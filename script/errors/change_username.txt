@@ -1,0 +1,25 @@
+raceback (most recent call last):
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\instagrapi\mixins\private.py", line 361, in _send_private_request
+    response.raise_for_status()
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\requests\models.py", line 960, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://i.instagram.com/api/v1/accounts/edit_profile/
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Desktop\tmp\upwork\instagram_cold_dm_sender\script\t.py", line 82, in <module>
+    ig.account_edit(username='edward')
+  File "C:\Users\user\Desktop\tmp\upwork\instagram_cold_dm_sender\script\extra\instagram\InstagramMobileMiddleware.py", line 16, in nested_func
+    func(self, *args, **kwargs)
+  File "C:\Users\user\Desktop\tmp\upwork\instagram_cold_dm_sender\script\extra\instagram\InstagramMobileMiddleware.py", line 30, in account_edit
+    self.client.account_edit(**kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\instagrapi\mixins\account.py", line 167, in account_edit
+    result = self.private_request(
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\instagrapi\mixins\private.py", line 543, in private_request
+    raise e
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\instagrapi\mixins\private.py", line 528, in private_request
+    self._send_private_request(endpoint, **kwargs)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\instagrapi\mixins\private.py", line 450, in _send_private_request
+    raise UnknownError(**last_json)
+instagrapi.exceptions.UnknownError: {'errors': ["This username isn't available. Please try another."]}

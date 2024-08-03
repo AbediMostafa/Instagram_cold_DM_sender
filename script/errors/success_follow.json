@@ -1,0 +1,18 @@
+{
+    "data": {
+        "xdt_create_friendship": {
+            "username": "reeree_606",
+            "friendship_status": {
+                "following": true,
+                "outgoing_request": false,
+                "followed_by": false,
+                "is_bestie": false
+            },
+            "id": "49685789239"
+        }
+    },
+    "extensions": {
+        "is_final": true
+    },
+    "status": "ok"
+}

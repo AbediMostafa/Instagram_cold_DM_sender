@@ -1,0 +1,22 @@
+{
+    "errors": [
+        {
+            "message": "execution error",
+            "severity": "CRITICAL",
+            "extensions": {
+                "code": 1390008,
+                "error_type": "SENTRY_BLOCK_ACCESS",
+                "field_oncall": "instagram_growth_common_services"
+            },
+            "code": 1390008,
+            "path": [
+                "xdt_api__v1__friendships__create__target_user_id"
+            ]
+        }
+    ],
+    "data": null,
+    "extensions": {
+        "is_final": true
+    },
+    "status": "ok"
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="dc7a7c62-585a-4455-a427-fc501ddb129a" name="cold-dm">
+        <fileTransfer rootFolder="/opt" accessType="SFTP" host="194.26.183.188" port="2221" sshConfigId="a6bb3fa1-d402-4b56-b897-2b80ab1f1afc" sshConfig="root@194.26.183.188:2221 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

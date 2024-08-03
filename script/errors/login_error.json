@@ -1,0 +1,14 @@
+[
+{
+  "message": "The username you entered doesn't appear to belong to an account. Please check your username and try again.",
+  "status": "fail",
+  "error_title": "Incorrect username",
+  "buttons": [
+    {
+      "title": "Try Again",
+      "action": "dismiss"
+    }
+  ],
+  "invalid_credentials": true,
+  "exception_name": "UserInvalidCredentials"
+}]
