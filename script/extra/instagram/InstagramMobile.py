@@ -55,7 +55,7 @@ class InstagramMobile(InstagramMobileMiddleware):
             try:
                 self.account.add_cli("Trying to get feeds")
 
-                feeds = self.client.get_timeline_feed()
+                feeds = self.get_timeline_feed()
             except (PleaseWaitFewMinutes, LoginRequired):
                 old_session = self.client.get_settings()
 

@@ -53,11 +53,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # import urllib3
 # from requests.adapters import HTTPAdapter
 # from script.models.AccountHelper import *
-from script.models.Account import *
-from script.models.Command import *
-from script.models.Setting import *
-from script.models.Lead import *
-from script.models.Thread import *
 #
 # from datetime import datetime, timedelta
 # from spintax import spintax
@@ -68,7 +63,6 @@ from script.models.Thread import *
 # # # while True:
 # # Process().start()
 # # #
-from script.extra.instagram.InstagramMobile import InstagramMobile
 # #
 #
 #
@@ -80,17 +74,12 @@ from script.extra.instagram.InstagramMobile import InstagramMobile
 # # import requests
 # #
 # from script.extra.instagram.InstagramMobile import InstagramMobile
-from script.extra.events.ChangeUsernameEvent import ChangeUsernameEvent
 # from script.extra.events.ChangeNameEvent import ChangeNameEvent
-from script.extra.events.ChangeBioEvent import ChangeBioEvent
-from script.extra.events.ChangeAvatarEvent import ChangeAvatarEvent
 # from script.extra.events.FollowEvent import FollowEvent
-from script.extra.events.PostImageEvent import PostImageEvent
 # from script.extra.events.PostVideoEvent import PostVideoEvent
 # from script.extra.events.LoomFollowUpEvent import LoomFollowUpEvent
 # from script.extra.events.DmEvent import DmEvent
 # from script.extra.events.DmFollowUpEvent import DmFollowUpEvent
-from script.extra.events.DeleteInitialPostsEvent import DeleteInitialPostsEvent
 # from script.extra.hooks.CheckNewMessageHooks import CheckNewMessageHooks
 #
 # # from instagrapi.exceptions import ProxyAddressIsBlocked
@@ -106,10 +95,9 @@ from script.extra.events.DeleteInitialPostsEvent import DeleteInitialPostsEvent
 # DmFollowUpEvent(account, ig).fire()
 # LoomFollowUpEvent(account, ig).fire()
 #
-# from script.extra.process.Process import Process
-#
-# process = Process()
-#
-# while True:
-#     process.start()
-# from script.models.Template import
+from script.extra.process.Process import Process
+
+process = Process()
+
+while True:
+    process.start()

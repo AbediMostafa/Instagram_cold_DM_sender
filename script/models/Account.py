@@ -63,7 +63,6 @@ class Account(BaseModel):
     def has(self, prop):
         return getattr(self, prop)
 
-
     def get_mobile_session(self):
         try:
             return json.loads(self.mobile_session)
@@ -138,13 +137,6 @@ class Account(BaseModel):
         self.passed_days_since_creation = (datetime.now() - self.created_at).days
 
         self.passed_days_since_creation = 0 if self.passed_days_since_creation < 0 else self.passed_days_since_creation
-
-    # def passed_days_since_creation(self):
-    #     if not self.created_at:
-    #         self.created_at = datetime.now()
-    #         self.save()
-    #
-    #     return (datetime.now() - self.created_at).days
 
     def change_proxy(self):
         from .AccountHelper import get_first_proxy_with_less_accounts

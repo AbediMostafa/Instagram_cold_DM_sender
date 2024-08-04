@@ -1,6 +1,7 @@
 import traceback
 from .BaseActionState import BaseActionState
-from script.extra.helper import pause, chat_ai
+from script.extra.helper import pause
+from script.models.Template import get_a, delete
 
 
 class ChangeUsernameEvent(BaseActionState):
@@ -11,20 +12,7 @@ class ChangeUsernameEvent(BaseActionState):
         return self.account.username_changed or not self.username
 
     def get_username(self):
-
-        prompt = """
-        i need one IG username. consist of 4 words
-        with underscores and dot separating each word.
-        the accounts are for a tiktok ads agency that runs marketing services on tiktok.
-        
-        i also need them more personalized, my name is edward, put variations of my name in there.
-        Please rearrange the words and do not use only the name or tiktok first, 
-        give me only one username and the username must be less than 30 characters and only give me the username without 
-        any extra words
-        replace all occurrence of o with 0   
-        """
-
-        self.username = chat_ai(prompt)
+        self.username = get_a('username').text
         self.account.add_cli(f'Selected username: {self.username}')
 
     def init_state(self):
@@ -43,14 +31,19 @@ class ChangeUsernameEvent(BaseActionState):
 
         return False
 
+    def delete_current_username(self):
+        return delete('username', self.username)
+
     def try_change_username(self):
         try:
             self.attempt += 1
             self.account.add_cli(f"Trying to change the username for the {self.attempt} time ...")
             self.ig.change_username(self.username)
             self.account.add_cli('Username changed successfully')
+            self.delete_current_username()
 
         except Exception as e:
+            self.delete_current_username()
             self.account.add_cli(str(e))
 
             if self.attempt > 2:
@@ -60,10 +53,9 @@ class ChangeUsernameEvent(BaseActionState):
                     e) or 'Enter a name under 30 characters' in str(
                 e) or "You can't end your username with a period" in str(e):
                 pause(2, 4)
+
                 self.get_username()
                 self.try_change_username()
-
-
 
     def success_state(self):
         self.account.set_state('set username', 'app_state')

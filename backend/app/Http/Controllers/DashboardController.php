@@ -19,7 +19,7 @@ class DashboardController extends Controller
                 DB::raw("count(case when type = 'dm follow up' and times = 1 and state = 'success' then 1 end) as first_follow_ups"),
                 DB::raw("count(case when type = 'dm follow up' and times = 2 and state = 'success' then 1 end) as second_follow_ups"),
                 DB::raw("count(case when type = 'dm follow up' and times = 3 and state = 'success' then 1 end) as third_follow_ups"),
-                DB::raw("count(case when type = 'loom follow up' and times = 0 and state = 'success' then 1 end) as successful_loom_follow_ups")
+                DB::raw("count(case when type = 'loom follow up' and times = 0 and state = 'success' then 1 end) as looms_sent_out")
             )
             ->groupBy('date')
             ->orderBy('date', 'DESC')

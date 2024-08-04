@@ -123,3 +123,7 @@ class InstagramMobileMiddleware:
     @try_except
     def login(self, *args, **kwargs):
         self.client.login(*args, **kwargs)
+
+    @try_except
+    def get_timeline_feed(self):
+        self.client.get_timeline_feed()

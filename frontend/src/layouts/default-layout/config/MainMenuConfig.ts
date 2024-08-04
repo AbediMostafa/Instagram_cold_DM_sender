@@ -36,11 +36,17 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-layers",
       },
       {
-        heading: "looms",
-        route: "/looms",
+        heading: "spintaxes",
+        route: "/spintaxes",
         keenthemesIcon: "message-text-2",
         bootstrapIcon: "bi-chat-left",
       },
+      // {
+      //   heading: "looms",
+      //   route: "/looms",
+      //   keenthemesIcon: "message-text-2",
+      //   bootstrapIcon: "bi-chat-left",
+      // },
 
       {
         heading: "proxies",
