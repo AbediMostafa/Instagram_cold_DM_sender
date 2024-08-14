@@ -1,6 +1,8 @@
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from peewee import fn, SQL
 
 # # import utc
 # # from apscheduler.schedulers.background import BackgroundScheduler
@@ -96,8 +98,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # LoomFollowUpEvent(account, ig).fire()
 #
 from script.extra.process.Process import Process
+from script.extra.instagram.Instagram import Instagram
+from script.extra.instagram.InstagramMobile import InstagramMobile
+from script.models.Account import Account
 
 process = Process()
-
 while True:
     process.start()
+

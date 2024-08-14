@@ -21,7 +21,7 @@ class AccountController extends Controller
             ->select(
                 'accounts.id', 'accounts.avatar_changed', 'accounts.username', 'accounts.instagram_state',
                 'accounts.name', 'accounts.app_state', 'accounts.log', 'accounts.is_active', 'accounts.password',
-                'accounts.email',
+                'accounts.email','accounts.secret_key',
                 DB::raw('MIN(CASE WHEN messages.state = \'unseen\' THEN 0 ELSE 1 END) as priority'))
             ->leftJoin('threads', 'accounts.id', '=', 'threads.account_id')
             ->leftJoin('messages', 'threads.id', '=', 'messages.thread_id')

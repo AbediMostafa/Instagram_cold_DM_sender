@@ -54,8 +54,10 @@ def manual_input_code(self, username: str, choice=None):
     str
         Code
     """
+    raise ChallengeRequired(f"Enter code (6 digits) for {username} ({choice}): ")
     code = None
     while True:
+        print('salam Farmandeh')
         code = input(f"Enter code (6 digits) for {username} ({choice}): ").strip()
         if code and code.isdigit():
             break

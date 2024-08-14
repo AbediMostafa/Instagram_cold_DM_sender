@@ -103,6 +103,16 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
+        path: "/spintaxes",
+        name: "spintaxes",
+        component: () => import("@/views/spintax/Spintaxes.vue"),
+        meta: {
+          pageTitle: "Spintaxes",
+          breadcrumbs: ["Spintaxes"],
+        },
+      },
+
+      {
         path: "/lead/:id",
         name: "lead",
         component: () => import("@/views/lead/Lead.vue"),
@@ -137,8 +147,8 @@ const routes: Array<RouteRecordRaw> = [
         name: "proxies",
         component: () => import("@/views/proxy/Proxies.vue"),
         meta: {
-          pageTitle: "Leads",
-          breadcrumbs: ["Leads"],
+          pageTitle: "Proxies",
+          breadcrumbs: ["Proxies"],
         },
       },
 

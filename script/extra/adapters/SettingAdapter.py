@@ -20,8 +20,24 @@ class SettingAdapter:
         return Setting.get_value('Max Follow', 50)
 
     @classmethod
+    def max_like(cls):
+        return Setting.get_value('Max Like', 200)
+
+    @classmethod
+    def max_comment(cls):
+        return Setting.get_value('Max Comment', 50)
+
+    @classmethod
     def follow_chunk(cls):
         return Setting.get_value('Follow Chunk', 5)
+
+    @classmethod
+    def like_chunk(cls):
+        return Setting.get_value('Like Chunk', 3)
+
+    @classmethod
+    def comment_chunk(cls):
+        return Setting.get_value('Comment Chunk', 3)
 
     @classmethod
     def dm_follow_up_chunk(cls):
@@ -42,3 +58,15 @@ class SettingAdapter:
     @classmethod
     def third_dm_follow_up_spintax(cls):
         return Setting.get_value('third dm follow up spintax')
+
+    @classmethod
+    def account_intervals(cls):
+        return Setting.get_value('Account intervals', 3)
+
+    @classmethod
+    def minimum_time_for_next_login(cls):
+        return Setting.get_value('Minimum time for next login', 1)
+
+    @classmethod
+    def maximum_time_for_next_login(cls):
+        return Setting.get_value('Maximum time for next login', 3)

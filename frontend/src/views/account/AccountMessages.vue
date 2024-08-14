@@ -210,27 +210,6 @@
                   </span>
                 </button>
                 <button
-                  :data-kt-indicator="is.loomSending ? 'on' : null"
-                  :disabled="is.loomSending"
-                  class="btn btn-primary btn-sm"
-                  type="submit"
-                  @click="sendMessage(sendLoom = true)"
-                >
-                  <span v-if="!is.loomSending" class="indicator-label">
-                    Send Loom
-                    <KTIcon
-                      icon-name="arrow-right"
-                      icon-class="fs-3 ms-2 me-0"
-                    />
-                  </span>
-                  <span v-else class="indicator-progress">
-                    Please wait...
-                    <span
-                      class="spinner-border spinner-border-sm align-middle ms-2"
-                    ></span>
-                  </span>
-                </button>
-                <button
                   :data-kt-indicator="is.refreshing ? 'on' : null"
                   :disabled="is.refreshing"
                   class="btn btn-light-success ms-2 btn-sm"

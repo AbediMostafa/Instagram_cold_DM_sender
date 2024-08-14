@@ -23,5 +23,7 @@ class Setting extends Model
         'Templates',
         'Proxy',
         'Command',
+        'Comment',
+        'Like',
     ];
 }

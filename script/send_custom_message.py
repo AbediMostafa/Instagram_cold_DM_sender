@@ -12,7 +12,7 @@ if len(sys.argv) > 1:
     command = Command.get_by_id(command_id)
 
     ig_mobile = InstagramMobile(command.account)
-    ig_mobile.set_proxy().log_in()
+    ig_mobile.log_in()
 
     command.update_cmd('state', 'processing')
 

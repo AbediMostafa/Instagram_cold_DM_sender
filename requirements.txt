@@ -10,3 +10,5 @@ pip3 install scikit-image --break-system-packages
 pip3 install openai --break-system-packages
 pip3 install pandas --break-system-packages
 pip3 install pycryptodomex --break-system-packages
+pip3 install pytest-playwright --break-system-packages
+pip3 install tzlocal --break-system-packages

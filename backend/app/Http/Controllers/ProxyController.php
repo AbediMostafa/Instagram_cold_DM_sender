@@ -10,7 +10,7 @@ class ProxyController extends Controller
     public function index()
     {
         return Proxy::query()
-            ->with('accounts:id,username,proxy_id')
+            ->with('accounts:id,username,proxy_id,instagram_state')
             ->paginate(
                 config('data.pagination.each_page.proxies')
             );

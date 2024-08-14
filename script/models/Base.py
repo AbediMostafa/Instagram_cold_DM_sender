@@ -2,7 +2,7 @@ from peewee import *
 from script.extra.config import *
 
 database = MySQLDatabase(
-    database_name,
+    'instagram_dm_sender',
     user='root',
     # password='mysql',
     password='TMFQ40GalqrQfB4fdkNU',

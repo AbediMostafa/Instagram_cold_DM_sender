@@ -40,4 +40,27 @@ class DashboardController extends Controller
             )->where('app_state', '!=', 'idle')
             ->get();
     }
+
+    public function addAccount()
+    {
+
+        return tryCatch(
+            function () {
+
+                $decodedAccounts = json_decode(request('account'), true);
+
+                foreach ($decodedAccounts as $data) {
+                    unset($data['id']);
+                    $account = new Account();
+
+                    $account->fill($data);
+
+                    $account->save();
+                }
+            },
+            'addedd successfully'
+        );
+
+
+    }
 }

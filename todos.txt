@@ -16,3 +16,5 @@ This structure ensures that the warning system is organized and that each step o
 The use of hooks allows for pre-event checks, ensuring that actions are only taken when appropriate,
 based on the account's status. The dashboard page provides a user-friendly interface to monitor and review warnings.
 
+
+

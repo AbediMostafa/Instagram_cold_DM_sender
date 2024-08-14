@@ -2,6 +2,7 @@ from peewee import *
 from .Base import BaseModel
 import json
 from datetime import datetime, timedelta
+import random
 from .Proxy import Proxy
 
 
@@ -24,7 +25,9 @@ class Account(BaseModel):
     mobile_session = TextField(null=True)
     log = TextField(null=True)
     created_at = DateTimeField(null=True, default=datetime.now)
-    updated_at = DateTimeField(null=True, constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
+    updated_at = DateTimeField(null=True)
+    last_login = DateTimeField(null=True)
+    next_login = DateTimeField(null=True)
 
     passed_days_since_creation = 0
 
@@ -55,9 +58,6 @@ class Account(BaseModel):
         log = f'[{self.username} -- {self.id}] ${log}'
 
         print(log)
-        self.log = log
-        self.save()
-
         Cli.create(account=self, log=log)
 
     def has(self, prop):
@@ -205,6 +205,38 @@ class Account(BaseModel):
 
         thread = Thread.create(account=self, lead=lead, thread_id=direct.thread_id)
         return add_message(thread)
+
+    def get_latest_warning(self):
+        from script.models.Warning import Warning
+
+        return (Warning
+                .select()
+                .where(Warning.account == self)
+                .order_by(Warning.created_at.desc())
+                .first())
+
+    def update_last_activity(self):
+        from script.extra.adapters.SettingAdapter import SettingAdapter
+
+        random_second = random.randint(1, 59)
+        random_minute = random.randint(1, 59)
+        random_hour = random.randint(SettingAdapter.minimum_time_for_next_login(),
+                                     SettingAdapter.maximum_time_for_next_login())
+
+        time_delta = timedelta(seconds=random_second, minutes=random_minute, hours=random_hour)
+        new_time = datetime.now() + time_delta
+
+        self.next_login = new_time
+        self.save()
+
+        return new_time
+
+    def next_login_has_not_reached_yet(self):
+        if not self.next_login:
+            return False, 0
+
+        time_delta = max(self.next_login - datetime.now(), timedelta(0))
+        return self.next_login > datetime.now(), time_delta
 
     class Meta:
         table_name = 'accounts'

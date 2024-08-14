@@ -15,55 +15,16 @@ use \App\Http\Controllers\MessageController;
 use \App\Http\Controllers\CommandController;
 use \App\Http\Controllers\LoomController;
 use \App\Http\Controllers\DashboardController;
-use \Carbon\Carbon;
-use \Illuminate\Support\Facades\DB;
+use \App\Http\Controllers\SpintaxController;
 
 
 Route::get('/', function () {
 
-//    for ($i=1;$i<12;$i++){
-//        $max = rand(10,50);
-//
-//        for($j=1;$j<=$max;$j++){
-//            Message::query()->insert([
-//                'message_id'=>rand(16546,456987777),
-//                'thread_id'=>$i,
-//                'text'=>fake()->text,
-//                'sender'=>fake()->randomElement(['account', 'lead',]),
-//                'type'=>'text',
-//                'state'=>'seen',
-//            ]);
-//        }
-//    }
+    $clis = Account::query()->find(466)
+        ->clis;
 
-    $leadTextMessagesSubquery = DB::table('messages')
-        ->select(
-            DB::raw('DATE(created_at) as date'),
-            DB::raw("count(case when sender = 'lead' and type = 'text' then 1 end) as lead_text_messages")
-        )
-        ->groupBy('date');
+    dd($clis[637]);
 
-    $results = Command::query()
-        ->select(
-            DB::raw('DATE(commands.created_at) as date'),
-            DB::raw("count(case when commands.type = 'dm follow up' and commands.times = 0 then 1 end) as total_cold_dms"),
-            DB::raw("count(case when commands.type = 'dm follow up' and commands.times = 0 and commands.state = 'success' then 1 end) as successful_cold_dms"),
-            DB::raw("count(case when commands.type = 'dm follow up' and commands.times = 0 and commands.state = 'fail' then 1 end) as failed_cold_dms"),
-            DB::raw("count(case when commands.type = 'dm follow up' and commands.times = 1 and commands.state = 'success' then 1 end) as first_follow_ups"),
-            DB::raw("count(case when commands.type = 'dm follow up' and commands.times = 2 and commands.state = 'success' then 1 end) as second_follow_ups"),
-            DB::raw("count(case when commands.type = 'dm follow up' and commands.times = 3 and commands.state = 'success' then 1 end) as third_follow_ups"),
-            DB::raw("count(case when commands.type = 'loom follow up' and commands.times = 0 and commands.state = 'success' then 1 end) as looms_sent_out"),
-            DB::raw("IFNULL(lead_text_messages_subquery.lead_text_messages, 0) as lead_text_messages")
-        )
-        ->crossJoinSub($leadTextMessagesSubquery, 'lead_text_messages_subquery', function ($join) {
-            $join->on(DB::raw('DATE(commands.created_at)'), '=', 'lead_text_messages_subquery.date');
-        })
-        ->groupBy('date')
-        ->orderBy('date', 'DESC')
-        ->get(
-        );
-
-    dd($results);
 });
 
 //function exportTables()
@@ -129,6 +90,11 @@ Route::post('loom/view', [LoomController::class, 'view']);
 
 Route::post('dashboard/dm-statistics', [DashboardController::class, 'getDailyDmStatistics']);
 Route::post('dashboard/running-accounts', [DashboardController::class, 'getRunningAccounts']);
+
+Route::post('spintaxes', [SpintaxController::class, 'index']);
+Route::post('spintaxe/view', [SpintaxController::class, 'view']);
+Route::post('spintaxe/create', [SpintaxController::class, 'create']);
+
 
 
 Route::post('clis', [CliController::class, 'index']);

@@ -61,7 +61,7 @@ class PreLoginFlowMixin:
         # self.set_contact_point_prefill("prefill")
         # self.get_prefill_candidates(True)
         # self.set_contact_point_prefill("prefill")
-        self.sync_launcher(True) 
+        self.sync_launcher(True)
         # self.sync_device_features(True)
         return True
 
@@ -418,7 +418,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         if self.user_id and not relogin:
             return True  # already login
         try:
-            self.pre_login_flow()     
+            self.pre_login_flow()
         except (PleaseWaitFewMinutes, ClientThrottledError):
             self.logger.warning("Ignore 429: Continue login")
             # The instagram application ignores this error

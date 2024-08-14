@@ -9,6 +9,7 @@ class InstagramMobile(InstagramMobileMiddleware):
     session = None
     client = None
     proxy = None
+    feeds = None
 
     def set_proxy(self):
 
@@ -41,6 +42,7 @@ class InstagramMobile(InstagramMobileMiddleware):
             raise Exception(str(e))
 
     def log_in(self):
+        self.set_proxy()
         session = self.account.get_mobile_session()
 
         try:
@@ -55,8 +57,9 @@ class InstagramMobile(InstagramMobileMiddleware):
             try:
                 self.account.add_cli("Trying to get feeds")
 
-                feeds = self.get_timeline_feed()
-            except (PleaseWaitFewMinutes, LoginRequired):
+                self.feeds = self.get_timeline_feed()
+            except Exception as e:
+                self.account.add_cli(str(e))
                 old_session = self.client.get_settings()
 
                 self.client.set_settings({})
@@ -66,6 +69,9 @@ class InstagramMobile(InstagramMobileMiddleware):
                     self.account.password,
                     verification_code=self.account.get_verification_code()
                 )
+
+                self.account.add_cli("Trying to get feeds again ... ")
+                self.feeds = self.get_timeline_feed()
 
             self.account.save_mobile_session(self.client.get_settings())
 

@@ -1,5 +1,7 @@
 import traceback
 from script.extra.exceptions import FeedbackRequiredPreferReviewFollower
+from instagrapi.exceptions import PleaseWaitFewMinutes, LoginRequired
+
 
 
 class InstagramErrorHandler:
@@ -12,14 +14,14 @@ class InstagramErrorHandler:
         if 'There is a limit to the number of new conversations you can start' in e:
             self.account.set_state('doesnt followed dm limit', 'instagram_state', e)
 
-        self.account.add_warning(e)
+        self.account.add_warning(e, 5)
         raise Exception(e)
 
     def handle_feedback_required_exception(self, e):
         if 'We limit how often you can do certain things on Instagram' in e:
             self.account.set_state('follow ban')
 
-            self.account.add_warning(e)
+            self.account.add_warning(e, 10)
             raise Exception(e)
 
         if 'Some accounts prefer to manually review followers' in e:
@@ -29,46 +31,52 @@ class InstagramErrorHandler:
             raise FeedbackRequiredPreferReviewFollower(e)
 
     def handle_client_not_found_exception(self, e):
-        self.account.add_warning(e)
+        self.account.add_warning(e, 15)
+        raise Exception(e)
+
+    def handle_assertion_error_exception(self, e):
+        self.account.set_state('wait a few minutes', 'instagram_state', e)
+        self.account.add_warning(e, 15)
         raise Exception(e)
 
     def handle_client_connection_error(self, e):
-
-        self.account.change_proxy()
-        self.account.add_warning(e)
+        self.account.add_warning(e, 20)
         raise Exception(e)
 
     def handle_proxy_blocked_exception(self, e):
         self.account.set_state('proxy blocked', 'instagram_state', e)
-        self.account.change_proxy()
-        self.account.add_warning(e, 48)
+        self.account.add_warning(e)
 
         raise Exception(e)
 
     def handle_account_challenging_exception(self, e):
         self.account.set_state('challenging', 'instagram_state', e)
-        self.account.change_proxy()
-        self.account.add_warning(e, 72)
+        self.account.add_warning(e, 24)
 
         raise Exception(e)
 
     def handle_wait_a_few_minutes_exception(self, e):
         self.account.set_state('wait a few minutes', 'instagram_state', e)
-        self.account.change_proxy()
-        self.account.add_warning(e)
-        raise Exception(e)
+        self.account.add_warning(e, 15)
+        raise PleaseWaitFewMinutes(e)
 
     def handle_two_factor_required_exception(self, e):
         self.account.set_state('two factor required', 'instagram_state', e)
-        self.account.change_proxy()
+        self.account.add_warning(e, 15)
+
+        raise Exception(e)
+
+    def handle_bad_password_exception(self, e):
+        self.account.set_state('bad password', 'instagram_state', e)
         self.account.add_warning(e)
 
         raise Exception(e)
 
     def handle_login_required_exception(self, e):
-        self.account.add_warning(e)
+        self.account.set_state('login required', 'instagram_state', e)
+        self.account.add_warning(e, 5)
 
-        raise Exception(e)
+        raise LoginRequired(e)
 
     def handle_general_exceptions(self, e):
         self.handle_exception(e)

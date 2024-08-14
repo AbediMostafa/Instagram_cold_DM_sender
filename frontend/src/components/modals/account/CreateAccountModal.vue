@@ -107,6 +107,20 @@
                     name="bunchInsert"
                 />
               </el-form-item>
+
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span>Category</span>
+              </label>
+              <!--end::Label-->
+              <el-form-item prop="category">
+                <el-input
+                    v-model="targetData.category"
+                    placeholder="Enter a category Here"
+                    name="category"
+                />
+              </el-form-item>
+
+
             </div>
 
 
@@ -225,6 +239,7 @@ export default defineComponent({
       password: "",
       secret_key: "",
       accounts: "",
+      category: "",
       bulk_insertion: false,
     });
 

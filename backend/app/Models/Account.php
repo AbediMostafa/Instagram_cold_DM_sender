@@ -16,7 +16,9 @@ class Account extends Model
         'active',
         'challenging',
         'follow ban',
+        'login required',
         'action ban',
+        'bad password',
         'proxy blocked',
         'wait a few minutes',
         'two factor required',
@@ -82,6 +84,7 @@ class Account extends Model
             'username' => r('username'),
             'password' => r('password'),
             'secret_key' => $secretKey,
+            'category' => request('category'),
         ]);
     }
 
@@ -109,7 +112,8 @@ class Account extends Model
                     'username' => $account[0],
                     'password' => $account[1],
                     'secret_key' => str_replace(' ', '', $account[2]),
-                    'created_at' => Carbon::now()
+                    'created_at' => Carbon::now(),
+                    'category' => request('category'),
                 ];
             }
         }
@@ -124,4 +128,3 @@ class Account extends Model
         return $this->hasMany(Warning::class);
     }
 }
-

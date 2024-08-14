@@ -59,11 +59,12 @@
                 <td>{{ proxy.password }}</td>
                 <td>
                   <span
-                    class="badge py-2 px-3 fs-7 badge-light-info me-1"
+                    class="badge py-2 px-3 fs-7 me-1"
                     v-for="account in proxy.accounts"
                     :key="account.username"
+                    :class="account.instagram_state=='active'?'badge-light-info':'badge-light-danger'"
                   >
-                    {{ account.username }}
+                    {{ account.id }}.{{ account.username }}
                   </span>
                 </td>
                 <td>

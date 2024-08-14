@@ -92,6 +92,59 @@ class SettingSeeder extends Seeder
                 'category' => 'Proxy',
                 'description' => "The maximum account used for one proxy",
             ],
+
+            [
+                'type' => 'number',
+                'key' => 'Max Like',
+                'value' => 200,
+                'category' => 'Like',
+                'description' => "The maximum like that an account can perform",
+            ],
+            [
+                'type' => 'number',
+                'key' => 'Max Comment',
+                'value' => 50,
+                'category' => 'Comment',
+                'description' => "The maximum comment that an account can perform",
+            ],
+
+            [
+                'type' => 'number',
+                'key' => 'Like Chunk',
+                'value' => 3,
+                'category' => 'Like',
+                'description' => "The selected chunk of posts to like every time",
+            ],
+
+            [
+                'type' => 'number',
+                'key' => 'Comment Chunk',
+                'value' => 3,
+                'category' => 'Comment',
+                'description' => "The selected chunk of posts to comment every time",
+            ],
+
+            [
+                'type' => 'number',
+                'key' => 'Account intervals',
+                'value' => 3,
+                'category' => 'Account',
+                'description' => "The time (in hours) of each account's interval",
+            ],
+            [
+                'type' => 'number',
+                'key' => 'Minimum time for next login',
+                'value' => 1,
+                'category' => 'Account',
+                'description' => "Specifies the minimum duration (in hours) that must elapse before an account is allowed to log in again after their last login attempt",
+            ],
+            [
+                'type' => 'number',
+                'key' => 'Maximum time for next login',
+                'value' => 3,
+                'category' => 'Account',
+                'description' => "Specifies the maximum duration (in hours) that must elapse before an account is allowed to log in again after their last login attempt",
+            ],
         ]);
     }
 }

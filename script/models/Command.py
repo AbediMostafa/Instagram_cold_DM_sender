@@ -4,6 +4,7 @@ from .Base import BaseModel
 from .Account import Account
 from .Message import Message
 from .Lead import Lead
+from datetime import datetime, timedelta
 
 
 class Command(BaseModel):
@@ -17,30 +18,25 @@ class Command(BaseModel):
     type = CharField()
     state = CharField()
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
+    created_at = DateTimeField(null=True, default=datetime.now)
 
     def update_cmd(self, col, val):
         setattr(self, col, val)
         self.save()
 
     @classmethod
-    def get_pending_commands(cls, _type):
-        return cls.select().where(
-            (cls.type == _type) &
-            (cls.state == 'pending')
-        ).order_by(cls.account_id.desc())
+    def successful_commands_within_passed_24hours(cls, account, _type):
+        twenty_hours_ago = datetime.now() - timedelta(hours=24)
 
-    @classmethod
-    def get_latest_successful_command(cls, account_id, _type, n_minutes_ago):
         return (cls
-                .select()
-                .where((cls.state == 'success') &
-                       (cls.account == account_id) &
-                       (cls.type == _type) &
-                       (cls.created_at > n_minutes_ago)
-                       )
-                .order_by(cls.created_at.desc())
-                .first())
+                .select(fn.COUNT(cls.id).alias('count'))
+                .where(
+            (cls.account == account) &
+            (cls.type == _type) &
+            (cls.state == 'success') &
+            (cls.created_at >= twenty_hours_ago)
+        )
+                .scalar())
 
     def get_commandable(self):
         model_class = self.get_model_from_type()
@@ -48,7 +44,6 @@ class Command(BaseModel):
         return model_class.get_by_id(self.commandable_id) if model_class else None
 
     def get_model_from_type(self):
-
         # This method should return the model class based on the commandable_type
         type_mapping = {
             'App\\Models\\Message': Message,

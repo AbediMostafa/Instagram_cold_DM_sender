@@ -4,6 +4,8 @@ from script.extra.actions.Follow import Follow
 from script.extra.helper import pause
 from script.extra.helper import test_accounts
 from script.extra.exceptions import FeedbackRequiredPreferReviewFollower
+from script.extra.instagram.InstagramMobile import InstagramMobile
+from script.extra.instagram.Instagram import Instagram
 
 
 class FollowEvent(BaseActionState):
@@ -36,11 +38,10 @@ class FollowEvent(BaseActionState):
             lead.change_state_from_free('followed', self.account)
             self.command.update_cmd('state', 'success')
 
-    def success_state(self):
-        self.account.set_state('following', 'app_state')
-
+    def mobile_execution(self):
         for lead in self.follow.leads_to_follow():
-        # for lead in test_accounts():
+
+            # for lead in test_accounts():
 
             try:
                 self.get_lead_id(lead)
@@ -58,6 +59,21 @@ class FollowEvent(BaseActionState):
             except FeedbackRequiredPreferReviewFollower as e:
                 self.command.update_cmd('state', 'fail')
                 break
+
+    def web_execution(self):
+        for lead in self.follow.leads_to_follow():
+            self.send_follow_request(lead)
+
+    def success_state(self):
+        self.account.set_state('following', 'app_state')
+
+        if isinstance(self.ig, InstagramMobile):
+            self.mobile_execution()
+
+        elif isinstance(self.ig, Instagram):
+            self.web_execution()
+        else:
+            raise TypeError("Unsupported type passed to AnotherClass")
 
     def exception_state(self, e):
         if self.command:

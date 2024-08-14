@@ -1,4 +1,4 @@
-from script.extra.BasePlaywright import BasePlaywright
+from .BasePlaywright import BasePlaywright
 import traceback
 from .InstagramButtonHandlerMixin import InstagramButtonHandlerMixin
 from .InstagramSuspensionHandlerMixin import InstagramSuspensionHandlerMixin
@@ -39,7 +39,6 @@ class Instagram(BasePlaywright, InstagramButtonHandlerMixin, InstagramSuspension
         self.click_on_users_instagram()
         self.pause(3000, 4000)
 
-
     def change_name(self, name):
 
         self.click_on_profile_attribute("Name")
@@ -68,35 +67,24 @@ class Instagram(BasePlaywright, InstagramButtonHandlerMixin, InstagramSuspension
         self.account.add_cli('After 4000-5000 timeout')
         self.page.get_by_role("button", name="Back").click()
 
-    def change_username(self, username_template):
+    def change_username(self, username):
+        self.go_to_profile_page()
+
         self.click_on_profile_attribute("Username")
         self.pause(3000, 4000)
 
-        while True:
-            self.fill_property("Username", username_template.text)
-            self.pause(4000, 5000)
+        self.fill_property("Username", username)
+        self.pause(4000, 5000)
 
-            if not self.is_visible_by_text('Username is not available'):
-                self.account.add_cli(f"The username : {username_template.text} accepted")
-                self.click_and_raise_if_cant(
-                    'Clicking on Done button',
-                    "Done",
-                    "Problem clicking on done button",
-                    "button"
-                )
-                self.account.set('username', username_template.text)
-                self.account.attach_template(username_template)
-                self.account.set('username_changed', 1)
-                break
+        if self.is_visible_by_text('Username is not available'):
+            raise Exception('Username is not available')
 
-            if not username_template:
-                self.account.add_cli("We have no more usernames left, Setting username failed")
-                self.page.get_by_role("button", name="Back").click()
-                break
-
-            self.account.add_cli(f"The username : {username_template.text} have been taken before, trying new one")
-
-            username_template = self.account.get_a_free_username()
+        self.click_and_raise_if_cant(
+            'Clicking on Done button',
+            "Done",
+            "Problem clicking on done button",
+            "button"
+        )
 
     def change_bio(self, bio):
         self.page.get_by_placeholder("Bio").fill(bio)
@@ -134,7 +122,6 @@ class Instagram(BasePlaywright, InstagramButtonHandlerMixin, InstagramSuspension
         self.pause(2000, 3000)
         self.page.get_by_role("button", name="Log in", exact=True).click()
         self.pause(8000, 9000)
-        self.pause(50000, 51000)
 
         return self
 
@@ -173,7 +160,8 @@ class Instagram(BasePlaywright, InstagramButtonHandlerMixin, InstagramSuspension
             self.page.get_by_role("button", name="This Was Me").click()
             self.pause(4000, 5000)
 
-    def login(self):
+    def log_in(self):
+        self.go_to_instagram()
         self.pause(2000, 3000)
 
         try:

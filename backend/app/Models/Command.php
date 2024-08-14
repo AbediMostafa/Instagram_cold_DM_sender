@@ -27,6 +27,8 @@ class Command extends Model
         'post video',
         'follow',
         'dm follow up',
+        'like post',
+        'comment post',
         'custom message',
         'send loom',
         'loom follow up',

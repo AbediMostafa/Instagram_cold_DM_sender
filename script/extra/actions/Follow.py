@@ -3,7 +3,7 @@ import random
 from script.models.Command import Command
 from script.models.Lead import Lead
 from datetime import datetime, timedelta
-from peewee import fn,SQL
+from peewee import fn, SQL
 
 
 class Follow:
@@ -16,7 +16,7 @@ class Follow:
 
     def number_of_follow_strategy(self):
 
-        allowed_follow = min(self.account.passed_days_since_creation+1, SettingAdapter.max_follow())
+        allowed_follow = min(self.account.passed_days_since_creation + 1, SettingAdapter.max_follow())
 
         self.account.add_cli(f"Today's max allowed follow: {allowed_follow}")
 

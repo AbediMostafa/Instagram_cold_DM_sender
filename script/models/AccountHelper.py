@@ -3,11 +3,7 @@ from peewee import fn, JOIN
 
 
 def free_account_query():
-    return Account.select().where(
-        (Account.is_used == 0) &
-        (Account.is_active == 1) &
-        (Account.instagram_state == 'active')
-    )
+    return Account.select().where((Account.is_used == 0) & (Account.is_active == 1))
 
 
 def get_next_account():

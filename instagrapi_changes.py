@@ -11,3 +11,11 @@ elif isinstance(e, ChallengeRequired):
     raise e
 ======================================================
 """
+
+"""
+mixins\private.py ==>line 57
+
+======================================================
+add : raise ChallengeRequired(f"Enter code (6 digits) for {username} ({choice}): ")
+======================================================
+"""

@@ -11,6 +11,24 @@
       </h3>
       <div class="card-toolbar">
         <!--begin::Menu-->
+        <div>
+          <el-checkbox-group
+              v-model="store.accounts.filters"
+              size="default"
+          >
+            <el-checkbox-button
+                v-for="action in store.accountStates"
+                :key="action.value"
+                :label="action.label"
+                :value="action.value"
+                @click="store.getAccounts"
+            >
+              {{ action.value }}
+            </el-checkbox-button>
+          </el-checkbox-group>
+        </div>
+
+
         <a
           class="btn btn-sm btn-success me-2"
           @click="showModal('create_account_modal')"
@@ -100,9 +118,6 @@
                     </div>
 
                     <div class="ms-4">
-                      <router-link
-                        :to="{ name: 'messages', params: { id: account.id } }"
-                      >
                         <a
                           class="text-gray-900 fw-bold text-hover-primary fs-7"
                           >{{account.id}} - {{ account.username }}</a
@@ -114,7 +129,6 @@
                           class="text-muted fw-semibold text-muted d-block fs-7"
                           >{{ account.password }}</span
                         >
-                      </router-link>
                     </div>
                   </div>
                 </td>
@@ -128,7 +142,7 @@
                   <account-app-state :state="account.app_state" />
                   <span
                     class="text-muted fw-semibold text-muted d-block fs-8 mt-2"
-                    >{{ account.log }}</span
+                    >{{ account.secret_key }}</span
                   >
                 </td>
 
@@ -194,6 +208,13 @@ const getAvatarPath = (account) => {
     import.meta.env.VITE_APP_API_URL + "/storage/" + account.templates[0]?.text
   );
 };
+
+const accountStates = ref([
+  {value: "Interested", label: "interested"},
+  {value: "Not Interested", label: "not interested"},
+  {value: "Needs Response", label: "needs response"},
+  {value: "Loom Sent", label: "loom follow up"},
+]);
 
 onMounted(store.getAccounts);
 const getAccountsWithInterval = setInterval(

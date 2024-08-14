@@ -10,6 +10,8 @@ from script.extra.events.PostVideoEvent import PostVideoEvent
 from script.extra.events.DmFollowUpEvent import DmFollowUpEvent
 from script.extra.events.LoomFollowUpEvent import LoomFollowUpEvent
 from script.extra.events.DeleteInitialPostsEvent import DeleteInitialPostsEvent
+from script.extra.events.LikeAndCommentLeadsPosts import LikeAndCommentLeadsPosts
+from script.extra.events.LikeAndCommentFeeds import LikeAndCommentFeeds
 from script.extra.helper import pause
 
 
@@ -23,6 +25,7 @@ class HowManyEventsCanHandleStrategy:
     def __init__(self, account, ig):
         self.account = account
         self.ig = ig
+
         self.account.get_passed_days_since_creation()
         self.account.add_cli(f'We are at the {self.account.passed_days_since_creation} day of account creation')
 
@@ -49,15 +52,18 @@ class HowManyEventsCanHandleStrategy:
         random.shuffle(self.events)
 
         for event in self.events:
-            pause(1,3)
+            pause(18, 40)
+            # pause(3, 6)
             event.fire()
 
     def first_day_strategy(self):
         self.account.add_cli('running first day strategy')
         self.events = [
-            DeleteInitialPostsEvent(self.account, self.ig),
+            # DeleteInitialPostsEvent(self.account, self.ig),
             ChangeUsernameEvent(self.account, self.ig),
             FollowEvent(self.account, self.ig),
+            LikeAndCommentFeeds(self.account, self.ig),
+            LikeAndCommentLeadsPosts(self.account, self.ig),
         ]
 
     def second_day_strategy(self):
@@ -67,9 +73,11 @@ class HowManyEventsCanHandleStrategy:
             DeleteInitialPostsEvent(self.account, self.ig),
             ChangeUsernameEvent(self.account, self.ig),
 
-            ChangeNameEvent(self.account, self.ig),
+            # ChangeNameEvent(self.account, self.ig),
             FollowEvent(self.account, self.ig),
             DmEvent(self.account, self.ig),
+            LikeAndCommentFeeds(self.account, self.ig),
+            LikeAndCommentLeadsPosts(self.account, self.ig),
         ]
 
     def third_day_strategy(self):
@@ -78,12 +86,14 @@ class HowManyEventsCanHandleStrategy:
         self.events = [
             DeleteInitialPostsEvent(self.account, self.ig),
             ChangeUsernameEvent(self.account, self.ig),
-            ChangeNameEvent(self.account, self.ig),
+            #             ChangeNameEvent(self.account, self.ig),
 
             ChangeAvatarEvent(self.account, self.ig),
             ChangeBioEvent(self.account, self.ig),
             FollowEvent(self.account, self.ig),
             DmEvent(self.account, self.ig),
+            LikeAndCommentFeeds(self.account, self.ig),
+            LikeAndCommentLeadsPosts(self.account, self.ig),
         ]
 
     def fourth_day_strategy(self):
@@ -91,7 +101,7 @@ class HowManyEventsCanHandleStrategy:
 
         self.events = [
             ChangeUsernameEvent(self.account, self.ig),
-            ChangeNameEvent(self.account, self.ig),
+            #             ChangeNameEvent(self.account, self.ig),
             ChangeAvatarEvent(self.account, self.ig),
             ChangeBioEvent(self.account, self.ig),
 
@@ -100,6 +110,8 @@ class HowManyEventsCanHandleStrategy:
             DmEvent(self.account, self.ig),
             DmFollowUpEvent(self.account, self.ig),
             LoomFollowUpEvent(self.account, self.ig),
+            LikeAndCommentFeeds(self.account, self.ig),
+            LikeAndCommentLeadsPosts(self.account, self.ig),
         ]
 
     def fifth_day_strategy(self):
@@ -107,7 +119,7 @@ class HowManyEventsCanHandleStrategy:
 
         self.events = [
             ChangeUsernameEvent(self.account, self.ig),
-            ChangeNameEvent(self.account, self.ig),
+            #             ChangeNameEvent(self.account, self.ig),
             ChangeAvatarEvent(self.account, self.ig),
             ChangeBioEvent(self.account, self.ig),
 
@@ -117,17 +129,24 @@ class HowManyEventsCanHandleStrategy:
             DmEvent(self.account, self.ig),
             DmFollowUpEvent(self.account, self.ig),
             LoomFollowUpEvent(self.account, self.ig),
+            LikeAndCommentFeeds(self.account, self.ig),
+            LikeAndCommentLeadsPosts(self.account, self.ig),
         ]
 
     def more_than_five_days_strategy(self):
         self.account.add_cli('running more than five days strategy')
 
         self.events = [
+            DeleteInitialPostsEvent(self.account, self.ig),
+            ChangeAvatarEvent(self.account, self.ig),
             ChangeUsernameEvent(self.account, self.ig),
+
             PostImageEvent(self.account, self.ig),
             PostVideoEvent(self.account, self.ig),
             FollowEvent(self.account, self.ig),
             DmEvent(self.account, self.ig),
             DmFollowUpEvent(self.account, self.ig),
             LoomFollowUpEvent(self.account, self.ig),
+            LikeAndCommentFeeds(self.account, self.ig),
+            LikeAndCommentLeadsPosts(self.account, self.ig),
         ]

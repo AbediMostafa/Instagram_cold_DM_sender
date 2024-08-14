@@ -219,10 +219,6 @@ const messageActions = ref([
   {value: "Loom Sent", label: "loom follow up"},
 ]);
 
-// const actionClicked = () => {
-//   setTimeout(getMessages, 100)
-// }
-
 const actionClicked = useDebounceFn(() => getMessages(), 1000);
 
 const changePageGetMessages = (page) => {

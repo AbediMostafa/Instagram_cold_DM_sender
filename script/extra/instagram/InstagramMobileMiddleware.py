@@ -1,7 +1,7 @@
 from instagrapi import Client
 from instagrapi.exceptions import ProxyAddressIsBlocked, ChallengeRequired, UserNotFound, FeedbackRequired, \
     ClientNotFoundError, ClientForbiddenError, ClientConnectionError, PleaseWaitFewMinutes, LoginRequired, \
-    TwoFactorRequired, ChallengeUnknownStep
+    TwoFactorRequired, ChallengeUnknownStep, BadPassword, MediaUnavailable
 from .InstagramErrorHandler import InstagramErrorHandler
 
 from script.extra.helper import pause
@@ -54,6 +54,15 @@ class InstagramMobileMiddleware:
             except LoginRequired as e:
                 self.error_handler.handle_login_required_exception(str(e))
 
+            except BadPassword as e:
+                self.error_handler.handle_bad_password_exception(str(e))
+
+            except MediaUnavailable as e:
+                pass
+
+            except AssertionError as e:
+                self.error_handler.handle_assertion_error_exception(str(e))
+
             except Exception as e:
                 exception_type = type(e)
                 exception_class = e.__class__.__name__
@@ -93,6 +102,7 @@ class InstagramMobileMiddleware:
     @try_except
     def user_id_from_username(self, lead):
         user = self.client.user_info_by_username_v1(lead.username)
+        return user.pk
         lead.update_instagram_id(user.pk)
         return lead.username
 
@@ -126,4 +136,16 @@ class InstagramMobileMiddleware:
 
     @try_except
     def get_timeline_feed(self):
-        self.client.get_timeline_feed()
+        return self.client.get_timeline_feed()
+
+    @try_except
+    def user_medias(self, user_id, amount):
+        return self.client.user_medias(user_id, amount=amount)
+
+    @try_except
+    def media_like(self, media_id):
+        return self.client.media_like(media_id)
+
+    @try_except
+    def media_comment(self, media_id, text):
+        return self.client.media_comment(media_id, text)
