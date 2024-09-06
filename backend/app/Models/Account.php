@@ -34,12 +34,19 @@ class Account extends Model
         'set bio',
         'set avatar',
         'post image',
+        'post carousel',
         'post video',
         'following',
         'sending DM',
         'loom follow up',
         'delete initial posts',
+        'get thread messages'
     ];
+
+    public function threads()
+    {
+        return $this->hasMany(Thread::class);
+    }
 
     public function leads()
     {
@@ -59,6 +66,11 @@ class Account extends Model
     public function proxy()
     {
         return $this->belongsTo(Proxy::class);
+    }
+
+    public function color()
+    {
+        return $this->belongsTo(Color::class);
     }
 
     public function notifs()

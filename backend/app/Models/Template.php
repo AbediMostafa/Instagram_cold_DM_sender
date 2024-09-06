@@ -9,13 +9,9 @@ class Template extends Model
 {
     use HasFactory;
 
+
     protected $guarded = [];
     const UPDATED_AT = null;
-    public static array $multimediaTemplates = [
-        'avatar',
-        'image-post',
-        'video-post',
-    ];
 
     public static array $types = [
         'name',
@@ -27,6 +23,7 @@ class Template extends Model
         'third loom follow up spintax',
         'loom follow up message',
         'avatar',
+        'carousel',
         'image-post',
         'video-post',
     ];
@@ -36,4 +33,8 @@ class Template extends Model
         return $this->belongsToMany(Account::class);
     }
 
+    public function color()
+    {
+        return $this->belongsTo(Color::class);
+    }
 }

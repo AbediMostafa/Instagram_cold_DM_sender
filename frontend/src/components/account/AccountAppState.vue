@@ -1,6 +1,6 @@
 <template>
-  <span v-if="state==='idle'" class="badge py-2 px-3 fs-7 badge-secondary text-gray-600 ">{{ state }}</span>
-  <span v-else class="badge py-2 px-3 fs-7 badge-light-success">{{ state }}</span>
+  <span v-if="state==='idle'" class="badge py-2 px-3 badge-secondary text-gray-600 ">{{ state }}</span>
+  <span v-else class="badge py-2 px-3 badge-light-success">{{ state }}</span>
 </template>
 
 <script lang="ts">

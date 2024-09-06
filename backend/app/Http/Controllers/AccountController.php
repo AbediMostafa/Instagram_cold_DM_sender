@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\Message;
 use App\Models\Notif;
 use App\Models\Proxy;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,23 +15,71 @@ class AccountController extends Controller
 {
     public function index()
     {
-        return Account::query()
+        if (r('dateRange')) {
+            $startDate = Carbon::parse(r('dateRange')[0])->startOfDay();
+            $endDate = Carbon::parse(r('dateRange')[1])->endOfDay();
+        } else {
+            // Default to today
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+        }
+
+        $accounts = Account::query()
+            ->select(
+                'id', 'avatar_changed', 'username', 'instagram_state',
+                'name', 'app_state', 'log', 'is_active', 'password', 'created_at',
+                'secret_key')
+            ->withCount([
+                'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
+                    $query->where('type', 'dm follow up')
+                        ->where('times', 0)
+                        ->whereBetween('created_at', [$startDate, $endDate]);
+                },
+
+                'commands as total_follow_ups' => function ($query) use ($startDate, $endDate) {
+                    $query->where('type', 'dm follow up')
+                        ->whereIn('times', [1, 2, 3])
+                        ->whereBetween('created_at', [$startDate, $endDate]);
+                },
+
+                'threads as total_replies' => function ($query) use ($startDate, $endDate) {
+                    $query->whereHas('messages', function ($subQuery) use ($startDate, $endDate) {
+                        $subQuery->where('sender', 'lead')
+                            ->where('type', 'text')
+                            ->whereBetween('created_at', [$startDate, $endDate]);
+                    });
+                }
+            ])
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
+                'warnings' => function ($query) use ($startDate, $endDate) {
+                    $query->select('created_at', 'account_id')
+                        ->orderByDesc('created_at');
+                }
             ])
-            ->select(
-                'accounts.id', 'accounts.avatar_changed', 'accounts.username', 'accounts.instagram_state',
-                'accounts.name', 'accounts.app_state', 'accounts.log', 'accounts.is_active', 'accounts.password',
-                'accounts.email','accounts.secret_key',
-                DB::raw('MIN(CASE WHEN messages.state = \'unseen\' THEN 0 ELSE 1 END) as priority'))
-            ->leftJoin('threads', 'accounts.id', '=', 'threads.account_id')
-            ->leftJoin('messages', 'threads.id', '=', 'messages.thread_id')
-            ->groupBy('accounts.id')
-            ->orderBy('priority', 'ASC')
-            ->orderBy('accounts.created_at', 'DESC')
+            ->when(
+                r('filter'),
+                fn($_) => $_->whereIn('instagram_state', r('filter'))
+            )
+            ->when(
+                r('search'),
+                fn($_) => $_->where('username','like','%'. r('search').'%')
+            )
+            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
                 config('data.pagination.each_page.accounts')
             );
+
+        $accounts->getCollection()->transform(function ($account) {
+            $account->created_at_ago = $account->created_at?->diffForHumans();
+
+            $latestWarningCreatedAt = $account->warnings->first()->created_at ?? null;
+            $account->latest_warning_created_at_ago = $latestWarningCreatedAt ? Carbon::parse($latestWarningCreatedAt)->diffForHumans() : 'No warnings';
+
+            return $account;
+        });
+
+        return $accounts;
     }
 
     public function view()
@@ -112,3 +161,5 @@ class AccountController extends Controller
         );
     }
 }
+
+

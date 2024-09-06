@@ -18,12 +18,12 @@
         <el-dropdown-item divided>
           <a class="btn btn-light-danger btn-sm"
              v-if="account?.is_active"
-             @click="store.changeProperty([account?.id], 'is_active',0, `${account.username} deactivated successfully`, store.getAccounts)"
+             @click="store.changeProperty([account?.id], 'is_active',0, `${account.username} deactivated successfully`, ()=>store.getAccounts(store.accounts.current_page))"
           >Deactivate</a>
 
           <a class="btn btn-light-success btn-sm"
              v-else
-             @click="store.changeProperty([account?.id], 'is_active',1, `${account.username} activated successfully`, store.getAccounts)"
+             @click="store.changeProperty([account?.id], 'is_active',1, `${account.username} activated successfully`,()=> store.getAccounts(store.accounts.current_page))"
           >Activate</a>
         </el-dropdown-item>
       </el-dropdown-menu>

@@ -26,6 +26,7 @@ class Message extends Model
     ];
 
     public static array $states = [
+        'fail',
         'seen',
         'unseen',
         'pending',

@@ -24,6 +24,10 @@
         <el-dropdown-item @click="changeThreadState('dm follow up')">
           <a class="w-100 btn btn-light-primary btn-sm">autoreply</a>
         </el-dropdown-item>
+
+        <el-dropdown-item @click="changeThreadState('call booked')">
+          <a class="w-100 btn btn-primary btn-sm">call booked</a>
+        </el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -41,33 +45,6 @@ export default defineComponent({
   props: ["threadId", "messageId"],
   setup(props) {
     const changeThreadState = (state) => {
-      const stateText = {
-        "dm follow up": {
-          title: "autoreply",
-          text: 'The lead will be returned to the "follow-up" status, and we will send a follow-up request every 48 hours',
-        },
-
-        interested: {
-          title: "is positive",
-          text: 'The lead will be marked as "interested" and will await the Loom video.',
-        },
-
-        "not interested": {
-          title: "is negative",
-          text: 'The lead will be marked as "not interested" and will be removed from the direct message (DM) cycle.',
-        },
-
-        "needs response": {
-          title: "needs response",
-          text: "The lead will be out of the follow-up cycle until the end of the conversation",
-        },
-
-        "loom follow up": {
-          title: "Loom sent",
-          text: "We will initiate the Loom follow-up, sending an appropriate message every 48 hours",
-        },
-      };
-
       const data = {
         threadId: props.threadId,
         state,

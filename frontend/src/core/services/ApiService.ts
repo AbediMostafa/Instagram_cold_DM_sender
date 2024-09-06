@@ -4,6 +4,9 @@ import axios from "axios";
 import VueAxios from "vue-axios";
 import JwtService from "@/core/services/JwtService";
 import { ElMessage, ElMessageBox } from "element-plus";
+import {useUserStore} from "@/stores/User";
+import router from "@/router";
+
 
 /**
  * @description service to call HTTP request via Axios
@@ -38,8 +41,8 @@ class ApiService {
     const status = error.response?.status;
 
     if (status === 401) {
-      // useAuthStore().clearUser()
-      // setTimeout(()=>router.push('sign-in'), 500)
+      useUserStore().clearUser()
+      setTimeout(()=>router.push('sign-in'), 500)
     }
   }
   public static check403Status(error) {
@@ -64,7 +67,8 @@ class ApiService {
     ApiService.vueInstance.use(VueAxios, axios);
     ApiService.vueInstance.axios.defaults.baseURL =
       import.meta.env.VITE_APP_API_URL;
-
+    ApiService.vueInstance.axios.defaults.withCredentials = true;
+    ApiService.vueInstance.axios.defaults.headers.common['Accept'] = 'application/json';
     ApiService.vueInstance.axios.interceptors.response.use(
       (response) => {
         // if we want to send a notification to front, we send withResponse key

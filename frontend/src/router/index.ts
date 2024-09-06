@@ -5,6 +5,7 @@ import {
 } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useConfigStore } from "@/stores/config";
+import {useUserStore} from "@/stores/User";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -633,11 +634,20 @@ router.beforeEach((to, from, next) => {
 
   // current page view title
   document.title = `${to.meta.pageTitle} - ${import.meta.env.VITE_APP_NAME}`;
+  const isLoggedIn = () => useUserStore().getUser();
+  // const isLoggedIn = () => localStorage.getItem('user');
+  const goingToSignIn = () => to.name === "sign-in";
 
-  // reset config to initial state
-  configStore.resetLayoutConfig();
+  //If we are not logged in, and we are not going to sign-in page, got to the sign-in page
+  if (!goingToSignIn() && !isLoggedIn()) {
+    next('/sign-in')
 
-  next();
+    //If we are going to sing-in page, and we are already logged in, got to the dashboard page
+  } else if (goingToSignIn() && isLoggedIn()) {
+    next('/dashboard');
+  } else {
+    next();
+  }
 });
 
 export default router;

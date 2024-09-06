@@ -33,10 +33,12 @@
           <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
             <th class="min-w-100px">date</th>
             <th class="min-w-100px">cold dms</th>
-            <th class="min-w-150px">successful cold dms</th>
-            <th class="min-w-150px">failed cold dms</th>
-            <th class="min-w-150px">dm follow ups</th>
-            <th class="min-w-150px">loom follow ups</th>
+            <th class="min-w-120px">first follow ups</th>
+            <th class="min-w-150px">second follow ups</th>
+            <th class="min-w-150px">third follow ups</th>
+            <th class="min-w-130px">looms sent</th>
+            <th class="min-w-130px">calls booked</th>
+            <th class="min-w-150px">active accounts</th>
           </tr>
           </thead>
           <!--end::Table head-->
@@ -49,11 +51,33 @@
               class="odd"
           >
             <td>{{ statistic.date }}</td>
-            <td>{{ statistic.total_cold_dms }}</td>
-            <td>{{ statistic.successful_cold_dms }}</td>
-            <td>{{ statistic.failed_cold_dms }}</td>
-            <td>{{ statistic.successful_dm_follow_ups }}</td>
-            <td>{{ statistic.successful_loom_follow_ups }}</td>
+            <td>
+              <div class="fs-4">{{ statistic.total_cold_dms }}</div>
+              <div>
+                <span class="badge badge-light-success fs-base me-1">
+                  <i class="ki-duotone ki-arrow-up-right me-1 text-success"><span class="path1"></span><span class="path2"></span></i>
+                  {{ statistic.successful_cold_dms }}</span>
+                <span class="badge badge-light-danger fs-base">
+                  <i class="ki-duotone ki-arrow-down-right me-1 text-danger"><span class="path1"></span><span class="path2"></span></i>
+                  {{ statistic.failed_cold_dms }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="fs-4">{{ statistic.total_first_follow_ups }}</div>
+              <div>
+                <span class="badge badge-light-success fs-base me-1">
+                  <i class="ki-duotone ki-arrow-up-right me-1 text-success"><span class="path1"></span><span class="path2"></span></i>
+                  {{ statistic.successful_first_follow_ups }}</span>
+                <span class="badge badge-light-danger fs-base">
+                  <i class="ki-duotone ki-arrow-down-right me-1 text-danger"><span class="path1"></span><span class="path2"></span></i>
+                  {{ statistic.failed_first_follow_ups }}</span>
+              </div>
+            </td>
+            <td class="fs-4">{{ statistic.second_follow_ups }}</td>
+            <td class="fs-4">{{ statistic.third_follow_ups }}</td>
+            <td>{{ statistic.looms_sent_out }}</td>
+            <td>{{ statistic.call_booked }}</td>
+            <td>{{ statistic.active_accounts }}</td>
           </tr>
           </tbody>
           <!--end::Table body-->
@@ -79,6 +103,7 @@
 import {onMounted, ref} from "vue";
 import ApiService from "@/core/services/ApiService";
 import {useAppConfigStore} from "@/stores/AppConfig";
+import {useUserStore} from "@/stores/User";
 
 const configStore = useAppConfigStore();
 const loading = ref(false);
@@ -87,6 +112,8 @@ const dailyStatistics = ref({
   current_page: 1,
   total: 0,
 });
+
+const store = useUserStore()
 
 const getDailyDmStatistics = (page = 1) => {
   loading.value = true;

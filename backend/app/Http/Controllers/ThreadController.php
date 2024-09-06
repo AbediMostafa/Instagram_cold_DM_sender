@@ -25,9 +25,14 @@ class ThreadController extends Controller
                 'messages',
                 'messages as unread_messages_count' => fn($_) => $_->where('sender', 'lead')->where('state', 'unseen')
             ])
+            ->when(r('search'),
+                fn($_) => $_->whereHas('lead',
+                    fn($_) => $_->where('username', 'like', '%' . r('search') . '%')
+                )
+            )
             ->orderBy('unread_messages_count', 'DESC')
             ->orderBy('latest_message_time', 'DESC')
-            ->get();
+            ->paginate(10);
     }
 
     public function view()

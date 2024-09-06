@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Color;
 use App\Models\Template;
 use \Carbon\Carbon;
 use \Illuminate\Support\Facades\Storage;
@@ -51,33 +52,48 @@ class TemplateController extends Controller
         $file = r()->file('file');
         $day = Carbon::now()->day;
         $month = Carbon::now()->month;
+        $mediaType = r('mediaType');
+        $theme = r('theme');
+        $carouselId = r('carouselId');
+        $colorId = null;
 
-        $mediaType = match ($file->extension()) {
+        if ($mediaType === 'carousel') {
+            $color = Color::whereTitle($theme)->first();
+
+            if(!$color){
+                abort(422, "The $theme not recorded in the database");
+            }
+
+            $colorId = $color?->id;
+        }
+
+        $extension = match ($file->extension()) {
             'jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp',
-            'tiff', 'heif', 'svg' => 'image-post',
+            'tiff', 'heif', 'svg' => 'image',
 
             'webm', 'mpg', 'mp2', 'mpeg', 'mpe', 'mpv',
             'mp4', 'm4p', 'ogg', 'm4v', 'avi', 'wmv',
-            'mov', 'qt', 'flv', 'swf', 'avchd' => 'video-post',
+            'mov', 'qt', 'flv', 'swf', 'avchd' => 'video',
 
             default => abort(422, 'unhandled file extension')
         };
 
-        if (r('use-as-avatar') && $mediaType === 'video-post') {
+        if ($mediaType === 'avatar' && $extension === 'video') {
             abort(422, 'unhandled file extension for avatar type');
         }
 
-        if (r('use-as-avatar')) {
-            $mediaType = 'avatar';
-        }
-
-        $path = "uploads/$mediaType/$month/$day";
+        $path = $mediaType === 'carousel' ?
+            "uploads/$mediaType/$theme/$carouselId" :
+            "uploads/$mediaType/$month/$day";
 
         $filePath = $file->store($path, 'public');
 
         Template::query()->create([
             'text' => $filePath,
             'type' => $mediaType,
+            'carousel_id' => $mediaType === 'carousel' ? $carouselId : null,
+            'uid' => $mediaType === 'carousel' ? r('uid') : null,
+            'color_id' => $colorId,
             'caption' => r('caption')
         ]);
     }

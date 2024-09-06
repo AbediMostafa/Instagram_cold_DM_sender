@@ -42,6 +42,33 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-chat-left",
       },
       // {
+      //   sectionTitle: "User management",
+      //   route: 'user-management',
+      //   svgIcon: "/media/icons/duotune/general/gen025.svg",
+      //   keenthemesIcon: "element-plus",
+      //   bootstrapIcon: "bi-archive",
+      //
+      //   sub: [
+      //     {
+      //       heading: "Users",
+      //       route: "/user-management/users",
+      //       permission: "view-users",
+      //     },
+      //     {
+      //       heading: "Roles",
+      //       route: "/user-management/roles",
+      //       permission: "view-roles",
+      //     },
+      //     {
+      //       heading: "Permissions",
+      //       route: "/user-management/permissions",
+      //       permission: "view-permissions",
+      //     },
+      //   ]
+      //
+      // },
+
+      // {
       //   heading: "looms",
       //   route: "/looms",
       //   keenthemesIcon: "message-text-2",

@@ -1,6 +1,0 @@
-1- test if images and videos post correctly
-2- test if created commands and 24 hours before are correct
-3- when we click on a lead it goes to the account page with same id
-
-
-

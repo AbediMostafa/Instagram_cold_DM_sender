@@ -12,13 +12,16 @@ export const useAccountStore = defineStore("AccountStore", {
                 data: [],
                 current_page: 1,
                 total: 0,
-              filters:'',
+                filters: [],
+                search: '',
+                dateRange: '',
+                sortBy:  'total_cold_dms',
+                sortDesc: true,
             },
             accountStates: [
-                {value: "active", label: "active"},
-                {value: "Not Interested", label: "not interested"},
-                {value: "Needs Response", label: "needs response"},
-                {value: "Loom Sent", label: "loom follow up"},
+                {value: "Active", label: "active"},
+                {value: "Suspended", label: "suspended"},
+                {value: "Challenging", label: "challenging"},
             ],
             is: {
                 loading: false,
@@ -66,11 +69,21 @@ export const useAccountStore = defineStore("AccountStore", {
         },
 
         getAccounts(page = 1, withLoading = true) {
+
             if (withLoading) this.is.loading = true;
 
             this.accounts.current_page = page;
 
-            ApiService.post("accounts", {page})
+            const data = {
+                page,
+                filter: this.accounts.filters,
+                search: this.accounts.search,
+                dateRange: this.accounts.dateRange,
+                sortBy: this.accounts.sortBy,
+                sortDesc: this.accounts.sortDesc,
+            }
+
+            ApiService.post("accounts", data)
                 .then((response) => {
                     this.accounts.data = response.data.data;
                     this.accounts.total = response.data.total;
@@ -84,6 +97,21 @@ export const useAccountStore = defineStore("AccountStore", {
             this.checkedAccountRows = e.target.checked
                 ? this.accounts.data.map((account) => account.id)
                 : [];
+        },
+        sortBy(field) {
+            if (this.accounts.sortBy === field) {
+                this.accounts.sortDesc = !this.accounts.sortDesc;
+            } else {
+                this.accounts.sortBy = field;
+                this.accounts.sortDesc = false;
+            }
+            this.getAccounts(this.accounts.current_page);
+        },
+
+        clearSort() {
+            this.accounts.sortBy = 'total_cold_dms';
+            this.accounts.sortDesc = true;
+            this.getAccounts(this.accounts.current_page);
         },
     },
 });

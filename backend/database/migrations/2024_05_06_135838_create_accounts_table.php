@@ -24,6 +24,11 @@ return new class extends Migration {
             $table->enum('instagram_state', Account::$instagramStates)->default('active');
             $table->enum('app_state', Account::$appStates)->default('idle');
 
+            $table->foreignId('color_id')
+                ->nullable()
+                ->constrained('colors')
+                ->nullOnDelete();
+
             $table->foreignId('proxy_id')
                 ->nullable()
                 ->constrained()

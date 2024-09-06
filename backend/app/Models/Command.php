@@ -25,6 +25,7 @@ class Command extends Model
         'set avatar',
         'post image',
         'post video',
+        'post carousel',
         'follow',
         'dm follow up',
         'like post',
@@ -32,9 +33,11 @@ class Command extends Model
         'custom message',
         'send loom',
         'loom follow up',
-        'relief action ban',
         'get threads',
         'delete initial posts',
+        'get thread messages',
+        'call booked',
+        'number of active accounts',
     ];
 
     public function account()

@@ -16,9 +16,11 @@ import { initApexCharts } from "@/core/plugins/apexcharts";
 import { initInlineSvg } from "@/core/plugins/inline-svg";
 import { initVeeValidate } from "@/core/plugins/vee-validate";
 import { initKtIcon } from "@/core/plugins/keenthemes";
+import axios from "axios";
 
 import "@/core/plugins/prismjs";
 import {useAppConfigStore} from "@/stores/AppConfig";
+import {useUserStore} from "@/stores/User";
 
 const app = createApp(App);
 
@@ -39,5 +41,9 @@ app.directive("tooltip", (el) => {
 });
 
 useAppConfigStore().getAppConfigs()
+useUserStore().reAssignUser();
 
 app.mount("#app");
+
+axios.get('/sanctum/csrf-cookie')
+

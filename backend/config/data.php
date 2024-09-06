@@ -3,7 +3,7 @@
 return [
     'pagination' => [
         'each_page' => [
-            'accounts' => 250,
+            'accounts' => 50,
             'leads' => 50,
             'looms' => 50,
             'messages' => 10,
@@ -19,11 +19,13 @@ return [
             'avatar',
             'image-post',
             'video-post',
+            'carousel',
         ],
 
         'image_type' => [
             'avatar',
             'image-post',
+            'carousel',
         ]
     ],
 ];

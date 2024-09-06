@@ -33,9 +33,15 @@ class CommandController extends Controller
                     ->create([
                         'account_id' => $message->thread->account_id,
                         'lead_id' => $message->thread->lead_id,
-                        'type' => 'custom message',
+                        'type' => r('sendLoom') ? 'loom follow up' : 'custom message',
                         'state' => 'pending',
                     ]);
+
+                r('sendLoom') &&
+                Lead::find($message->thread->lead_id)
+                    ->startLoomFollowUp()
+                    ->createHistory('loom follow up');
+
 
                 DB::afterCommit(fn() => runPythonProcess('send_custom_message.py', $command->id));
 
@@ -63,18 +69,14 @@ class CommandController extends Controller
                     ->create([
                         'account_id' => r('account_id'),
                         'lead_id' => r('lead_id'),
-                        'type' => r('sendLoom') ? 'send loom' : 'custom message',
+                        'type' => r('sendLoom') ? 'loom follow up' : 'custom message',
                         'state' => 'pending',
                     ]);
 
-                if(r('sendLoom')){
-                    $lead = Lead::query()
-                        ->whereId(r('lead_id'))
-                        ->update([
-//                            'last_state'=>
-                        ]);
-                }
-
+                r('sendLoom') &&
+                Lead::find(r('lead_id'))
+                    ->startLoomFollowUp()
+                    ->createHistory('loom follow up');
 
                 DB::afterCommit(fn() => runPythonProcess('send_custom_message.py', $command->id));
             });

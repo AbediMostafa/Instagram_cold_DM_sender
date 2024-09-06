@@ -17,8 +17,24 @@ class MessageController extends Controller
                 fn($_) => $_->where('sender', 'lead')
                     ->whereHas(
                         'thread.lead',
-                        fn($_)=>$_->whereIn('last_state', r('filters'))
+                        fn($_) => $_->whereIn('last_state', r('filters'))
                     )
+            )
+            ->when(
+                r('search.text'),
+                function ($_) {
+                    if (r('search.type') === 'lead') {
+                        $_->whereHas('thread.lead', fn($__) => $__->where('username', 'like', '%' . r('search.text') . '%'));
+                    }
+
+                    if (r('search.type') === 'account') {
+                        $_->whereHas('thread.account', fn($__) => $__->where('username', 'like', '%' . r('search.text') . '%'));
+                    }
+
+                    if (r('search.type') === 'message') {
+                        $_->where('text', 'like', '%' . r('search.text') . '%');
+                    }
+                }
             )
             ->orderByRaw("
                 CASE state
@@ -27,6 +43,7 @@ class MessageController extends Controller
                 WHEN 'seen' THEN 3
                 END ASC
             ")
+            ->orderBy('sender', 'DESC')
             ->orderBy('created_at', 'DESC')
             ->paginate(
                 config('data.pagination.each_page.messages')

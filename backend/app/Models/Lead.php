@@ -33,7 +33,29 @@ class Lead extends Model
         'loom follow up',
         'unseen loom reply',
         'seen loom reply',
+        'failed dm',
+        'call booked',
     ];
+
+    public function startLoomFollowUp(): static
+    {
+        $this->update([
+            'last_state' => 'loom follow up',
+            'times' => 0
+        ]);
+
+        return $this;
+    }
+
+    public function createHistory($state): static
+    {
+        $this->histories()->create([
+            'state' => $state,
+            'account_id' => $this->account_id,
+        ]);
+
+        return $this;
+    }
 
     public function makeSeen()
     {

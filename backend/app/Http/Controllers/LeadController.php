@@ -72,12 +72,27 @@ class LeadController extends Controller
             function () {
                 DB::transaction(function () {
 
-                    Message::query()
-                        ->where('id', r('messageId'))
-                        ->update(['state' => 'seen']);
+                    $message = Message::find(r('messageId'));
+
+                    $message->update(['state' => 'seen']);
 
                     $lead = Thread::find(r('threadId'))
                         ->lead;
+
+                    if (r('state') == 'call booked') {
+
+                        //If lead's last state is call booked and user keeps clicking on call booked
+                        // it creates call booked command and displays wrong statistics in dashboard
+                        if ($lead->last_state !== 'call booked') {
+                            $message->command()
+                                ->create([
+                                    'account_id' => $message->thread->account_id,
+                                    'lead_id' => $message->thread->lead_id,
+                                    'type' => 'call booked',
+                                    'state' => 'success',
+                                ]);
+                        }
+                    }
 
                     $lead->update([
                         'last_state' => r('state'),

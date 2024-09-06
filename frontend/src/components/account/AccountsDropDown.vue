@@ -18,6 +18,24 @@
     <!--begin::Menu item-->
     <div class="menu-item ">
       <div class="menu-content px-3 fill-flex d-flex align-items-center">
+
+      </div>
+    </div>
+    <div class="menu-item ">
+      <div class="menu-content px-3 fill-flex d-flex align-items-center">
+        <a
+            class="btn btn-sm btn-success me-2"
+            @click="showModal('create_account_modal')"
+        >Add Account</a>
+
+        <a
+            class="btn btn-sm btn-primary"
+            @click="store.getAccounts(store.accounts.current_page)"
+        >Refresh</a>
+      </div>
+    </div>
+    <div class="menu-item ">
+      <div class="menu-content px-3 fill-flex d-flex align-items-center">
         <a
             class="btn btn-light-danger btn-sm px-4"
             @click="store.deleteSelected(store.checkedAccountRows)"> Delete Selected </a>
@@ -43,9 +61,11 @@
 <script lang="ts">
 import {defineComponent, ref} from "vue";
 import {useAccountStore} from "@/stores/Account";
+import {showModal} from "@/core/helpers/modal";
 
 export default defineComponent({
   name: "accounts-drop-down",
+  methods: {showModal},
   components: {},
   setup() {
 

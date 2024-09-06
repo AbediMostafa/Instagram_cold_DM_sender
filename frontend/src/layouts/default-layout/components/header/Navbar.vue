@@ -85,7 +85,7 @@
           alt="user"
         />
       </div>
-<!--      <KTUserMenu />-->
+      <KTUserMenu />
       <!--end::Menu wrapper-->
     </div>
     <!--end::User menu-->
