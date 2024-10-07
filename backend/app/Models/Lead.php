@@ -33,7 +33,10 @@ class Lead extends Model
         'loom follow up',
         'unseen loom reply',
         'seen loom reply',
+
         'failed dm',
+        'failed loom dm',
+
         'call booked',
     ];
 
@@ -99,5 +102,10 @@ class Lead extends Model
     public function looms()
     {
         return $this->hasMany(Loom::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

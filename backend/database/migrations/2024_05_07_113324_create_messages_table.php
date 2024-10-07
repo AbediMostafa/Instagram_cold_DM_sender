@@ -20,11 +20,6 @@ return new class extends Migration {
                 ->constrained('threads')
                 ->cascadeOnDelete();
 
-            $table->foreignId('spintax_id')
-                ->nullable()
-                ->constrained('spintaxes')
-                ->nullOnDelete();
-
             $table->unsignedBigInteger('messageable_id')->nullable();
             $table->string('messageable_type')->nullable();
 

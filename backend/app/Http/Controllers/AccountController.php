@@ -28,7 +28,7 @@ class AccountController extends Controller
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state',
                 'name', 'app_state', 'log', 'is_active', 'password', 'created_at',
-                'secret_key')
+                'secret_key', 'category_id')
             ->withCount([
                 'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
                     $query->where('type', 'dm follow up')
@@ -52,6 +52,7 @@ class AccountController extends Controller
             ])
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
+                'category:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
                     $query->select('created_at', 'account_id')
                         ->orderByDesc('created_at');
@@ -63,7 +64,7 @@ class AccountController extends Controller
             )
             ->when(
                 r('search'),
-                fn($_) => $_->where('username','like','%'. r('search').'%')
+                fn($_) => $_->where('username', 'like', '%' . r('search') . '%')
             )
             ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
@@ -86,11 +87,12 @@ class AccountController extends Controller
     {
         return Account::query()->select(
             'username', 'password', 'name', 'bio', 'id', 'avatar_changed',
-            'instagram_state', 'app_state', 'is_active', 'created_at'
+            'instagram_state', 'app_state', 'is_active', 'created_at', 'category_id'
         )
-            ->with(['templates' => function ($query) {
-                $query->where('type', 'avatar')->first();
-            }])
+            ->with([
+                'templates' => fn($query) => $query->where('type', 'avatar')->first(),
+                'category:id,title',
+            ])
             ->withCount([
                 'commands as following_count' => fn($_) => $_->where('type', 'follow')->where('state', 'success'),
                 'commands as image_post_count' => fn($_) => $_->where('type', 'post image')->where('state', 'success'),
@@ -98,6 +100,15 @@ class AccountController extends Controller
                 'commands as successful_commands' => fn($_) => $_->where('state', 'success'),
                 'commands as total_commands',
             ])
+            ->find(r('id'));
+    }
+
+    public function getAccount()
+    {
+        return Account::query()->select(
+            'username', 'password', 'category_id',
+            'instagram_state', 'app_state',
+        )
             ->find(r('id'));
     }
 
@@ -144,6 +155,7 @@ class AccountController extends Controller
                     'username' => r('username'),
                     'password' => r('password'),
                     'instagram_state' => r('instagram_state'),
+                    'category_id' => r('category_id'),
                 ]),
             'Account updated successfully',
         );
@@ -158,6 +170,19 @@ class AccountController extends Controller
                     r('key') => r('value')
                 ]),
             r('msg'),
+        );
+    }
+
+    public function setCategory()
+    {
+        return tryCatch(
+            fn() => Account::query()
+                ->whereIn('id', r('accountIds'))
+                ->update([
+                    'category_id' => r('categoryId'),
+                ]),
+            'Account updated successfully',
+            'Problem updating account',
         );
     }
 }

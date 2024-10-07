@@ -27,6 +27,7 @@
               placeholder="Search on username"
               class="input-with-select"
               clearable
+              @clear="actionClicked"
           >
             <template #prepend>
               <el-button :icon="Search" @click="store.getAccounts"/>
@@ -74,7 +75,7 @@
           <!--begin::Table head-->
           <thead>
           <tr class="fw-bold text-muted">
-            <th class="w-25px">
+            <th class="w-20px">
               <div
                   class="form-check form-check-sm form-check-custom form-check-solid"
               >
@@ -87,33 +88,50 @@
             </th>
             <th class="min-w-150px">USERNAME</th>
 
-            <th class="min-w-120px cursor-pointer" @click="sortBy('total_cold_dms')">
-              COLD DMS
-              <i v-if="store.accounts.sortBy === 'total_cold_dms' && !store.accounts.sortDesc" class="bi bi-caret-up-fill"></i>
-              <i v-if="store.accounts.sortBy === 'total_cold_dms' && store.accounts.sortDesc" class="bi bi-caret-down-fill"></i>
-            </th>
-            <th class="min-w-120px cursor-pointer" @click="sortBy('total_follow_ups')">
-              FOLLOW UPS
-              <i v-if="store.accounts.sortBy === 'total_follow_ups' && !store.accounts.sortDesc" class="bi bi-caret-up-fill"></i>
-              <i v-if="store.accounts.sortBy === 'total_follow_ups' && store.accounts.sortDesc" class="bi bi-caret-down-fill"></i>
-            </th>
-            <th class="min-w-120px cursor-pointer" @click="sortBy('total_replies')">
-              RESPONSES
-              <i v-if="store.accounts.sortBy === 'total_replies' && !store.accounts.sortDesc" class="bi bi-caret-up-fill"></i>
-              <i v-if="store.accounts.sortBy === 'total_replies' && store.accounts.sortDesc" class="bi bi-caret-down-fill"></i>
+            <th class="min-w-300px">
+
+              <span class="cursor-pointer" @click="sortBy('total_cold_dms')">
+                 COLD DMS
+                <i v-if="store.accounts.sortBy === 'total_cold_dms' && !store.accounts.sortDesc"
+                   class="bi bi-caret-up-fill"></i>
+              <i v-if="store.accounts.sortBy === 'total_cold_dms' && store.accounts.sortDesc"
+                 class="bi bi-caret-down-fill"></i>
+              </span> /
+
+              <span class="cursor-pointer" @click="sortBy('total_follow_ups')">
+                FOLLOW UPS
+
+                <i v-if="store.accounts.sortBy === 'total_follow_ups' && !store.accounts.sortDesc"
+                   class="bi bi-caret-up-fill"></i>
+                <i v-if="store.accounts.sortBy === 'total_follow_ups' && store.accounts.sortDesc"
+                   class="bi bi-caret-down-fill"></i>
+              </span> /
+
+              <span class="cursor-pointer" @click="sortBy('total_replies')">
+                 RESPONSES
+              <i v-if="store.accounts.sortBy === 'total_replies' && !store.accounts.sortDesc"
+                 class="bi bi-caret-up-fill"></i>
+              <i v-if="store.accounts.sortBy === 'total_replies' && store.accounts.sortDesc"
+                 class="bi bi-caret-down-fill"></i>
+
+              </span>
+
+
             </th>
 
-            <th class="min-w-120px">IS ACTIVE</th>
+            <th class="min-w-130px">ACTIVE</th>
 
-            <th class="min-w-120px cursor-pointer" @click="sortBy('created_at')">
-              CREATED AT / SUSPENDED AT
-              <i v-if="store.accounts.sortBy === 'created_at' && !store.accounts.sortDesc" class="bi bi-caret-up-fill"></i>
-              <i v-if="store.accounts.sortBy === 'created_at' && store.accounts.sortDesc" class="bi bi-caret-down-fill"></i>
+            <th class="min-w-200px cursor-pointer" @click="sortBy('created_at')">
+              CREATED / SUSPENDED AT
+              <i v-if="store.accounts.sortBy === 'created_at' && !store.accounts.sortDesc"
+                 class="bi bi-caret-up-fill"></i>
+              <i v-if="store.accounts.sortBy === 'created_at' && store.accounts.sortDesc"
+                 class="bi bi-caret-down-fill"></i>
             </th>
 
-            <th class="min-w-100px text-end">
+            <th class="text-end">
 
-              Actions
+              ACTIONS
 
             </th>
           </tr>
@@ -178,21 +196,23 @@
                 </div>
               </td>
               <td>
-                <span class="fw-semibold d-block fs-7">{{ account.total_cold_dms }}</span>
+                <span class="fw-semibold fs-7 ">{{ account.total_cold_dms }} </span> /
+                <span class="fw-semibold fs-7 ">{{ account.total_follow_ups }}</span> /
+                <span class="fw-semibold fs-7 ">{{ account.total_replies }}</span>
+
+                <div>
+                  <span class="badge badge-light-info mt-1" >{{ account.category?.title }}</span>
+                </div>
+
+
               </td>
 
               <td>
-                <span class="fw-semibold d-block fs-7">{{ account.total_follow_ups }}</span>
+                <account-is-active :is-active="account.is_active"/>
               </td>
-
               <td>
-                <span class="fw-semibold d-block fs-7">{{ account.total_replies }}</span>
-              </td>
-
-              <td><account-is-active :is-active="account.is_active"/></td>
-              <td>
-                <div>{{account.created_at_ago}}</div>
-                <div>{{account.latest_warning_created_at_ago}}</div>
+                <div>{{ account.created_at_ago }}</div>
+                <div>{{ account.latest_warning_created_at_ago }}</div>
               </td>
 
               <td class="text-end">
@@ -240,6 +260,7 @@ import EditAccountModal from "@/components/modals/account/EditAccountModal.vue";
 import {onBeforeRouteLeave} from "vue-router";
 import {useDebounceFn} from "@vueuse/core";
 import {Search} from '@element-plus/icons-vue'
+import {useCategoryStore} from "@/stores/Category";
 
 
 const selectedId = ref(0);

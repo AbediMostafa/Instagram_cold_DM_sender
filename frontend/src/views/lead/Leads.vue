@@ -49,6 +49,7 @@
             </th>
             <th class="min-w-150px">USERNAME</th>
             <th class="min-w-120px">ACCOUNT</th>
+            <th class="min-w-120px">CATEGORY</th>
             <th class="min-w-100px text-end">Actions</th>
           </tr>
           </thead>
@@ -73,7 +74,7 @@
 
               <td>
                 <router-link :to="{name:'process-output', params:{id:lead.id}}">
-                  <a class="text-gray-900 fw-bold text-hover-primary fs-6">{{ lead.username }}</a>
+                  <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ lead.username }}</a>
                   <lead-last-state :state="lead.last_state"/>
                 </router-link>
               </td>
@@ -81,7 +82,13 @@
               <td>
                 <a
                     v-if="lead.account"
-                    class="text-gray-900 fw-bold text-hover-primary fs-6">{{ lead.account.username }}</a>
+                    class="text-gray-700 fw-bold text-hover-primary fs-7">{{ lead.account.username }}</a>
+              </td>
+
+              <td>
+                <a
+                    v-if="lead.category"
+                    class="text-gray-700 fw-bold text-hover-primary fs-7">{{ lead.category.title }}</a>
               </td>
 
               <td class="text-end">

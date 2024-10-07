@@ -102,7 +102,7 @@ function r($value = ''): mixed
 function runPythonProcess($pythonFile, $commandId)
 {
     $path = base_path("../script/$pythonFile");
-    $process = new Process(['python3', $path, $commandId]);
+    $process = new Process(['python', $path, $commandId]);
     $process->run();
 
     if (!$process->isSuccessful()) {

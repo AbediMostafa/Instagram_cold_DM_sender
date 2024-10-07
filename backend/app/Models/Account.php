@@ -68,6 +68,11 @@ class Account extends Model
         return $this->belongsTo(Proxy::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function color()
     {
         return $this->belongsTo(Color::class);
@@ -96,7 +101,7 @@ class Account extends Model
             'username' => r('username'),
             'password' => r('password'),
             'secret_key' => $secretKey,
-            'category' => request('category'),
+            'category_id' => request('category'),
         ]);
     }
 
@@ -125,7 +130,7 @@ class Account extends Model
                     'password' => $account[1],
                     'secret_key' => str_replace(' ', '', $account[2]),
                     'created_at' => Carbon::now(),
-                    'category' => request('category'),
+                    'category_id' => request('category'),
                 ];
             }
         }

@@ -45,7 +45,9 @@ class CommandController extends Controller
 
                 DB::afterCommit(fn() => runPythonProcess('send_custom_message.py', $command->id));
 
+                return jsonSuccess('Message sent successfully');
             });
+
         } catch (\Exception $e) {
 
             return jsonError($e->getMessage());

@@ -16,8 +16,13 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->enum('type', Spintax::$types)->default('cold dm');
-            $table->unsignedTinyInteger('is_active')->default(0);
             $table->text('text');
+
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->timestamps();
         });
     }

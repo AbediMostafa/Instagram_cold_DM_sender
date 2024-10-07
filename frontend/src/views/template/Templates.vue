@@ -54,6 +54,7 @@
             </th>
             <th class="min-w-150px">TEXT</th>
             <th class="min-w-120px">TYPE</th>
+            <th class="min-w-120px">CATEGORY</th>
             <th class="min-w-100px text-end">Actions</th>
           </tr>
           </thead>
@@ -87,6 +88,9 @@
               </td>
               <td>
                 <a class="text-gray-900 fw-bold text-hover-primary fs-6">{{ template.type }}</a>
+              </td>
+              <td>
+                <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ template.category?.title }}</a>
               </td>
 
               <td class="text-end">

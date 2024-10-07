@@ -94,6 +94,26 @@
               </el-form-item>
             </div>
 
+            <div class="d-flex flex-column mb-8 fv-row">
+              <!--begin::Label-->
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span class="required">Category</span>
+              </label>
+
+              <el-form-item prop="category">
+                <el-select
+                    v-if="categoryStore.categories.data.length"
+                    v-model="store.createSpintaxData.category_id" placeholder="Category">
+                  <el-option
+                      v-for="item in categoryStore.categories.data"
+                      :key="item.id"
+                      :label="item.title"
+                      :value="item.id"
+                  />
+                </el-select>
+              </el-form-item>
+
+            </div>
             <!--begin::Actions-->
             <div class="text-center">
               <button
@@ -131,12 +151,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import {hideModal} from "@/core/helpers/modal";
 import {useSpintaxStore} from "@/stores/Spintax";
+import {useCategoryStore} from "@/stores/Category";
 
 const store = useSpintaxStore();
 const formRef = ref(null);
+const categoryStore = useCategoryStore()
 
 const rules = ref({
   name: [{required: true, message: "Please input name", trigger: "blur"}],
@@ -157,6 +179,7 @@ const submit = () => {
   formRef.value.validate((valid: boolean) => valid && store.createSpintax());
 };
 
+onMounted(categoryStore.getCategories)
 </script>
 
 <style lang="scss">

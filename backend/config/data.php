@@ -10,7 +10,8 @@ return [
             'templates' => 20,
             'proxies' => 20,
             'spintaxes' => 20,
-            'daily_dm_statistics' => 5,
+            'daily_dm_statistics' => 15,
+            'categories' => 15,
         ]
     ],
     'template' => [

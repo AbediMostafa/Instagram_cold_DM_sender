@@ -24,6 +24,11 @@ return new class extends Migration {
                 ->constrained('leads')
                 ->nullOnDelete();
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->timestamp('created_at');
             $table->unique(['account_id', 'lead_id']);
         });

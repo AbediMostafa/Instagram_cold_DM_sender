@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Thread extends Model
 {
     use HasFactory;
+    public $timestamps = false;
 
     public function messages()
     {
@@ -29,4 +30,15 @@ class Thread extends Model
         return $this->hasMany(Notif::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function makeSeenUnseenMessages()
+    {
+        $this->messages()
+            ->where('state', 'unseen')
+            ->update(['state' => 'seen']);
+    }
 }

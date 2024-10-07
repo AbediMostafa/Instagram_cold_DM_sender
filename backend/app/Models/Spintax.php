@@ -16,4 +16,9 @@ class Spintax extends Model
       'second dm follow up',
       'third dm follow up',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

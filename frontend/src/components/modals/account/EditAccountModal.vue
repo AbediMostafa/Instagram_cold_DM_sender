@@ -72,6 +72,24 @@
                 ></el-input>
               </el-form-item>
             </div>
+
+            <div class="d-flex flex-column mb-8 fv-row">
+              <!--begin::Label-->
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span class="required">Category</span>
+              </label>
+              <!--end::Label-->
+              <el-select v-model="account.category_id" placeholder="Select">
+                <el-option
+                    v-for="item in categoryStore.categories.data"
+                    :key="item.id"
+                    :label="item.title"
+                    :value="item.id"
+                />
+              </el-select>
+
+            </div>
+
             <div class="d-flex flex-column mb-8 fv-row">
               <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
@@ -137,11 +155,12 @@
 
 <script lang="ts">
 import {getAssetPath} from "@/core/helpers/assets";
-import {computed, defineComponent, onMounted, ref, watch} from "vue";
+import { defineComponent, onMounted, ref, watch} from "vue";
 import {hideModal} from "@/core/helpers/modal";
-import Swal from "sweetalert2/dist/sweetalert2.js";
 import ApiService from "@/core/services/ApiService";
 import {useAccountStore} from "@/stores/Account";
+import {useCategoryStore} from "@/stores/Category";
+
 
 export default defineComponent({
   name: "edit_account_modal",
@@ -154,6 +173,7 @@ export default defineComponent({
     const is = ref({
       gettingAccount: false
     });
+    const categoryStore = useCategoryStore();
 
     const rules = ref({
       username: [{required: true, message: "Please input username", trigger: "blur"},],
@@ -162,7 +182,7 @@ export default defineComponent({
 
     const getAccount = () => {
       is.value.gettingAccount = true
-      ApiService.post('account/view', {id: props.id})
+      ApiService.post('account/get-account', {id: props.id})
           .then(response => account.value = response.data)
           .finally(() => is.value.gettingAccount = false)
     }
@@ -186,11 +206,14 @@ export default defineComponent({
       });
     };
 
+    onMounted(categoryStore.getCategories)
+
     return {
       is,
       account,
       submit,
       loading,
+      categoryStore,
       formRef,
       rules,
       getAssetPath,

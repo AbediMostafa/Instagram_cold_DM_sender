@@ -1,0 +1,11 @@
+{
+    "message": "feedback_required",
+    "spam": true,
+    "feedback_title": "Try Again Later",
+    "feedback_message": "We restrict certain activity to protect our community. Let us know if you think we made a mistake.",
+    "feedback_url": "",
+    "feedback_action": "report_problem",
+    "feedback_appeal_label": "Let us know",
+    "restriction_enrollment_data": "",
+    "status": "fail"
+}

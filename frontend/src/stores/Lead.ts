@@ -10,6 +10,7 @@ export const useLeadStore = defineStore("LeadStore", {
         data: [],
         current_page: 1,
         total: 0,
+        category_id:''
       },
       is: {
         loading: false,
@@ -67,5 +68,16 @@ export const useLeadStore = defineStore("LeadStore", {
         ? this.leads.data.map((lead) => lead.id)
         : [];
     },
+    setCategory(){
+      const data = {
+        categoryId:this.leads.category_id,
+        leadIds :this.checkedLeadRows
+      }
+
+      this.warnIfdosntSelected(this.checkedLeadRows) &&
+      ApiService.post('lead/set-category', data)
+          .then(this.getLeads);
+
+    }
   },
 });

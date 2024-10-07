@@ -8,36 +8,25 @@
         <div class="card card-flush" v-loading="is.threadsLoading">
           <div v-if="threads.length">
             <div class="card-header pt-7">
-              <div class="d-flex justify-content-center me-3">
-
-                <div>
-                  <a
-                      href="#"
-                      class="fs-4 fw-bold text-gray-900 text-hover-primary me-1 mb-2 lh-1"
+              <h3 class="card-title align-items-start flex-column">
+                <span class="card-label fw-bold fs-3 mb-1">Leads</span>
+                <span class="text-muted mt-1 fw-semibold fs-7"> {{ totalThreads }} Leads</span>
+              </h3>
+              <div class="card-toolbar">
+                <div class="me-2">
+                  <el-input
+                      v-model="searchText"
+                      placeholder="Search leads"
+                      clearable
+                      class="mb-4 w-200px ms-15"
+                      @clear="getThreads()"
                   >
-                    Leads
-                  </a>
-                  <div class="mb-0 lh-1">
-                  <span class="fs-7 fw-semibold text-muted">
-                    {{ totalThreads }} Leads
-                  </span>
-                  </div>
+                    <template #prepend >
+                      <el-button :icon="Search" @click="debouncedGetThreads" />
+                    </template>
+                  </el-input>
+
                 </div>
-
-                <el-input
-                    v-model="searchText"
-                    placeholder="Search leads"
-                    clearable
-                    class="mb-4 w-200px ms-15"
-                    @clear="getThreads()"
-                >
-                  <template #prepend >
-                    <el-button :icon="Search" @click="debouncedGetThreads" />
-                  </template>
-                </el-input>
-
-
-
               </div>
             </div>
             <div class="card-body pt-5" id="kt_chat_contacts_body">

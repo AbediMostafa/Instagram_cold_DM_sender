@@ -36,6 +36,8 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import NewMessageIcon from "@/components/icons/NewMessageIcon.vue";
+
 
 // Define props
 interface Props {
@@ -55,6 +57,8 @@ function decodeHtml(html: string): string {
 
 // Computed property to format the text
 const formattedText = computed(() => decodeHtml(props.text || ''));
+
+
 </script>
 
 <style scoped>

@@ -10,12 +10,9 @@
         Quick Actions
       </div>
     </div>
-    <!--end::Menu item-->
-
     <!--begin::Menu separator-->
     <div class="separator mb-3 opacity-75"></div>
 
-    <!--begin::Menu item-->
     <div class="menu-item ">
       <div class="menu-content px-3 fill-flex d-flex align-items-center">
         <a
@@ -23,21 +20,48 @@
             @click="store.deleteSelected(store.checkedLeadRows)"> Delete Selected </a>
       </div>
     </div>
+    <div class="menu-item">
+      <div class="menu-content px-3 justify-content-between d-flex align-items-center">
+        <!--end::Label-->
+        <el-select
+            style="width: 220px"
+            v-model="store.leads.category_id" placeholder="Select Category">
+          <el-option
+              v-for="item in categoryStore.categories.data"
+              :key="item.id"
+              :label="item.title"
+              :value="item.id"
+          />
+
+          <el-option
+              label="Clear Category"
+              :value="null"
+          />
+        </el-select>
+
+        <a class="btn btn-sm btn-light-success ms-1" @click="store.setCategory()"> Set Category</a>
+      </div>
+    </div>
+
   </div>
   <!--end::Menu 2-->
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
+import {defineComponent, onMounted} from "vue";
 import {useLeadStore} from "@/stores/Lead";
+import {useCategoryStore} from "@/stores/Category";
 
 export default defineComponent({
   name: "accounts-drop-down",
   components: {},
   setup() {
+    const categoryStore = useCategoryStore()
+    onMounted(categoryStore.getCategories)
 
     return {
-      store: useLeadStore()
+      store: useLeadStore(),
+      categoryStore
     }
 
   }

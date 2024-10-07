@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+use App\Models\Command;
 use App\Models\Lead;
 use App\Models\Message;
 use App\Models\Notif;
 use App\Models\Thread;
+use App\Services\ChangeLeadStateService;
 use Illuminate\Support\Facades\DB;
 
 class LeadController extends Controller
@@ -13,7 +16,10 @@ class LeadController extends Controller
     public function index()
     {
         return Lead::query()
-            ->with('account:id,username')
+            ->with([
+                'account:id,username',
+                'category:id,title',
+            ])
             ->paginate(
                 config('data.pagination.each_page.leads')
             );
@@ -69,45 +75,23 @@ class LeadController extends Controller
     public function changeState()
     {
         return tryCatch(
-            function () {
-                DB::transaction(function () {
-
-                    $message = Message::find(r('messageId'));
-
-                    $message->update(['state' => 'seen']);
-
-                    $lead = Thread::find(r('threadId'))
-                        ->lead;
-
-                    if (r('state') == 'call booked') {
-
-                        //If lead's last state is call booked and user keeps clicking on call booked
-                        // it creates call booked command and displays wrong statistics in dashboard
-                        if ($lead->last_state !== 'call booked') {
-                            $message->command()
-                                ->create([
-                                    'account_id' => $message->thread->account_id,
-                                    'lead_id' => $message->thread->lead_id,
-                                    'type' => 'call booked',
-                                    'state' => 'success',
-                                ]);
-                        }
-                    }
-
-                    $lead->update([
-                        'last_state' => r('state'),
-                        'times' => 0
-                    ]);
-
-                    $lead->histories()->create([
-                        'state' => r('state'),
-                        'account_id' => $lead->account_id,
-                    ]);
-                });
-            },
+            fn() => ChangeLeadStateService::makeInstance(r('ids'), r('state'))
+                ->execute(),
             "Lead's state changed successfully",
             "Problem changing lead's state"
         );
     }
 
+    public function setCategory()
+    {
+        return tryCatch(
+            fn() => Lead::query()
+                ->whereIn('id', r('leadIds'))
+                ->update([
+                    'category_id' => r('categoryId'),
+                ]),
+            'Lead(s) updated successfully',
+            'Problem updating lead(s)',
+        );
+    }
 }

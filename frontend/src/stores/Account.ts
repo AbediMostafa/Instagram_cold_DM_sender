@@ -17,6 +17,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 dateRange: '',
                 sortBy:  'total_cold_dms',
                 sortDesc: true,
+                category_id:'',
             },
             accountStates: [
                 {value: "Active", label: "active"},
@@ -113,5 +114,17 @@ export const useAccountStore = defineStore("AccountStore", {
             this.accounts.sortDesc = true;
             this.getAccounts(this.accounts.current_page);
         },
+
+        setCategory(){
+            const data = {
+                categoryId:this.accounts.category_id,
+                accountIds :this.checkedAccountRows
+            }
+
+            this.warnIfdosntSelected(this.checkedAccountRows) &&
+            ApiService.post('account/set-category', data)
+                .then(this.getAccounts);
+
+        }
     },
 });

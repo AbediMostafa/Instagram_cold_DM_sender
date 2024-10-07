@@ -18,11 +18,19 @@ return new class extends Migration {
             $table->text('caption')->nullable();
             $table->string('carousel_id')->nullable();
             $table->string('uid')->nullable();
+
             $table->foreignId('color_id')
                 ->nullable()
                 ->constrained('colors')
                 ->nullOnDelete();
+
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->enum('type', Template::$types);
+            $table->enum('sub_type', Template::$subTypes);
             $table->timestamp('created_at')->nullable();
         });
     }

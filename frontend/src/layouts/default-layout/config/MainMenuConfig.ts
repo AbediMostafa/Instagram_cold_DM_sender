@@ -30,6 +30,12 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-layers",
       },
       {
+        heading: "loom unibox",
+        route: "/loom-unibox",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-layers",
+      },
+      {
         heading: "templates",
         route: "/templates",
         keenthemesIcon: "switch",
@@ -40,6 +46,12 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/spintaxes",
         keenthemesIcon: "message-text-2",
         bootstrapIcon: "bi-chat-left",
+      },
+      {
+        heading: "categories",
+        route: "/categories",
+        keenthemesIcon: "abstract-38",
+        bootstrapIcon: "bi-printer",
       },
       // {
       //   sectionTitle: "User management",

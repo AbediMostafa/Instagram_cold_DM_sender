@@ -21,6 +21,7 @@ export default defineComponent({
         'seen dm reply': 'success',
         'auto dm reply': 'success',
         'interested': 'info',
+        'failed dm': 'danger',
         'not interested': 'danger',
         'loom follow up': 'info',
         'unseen loom reply': 'info',

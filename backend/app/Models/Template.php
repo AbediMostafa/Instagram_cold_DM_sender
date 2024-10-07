@@ -28,6 +28,11 @@ class Template extends Model
         'video-post',
     ];
 
+    public static array $subTypes = [
+        'image',
+        'video',
+    ];
+
     public function accounts()
     {
         return $this->belongsToMany(Account::class);
@@ -36,5 +41,10 @@ class Template extends Model
     public function color()
     {
         return $this->belongsTo(Color::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

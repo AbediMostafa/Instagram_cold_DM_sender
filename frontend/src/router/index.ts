@@ -102,6 +102,15 @@ const routes: Array<RouteRecordRaw> = [
           breadcrumbs: ["Unibox"],
         },
       },
+      {
+        path: "/loom-unibox",
+        name: "loom-unibox",
+        component: () => import("@/views/message/LoomMessages.vue"),
+        meta: {
+          pageTitle: "Unibox",
+          breadcrumbs: ["Unibox"],
+        },
+      },
 
       {
         path: "/spintaxes",
@@ -141,6 +150,16 @@ const routes: Array<RouteRecordRaw> = [
         //         },
         //     },
         // ],
+      },
+
+      {
+        path: "/categories",
+        name: "categories",
+        component: () => import("@/views/category/Categories.vue"),
+        meta: {
+          pageTitle: "Categories",
+          breadcrumbs: ["Categories"],
+        },
       },
 
       {

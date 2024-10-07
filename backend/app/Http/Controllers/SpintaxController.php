@@ -11,7 +11,8 @@ class SpintaxController extends Controller
     public function index()
     {
         return Spintax::query()
-            ->select('id', 'name', 'type', 'is_active', 'text')
+            ->select('id', 'name', 'type', 'text', 'category_id')
+            ->with(['category:id,title'])
             ->orderBy('type')
             ->paginate(
                 config('data.pagination.each_page.spintaxes')
@@ -28,12 +29,21 @@ class SpintaxController extends Controller
     public function create()
     {
         r()->validate(
-            ['data.name' => 'unique:spintaxes,name'],
-            ['data.name.unique' => 'The name must be unique. This name is already taken.']
+            [
+                'name' => 'unique:spintaxes,name',
+                'type' => [
+                    'required',
+                    fn($attribute, $value, $fail) =>
+                        Spintax::where('type', $value)->where('category_id', r('category_id'))->exists() &&
+                        $fail('A spintax with this type and category already exists.'),
+                ],
+
+            ],
+            ['name.unique' => 'The name must be unique. This name is already taken.']
         );
 
         return tryCatch(
-            fn() => Spintax::query()->create(r('data'))
+            fn() => Spintax::query()->create(r()->all())
             , 'Spintax created successfully'
         );
     }

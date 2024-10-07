@@ -7,11 +7,21 @@
       </h3>
       <div class="card-toolbar">
         <!--begin::Menu-->
-        <a
-            class="btn btn-sm btn-success me-2"
-            @click="showModal('create_spintax_modal')"
-        >Add Spintax</a
-        >
+        <div class="me-2">
+          <a
+              class="btn btn-sm btn-success"
+              @click="showModal('create_spintax_modal')"
+          >Add Spintax</a
+          >
+        </div>
+        <div class="me-2">
+          <a
+              class="btn btn-sm btn-light-primary"
+              @click="store.getSpintaxes"
+          >Refresh</a
+          >
+        </div>
+
         <!-- Other toolbar buttons can go here -->
       </div>
     </div>
@@ -29,10 +39,9 @@
           <tr class="fw-bold text-muted">
             <td>
               <div class="d-flex align-items-center">
-                <div class="col-2">NAME</div>
-                <div class="col-2">TYPE</div>
-                <div class="col-5">TEXT</div>
-                <div class="col-2">DEFAULT</div>
+                <div class="col-3">NAME</div>
+                <div class="col-2">CATEGORY</div>
+                <div class="col-6">TEXT</div>
                 <div class="col-1 text-end">ACTIONS</div>
               </div>
             </td>
@@ -43,21 +52,18 @@
           <tr v-for="(spintax, index) in store.spintaxes.data" :key="index">
             <td>
               <div class="d-flex align-items-center w-100">
-                <div class="col-2">
-                  <div class="d-flex fs-7 align-items-center">
-                    <div>
-                      <a
-                          class="text-gray-900 fw-bold text-hover-primary fs-6"
-                      >
-                        {{ spintax.name }}
-                      </a>
-                    </div>
+                <div class="col-3 p-2">
+                  <a class="text-gray-900 fw-bold text-hover-primary fs-6">
+                    {{ spintax.name }}
+                  </a>
+                  <div>
+                    <span :class="`badge ${store.getTypeClass(spintax.type)} mt-1`">{{ spintax.type }}</span>
                   </div>
                 </div>
                 <div class="col-2">
-                  <div class="text-muted">{{ spintax.type }}</div>
+                  <div class="text-gray-700 fs-7 p-2">{{ spintax.category?.title }}</div>
                 </div>
-                <div class="col-5">
+                <div class="col-6">
                   <a class="text-gray-700 fs-7">
                     {{
                       spintax.text.length > 300
@@ -66,17 +72,7 @@
                     }}
                   </a>
                 </div>
-                <div class="col-2">
-                  <el-switch
-                      class="ms-5"
-                      v-model="spintax.is_active"
-                      @change="setDefault(spintax)"
-                      :active-value="1"
-                      :inactive-value="0"
-                  ></el-switch>
-                </div>
                 <div class="col-1 text-end">
-
                   <spintax-drop-down :id="spintax.id"/>
                 </div>
               </div>

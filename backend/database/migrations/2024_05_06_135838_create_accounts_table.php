@@ -18,7 +18,6 @@ return new class extends Migration {
             $table->string('email')->nullable();
             $table->string('password');
             $table->string('name')->nullable();
-            $table->string('category')->nullable();
             $table->text('bio')->nullable();
             $table->text('profile_pic_url')->nullable();
             $table->enum('instagram_state', Account::$instagramStates)->default('active');
@@ -30,6 +29,11 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->foreignId('proxy_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->foreignId('category_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();

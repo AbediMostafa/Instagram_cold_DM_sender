@@ -108,18 +108,24 @@
                 />
               </el-form-item>
 
-              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span>Category</span>
-              </label>
-              <!--end::Label-->
-              <el-form-item prop="category">
-                <el-input
-                    v-model="targetData.category"
-                    placeholder="Enter a category Here"
-                    name="category"
-                />
-              </el-form-item>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <!--begin::Label-->
+                <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  <span class="required">Category</span>
+                </label>
+                <!--end::Label-->
+                <el-select
+                    v-if="categoryStore.categories.data.length"
+                    v-model="targetData.category" placeholder="Select">
+                  <el-option
+                      v-for="item in categoryStore.categories.data"
+                      :key="item.id"
+                      :label="item.title"
+                      :value="item.id"
+                  />
+                </el-select>
 
+              </div>
 
             </div>
 
@@ -171,6 +177,22 @@
                   ></el-input>
                 </el-form-item>
               </div>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <!--begin::Label-->
+                <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  <span class="required">Category</span>
+                </label>
+                <!--end::Label-->
+                <el-select v-model="targetData.category" placeholder="Select">
+                  <el-option
+                      v-for="item in categoryStore.categories.data"
+                      :key="item.id"
+                      :label="item.title"
+                      :value="item.id"
+                  />
+                </el-select>
+
+              </div>
             </div>
 
             <!--begin::Actions-->
@@ -221,10 +243,11 @@
 </style>
 
 <script lang="ts">
-import {defineComponent, ref} from "vue";
+import {defineComponent, onMounted, ref} from "vue";
 import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
 import {useAccountStore} from "@/stores/Account";
+import {useCategoryStore} from "@/stores/Category";
 
 export default defineComponent({
   name: "create_account_modal",
@@ -232,6 +255,7 @@ export default defineComponent({
     const formRef = ref<null | HTMLFormElement>(null);
     const newAccountModalRef = ref<null | HTMLElement>(null);
     const loading = ref<boolean>(false);
+    const categoryStore = useCategoryStore();
     const store = useAccountStore();
 
     const targetData = ref({
@@ -269,15 +293,18 @@ export default defineComponent({
       });
     };
 
-    const bulkInsertionChanged = ()=>{
+    const bulkInsertionChanged = () => {
       console.log(targetData.value.bulk_insertion);
     }
+
+    onMounted(categoryStore.getCategories)
 
     return {
       targetData,
       submit,
       loading,
       formRef,
+      categoryStore,
       rules,
       newAccountModalRef,
       hideModal,

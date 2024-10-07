@@ -1,10 +1,10 @@
 <template>
   <!--begin::Modal - New Target-->
   <div
-    class="modal fade"
-    id="create_template_modal"
-    tabindex="-1"
-    aria-hidden="true"
+      class="modal fade"
+      id="create_template_modal"
+      tabindex="-1"
+      aria-hidden="true"
   >
     <!--begin::Modal dialog-->
     <div class="modal-dialog modal-dialog-centered mw-650px">
@@ -14,10 +14,10 @@
         <div class="modal-header pb-0 border-0 justify-content-end">
           <!--begin::Close-->
           <div
-            class="btn btn-sm btn-icon btn-active-color-primary"
-            data-bs-dismiss="modal"
+              class="btn btn-sm btn-icon btn-active-color-primary"
+              data-bs-dismiss="modal"
           >
-            <KTIcon icon-name="cross" icon-class="fs-1" />
+            <KTIcon icon-name="cross" icon-class="fs-1"/>
           </div>
           <!--end::Close-->
         </div>
@@ -27,12 +27,12 @@
         <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
           <!--begin:Form-->
           <el-form
-            id="create_template_modal_form"
-            @submit.prevent="submit()"
-            :model="targetData"
-            :rules="rules"
-            ref="formRef"
-            class="form"
+              id="create_template_modal_form"
+              @submit.prevent="submit()"
+              :model="targetData"
+              :rules="rules"
+              ref="formRef"
+              class="form"
           >
             <!--begin::Heading-->
             <div class="mb-13 text-center">
@@ -47,9 +47,9 @@
 
               <el-form-item prop="text">
                 <el-input
-                  v-model="targetData.text"
-                  placeholder="Enter text"
-                  name="text"
+                    v-model="targetData.text"
+                    placeholder="Enter text"
+                    name="text"
                 ></el-input>
               </el-form-item>
             </div>
@@ -61,45 +61,64 @@
 
               <el-form-item prop="type">
                 <el-select
-                  v-model="targetData.type"
-                  placeholder="Select type of template"
-                  size="large"
+                    v-model="targetData.type"
+                    placeholder="Select type of template"
+                    size="large"
                 >
                   <el-option
-                    v-for="item in templateTypes"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                      v-for="item in templateTypes"
+                      :key="item"
+                      :label="item"
+                      :value="item"
                   />
                 </el-select>
               </el-form-item>
             </div>
 
+            <div class="d-flex flex-column mb-8 fv-row">
+              <!--begin::Label-->
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span class="required">Category</span>
+              </label>
+              <!--end::Label-->
+              <el-select
+                  v-if="categoryStore.categories.data.length"
+                  v-model="targetData.category" placeholder="Select">
+                <el-option
+                    v-for="item in categoryStore.categories.data"
+                    :key="item.id"
+                    :label="item.title"
+                    :value="item.id"
+                />
+              </el-select>
+
+            </div>
+
             <!--begin::Actions-->
             <div class="text-center">
               <button
-                type="reset"
-                id="create_template_modal_cancel"
-                class="btn btn-light me-3"
-                @click="hideModal('create_template_modal')"
+                  type="reset"
+                  id="create_template_modal_cancel"
+                  class="btn btn-light me-3"
+                  @click="hideModal('create_template_modal')"
               >
                 Cancel
               </button>
 
               <!--begin::Button-->
               <button
-                :data-kt-indicator="loading ? 'on' : null"
-                class="btn btn-lg btn-primary"
-                type="submit"
+                  :data-kt-indicator="loading ? 'on' : null"
+                  class="btn btn-lg btn-primary"
+                  type="submit"
               >
                 <span v-if="!loading" class="indicator-label">
                   Submit
-                  <KTIcon icon-name="arrow-right" icon-class="fs-3 ms-2 me-0" />
+                  <KTIcon icon-name="arrow-right" icon-class="fs-3 ms-2 me-0"/>
                 </span>
                 <span v-if="loading" class="indicator-progress">
                   Please wait...
                   <span
-                    class="spinner-border spinner-border-sm align-middle ms-2"
+                      class="spinner-border spinner-border-sm align-middle ms-2"
                   ></span>
                 </span>
               </button>
@@ -123,11 +142,12 @@
 </style>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
-import { hideModal } from "@/core/helpers/modal";
+import {defineComponent, onMounted, ref} from "vue";
+import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
-import { useAccountStore } from "@/stores/Account";
-import { useTemplateStore } from "@/stores/Template";
+import {useAccountStore} from "@/stores/Account";
+import {useTemplateStore} from "@/stores/Template";
+import {useCategoryStore} from "@/stores/Category";
 
 export default defineComponent({
   name: "create_template_modal",
@@ -135,6 +155,7 @@ export default defineComponent({
     const formRef = ref<null | HTMLFormElement>(null);
     const loading = ref<boolean>(false);
     const store = useTemplateStore();
+    const categoryStore = useCategoryStore()
 
     const templateTypes = ref([
       "name",
@@ -150,6 +171,7 @@ export default defineComponent({
     const targetData = ref({
       text: "",
       type: "",
+      category: "",
     });
 
     const rules = ref({
@@ -179,12 +201,14 @@ export default defineComponent({
           loading.value = true;
 
           ApiService.post("template/create", targetData.value)
-            .then(() => hideModal("create_template_modal"))
-            .then(() => store.getTemplates())
-            .finally(() => (loading.value = false));
+              .then(() => hideModal("create_template_modal"))
+              .then(() => store.getTemplates())
+              .finally(() => (loading.value = false));
         }
       });
     };
+
+    onMounted(categoryStore.getCategories)
 
     return {
       templateTypes,
@@ -194,6 +218,7 @@ export default defineComponent({
       formRef,
       rules,
       hideModal,
+      categoryStore,
     };
   },
 });

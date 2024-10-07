@@ -24,6 +24,11 @@ return new class extends Migration {
                 ->constrained('accounts')
                 ->nullOnDelete();
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->timestamp('last_command_send_date')->nullable();
             $table->timestamp('created_at')->nullable()->useCurrent();
         });

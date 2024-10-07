@@ -24,6 +24,7 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
                 name: '',
                 type: '',
                 text: '',
+                category_id: '',
             }
         };
     },
@@ -71,7 +72,7 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
         createSpintax() {
             this.is.creating = true;
 
-            ApiService.post('spintaxe/create', {data: this.createSpintaxData})
+            ApiService.post('spintaxe/create', this.createSpintaxData)
                 .then(this.getSpintaxes)
                 .finally(() => {
                     this.is.creating = false;
@@ -88,6 +89,16 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
                     this.is.updating = false;
                     hideModal("create_spintax_modal")
                 })
+        },
+
+        getTypeClass(type) {
+
+            return {
+                'cold dm': 'badge-light-primary',
+                'first dm follow up': 'badge-light-success',
+                'second dm follow up': 'badge-light-info',
+                'third dm follow up': 'badge-light-warning',
+            }[type]
         }
     },
 });
