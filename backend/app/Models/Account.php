@@ -144,4 +144,9 @@ class Account extends Model
     {
         return $this->hasMany(Warning::class);
     }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
 }

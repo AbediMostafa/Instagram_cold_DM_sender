@@ -48,8 +48,8 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-chat-left",
       },
       {
-        heading: "categories",
-        route: "/categories",
+        heading: "site variables",
+        route: "/site-variables",
         keenthemesIcon: "abstract-38",
         bootstrapIcon: "bi-printer",
       },

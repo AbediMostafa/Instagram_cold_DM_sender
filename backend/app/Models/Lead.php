@@ -108,4 +108,14 @@ class Lead extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function group()
+    {
+        return $this->belongsTo(LeadGroup::class);
+    }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
 }

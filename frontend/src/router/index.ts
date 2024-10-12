@@ -153,12 +153,12 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
-        path: "/categories",
-        name: "categories",
-        component: () => import("@/views/category/Categories.vue"),
+        path: "/site-variables",
+        name: "site variables",
+        component: () => import("@/views/site_variable/SiteVariables.vue"),
         meta: {
-          pageTitle: "Categories",
-          breadcrumbs: ["Categories"],
+          pageTitle: "Site Variables",
+          breadcrumbs: ["Site Variables"],
         },
       },
 

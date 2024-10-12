@@ -7,6 +7,7 @@ from script.models.Command import Command
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
 from script.extra.hooks.CheckNewMessageHooks import CheckNewMessageHooks
 
+# if we have input
 if len(sys.argv) > 1:
     command_id = sys.argv[1]
     command = Command.get_by_id(command_id)
