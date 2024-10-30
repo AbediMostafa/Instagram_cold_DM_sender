@@ -37,7 +37,7 @@ class BrowserGoToTargetAccountAndExplorePostsBase(InstagramMiddleware):
                     continue
 
                 if self.scroll_before_click:
-                    self.base.scroll(times=self.number_of_scrolls, length=random.randint(450, 650))
+                    self.base.scroll(times=random.randint(4, 7))
 
                 self.click_on_first_post()
                 self.go_to_next_posts()
@@ -63,12 +63,12 @@ class BrowserGoToTargetAccountAndExplorePostsBase(InstagramMiddleware):
     def get_a_random_lead(self):
         self.user = (Lead.select()
                      .where(Lead.account == self.ig.account)
-                     .order_by(fn.Rand())
+                     .order_by(fn.Random())
                      .first())
 
         if not self.user:
             self.user = (Lead.select()
-                         .order_by(fn.Rand())
+                         .order_by(fn.Random())
                          .first())
 
         self.ig.account.add_cli(f'Selected Lead to explore : {self.user.username}')
@@ -76,7 +76,7 @@ class BrowserGoToTargetAccountAndExplorePostsBase(InstagramMiddleware):
 
     def get_a_random_account(self):
         self.user = (Account.select()
-                     .order_by(fn.Rand())
+                     .order_by(fn.Random())
                      .first())
 
         self.ig.account.add_cli(f'Selected Account to explore : {self.user.username}')

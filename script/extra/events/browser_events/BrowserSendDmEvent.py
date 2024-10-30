@@ -37,11 +37,11 @@ class BrowserSendDmEvent(InstagramMiddleware):
         self.ig.account.set_state('sending DM', 'app_state')
 
         while self.allowed_leads_count > 0:
-            lead = Lead.select().where(Lead.account.is_null()).order_by(fn.Rand()).first()
+            lead = Lead.get_leads()[0]
             lead.dm_text = spin(SettingAdapter.cold_dm_spintax())
 
             self.send_dm(lead)
-            self.ig.pause(3000, 6000)
+            self.ig.pause(10000, 60000)
             self.allowed_leads_count -= 1
 
     def send_dm(self, lead):
@@ -63,13 +63,17 @@ class BrowserSendDmEvent(InstagramMiddleware):
                 self.command.update_cmd('state', 'fail')
 
     def send_direct(self, lead):
-        self.ig.page.get_by_role("button", name="New message", exact=True).click(timeout=3000)
-        self.ig.pause(3000, 4500)
-        self.ig.page.get_by_placeholder("Search...").fill(lead.username)
-        self.ig.pause(4000, 6000)
 
         try:
-            self.ig.page.click(f'//text()[contains(., "{lead.username}")]/ancestor::div[@role="button"]', timeout=3000)
+            self.base.go_and_click_on_lead_message(lead)
+            self.ig.pause(5000, 6000)
+
+            self.ig.page.get_by_label("Message", exact=True).fill(lead.dm_text)
+            self.ig.pause(4000, 6000)
+
+            self.ig.page.get_by_role("button", name="Send", exact=True).click()
+            self.ig.pause(4000, 6000)
+
         except Exception as e:
             self.ig.page.reload()
             self.ig.pause(4000, 5000)
@@ -77,11 +81,3 @@ class BrowserSendDmEvent(InstagramMiddleware):
             self.command.delete_instance()
             self.ig.account.add_cli(f"Command deleted successfully, raising exception ...")
             raise e
-
-        self.ig.pause(3000, 5500)
-        self.ig.page.get_by_role("button", name="Chat").click()
-        self.ig.pause(3000, 4500)
-        self.ig.page.get_by_label("Message", exact=True).fill(lead.dm_text)
-        self.ig.pause(4000, 6000)
-        self.ig.page.get_by_role("button", name="Send", exact=True).click()
-        self.ig.pause(4000, 6000)

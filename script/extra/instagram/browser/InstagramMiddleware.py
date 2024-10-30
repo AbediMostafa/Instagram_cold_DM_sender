@@ -21,13 +21,13 @@ class InstagramMiddleware:
             self.handle_exception(str(e))
 
         except (ProblemLogingYouError, YourPasswordWasIncorrectError, MultipleSomethingWentWrongError,
-                EnterYourEmailError, AddAPhoneNumberError, FeedbackRequired) as e:
+                EnterYourEmailError, AddAPhoneNumberError, FeedbackRequired, EnterYourMobileError, HelpUsConfirmItsYouError) as e:
             self.ig.account.set_state('challenging')
             self.ig.account.add_warning(e, 500)
             self.take_screenshot(str(e))
             self.handle_exception(str(e))
 
-        except (AccountSuspendedError, HelpUsConfirmItsYouError, ConfirmYouOwnThisAccount) as e:
+        except (AccountSuspendedError, ConfirmYouOwnThisAccount, AccountDisabledError) as e:
             self.ig.account.set_state('suspended')
             self.ig.account.add_warning(e, 500)
             self.take_screenshot(str(e))

@@ -5,6 +5,9 @@ from script.models.Thread import get_url_id
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 
 
+# Invite sent
+# You can send more messages after your invite is accepted.
+
 class BrowserDmFollowUpEvent(InstagramMiddleware):
     dm = None
     command = None
@@ -33,7 +36,7 @@ class BrowserDmFollowUpEvent(InstagramMiddleware):
         for lead in self.leads:
             self.ig.account.add_cli(f"Sending Dm follow up to : {lead.username}")
             self.send_dm(lead)
-            self.ig.pause(3000, 5000)
+            self.ig.pause(13000, 20000)
 
     def send_dm(self, lead):
 
@@ -55,14 +58,9 @@ class BrowserDmFollowUpEvent(InstagramMiddleware):
                 self.command.update_cmd('state', 'fail')
 
     def send_direct(self, lead):
-        self.url_id = get_url_id(lead, self.ig.account)
+        self.base.go_and_click_on_lead_message(lead)
+        self.ig.pause(5000, 6000)
 
-        if not self.url_id:
-            raise Exception("Thread dont have url_id")
-
-        self.ig.page.goto(f'https://www.instagram.com/direct/t/{self.url_id}/')
-
-        self.ig.pause(4000, 4500)
         self.ig.page.get_by_label("Message", exact=True).fill(lead.dm_text)
         self.ig.pause(3000, 5000)
         self.ig.page.get_by_role("button", name="Send", exact=True).click()

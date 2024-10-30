@@ -10,6 +10,10 @@ class AccountSuspendedError(Exception):
     pass
 
 
+class AccountDisabledError(Exception):
+    pass
+
+
 class ProblemLogingYouError(Exception):
     pass
 
@@ -43,4 +47,8 @@ class ConfirmYouOwnThisAccount(Exception):
 
 
 class FeedbackRequired(Exception):
+    pass
+
+
+class EnterYourMobileError(Exception):
     pass

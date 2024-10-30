@@ -39,20 +39,24 @@ from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserC
 from script.extra.events.browser_events.BasePlaywright import BasePlaywright
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
+from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
 from script.models.Lead import Lead
 from script.models.Thread import Thread
 from script.models.Message import Message
 from script.models.Command import Command
+from script.extra.actions.DM import DM
 
-account = get_next_account()
 
+account = Account.get_by_id(908)
+# account = get_next_account()
 # ig_mobile = InstagramMobile(account)
 # ig_mobile.log_in()
 browser_ig = BasePlaywright(account)
 BrowserLoginEvent(browser_ig).fire()
-# BrowserSendDmEvent(browser_ig).fire()
+BrowserDmFollowUpEvent(browser_ig).fire()
 # BrowserGetThreadMessagesEvent(browser_ig).fire()
 browser_ig.pause(1000000, 2000000)
+
 
 class BrowserLoginEvent(InstagramMiddleware):
     def execute(self):
@@ -74,6 +78,8 @@ class BrowserLoginEvent(InstagramMiddleware):
         self.ig.account.add_cli('After Instagram loaded and before timeout')
         self.ig.pause(4000, 6000)
         return self
+
+
 class BrowserGetThreadMessagesEvent(InstagramMiddleware):
     base = None
     thread = None
@@ -154,7 +160,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
 
     def write(self, txt):
         # Open the file in append mode ('a' means it will not overwrite existing content)
-        with open("output.txt", "a",  encoding="utf-8") as file:
+        with open("output.txt", "a", encoding="utf-8") as file:
             file.write(txt + "\n")
             print("Written to the file.")
 
@@ -229,6 +235,8 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
 
         except Exception as e:
             self.ig.account.add_cli(f'Problem clicking on unread conversation : {e}')
+
+
 class BrowserSendDmEvent(InstagramMiddleware):
     dm = None
     command = None
@@ -242,7 +250,8 @@ class BrowserSendDmEvent(InstagramMiddleware):
 
     def send_dms(self):
         self.ig.account.set_state('sending DM', 'app_state')
-        lead_ids = [236560, 236561, 236562, 236563, 236564, 236565, 236566, 236567, 236568, 236569, 236570, 236571, 236572, 236573, 236574, 236575]
+        lead_ids = [236560, 236561, 236562, 236563, 236564, 236565, 236566, 236567, 236568, 236569, 236570, 236571,
+                    236572, 236573, 236574, 236575]
 
         for lead_id in lead_ids:
             lead = Lead.get_by_id(lead_id)
@@ -283,12 +292,6 @@ class BrowserSendDmEvent(InstagramMiddleware):
         self.ig.page.get_by_role("button", name="Send", exact=True).click()
         self.ig.pause(4000, 6000)
 
-
-
-
-
-
-
 # BrowserPostImageEvent(browser_ig).fire()
 # BrowserPostCarouselEvent(browser_ig).fire()
 # PostVideoEvent(account).fire()
@@ -314,5 +317,3 @@ class BrowserSendDmEvent(InstagramMiddleware):
 # # BrowserChangeAvatarEvent(browser_ig).fire()
 # BrowserPostCarouselEvent(browser_ig).fire()
 # BrowserGotoExploreEvent(browser_ig).fire(),
-
-

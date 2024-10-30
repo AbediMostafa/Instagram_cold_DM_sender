@@ -3,6 +3,7 @@ from script.models.AccountHelper import *
 from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEventsCanHandleStrategy
 from script.extra.events.browser_events.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
+import traceback
 
 from script.extra.hooks.CheckNewMessageHooks import CheckNewMessageHooks
 from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
@@ -15,36 +16,50 @@ class Process:
     account = None
     browser_ig = None
     api_ig = None
+    should_stop = None
+
+    def get_account(self):
+        """
+        Sometimes we face Race condition and get_next_account() returns None
+        """
+
+        while not self.account:
+            # self.account = get_next_account(['created by mobile'])
+            self.account = get_next_account()
 
     def start(self):
-        try:
-            self.account = get_next_account()
-            self.account.get_proxy()
+        # try:
+        self.get_account()
+        self.account.get_proxy()
 
-            should_stop = self.before_process_hooks()
+        self.should_stop = self.before_process_hooks()
 
-            if should_stop:
-                return  # Exit
+        if self.should_stop:
+            return
 
-            self.browser_ig = BasePlaywright(self.account)
-            BrowserLoginEvent(self.browser_ig).fire()
-            self.account.set_state('processing', 'app_state')
-            self.account.set_state('active')
+        self.browser_ig = BasePlaywright(self.account)
+        BrowserLoginEvent(self.browser_ig).fire()
+        self.account.set_state('processing', 'app_state')
+        self.account.set_state('active')
 
-            self.do_process()
+        self.do_process()
+        self.account.set_state('idle', 'app_state')
 
-        except Exception as e:
-            self.account.add_cli(str(e))
-            pass
+        self.browser_ig.cleanup()
+        RecordLastActivityHook(self.account)
 
-        finally:
-            self.account.set_state('idle', 'app_state')
-
-            if self.browser_ig:
-                self.browser_ig.cleanup()
-
-            if not should_stop:  # Only record last activity if hooks did not stop the process
-                RecordLastActivityHook(self.account)
+    # except Exception as e:
+    #     self.account.add_cli(str(e))
+    #     self.account.add_log(traceback.format_exc())
+    #
+    # finally:
+    #     self.account.set_state('idle', 'app_state')
+    #
+    #     if self.browser_ig:
+    #         self.browser_ig.cleanup()
+    #
+    #     if not self.should_stop:  # Only record last activity if hooks did not stop the process
+    #         RecordLastActivityHook(self.account)
 
     def do_process(self):
         HowManyEventsCanHandleStrategy(self.account, self.browser_ig, self.api_ig).run()

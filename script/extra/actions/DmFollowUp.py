@@ -22,18 +22,18 @@ class DmFollowUp:
             (Lead.account == self.account) &
             (Lead.times < 3) &
             (Lead.last_command_send_date < forty_eight_hours_ago)
-        ).limit(random.randint(25,40))
+        ).limit(random.randint(15, 20))
 
         self.account.add_cli(f'We have {len(leads)} leads for follow up')
 
         for lead in leads:
             if lead.times == 0:
-                lead.dm_text = spin(SettingAdapter.first_dm_follow_up_spintax(self.account))
+                lead.dm_text = spin(SettingAdapter.first_dm_follow_up_spintax())
 
             if lead.times == 1:
-                lead.dm_text = spin(SettingAdapter.second_dm_follow_up_spintax(self.account))
+                lead.dm_text = spin(SettingAdapter.second_dm_follow_up_spintax())
 
             if lead.times == 2:
-                lead.dm_text = spin(SettingAdapter.third_dm_follow_up_spintax(self.account))
+                lead.dm_text = spin(SettingAdapter.third_dm_follow_up_spintax())
 
         return leads

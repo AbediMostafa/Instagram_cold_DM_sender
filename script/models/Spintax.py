@@ -15,7 +15,7 @@ class Spintax(BaseModel):
     updated_at = DateTimeField(null=True)
 
     @classmethod
-    def get_value(cls, _type, category, default=None):
+    def get_value(cls, _type, category=None, default=None):
         record = (Spintax
                   .select()
                   .where(

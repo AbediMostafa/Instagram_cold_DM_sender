@@ -13,9 +13,9 @@ def delete(_type, text):
     ).execute()
 
 
-def get_a(_type, account=None):
+def get_a(_type, account=None):  
     return Template.select().where(
-        (Template.type == _type) & (Template.category == account.category)
+        (Template.type == _type)
     ).first()
 
 

@@ -12,10 +12,12 @@ class BrowserChangeBioEvent(InstagramMiddleware):
         if self.ig.account.has('bio'):
             return self.ig.account.add_cli(f'{self.ig.account.username} has a bio')
 
-        self.bio = get_a('bio', self.ig.account).text
+        self.bio = get_a('bio', self.ig.account)
 
         if not self.bio:
             return self.ig.account.add_cli(f"We don't have a bio for : {self.ig.account.username}")
+
+        self.bio = self.bio.text
 
         try:
             self.before_change_hook()

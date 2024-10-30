@@ -25,6 +25,7 @@ from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserCha
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
 from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
+from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
 from script.extra.events.browser_events.BrowserGoToTargetAccountAndExplorePosts import \
     BrowserGoToTargetAccountAndExplorePosts
 
@@ -73,11 +74,14 @@ class HowManyEventsCanHandleStrategy:
         random.shuffle(self.events)
 
         for event in self.events:
-            pause(1, 3)
+            self.browser_ig.pause(1000, 3000)
             event.fire()
 
     def post_hook(self):
         BrowserGetThreadMessagesEvent(self.browser_ig).fire()
+        # self.post_a_media()
+
+    def post_a_media(self):
         next_command = self.account.determine_next_post_command()
 
         if next_command == 'post carousel':
@@ -96,47 +100,42 @@ class HowManyEventsCanHandleStrategy:
         self.account.add_cli('running first day strategy')
 
         self.events = [
+            BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
 
             BrowserGotoExploreEvent(self.browser_ig),
-            BrowserSendDmEvent(self.browser_ig),
             BrowserScrollAndLikeEvent(self.browser_ig),
-            BrowserGetThreadMessagesEvent(self.browser_ig)
         ]
 
     def second_day_strategy(self):
         self.account.add_cli('running second day strategy')
 
         self.events = [
+            BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
 
             BrowserGotoExploreEvent(self.browser_ig),
-            BrowserSendDmEvent(self.browser_ig),
             BrowserScrollAndLikeEvent(self.browser_ig),
-            BrowserGetThreadMessagesEvent(self.browser_ig),
         ]
 
     def third_day_strategy(self):
         self.account.add_cli('running third day strategy')
 
         self.events = [
+            BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
 
             BrowserGotoExploreEvent(self.browser_ig),
-            BrowserSendDmEvent(self.browser_ig),
             BrowserScrollAndLikeEvent(self.browser_ig),
-
-            BrowserDmFollowUpEvent(self.browser_ig),
-            BrowserLoomFollowUpEvent(self.browser_ig),
-            BrowserGetThreadMessagesEvent(self.browser_ig)
         ]
 
     def fourth_day_strategy(self):
         self.account.add_cli('running fourth day strategy')
         self.events = [
+            BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
@@ -144,17 +143,13 @@ class HowManyEventsCanHandleStrategy:
 
             BrowserGotoExploreEvent(self.browser_ig),
             BrowserScrollAndLikeEvent(self.browser_ig),
-
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
-            BrowserLoomFollowUpEvent(self.browser_ig),
-            BrowserGetThreadMessagesEvent(self.browser_ig),
         ]
 
     def fifth_day_strategy(self):
         self.account.add_cli('running fifth day strategy')
 
         self.events = [
+            BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
@@ -163,25 +158,17 @@ class HowManyEventsCanHandleStrategy:
 
             BrowserGotoExploreEvent(self.browser_ig),
             BrowserScrollAndLikeEvent(self.browser_ig),
-
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
-            BrowserLoomFollowUpEvent(self.browser_ig),
-            BrowserGetThreadMessagesEvent(self.browser_ig),
-
-            # BrowserPostImageEvent(self.account),
         ]
 
     def more_than_five_days_strategy(self):
         self.account.add_cli('running more than five days strategy')
 
         self.events = [
-            # BrowserDeleteInitialPostsEvent(self.browser_ig),
-            # BrowserChangeUsernameEvent(self.browser_ig),
-            # BrowserChangeAvatarEvent(self.browser_ig),
-            # BrowserChangeBioEvent(self.browser_ig),
-            # BrowserChangeNameEvent(self.browser_ig),
-            # BrowserGetThreadMessagesEvent(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+            BrowserChangeBioEvent(self.browser_ig),
+            BrowserChangeNameEvent(self.browser_ig),
             BrowserGotoExploreEvent(self.browser_ig),
             BrowserScrollAndLikeEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
@@ -191,13 +178,13 @@ class HowManyEventsCanHandleStrategy:
             #                                         post_numbers=random.randint(1, 4),
             #                                         load_more_comments_number=5, scroll_before_click=True,
             #                                         number_of_scrolls=random.randint(6, 10)),
-            # #
-            # BrowserGoToTargetAccountAndExplorePosts(self.browser_ig, user_type='random_user',
+            # # #
+            # BrowserGoToTargetAccountAndExplorePosts(self.browser_ig, user_type='account',
             #                                         user_numbers=random.randint(1, 3),
             #                                         post_numbers=random.randint(1, 5),
             #                                         load_more_comments_number=5, scroll_before_click=True,
             #                                         number_of_scrolls=random.randint(2, 7)),
-            #
+
             # BrowserGoToTargetAccountAndExplorePosts(self.browser_ig, user_type='random_user',
             #                                         user_numbers=random.randint(1, 3),
             #                                         post_numbers=random.randint(1, 5),

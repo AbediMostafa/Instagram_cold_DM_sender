@@ -55,7 +55,6 @@ def download_image(image_url, download_path):
 
 
 def process_image(image_path, output_dir):
-
     image_name = f'{generate_random_word(20)}.jpg'
 
     # Load the image using skimage
@@ -122,26 +121,9 @@ def get_random_user_agent():
     import random
 
     user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:88.0) Gecko/20100101 Firefox/88.0",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.864.48 Safari/537.36 Edg/91.0.864.48",
-        "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.818.56 Safari/537.36 Edg/90.0.818.56",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36 OPR/74.0.3911.160",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36 OPR/73.0.3856.344",
-        "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
-        "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.705.81 Safari/537.36 Edg/88.0.705.81",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 11.2; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 11.2.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36 Edg/89.0.774.63",
-        "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36 OPR/71.0.3770.284",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
-        "Mozilla/5.0 (X11; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.90 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        # "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.59 Safari/537.36",
     ]
 
     return random.choice(user_agents)
@@ -151,3 +133,68 @@ def generate_random_word(length=10):
     characters = string.ascii_letters + string.digits
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
+
+
+def give_a_good_resolution():
+    resolutions = [
+        {'width': 1920, 'height': 1080},
+        {'width': 1366, 'height': 768},
+        {'width': 1280, 'height': 1024},
+    ]
+
+    return random.choice(resolutions)
+
+
+# Fetch geolocation, timezone, and locale information from the proxy IP
+def get_proxy_details(proxy_ip):
+    try:
+        response = requests.get(f'http://ipinfo.io/{proxy_ip}/json')
+        data = response.json()
+
+        # Extract geolocation (latitude, longitude)
+        loc = data.get('loc')
+
+        if loc:
+            loc_split = loc.split(',')
+            if len(loc_split) == 2:
+                latitude = float(loc_split[0])
+                longitude = float(loc_split[1])
+            else:
+                raise ValueError(f"Invalid 'loc' format: {loc}")
+        else:
+            raise ValueError("'loc' not found in response")
+
+        # Extract timezone and country if available
+        timezone = data.get('timezone', 'America/Los_Angeles')  # Default to Los Angeles if not available
+        country = data.get('country', 'US')  # Default to US if country info isn't available
+
+        # Default language based on country (you can customize this mapping as needed)
+        language_mapping = {
+            'US': 'en',
+            'FR': 'fr',
+            'DE': 'de',
+        }
+
+        # Set the language based on the country (default to 'en' for unknown countries)
+        language = language_mapping.get(country, 'en')
+
+        # Construct the locale (e.g., en-US, fr-FR)
+        locale = f"{language.lower()}-{country.upper()}"
+
+        return {
+            "latitude": latitude,
+            "longitude": longitude,
+            "timezone": timezone,
+            "locale": locale
+        }
+
+    except Exception as e:
+        print(f"Error fetching proxy details: {e}")
+
+        # Use default values in case of an error
+        return {
+            "latitude": 0.0,  # Or use an appropriate default
+            "longitude": 0.0,  # Or use an appropriate default
+            "timezone": 'America/Los_Angeles',  # Default timezone
+            "locale": 'en-US'  # Default locale
+        }

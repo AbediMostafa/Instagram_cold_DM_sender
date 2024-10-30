@@ -22,7 +22,12 @@ class DM:
         max_dm = SettingAdapter.max_dm()
         max_dm = random.randint(max_dm - 4, max_dm + 4)
 
-        allowed_dm = passed_days + 5 if passed_days < 7 else max_dm
+        self.account.add_cli(f"Max dm : {max_dm}")
+        self.account.add_cli(f"passed days: {passed_days}")
+
+        allowed_dm = min(passed_days, max_dm)
+        self.account.add_cli(f"Allowed dm : {allowed_dm}")
+        # allowed_dm = passed_days if passed_days < 7 else max_dm
 
         self.account.add_cli(f"Today's allowed dms : {allowed_dm}")
 
@@ -66,6 +71,6 @@ class DM:
             f'We have {leads.count()} leads to sent Cold DM')
 
         for lead in leads:
-            lead.dm_text = spin(SettingAdapter.cold_dm_spintax())
+            lead.dm_text = spin(SettingAdapter.cold_dm_spintax(self.account))
 
         return leads

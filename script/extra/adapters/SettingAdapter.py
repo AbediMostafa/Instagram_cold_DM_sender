@@ -6,19 +6,19 @@ class SettingAdapter:
 
     @classmethod
     def max_account_for_one_proxy(cls):
-        return Setting.get_value('Max Account For One Proxy', 4)
+        return Setting.get_value('Max Account For One Proxy', 2)
 
     @classmethod
     def max_dm(cls):
-        return Setting.get_value('Max DM', 50)
+        return Setting.get_value('Max DM', 35)
 
     @classmethod
     def dm_chunk(cls):
-        return Setting.get_value('DM Chunk', 3)
+        return Setting.get_value('DM Chunk', 10)
 
     @classmethod
     def max_follow(cls):
-        return Setting.get_value('Max Follow', 5)
+        return Setting.get_value('Max Follow', 15)
 
     @classmethod
     def max_like(cls):
@@ -49,20 +49,23 @@ class SettingAdapter:
         return Setting.get_value('DM Follow Up Chunk', 5)
 
     @classmethod
-    def cold_dm_spintax(cls, account):
-        return Spintax.get_value('cold dm', account.category)
+    def cold_dm_spintax(cls, account=None):
+        return Spintax.get_value(
+            'cold dm',
+            account.category if account else None,
+        )
 
     @classmethod
-    def first_dm_follow_up_spintax(cls, account):
-        return Spintax.get_value('first dm follow up', account.category)
+    def first_dm_follow_up_spintax(cls, account=None):
+        return Spintax.get_value('first dm follow up', account.category if account else None)
 
     @classmethod
-    def second_dm_follow_up_spintax(cls, account):
-        return Spintax.get_value('second dm follow up', account.category)
+    def second_dm_follow_up_spintax(cls, account=None):
+        return Spintax.get_value('second dm follow up', account.category if account else None)
 
     @classmethod
-    def third_dm_follow_up_spintax(cls, account):
-        return Spintax.get_value('third dm follow up', account.category)
+    def third_dm_follow_up_spintax(cls, account=None):
+        return Spintax.get_value('third dm follow up', account.category if account else None)
 
     @classmethod
     def account_intervals(cls):

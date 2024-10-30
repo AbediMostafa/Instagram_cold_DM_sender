@@ -26,12 +26,12 @@ class Account(BaseModel):
     initial_posts_deleted = SmallIntegerField(default=0)
     is_used = SmallIntegerField(default=0)
     is_active = SmallIntegerField(default=1)
+    is_public = SmallIntegerField(default=0)
     web_session = TextField(null=True)
     mobile_session = TextField(null=True)
     log = TextField(null=True)
     created_at = DateTimeField(null=True, default=datetime.now)
     updated_at = DateTimeField(null=True)
-    last_login = DateTimeField(null=True)
     next_login = DateTimeField(null=True)
 
     passed_days_since_creation = 0
@@ -63,18 +63,25 @@ class Account(BaseModel):
         log = f'[{self.username} -- {self.id}] ${log}'
 
         print(log)
-        self.log = log
+
+        truncated_log = (log[:254]) if log else ''
+
+        self.log = truncated_log
         self.save()
 
-        Cli.create(account=self, log=log)
+        Cli.create(account=self, log=truncated_log)
 
     def add_screen_shot(self, cause, path):
         from .ScreenShot import ScreenShot
 
+        max_length = 200
+        truncated_cause = (cause[:max_length]) if cause else ''
+        truncated_path = (path[:max_length]) if path else ''
+
         ScreenShot.create(
             account=self,
-            cause=cause,
-            path=path,
+            cause=truncated_cause,
+            path=truncated_path,
         )
 
     def has(self, prop):
@@ -93,6 +100,19 @@ class Account(BaseModel):
     def save_session(self, session_data):
         self.web_session = json.dumps(session_data)
         self.save()
+
+    def get_session(self):
+        storage_state = self.web_session
+
+        try:
+            decoded = json.loads(storage_state)
+            if isinstance(decoded, str):
+                decoded = json.loads(decoded)
+
+        except Exception as e:
+            decoded = {}
+
+        return decoded
 
     def should_not_post(self, command_type, hours=24):
         from .Command import Command
@@ -120,7 +140,7 @@ class Account(BaseModel):
                                      (Template.type == type))
                               ))
         )
-                .order_by(fn.Rand())
+                .order_by(fn.Random())
                 .first())
 
     def attach_template(self, template):
@@ -303,7 +323,7 @@ class Account(BaseModel):
             (Template.category == self.category) &
             (~(Template.id << selected_templates_subquery))
         )
-                              .order_by(fn.Rand())
+                              .order_by(fn.Random())
                               .first())
 
         # return series of carousels

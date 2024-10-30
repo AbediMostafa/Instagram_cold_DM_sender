@@ -1,6 +1,5 @@
 from time import sleep
-from script.extra.exceptions import ChangePasswordError, LoginAppearedAgainError, MultipleSomethingWentWrongError, \
-    EnterYourEmailError, AddAPhoneNumberError, ConfirmYouOwnThisAccount
+from script.extra.exceptions import *
 from script.extra.helper import generate_random_word
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 
@@ -8,6 +7,9 @@ import random
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.models.Command import performed_command_count
 
+
+# Your account has been disabled
+# We disabled your account
 
 class BrowserLoginEvent(InstagramMiddleware):
 
@@ -59,7 +61,7 @@ class BrowserLoginEvent(InstagramMiddleware):
         self.ig.save_session()
         self.ig.pause(4000, 5000)
 
-        # self.follow_suggested()
+        self.follow_suggested()
 
     def pre_login_hook(self):
 
@@ -68,8 +70,7 @@ class BrowserLoginEvent(InstagramMiddleware):
         for i in range(6):
 
             if self.ig.is_visible_by_text('Enter your mobile number'):
-                self.ig.account.set_state('challenging', 'instagram_state', 'Enter your mobile number')
-                self.ig.handle_exception('Enter you mobile is visible')
+                raise EnterYourMobileError('Enter your mobile number')
 
             if self.ig.is_visible_by_text('Continue as'):
                 self.ig.account.add_cli('Continue as is visible, Clicking on it')
@@ -129,7 +130,7 @@ class BrowserLoginEvent(InstagramMiddleware):
         return is_visible
 
     def after_filling_username_password_hook(self):
-        for i in range(15):
+        for i in range(18):
             self.ig.account.add_cli(f'Checking for 2f authentication for the {i} time ...')
             if self.need_2f_authentication():
                 self.ig.two_factor_authentication_process()
@@ -167,6 +168,7 @@ class BrowserLoginEvent(InstagramMiddleware):
                 return
 
             self.ig.suspended_account_handler()
+            self.ig.disabled_account_handler()
 
             if self.ig.suspect_automate_behavior_handler():
                 self.ig.pause(3000, 4000)
@@ -252,12 +254,14 @@ class BrowserLoginEvent(InstagramMiddleware):
 
     def follow_suggested(self):
         allowed_follows = random.randint(1, SettingAdapter.max_follow())
+        allowed_follows = min(allowed_follows, self.ig.account.passed_days_since_creation)
+
         command_count = performed_command_count(self.ig.account, ['follow'], 24)
 
         self.ig.account.add_cli(f"performed follow :{command_count}, and allowed : {allowed_follows}")
 
         if command_count > allowed_follows:
-            self.ig.account.add_cli(f"We are allowed to follow")
+            self.ig.account.add_cli(f"We are not allowed to follow")
             return False
 
         if self.ig.is_visible_by_text('Suggested for you'):
@@ -278,7 +282,7 @@ class BrowserLoginEvent(InstagramMiddleware):
                     self.ig.account.add_cli("Lead followed successfully")
 
                 except Exception as e:
-                    self.ig.account.add_cli(f"Failed to send DM : {str(e)}")
+                    self.ig.account.add_cli(f"Failed to follow suggested : {str(e)}")
                     command.update_cmd('state', 'fail')
                 # Optional: Wait a bit between clicks to mimic human behavior and avoid rate limits
-                self.ig.pause(2000, 3500)  # Wait for 1 second0
+                self.ig.pause(1000, 3500)  # Wait for 1 second0

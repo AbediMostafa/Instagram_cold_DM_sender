@@ -1,45 +1,37 @@
 import sys
 import os
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from script.extra.adapters.SettingAdapter import SettingAdapter
+from spintax import spin
 
+from script.models.Setting import Setting
+from script.models.Spintax import Spintax
+#
 from script.models.Account import Account
-from script.extra.instagram.api.InstagramMobile import InstagramMobile
-from script.extra.events.api_events.PostVideoEvent import PostVideoEvent
+from script.models.Lead import Lead
 from script.models.AccountHelper import *
 from script.models.Message import Message
-
-text = '''
-👋 Hey there!
-
-Had your page show up on my feed and I was very impressed by your products. Wanted to reach out personally because I think you've got amazing potential to scale huge on TikTok. 🤩
-
-Right now in 2024 there's a tremendous opportunity on there with UGC. It's the world's best source of low cost, high quality, and high converting traffic. I've helped brands like yours boost their sales by 20k, 30k, even 50k in just 30 days through TikTok UGC—making it *unfairly easy* to do that 😋
-
-I filmed a personalized loom going over your store and why I think you guys in particular would do so well on TikTok.
-
-Would you like me to send it your way?
-
-Cheers, 
-E
-'''
-m = Message.select().where(
-    (Message.thread_id == 214073) &
-    (Message.text==text)
-).first()
-
-print(m)
-
-# account = Account.get_by_id(37)  Edward_TikT0k_Ads0lut0ns
-# account = get_next_account()
-# PostVideoEvent(account).fire()
-# ads.edward_master
-# account = Account.get_by_id(51)  ed_digital_wiz
-# account = Account.get_by_id(52) ecom_growth_edward
-# account = Account.get_by_id(56) ads.master.ed
-# ig = InstagramMobile(account)
-#
-# ig.set_proxy().log_in()
+import requests
+from dotenv import load_dotenv
+from script.extra.events.browser_events.BasePlaywright import BasePlaywright
+from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
+from script.extra.events.browser_events.BrowserSendDmEvent import BrowserSendDmEvent
+from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
+from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
+from script.extra.events.browser_events.BrowserGotoExploreEvent import BrowserGotoExploreEvent
+from script.models.Template import get_a, delete
 
 
-# account = Account.get_by_id(16)
+from script.models.AccountHelper import *
+
+lead = (Lead.select()
+        .where(
+    Lead.account.is_null()
+
+).limit(1).first())
+
+
+print(lead.account_id)
+

@@ -1,13 +1,14 @@
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 import random
 import traceback
-from script.extra.helper import get_random_user_agent
+from script.extra.helper import get_random_user_agent, give_a_good_resolution, get_proxy_details
 from script.extra.instagram.browser.InstagramSuspensionHandlerMixin import InstagramSuspensionHandlerMixin
 from script.extra.instagram.browser.InstagramButtonHandlerMixin import InstagramButtonHandlerMixin
 from script.extra.exceptions import *
 import json
 
 
+# Your account has been disabled
 class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixin):
 
     def __init__(self, account):
@@ -169,24 +170,17 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
         """)
 
     def randomize_browser_context(self):
-        screen_width = random.choice([1920, 1366, 1440, 1536])
-        screen_height = random.choice([1080, 768, 900, 864])
-        storage_state = self.account.web_session
-
-        try:
-            decoded = json.loads(storage_state)
-            if isinstance(decoded, str):
-                decoded = json.loads(decoded)
-
-        except Exception as e:
-            decoded = {}
+        proxy_details = get_proxy_details(self.account.proxy.ip)
 
         self.context = self.browser.new_context(
-            # viewport={'width': screen_width, 'height': screen_height}, 
-            locale=random.choice(['en-US', 'en-GB']),
-            timezone_id=random.choice(['UTC', 'America/New_York', 'Europe/Berlin']),
+            geolocation={"longitude": proxy_details['longitude'], "latitude": proxy_details['latitude']},
+            permissions=["geolocation", 'notifications'],
+            viewport=give_a_good_resolution(),
+            locale=proxy_details["locale"],
+            timezone_id=proxy_details["timezone"],
             user_agent=get_random_user_agent(),
-            storage_state=decoded
+            storage_state=self.account.get_session(),
+            bypass_csp=True
         )
 
     def password_is_incorrect_handler(self):
@@ -201,6 +195,11 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
     def suspended_account_handler(self):
         if self.is_visible_by_text('We suspended your account'):
             raise AccountSuspendedError('We suspended your account')
+
+    def disabled_account_handler(self):
+        if self.is_visible_by_text('Your account has been disabled') or self.is_visible_by_text(
+                'We disabled your account'):
+            raise AccountDisabledError('We disabled your account')
 
     def suspect_automate_behavior_handler(self):
 
@@ -251,11 +250,13 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
         self.account.save_session(storage_state_json)
 
     def apply_stealth(self):
+
         self.page.add_init_script("""
-           Object.defineProperty(navigator, 'webdriver', {
-               get: () => undefined
-           });
-           """)
+                   navigator.webdriver = false
+                   Object.defineProperty(navigator, 'webdriver', {
+                       get: () => false
+                   })
+               """)
 
         # Adding fake Chrome object
         self.page.add_init_script("""

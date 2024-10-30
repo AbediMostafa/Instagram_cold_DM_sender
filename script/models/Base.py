@@ -1,19 +1,28 @@
 from peewee import *
 from script.extra.config import *
+from dotenv import load_dotenv
+import os
 
-database = MySQLDatabase(
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the values from environment variables
+user = os.getenv('POSTGRES_USER')
+password = os.getenv('POSTGRES_PASSWORD')
+host = os.getenv('POSTGRES_HOST')
+port = int(os.getenv('POSTGRES_PORT'))
+database_name = os.getenv('POSTGRES_DB')
+
+# Set up the database connection
+database = PostgresqlDatabase(
     database_name,
-    user='root',
-    # password='mysql',
-    password='TMFQ40GalqrQfB4fdkNU',
-    host='localhost',
-    port=3306,
-    charset='utf8mb4',
-    collation='utf8mb4_unicode_ci'
+    user=user,
+    password=password,
+    host=host,
+    port=port,
 )
-# database = MySQLDatabase(database_name, user='root', password='TMFQ40GalqrQfB4fdkNU', host='localhost', port=3306)
-database.connect()
 
+database.connect()
 
 class BaseModel(Model):
     class Meta:

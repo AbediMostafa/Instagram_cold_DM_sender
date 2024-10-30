@@ -33,7 +33,7 @@ class BrowserLoomFollowUpEvent(InstagramMiddleware):
         for lead in self.leads:
             self.ig.account.add_cli(f"Sending Dm follow up to : {lead.username}")
             self.send_dm(lead)
-            self.ig.pause(3000, 5000)
+            self.ig.pause(30000, 50000)
 
     def send_dm(self, lead):
 
