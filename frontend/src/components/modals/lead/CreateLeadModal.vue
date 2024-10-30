@@ -1,88 +1,60 @@
 <template>
-  <!--begin::Modal - New Target-->
-  <div
-      class="modal fade"
-      id="create_lead_modal"
-      tabindex="-1"
-      aria-hidden="true"
-  >
-    <!--begin::Modal dialog-->
+  <div class="modal fade" id="create_lead_modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered mw-650px">
-      <!--begin::Modal content-->
       <div class="modal-content rounded">
-        <!--begin::Modal header-->
         <div class="modal-header pb-0 border-0 justify-content-end">
-          <!--begin::Close-->
-          <div
-              class="btn btn-sm btn-icon btn-active-color-primary"
-              data-bs-dismiss="modal"
-          >
+          <div class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
             <KTIcon icon-name="cross" icon-class="fs-1"/>
           </div>
-          <!--end::Close-->
         </div>
-        <!--begin::Modal header-->
-
-        <!--begin::Modal body-->
         <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
-          <!--begin:Form-->
-          <el-form
-              id="create_lead_modal_form"
-              @submit.prevent="submit()"
-              :model="targetData"
-              :rules="rules"
-              ref="formRef"
-              class="form"
-          >
-            <!--begin::Heading-->
+          <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" class="form" @submit.prevent="submit">
             <div class="mb-13 text-center">
-              <h1 class="mb-3">Create New Lead</h1>
+              <h1 class="mb-3">Import Leads from CSV</h1>
             </div>
-            <!--end::Heading-->
 
-            <!--begin::Input group-->
+            <!-- Tag Input -->
             <div class="d-flex flex-column mb-8 fv-row">
-              <!--begin::Label-->
-              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Username</span>
-              </label>
-              <!--end::Label-->
-
-              <el-form-item prop="username">
-                <el-input
-                    v-model="targetData.username"
-                    placeholder="Enter Lead Username"
-                    name="username"
-                ></el-input>
+              <el-form-item label="Select Tags" prop="selectedTags">
+                <el-select
+                    v-model="form.selectedTags"
+                    multiple
+                    filterable
+                    remote
+                    clearable
+                    placeholder="Search for tags"
+                    :remote-method="tagStore.fetchTags"
+                    :loading="tagLoading"
+                >
+                  <el-option
+                      v-for="tag in tagStore.searchedTags"
+                      :key="tag.id"
+                      :label="tag.title"
+                      :value="tag.id"
+                  />
+                </el-select>
               </el-form-item>
             </div>
 
-            <!--begin::Actions-->
-            <div class="text-center">
-              <button
-                  type="reset"
-                  id="create_lead_modal_cancel"
-                  class="btn btn-light me-3"
-                  @click="hideModal('create_lead_modal')"
-              >
-                Cancel
-              </button>
+            <!-- CSV Upload Section -->
+            <div class="d-flex flex-column mb-8 fv-row">
+              <el-form-item label="Upload CSV" prop="csvFile">
+                <input type="file" @change="onFileChange" accept=".csv"/>
+              </el-form-item>
+            </div>
 
-              <!--begin::Button-->
-              <button
-                  :data-kt-indicator="loading ? 'on' : null"
-                  class="btn btn-lg btn-primary"
-                  type="submit"
-              >
+            <div class="text-center">
+              <button type="reset" id="create_lead_modal_cancel" class="btn btn-light me-3"
+                      @click="hideModal('create_lead_modal')">Cancel
+              </button>
+              <button :data-kt-indicator="loading ? 'on' : null" class="btn btn-lg btn-primary" type="submit">
                 <span v-if="!loading" class="indicator-label">
                   Submit
                   <KTIcon icon-name="arrow-right" icon-class="fs-3 ms-2 me-0"/>
                 </span>
                 <span v-if="loading" class="indicator-progress">
                   Please wait...
-                  <span
-                      class="spinner-border spinner-border-sm align-middle ms-2"
-                  ></span>
+                  <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
                 </span>
               </button>
             </div>
@@ -93,70 +65,92 @@
   </div>
 </template>
 
-<style lang="scss">
-.el-select {
-  width: 100%;
-}
-
-.el-date-editor.el-input,
-.el-date-editor.el-input__inner {
-  width: 100%;
-}
-</style>
-
 <script lang="ts">
-import {defineComponent, ref} from "vue";
-import {hideModal} from "@/core/helpers/modal";
-import ApiService from "@/core/services/ApiService";
-import {useLeadStore} from "@/stores/Lead";
+import { defineComponent, ref, onMounted } from 'vue';
+import { hideModal } from '@/core/helpers/modal';
+import ApiService from '@/core/services/ApiService';
+import { useLeadStore } from '@/stores/Lead';
+import {useTagStore} from "@/stores/Tag";
 
 export default defineComponent({
-  name: "create_lead_modal",
+  name: 'create_lead_modal',
   setup() {
     const formRef = ref<null | HTMLFormElement>(null);
     const loading = ref<boolean>(false);
-    const store = useLeadStore()
+    const store = useLeadStore();
+    const tagStore = useTagStore();
 
-    const targetData = ref({
-      username: "",
+    // For handling the CSV file upload
+    const csvFile = ref<File | null>(null);
+
+    // For managing tags
+    const selectedTags = ref<Array<any>>([]);
+    const tagLoading = ref<boolean>(false);
+
+    const form = ref({
+      selectedTags: [],
+      csvFile: null,
     });
 
     const rules = ref({
-      username: [{required: true, message: "Please input username", trigger: "blur"},],
+      selectedTags: [
+        { required: true, message: 'Please select at least one tag', trigger: 'blur' },
+      ],
+      csvFile: [
+        { required: true, message: 'Please upload a CSV file', trigger: 'change' },
+      ],
     });
 
-    const submit = () => {
-      if (!formRef.value) {
-        return;
+    const onFileChange = (event: Event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        form.value.csvFile = file;
       }
+    };
 
-      formRef.value.validate((valid: boolean) => {
-        if (valid) {
-          loading.value = true;
+    const submit = () => {
+      formRef.value?.validate((valid) => {
+        if (!valid) return;
 
-          ApiService.post('lead/create', targetData.value)
-              .then(()=>hideModal("create_lead_modal"))
-              .then(()=>store.getLeads())
-              .finally(() => loading.value = false)
+        loading.value = true;
+
+        const formData = new FormData();
+        formData.append('file', form.value.csvFile);
+
+        if (form.value.selectedTags.length > 0) {
+          formData.append('tags', JSON.stringify(form.value.selectedTags));
         }
+
+        ApiService.post('lead/import', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+            .then(() => {
+              store.getLeads();
+              hideModal('create_lead_modal');
+            })
+            .catch((error) => {
+              console.error(error);
+            })
+            .finally(() => {
+              loading.value = false;
+            });
       });
     };
 
     return {
-      targetData,
+      tagStore,
       submit,
       loading,
       formRef,
-      rules,
       hideModal,
+      onFileChange,
+      selectedTags,
+      tagLoading,
+      form,
+      rules,
     };
   },
 });
 </script>
-
-<style lang="scss">
-.override-styles {
-  z-index: 99999 !important;
-  pointer-events: initial;
-}
-</style>

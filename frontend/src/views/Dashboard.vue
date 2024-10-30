@@ -1,6 +1,6 @@
 <template>
   <!--begin::Layout-->
-  <div class="d-flex flex-column flex-lg-row">
+  <div class="d-flex flex-column flex-lg-row" v-has-any-of-these-roles="['user']">
     <div class="flex-lg-row-fluid me-lg-15 order-2 order-lg-1 mb-10 mb-lg-0">
       <daily-dm-statistics />
 <!--      <active-accounts />-->

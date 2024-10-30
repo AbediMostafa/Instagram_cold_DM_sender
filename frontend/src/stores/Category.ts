@@ -11,6 +11,7 @@ export const useCategoryStore = defineStore('category', {
             current_page: 1,
             key: '',
         },
+        categoriesForDropDown:[],
         is: {
             loading: false,
             creating: false,
@@ -34,6 +35,10 @@ export const useCategoryStore = defineStore('category', {
                     this.categories.total = response.data.total
                 })
                 .finally(() => this.is.loading = false)
+        },
+        getCategoriesForDropDown() {
+            ApiService.post(`categories/get-categories`,{})
+                .then(response => this.categoriesForDropDown = response.data)
         },
 
         createCategory() {

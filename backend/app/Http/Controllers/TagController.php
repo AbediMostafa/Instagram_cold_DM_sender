@@ -45,4 +45,11 @@ class TagController extends Controller
             'Category deleted successfully'
         );
     }
+
+    public function search()
+    {
+        return Tag::query()
+            ->where('title', 'like', '%' . request('q') . '%')
+            ->get();
+    }
 }

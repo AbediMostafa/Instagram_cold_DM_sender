@@ -127,6 +127,31 @@
 
               </div>
 
+              <div class="d-flex flex-column mb-8 fv-row">
+                <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  Tags
+                </label>
+
+                <el-form-item prop="selectedTags">
+                  <el-select
+                      v-model="targetData.tags"
+                      multiple
+                      filterable
+                      remote
+                      clearable
+                      placeholder="Search for tags"
+                      :remote-method="tagStore.fetchTags"
+                      :loading="tagStore.is.searching"
+                  >
+                    <el-option
+                        v-for="tag in tagStore.searchedTags"
+                        :key="tag.id"
+                        :label="tag.title"
+                        :value="tag.id"
+                    />
+                  </el-select>
+                </el-form-item>
+              </div>
             </div>
 
 
@@ -193,6 +218,33 @@
                 </el-select>
 
               </div>
+
+              <div class="d-flex flex-column mb-8 fv-row">
+                <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  Tags
+                </label>
+
+                <el-form-item prop="selectedTags">
+                  <el-select
+                      v-model="targetData.tags"
+                      multiple
+                      filterable
+                      remote
+                      clearable
+                      placeholder="Search for tags"
+                      :remote-method="tagStore.fetchTags"
+                      :loading="tagStore.is.searching"
+                  >
+                    <el-option
+                        v-for="tag in tagStore.searchedTags"
+                        :key="tag.id"
+                        :label="tag.title"
+                        :value="tag.id"
+                    />
+                  </el-select>
+                </el-form-item>
+              </div>
+
             </div>
 
             <!--begin::Actions-->
@@ -248,6 +300,7 @@ import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
 import {useAccountStore} from "@/stores/Account";
 import {useCategoryStore} from "@/stores/Category";
+import {useTagStore} from "@/stores/Tag";
 
 export default defineComponent({
   name: "create_account_modal",
@@ -257,6 +310,7 @@ export default defineComponent({
     const loading = ref<boolean>(false);
     const categoryStore = useCategoryStore();
     const store = useAccountStore();
+    const tagStore = useTagStore()
 
     const targetData = ref({
       username: "",
@@ -265,6 +319,7 @@ export default defineComponent({
       accounts: "",
       category: "",
       bulk_insertion: false,
+      tags: [],
     });
 
     const rules = ref({
@@ -303,6 +358,7 @@ export default defineComponent({
       targetData,
       submit,
       loading,
+      tagStore,
       formRef,
       categoryStore,
       rules,

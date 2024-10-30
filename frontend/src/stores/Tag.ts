@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import ApiService from '../core/services/ApiService';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
-import { hideModal } from "@/core/helpers/modal";
+import {hideModal} from "@/core/helpers/modal";
 
 export const useTagStore = defineStore('tag', {
     state: () => ({
@@ -11,12 +11,14 @@ export const useTagStore = defineStore('tag', {
             current_page: 1,
             key: '',
         },
+        searchedTags: [],
         is: {
             loading: false,
             creating: false,
             editing: false,
             creatingTag: false,
             updatingTag: false,
+            searching: false
         },
 
         checkedTagRows: [],
@@ -27,7 +29,7 @@ export const useTagStore = defineStore('tag', {
     actions: {
         getTags(page = 1) {
             this.is.loading = true;
-            ApiService.post(`tags`, { page })
+            ApiService.post(`tags`, {page})
                 .then(response => {
                     this.tags.data = response.data.data;
                     this.tags.total = response.data.total;
@@ -45,7 +47,7 @@ export const useTagStore = defineStore('tag', {
         updateTag(tag) {
             this.is.editing = true
             ApiService.post(`tags/edit/${tag.id}`, this.tagData)
-                .then(()=> {
+                .then(() => {
                     this.is.editing = false;
                     this.cancelEditing(tag)
                 });
@@ -83,7 +85,7 @@ export const useTagStore = defineStore('tag', {
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        ApiService.post('tags/delete', { ids })
+                        ApiService.post('tags/delete', {ids})
                             .then(this.getTags);
 
                     } catch (error) {
@@ -92,5 +94,21 @@ export const useTagStore = defineStore('tag', {
                 }
             });
         },
+        fetchTags(q) {
+            if (q) {
+                this.is.searching = true;
+                ApiService.post(`tags/search`, {q})
+                    .then(response => {
+                        this.searchedTags = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching tags:', error);
+                    })
+                    .finally(() => {
+                        this.is.searching = false;
+                    });
+            }
+        }
+
     },
 });

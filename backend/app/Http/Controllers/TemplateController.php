@@ -15,6 +15,18 @@ class TemplateController extends Controller
             ->with([
                 'category:id,title',
             ])
+            ->when(
+                r('tags'),
+                fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
+            )
+            ->when(
+                r('category_id'),
+                fn($_) => $_->where('category_id', r('category_id'))
+            )
+            ->when(
+                r('types'),
+                fn($_) => $_->whereIn('type', r('types'))
+            )
             ->orderBy('type')
             ->paginate(
                 config('data.pagination.each_page.templates')
@@ -111,12 +123,12 @@ class TemplateController extends Controller
             return response()->json(['message' => 'unhandled file extension for avatar type'], 422);
         }
 
-        if($mediaType === 'carousel'){
-            $path ="uploads/$mediaType/$theme/$carouselId";
-        }elseif ($mediaType === 'video-post'){
-            $path ="uploads/$mediaType/$carouselId";
-        }else{
-            $path ="uploads/$mediaType/$month/$day";
+        if ($mediaType === 'carousel') {
+            $path = "uploads/$mediaType/$theme/$carouselId";
+        } elseif ($mediaType === 'video-post') {
+            $path = "uploads/$mediaType/$carouselId";
+        } else {
+            $path = "uploads/$mediaType/$month/$day";
         }
 
         $filePath = $file->store($path, 'public');
@@ -153,5 +165,11 @@ class TemplateController extends Controller
                 }),
             'Template(s) deleted successfully',
         );
+    }
+
+
+    public function fetchTypes()
+    {
+        return Template::$types;
     }
 }

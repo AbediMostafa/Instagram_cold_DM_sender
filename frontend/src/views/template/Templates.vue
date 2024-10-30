@@ -25,6 +25,18 @@
             @click="store.deleteSelected(store.checkedTemplateRows)"
             class="btn btn-sm btn-light-danger"
             v-if="store.checkedTemplateRows.length"> Delete selected</a>
+
+
+        <button
+            type="button"
+            class="btn btn-sm btn-icon btn-color-primary btn-active-light-primary"
+            data-kt-menu-trigger="click"
+            data-kt-menu-placement="bottom-end"
+            data-kt-menu-flip="top-end"
+        >
+          <KTIcon icon-name="category" icon-class="fs-2"/>
+        </button>
+        <templates-drop-down/>
       </div>
     </div>
     <!--end::Header-->
@@ -135,6 +147,7 @@ import AccountPost from "@/components/account/AccountPost.vue";
 import CreateTemplateModal from "@/components/modals/account_information_template/CreateTemplateModal.vue";
 import {useTemplateStore} from "@/stores/Template";
 import UploadMediaModal from "@/components/modals/account_information_template/UploadMediaModal.vue";
+import TemplatesDropDown from "../../components/template/TemplatesDropDown.vue";
 
 export default defineComponent({
   name: "account-information-templates",
@@ -147,7 +160,8 @@ export default defineComponent({
     AccountInstagramState,
     AccountPost,
     CreateTemplateModal,
-    UploadMediaModal
+    UploadMediaModal,
+    TemplatesDropDown
   },
   setup() {
 

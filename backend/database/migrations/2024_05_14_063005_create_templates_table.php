@@ -30,7 +30,7 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->enum('type', Template::$types);
-            $table->enum('sub_type', Template::$subTypes);
+            $table->enum('sub_type', Template::$subTypes)->nullable();
             $table->timestamp('created_at')->nullable();
         });
     }

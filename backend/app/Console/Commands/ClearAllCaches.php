@@ -16,7 +16,7 @@ class ClearAllCaches extends Command
     public function handle()
     {
         $this->call('cache:clear');
-        $this->call('view:clear');
+//        $this->call('view:clear');
         $this->call('route:clear');
         $this->call('clear-compiled');
         $this->call('config:cache');

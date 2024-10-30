@@ -53,8 +53,9 @@ class AccountController extends Controller
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
                 'category:id,title',
+                'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
-                    $query->select('created_at', 'account_id')
+                    $query->select('created_at', 'account_id', 'cause')
                         ->orderByDesc('created_at');
                 }
             ])
@@ -65,6 +66,10 @@ class AccountController extends Controller
             ->when(
                 r('search'),
                 fn($_) => $_->where('username', 'like', '%' . r('search') . '%')
+            )
+            ->when(
+                r('tags'),
+                fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
             )
             ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
@@ -184,6 +189,22 @@ class AccountController extends Controller
             'Account updated successfully',
             'Problem updating account',
         );
+    }
+
+    public function deleteWarning()
+    {
+        return tryCatch(
+            function () {
+                $accounts = Account::whereIn('id', r('ids'))->get();
+
+                foreach ($accounts as $account) {
+                    $account->warnings()->delete();
+                }
+            },
+            'Warning(s) deleted successfully',
+            'Problem updating account',
+        );
+
     }
 }
 

@@ -11,10 +11,9 @@
           </router-link>
         </el-dropdown-item>
         <el-dropdown-item @click="$emit('editClicked')">Edit</el-dropdown-item>
-        <el-dropdown-item
-            @click="store.deleteSelected([account?.id])"
-        >Delete
-        </el-dropdown-item>
+        <el-dropdown-item @click="store.deleteSelected([account?.id])">Delete</el-dropdown-item>
+        <el-dropdown-item @click="store.deleteWarning([account?.id])">Delete Warning</el-dropdown-item>
+
         <el-dropdown-item divided>
           <a class="btn btn-light-danger btn-sm"
              v-if="account?.is_active"

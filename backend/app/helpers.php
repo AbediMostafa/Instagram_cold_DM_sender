@@ -103,6 +103,7 @@ function runPythonProcess($pythonFile, $commandId)
 {
     $path = base_path("../script/$pythonFile");
     $process = new Process(['python', $path, $commandId]);
+    $process->setTimeout(400);
     $process->run();
 
     if (!$process->isSuccessful()) {

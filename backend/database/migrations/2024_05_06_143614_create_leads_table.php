@@ -15,7 +15,7 @@ return new class extends Migration {
         Schema::create('leads', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('instagram_id')->nullable();
-            $table->string('username');
+            $table->string('username')->unique();
             $table->integer('times')->nullable()->default(0);
             $table->enum('last_state', Lead::$states)->default('free');
 
@@ -28,6 +28,15 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
+
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->timestamp('export_date')
+                ->nullable()
+                ->comment('Date we pull lead');
 
             $table->timestamp('last_command_send_date')->nullable();
             $table->timestamp('created_at')->nullable()->useCurrent();

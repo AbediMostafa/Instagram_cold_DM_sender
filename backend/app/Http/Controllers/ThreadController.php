@@ -12,10 +12,10 @@ class ThreadController extends Controller
 {
     public function getThreads()
     {
-
         return Thread::select(
             'threads.*',
-            DB::raw('MAX(CASE WHEN messages.state = "unseen" THEN messages.created_at ELSE NULL END) as latest_unseen_message_created_at')
+            DB::raw("MAX(CASE WHEN messages.state = 'unseen' THEN messages.created_at ELSE NULL END) as latest_unseen_message_created_at"),
+            DB::raw("MAX(CASE WHEN messages.sender = 'lead' THEN messages.created_at ELSE NULL END) as lead_sent_created_at"),
         )
             ->leftJoin('messages', 'threads.id', '=', 'messages.thread_id')
             ->with([
@@ -54,10 +54,9 @@ class ThreadController extends Controller
                 fn($_) => $_->where('category_id', r('search.category_id'))
             )
             ->groupBy('threads.id')
-            ->orderByRaw('latest_unseen_message_created_at DESC')
+            ->orderByRaw('latest_unseen_message_created_at DESC NULLS LAST')
+            ->orderByRaw('lead_sent_created_at DESC NULLS LAST')
             ->paginate(10);
-
-
     }
 
 
@@ -65,7 +64,7 @@ class ThreadController extends Controller
     {
         return Thread::select(
             'threads.*',
-            DB::raw('MAX(CASE WHEN messages.state = "unseen" THEN messages.created_at ELSE NULL END) as latest_unseen_message_created_at')
+            DB::raw("MAX(CASE WHEN messages.state = 'unseen' THEN messages.created_at ELSE NULL END) as latest_unseen_message_created_at")
         )
             ->leftJoin('messages', 'threads.id', '=', 'messages.thread_id')
             ->with([

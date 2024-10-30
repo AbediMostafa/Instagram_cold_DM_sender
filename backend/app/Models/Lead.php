@@ -40,6 +40,13 @@ class Lead extends Model
         'call booked',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(fn($lead) => $lead->tags()->detach());
+    }
+
     public function startLoomFollowUp(): static
     {
         $this->update([
@@ -109,9 +116,9 @@ class Lead extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function group()
+    public function user()
     {
-        return $this->belongsTo(LeadGroup::class);
+        return $this->belongsTo(User::class);
     }
 
     public function tags()

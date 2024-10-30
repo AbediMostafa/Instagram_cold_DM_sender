@@ -38,6 +38,7 @@ class Account extends Model
         'post video',
         'following',
         'sending DM',
+        'make public',
         'loom follow up',
         'delete initial posts',
         'get thread messages'
@@ -97,12 +98,16 @@ class Account extends Model
     {
         $secretKey = str_replace(' ', '', r('secret_key'));
 
-        return Account::query()->create([
+        $account = Account::query()->create([
             'username' => r('username'),
             'password' => r('password'),
             'secret_key' => $secretKey,
             'category_id' => request('category'),
         ]);
+
+        !empty(r('tags')) && $account->tags()->attach(r('tags'));
+
+        return $account;
     }
 
     public static function createBulk()
@@ -125,17 +130,18 @@ class Account extends Model
                     continue;
                 }
 
-                $accounts[] = [
+                $accountObj = Account::query()->create([
                     'username' => $account[0],
                     'password' => $account[1],
                     'secret_key' => str_replace(' ', '', $account[2]),
                     'created_at' => Carbon::now(),
                     'category_id' => request('category'),
-                ];
+                ]);
+
+                !empty(r('tags')) && $accountObj->tags()->attach(r('tags'));
             }
         }
 
-        Account::query()->insert($accounts);
         abort_if($existsAccounts, 403, 'These accounts already exists :' . "\n" . $existsAccounts);
         return true;
     }

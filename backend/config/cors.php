@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['https://194.26.183.188', 'http://194.26.183.188', '*', 'sanctum/csrf-cookie'],
+    'paths' => ['sanctum/csrf-cookie', '*'],
 
     'allowed_methods' => ['*'],
 
@@ -30,5 +30,4 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => true,
-
 ];

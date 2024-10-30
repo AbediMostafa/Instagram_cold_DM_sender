@@ -37,6 +37,7 @@ class Command extends Model
         'delete initial posts',
         'get thread messages',
         'call booked',
+        'make public',
         'number of active accounts',
     ];
 

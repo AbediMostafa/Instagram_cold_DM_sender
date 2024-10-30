@@ -12,8 +12,15 @@ export const useTemplateStore = defineStore('TemplateStore', {
             templates: {
                 data: [],
                 current_page: 1,
-                total: 0
+                total: 0,
+                queryParams: {
+                    tags: [],
+                    category_id: '',
+                    types: [],
+                },
+
             },
+            types: [],
             is: {
                 loading: false,
                 deleting: false,
@@ -55,7 +62,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
         getTemplates(page = 1) {
             this.is.loading = true;
 
-            ApiService.post('templates', {page})
+            ApiService.post('templates', {page, ...this.templates.queryParams})
                 .then(response => {
                     this.templates.data = response.data.data
                     this.templates.total = response.data.total
@@ -70,6 +77,11 @@ export const useTemplateStore = defineStore('TemplateStore', {
         checkRows(e) {
             this.checkedTemplateRows = e.target.checked ?
                 this.templates.data.map(template => template.id) : []
+        },
+
+        fetchTypes() {
+            ApiService.post('template/fetch-types', {})
+                .then(response => this.types = response.data)
         }
     }
 })

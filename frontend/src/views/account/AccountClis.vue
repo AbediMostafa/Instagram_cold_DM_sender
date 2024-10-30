@@ -31,7 +31,7 @@
 
 <script lang="ts" setup>
 
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import ApiService from "@/core/services/ApiService";
 import {onBeforeRouteLeave} from "vue-router";
 
@@ -48,9 +48,11 @@ const getProcessOutput = (withLoading = true) => {
       .finally(() => loading.value = false)
 }
 
-const getProcessWithInterval = setInterval(() => getProcessOutput(false), 4000)
+onMounted(getProcessOutput)
 
-onBeforeRouteLeave(() => clearInterval(getProcessWithInterval))
+// const getProcessWithInterval = setInterval(() => getProcessOutput(false), 4000)
+
+// onBeforeRouteLeave(() => clearInterval(getProcessWithInterval))
 </script>
 
 <style>

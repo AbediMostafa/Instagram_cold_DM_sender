@@ -42,12 +42,12 @@ return new class extends Migration {
             $table->unsignedTinyInteger('avatar_changed')->default(0);
             $table->unsignedTinyInteger('username_changed')->default(0);
             $table->unsignedTinyInteger('initial_posts_deleted')->default(0);
+            $table->unsignedTinyInteger('is_public')->default(0);
             $table->unsignedTinyInteger('is_active')->default(1);
             $table->text('web_session')->nullable();
             $table->text('mobile_session')->nullable();
             $table->text('log')->nullable();
             $table->timestamps();
-            $table->timestamp('last_login')->nullable();
             $table->timestamp('next_login')->nullable();
         });
     }

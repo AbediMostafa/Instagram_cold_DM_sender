@@ -13,9 +13,11 @@ export const useUserStore = defineStore("UserStore", {
                 search: '',
                 dateRange: '',
             },
+            usersForDropDown: [],
             is: {
                 loading: false,
             },
+            user: {}
         };
     },
 
@@ -37,7 +39,7 @@ export const useUserStore = defineStore("UserStore", {
                 .then(response => response.data.status && this.handleSuccessLogin(response.data))
                 .finally(() => this.is.loading = false);
         },
-        signOut(){
+        signOut() {
             ApiService.post("sign-out")
                 .then(this.clearUser)
                 .finally(() => router.push('sign-in'));
@@ -66,6 +68,20 @@ export const useUserStore = defineStore("UserStore", {
         },
         getUser() {
             return this.user;
+        },
+
+        getUsersByName() {
+            ApiService.post("users/get-users-by-name")
+                .then(response => this.usersForDropDown = response.data)
+        },
+
+        $hasNotAnyOfTheseRoles(roles) {
+
+            if (Array.isArray(roles)) {
+                return !roles.includes(this.user.role)
+            }
+
+            return this.user.role != roles;
         },
     },
 });

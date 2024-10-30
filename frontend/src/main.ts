@@ -21,12 +21,14 @@ import axios from "axios";
 import "@/core/plugins/prismjs";
 import {useAppConfigStore} from "@/stores/AppConfig";
 import {useUserStore} from "@/stores/User";
+import applyDirectives from "@/core/helpers/directives";
 
 const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
 app.use(ElementPlus);
+applyDirectives(app)
 
 ApiService.init(app);
 initApexCharts(app);

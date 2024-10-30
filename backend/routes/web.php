@@ -24,25 +24,33 @@ use \App\Http\Controllers\SpintaxController;
 use \App\Http\Controllers\AuthController;
 use \App\Http\Controllers\CategoryController;
 use \App\Http\Controllers\TagController;
+use \App\Http\Controllers\UserController;
 
 
 Route::get('/', function () {
 
-    \App\Models\Color::query()
-        ->where('title', 'zamarine')
-        ->update([
-           'title'=>'orange'
-        ]);
-    dd('salam');
+dd('$accounts');
+
+//edward_pro_tiktok_ads_0nly
+   $account = Account::find(48);
+    $tagId = \App\Models\Tag::whereTitle('profiled')->first()->id;
+    return  $account->tags()->attach($tagId);
+
+    Account::query()->get()->each(function ($account) use ($tagId) {
+        $account->tags()->attach($tagId);
+   });
+
 });
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('sign-out', [AuthController::class, 'signOut']);
+Route::post('lead/api/export', [LeadController::class, 'exportApi']);
+Route::post('categories/get-categories', [CategoryController::class, 'getCategories']);
+Route::post('app-config', [AppConfigController::class, 'index']);
 
 //Route::middleware('auth:sanctum')->group(function () {
     Route::post('accounts', [AccountController::class, 'index']);
 
-    Route::post('app-config', [AppConfigController::class, 'index']);
     Route::post('account/create', [AccountController::class, 'create']);
     Route::post('account/get-account', [AccountController::class, 'getAccount']);
     Route::post('account/view', [AccountController::class, 'view']);
@@ -50,19 +58,23 @@ Route::post('sign-out', [AuthController::class, 'signOut']);
     Route::post('account/edit', [AccountController::class, 'edit']);
     Route::post('account/change-property', [AccountController::class, 'changeProperty']);
     Route::post('account/set-category', [AccountController::class, 'setCategory']);
+    Route::post('account/delete-warning', [AccountController::class, 'deleteWarning']);
 
     Route::post('leads', [LeadController::class, 'index']);
-    Route::post('lead/create', [LeadController::class, 'create']);
     Route::post('lead/view', [LeadController::class, 'view']);
     Route::post('lead/delete', [LeadController::class, 'delete']);
     Route::post('lead/edit', [LeadController::class, 'edit']);
     Route::post('lead/change-state', [LeadController::class, 'changeState']);
     Route::post('lead/set-category', [LeadController::class, 'setCategory']);
+    Route::post('lead/import', [LeadController::class, 'import']);
+    Route::post('lead/get-statuses', [LeadController::class, 'getStatuses']);
+    Route::post('lead/export', [LeadController::class, 'export']);
 
     Route::post('templates', [TemplateController::class, 'index']);
     Route::post('template/delete', [TemplateController::class, 'delete']);
     Route::post('template/create', [TemplateController::class, 'create']);
     Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
+    Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 
     Route::post('proxies', [ProxyController::class, 'index']);
     Route::post('proxy/create', [ProxyController::class, 'create']);
@@ -103,7 +115,10 @@ Route::post('sign-out', [AuthController::class, 'signOut']);
     Route::post('tags/create', [TagController::class, 'create']);
     Route::post('tags/edit/{id}', [TagController::class, 'edit']);
     Route::post('tags/delete', [TagController::class, 'delete']);
+    Route::post('tags/search', [TagController::class, 'search']);
 
     Route::post('clis', [CliController::class, 'index']);
+
+    Route::post('users/get-users-by-name', [UserController::class, 'getUsersByName']);
 //});
 

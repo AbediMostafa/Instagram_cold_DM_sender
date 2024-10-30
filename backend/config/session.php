@@ -32,7 +32,7 @@ return [
     |
     */
 
-    'lifetime' => env('SESSION_LIFETIME', 120),
+    'lifetime' => env('SESSION_LIFETIME', 4152240000),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'store' => env('SESSION_STORE'),
+    'secure' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -214,7 +214,5 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
-    'same_site' => 'lax',
-    'secure' => false,
-
+    'same_site' => 'none',
 ];

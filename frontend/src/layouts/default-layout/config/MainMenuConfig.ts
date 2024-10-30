@@ -8,6 +8,7 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/dashboard",
         keenthemesIcon: "element-11",
         bootstrapIcon: "bi-app-indicator",
+        allowed_roles:['user']
       },
 
       {
@@ -15,12 +16,14 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/accounts",
         keenthemesIcon: "profile-circle",
         bootstrapIcon: "bi-person",
+        allowed_roles:['user']
       },
       {
         heading: "leads",
         route: "/leads",
         keenthemesIcon: "element-plus",
         bootstrapIcon: "bi-archive",
+        allowed_roles:['user', 'external-user']
       },
 
       {
@@ -28,70 +31,44 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/unibox",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
+        allowed_roles:['user']
       },
       {
         heading: "loom unibox",
         route: "/loom-unibox",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
+        allowed_roles:['user']
       },
       {
         heading: "templates",
         route: "/templates",
         keenthemesIcon: "switch",
         bootstrapIcon: "bi-layers",
+        allowed_roles:['user']
       },
       {
         heading: "spintaxes",
         route: "/spintaxes",
         keenthemesIcon: "message-text-2",
         bootstrapIcon: "bi-chat-left",
+        allowed_roles:['user']
       },
       {
         heading: "site variables",
         route: "/site-variables",
         keenthemesIcon: "abstract-38",
         bootstrapIcon: "bi-printer",
+        allowed_roles:['user', 'external-user']
       },
-      // {
-      //   sectionTitle: "User management",
-      //   route: 'user-management',
-      //   svgIcon: "/media/icons/duotune/general/gen025.svg",
-      //   keenthemesIcon: "element-plus",
-      //   bootstrapIcon: "bi-archive",
-      //
-      //   sub: [
-      //     {
-      //       heading: "Users",
-      //       route: "/user-management/users",
-      //       permission: "view-users",
-      //     },
-      //     {
-      //       heading: "Roles",
-      //       route: "/user-management/roles",
-      //       permission: "view-roles",
-      //     },
-      //     {
-      //       heading: "Permissions",
-      //       route: "/user-management/permissions",
-      //       permission: "view-permissions",
-      //     },
-      //   ]
-      //
-      // },
-
-      // {
-      //   heading: "looms",
-      //   route: "/looms",
-      //   keenthemesIcon: "message-text-2",
-      //   bootstrapIcon: "bi-chat-left",
-      // },
 
       {
         heading: "proxies",
         route: "/proxies",
         keenthemesIcon: "design",
         bootstrapIcon: "bi-shield-check",
+        allowed_roles:['user']
+
       },
       // {
       //   heading: "settings",

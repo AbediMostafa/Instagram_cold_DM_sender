@@ -76,6 +76,42 @@
         <a class="btn btn-sm btn-light-success ms-1" @click="store.setCategory()"> Set Category</a>
       </div>
     </div>
+
+
+
+
+    <div class="menu-item">
+      <div class="menu-content fs-6 text-gray-900 fw-bold px-3 py-4">
+        Filter
+      </div>
+      <div class="menu-content px-3 ">
+        <!-- Filter by Tags -->
+        <el-select
+            v-model="store.accounts.tags"
+            multiple
+            filterable
+            remote
+            clearable
+            placeholder="Filter by Tags"
+            :remote-method="tagStore.fetchTags"
+            :loading="tagLoading"
+        >
+          <el-option
+              v-for="tag in tagStore.searchedTags"
+              :key="tag.id"
+              :label="tag.title"
+              :value="tag.id"
+          />
+        </el-select>
+
+        <div class="fill-flex d-flex align-items-center mt-4">
+          <a class="btn btn-sm btn-light-primary" @click="store.getAccounts()">Filter</a>
+
+        </div>
+
+      </div>
+    </div>
+
   </div>
   <!--end::Menu 2-->
 </template>
@@ -84,6 +120,7 @@
 import {defineComponent, onMounted, ref} from "vue";
 import {useAccountStore} from "@/stores/Account";
 import {useCategoryStore} from "@/stores/Category";
+import {useTagStore} from "@/stores/Tag";
 import {showModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
 
@@ -93,12 +130,18 @@ export default defineComponent({
   components: {},
   setup() {
     const categoryStore = useCategoryStore()
+    const tagStore = useTagStore()
+    const tagLoading = ref(false)
 
-    onMounted(categoryStore.getCategories)
+    onMounted(()=> {
+      categoryStore.getCategories();
+    })
 
     return {
       store: useAccountStore(),
       categoryStore,
+      tagStore,
+      tagLoading,
     }
 
   }

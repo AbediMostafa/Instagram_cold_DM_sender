@@ -22,4 +22,9 @@ class Tag extends Model
     {
         return $this->morphedByMany(Account::class, 'taggable');
     }
+
+    public function templates()
+    {
+        return $this->morphedByMany(Template::class, 'taggable');
+    }
 }

@@ -12,6 +12,11 @@ class CategoryController extends Controller
         return Category::query()->paginate(5);
     }
 
+    public function getCategories()
+    {
+        return Category::query()->select('id', 'title')->get();
+    }
+
     public function view()
     {
         return Category::findOrFail(r('categoryId'));

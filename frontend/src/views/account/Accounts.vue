@@ -201,7 +201,10 @@
                 <span class="fw-semibold fs-7 ">{{ account.total_replies }}</span>
 
                 <div>
-                  <span class="badge badge-light-info mt-1" >{{ account.category?.title }}</span>
+                  <span class="badge badge-light-info mt-1">{{ account.category?.title }}</span>
+                  <span class="badge badge-light-primary mt-1 ms-1"
+                        v-for="tag in account.tags"
+                  >{{ tag.title }}</span>
                 </div>
 
 
@@ -211,8 +214,14 @@
                 <account-is-active :is-active="account.is_active"/>
               </td>
               <td>
-                <div>{{ account.created_at_ago }}</div>
-                <div>{{ account.latest_warning_created_at_ago }}</div>
+                <span class="text-muted fw-semibold text-muted fs-8">{{ account.created_at_ago }} / </span>
+                <span class="text-muted fw-semibold text-muted fs-8">{{ account.latest_warning_created_at_ago }}</span>
+                <div>
+                <span class="badge badge-light-warning mt-1 ms-1"
+                      v-for="warning in account.warnings"
+                >{{ warning.cause }}</span>
+                </div>
+
               </td>
 
               <td class="text-end">
