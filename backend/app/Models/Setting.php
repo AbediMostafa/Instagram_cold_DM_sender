@@ -26,4 +26,24 @@ class Setting extends Model
         'Comment',
         'Like',
     ];
+
+    public static function getValue($key, $default = null)
+    {
+        $record = Setting::query()->where('key', $key)->first();
+
+        return $record ? $record->value : $default;
+    }
+
+    public static function setValue(string $key, $value, string $type = 'text', string $description = null): void
+    {
+        // Check if a record with the given key exists
+        $setting = self::query()->firstOrNew(['key' => $key]);
+
+        // Set or update fields
+        $setting->value = $value;
+        $setting->type = $type;
+        $setting->description = $description;
+
+        $setting->save();
+    }
 }

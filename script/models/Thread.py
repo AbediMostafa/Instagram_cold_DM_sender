@@ -24,5 +24,4 @@ def get_url_id(lead, account):
         (Thread.lead == lead)
     ).first()
 
-    if thread:
-        return thread.thread_url_id
+    return thread.thread_url_id if thread else None

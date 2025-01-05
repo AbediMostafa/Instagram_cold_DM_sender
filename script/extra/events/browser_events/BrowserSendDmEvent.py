@@ -6,6 +6,7 @@ from script.extra.actions.DM import DM
 from script.models.Lead import Lead
 from peewee import fn
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
+from script.models.Thread import get_url_id
 
 
 class BrowserSendDmEvent(InstagramMiddleware):
@@ -15,22 +16,23 @@ class BrowserSendDmEvent(InstagramMiddleware):
     base = None
 
     def execute(self):
-        self.base = BrowserBaseEvent(self.ig)
+
+        if not self.ig.account.has_enough_posts:
+            self.ig.account.add_cli("Account dont have enough post to send DM")
+            return
+
+        if not self.ig.account.can_send_dm_today:
+            self.ig.account.add_cli("We can't send DM today")
+            return
+
         self.base.go_to_threads()
+        self.ig.turn_on_notif()
         self.init()
 
     def init(self):
         self.ig.account.add_cli("Starting DM process ...")
-        self.dm = DM(self.ig.account)
-        self.dm.calculate_today_dms()
 
-        if not self.dm.can_send_dm_today:
-            self.ig.account.add_cli("We can't send DM today")
-            return
-
-        self.allowed_leads_count = self.dm.chunk_dm
-        self.ig.account.add_cli(f"Allowed leads count is {self.allowed_leads_count}")
-
+        self.allowed_leads_count = self.ig.account.current_chunk_dm
         self.send_dms()
 
     def send_dms(self):
@@ -41,15 +43,14 @@ class BrowserSendDmEvent(InstagramMiddleware):
             lead.dm_text = spin(SettingAdapter.cold_dm_spintax())
 
             self.send_dm(lead)
-            self.ig.pause(10000, 60000)
+            self.ig.pause(7000, 12000)
             self.allowed_leads_count -= 1
-
     def send_dm(self, lead):
 
         try:
             self.ig.account.add_cli(f"Sending Dm to : {lead.username}")
             self.command = self.ig.account.create_command('dm follow up', 'processing', lead)
-            self.send_direct(lead)
+            self.base.send_direct(lead)
             self.ig.account.add_direct_url_id(lead.dm_text, lead, self.base.get_thread_id())
 
             lead.change_state(self.ig.account, 'dm follow up', add_history=True, update_date=True)
@@ -57,27 +58,10 @@ class BrowserSendDmEvent(InstagramMiddleware):
 
         except Exception as e:
             self.ig.account.add_cli(f"Failed to send DM : {str(e)}")
-            lead.change_state(self.ig.account, 'failed dm', add_history=True, update_date=True)
+            # lead.change_state(self.ig.account, 'failed dm', add_history=True, update_date=True)
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
-    def send_direct(self, lead):
-
-        try:
-            self.base.go_and_click_on_lead_message(lead)
-            self.ig.pause(5000, 6000)
-
-            self.ig.page.get_by_label("Message", exact=True).fill(lead.dm_text)
-            self.ig.pause(4000, 6000)
-
-            self.ig.page.get_by_role("button", name="Send", exact=True).click()
-            self.ig.pause(4000, 6000)
-
-        except Exception as e:
-            self.ig.page.reload()
-            self.ig.pause(4000, 5000)
-            self.ig.account.add_cli(f"User does not exists, deleting command ...")
-            self.command.delete_instance()
-            self.ig.account.add_cli(f"Command deleted successfully, raising exception ...")
-            raise e
+            if str(e) == "Something went wrong":
+                raise Exception(str(e))

@@ -8,12 +8,15 @@ from .Category import Category
 
 
 def delete(_type, text):
+    if not text:
+        raise ValueError("Cannot delete: 'text' is None.")
+
     return Template.delete().where(
         (Template.type == _type) & (Template.text == text)
     ).execute()
 
 
-def get_a(_type, account=None):  
+def get_a(_type, account=None):
     return Template.select().where(
         (Template.type == _type)
     ).first()

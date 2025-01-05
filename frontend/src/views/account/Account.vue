@@ -76,35 +76,6 @@
               <a @click="getAccount" class="btn btn-sm btn-light-primary me-2">
                 refresh
               </a>
-              <a
-                class="btn btn-light-danger btn-sm"
-                v-if="account?.is_active"
-                @click="
-                  store.changeProperty(
-                    [account?.id],
-                    'is_active',
-                    0,
-                    `${account.username} deactivated successfully`,
-                    getAccount
-                  )
-                "
-                >Deactivate</a
-              >
-
-              <a
-                class="btn btn-light-success btn-sm"
-                v-else
-                @click="
-                  store.changeProperty(
-                    [account?.id],
-                    'is_active',
-                    1,
-                    `${account.username} activated successfully`,
-                    getAccount
-                  )
-                "
-                >Activate</a
-              >
 
 <!--              <div class="me-0">-->
 <!--                <button-->

@@ -6,6 +6,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 import random
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.models.Command import performed_command_count
+from script.extra.modules.bulkacc.TmpMail import TmpMail
 
 
 # Your account has been disabled
@@ -14,25 +15,10 @@ from script.models.Command import performed_command_count
 class BrowserLoginEvent(InstagramMiddleware):
 
     def execute(self):
-        self.go_to_instagram()
+        self.after_instagram_load()
         self.login()
 
-    def go_to_instagram(self):
-        self.ig.account.add_cli('Going to Instagram page ...')
-        retries = 3
-        for attempt in range(retries):
-            try:
-                self.ig.page.goto('https://www.instagram.com/', timeout=200000)
-                break
-            except Exception as e:
-                self.ig.account.add_cli(f"Attempt {attempt + 1} failed: {e}")
-                if attempt == retries - 1:
-                    raise e
-                sleep(2)
-
-        self.ig.account.add_cli('After Instagram loaded and before timeout')
-        self.ig.pause(4000, 6000)
-        self.ig.account.add_cli('After 4000-6000 timeout')
+    def after_instagram_load(self):
         self.ig.allow_cookies()
         self.ig.account.add_cli('After allowing cookies')
         self.ig.pause(4000, 6000)
@@ -58,6 +44,7 @@ class BrowserLoginEvent(InstagramMiddleware):
         self.ig.save_info()
         self.ig.pause(3000, 4000)
         self.ig.turn_on_notif()
+        self.ig.find_friends_and_accounts_like_you()
         self.ig.save_session()
         self.ig.pause(4000, 5000)
 
@@ -98,6 +85,10 @@ class BrowserLoginEvent(InstagramMiddleware):
         return self.ig.is_visible_by_text('confirm that you own this account') or self.ig.is_visible_by_text(
             "You'll need to verify your identity")
 
+    def we_are_working_on_getting_this_fixed(self):
+        return self.ig.is_visible_by_text('Sorry, something went wrong') or self.ig.is_visible_by_text(
+            "working on getting this fixed as soon as we can")
+
     def add_a_phone_number(self):
         return self.ig.is_visible_by_text(
             'Add a phone number to get back into Instagram') or self.ig.is_visible_by_text(
@@ -132,6 +123,10 @@ class BrowserLoginEvent(InstagramMiddleware):
     def after_filling_username_password_hook(self):
         for i in range(18):
             self.ig.account.add_cli(f'Checking for 2f authentication for the {i} time ...')
+
+            if self.fill_code_sent_to_email():
+                return True
+
             if self.need_2f_authentication():
                 self.ig.two_factor_authentication_process()
                 return
@@ -141,6 +136,59 @@ class BrowserLoginEvent(InstagramMiddleware):
             self.ig.problem_logging_in_handler()
 
             self.ig.page.wait_for_timeout(1100)
+
+    def fill_code_sent_to_email(self):
+        if self.ig.is_visible_by_text('Enter the code we sent to') or self.ig.is_visible_by_text('Check your email'):
+
+            def fill_email():
+                self.ig.account.add_cli(f'Fill email is visible trying to get the code ...')
+
+                self.ig.account.add_cli(self.ig.account.email)
+                code = TmpMail(self.ig).get_code()
+
+                try:
+                    self.ig.page.locator('input[name="email"]').first.fill("")
+                    self.ig.page.locator('input[name="email"]').first.fill(code)
+                except:
+                    self.ig.page.locator(
+                        'input.x1i10hfl.xggy1nq.x1s07b3s.x1a2a7pz.xjbqb8w.x1v8p93f.xogb00i.x16stqrj.x1ftr3km.x1ejq31n').first.fill(
+                        code)
+
+                self.ig.pause(2000, 2500)
+
+                try:
+                    self.ig.page.locator('span.x1lliihq.x193iq5w.x6ikm8r.x10wlt62.xlyipyv.xuxw1ft').first.click(
+                        timeout=3000)
+                except Exception as e:
+                    self.ig.account.add_cli(
+                        f'Problem clicking on code Continue button, change the locator ... {str(e)}')
+
+                self.ig.pause(3000, 4500)
+
+            fill_email()
+            counter = 0
+
+            while self.ig.is_visible_by_text('This code doesn’t work') or self.ig.is_visible_by_text(
+                    'Check it’s correct or try a new one'):
+
+                counter += 1
+                try:
+                    self.ig.page.get_by_role("button", name="Get a new code", exact=True).click(timeout=3000)
+                except Exception as e:
+                    self.ig.page.locator(
+                        "div.x1i10hfl.x1qjc9v5.xjbqb8w.xjqpnuy.xa49m3k.xqeqjp1.x2hbi6w.x13fuv20.xu3j5b3.x1q0q8m5.x26u7qi.x972fbf.xcfux6l.x1qhh985.xm0m39n").click(
+                        timeout=3000)
+
+                self.ig.page.wait_for_timeout(12000)
+                fill_email()
+
+                if counter > 3:
+                    break
+
+            self.ig.pause(8000, 10000)
+            return True
+
+        return False
 
     def something_went_wrong_handler(self):
         for i in range(8):
@@ -169,6 +217,8 @@ class BrowserLoginEvent(InstagramMiddleware):
 
             self.ig.suspended_account_handler()
             self.ig.disabled_account_handler()
+            self.ig.appeal_submitted_handler()
+            self.ig.upload_your_id_handler()
 
             if self.ig.suspect_automate_behavior_handler():
                 self.ig.pause(3000, 4000)
@@ -182,6 +232,9 @@ class BrowserLoginEvent(InstagramMiddleware):
 
             if self.confirm_you_own_this_account():
                 raise ConfirmYouOwnThisAccount('Help us confirm that you own this account')
+
+            if self.we_are_working_on_getting_this_fixed():
+                raise SomethingWentWrong('Sorry, something went wrong')
 
             self.ig.help_us_confirm_its_you_handler()
             self.ig.feedback_required()
@@ -253,6 +306,10 @@ class BrowserLoginEvent(InstagramMiddleware):
             self.ig.page.get_by_role("button", name="Log in").click()
 
     def follow_suggested(self):
+
+        if not self.ig.account.has_enough_posts:
+            return False
+        
         allowed_follows = random.randint(1, SettingAdapter.max_follow())
         allowed_follows = min(allowed_follows, self.ig.account.passed_days_since_creation)
 
@@ -267,6 +324,11 @@ class BrowserLoginEvent(InstagramMiddleware):
         if self.ig.is_visible_by_text('Suggested for you'):
             random_follow_number = random.randint(2, 4)
             follow_buttons = self.ig.page.query_selector_all('button:has-text("Follow")')
+
+            if len(follow_buttons) < 1 or len(follow_buttons) < random_follow_number:
+                self.ig.account.add_cli(f'small follow button : {len(follow_buttons)} ')
+                return False
+
             selected_follow_button = random.sample(follow_buttons, random_follow_number)
             count = 0
 
@@ -286,3 +348,5 @@ class BrowserLoginEvent(InstagramMiddleware):
                     command.update_cmd('state', 'fail')
                 # Optional: Wait a bit between clicks to mimic human behavior and avoid rate limits
                 self.ig.pause(1000, 3500)  # Wait for 1 second0
+
+        self.ig.pause(2000, 3500)

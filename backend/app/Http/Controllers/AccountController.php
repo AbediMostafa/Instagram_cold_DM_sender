@@ -10,6 +10,7 @@ use App\Models\Proxy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class AccountController extends Controller
 {
@@ -26,9 +27,9 @@ class AccountController extends Controller
 
         $accounts = Account::query()
             ->select(
-                'id', 'avatar_changed', 'username', 'instagram_state',
-                'name', 'app_state', 'log', 'is_active', 'password', 'created_at',
-                'secret_key', 'category_id')
+                'id', 'avatar_changed', 'username', 'instagram_state', 'email',
+                'name', 'password', 'created_at',
+                'secret_key', 'category_id', 'proxy_id', 'profile_id', 'has_enough_posts')
             ->withCount([
                 'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
                     $query->where('type', 'dm follow up')
@@ -53,6 +54,8 @@ class AccountController extends Controller
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
                 'category:id,title',
+                'profile:id,title',
+                'proxy:id,ip',
                 'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
                     $query->select('created_at', 'account_id', 'cause')
@@ -65,7 +68,19 @@ class AccountController extends Controller
             )
             ->when(
                 r('search'),
-                fn($_) => $_->where('username', 'like', '%' . r('search') . '%')
+                function ($_) {
+                    if (r('type') === 'proxy') {
+                        $_->whereHas('proxy', fn($__) => $__->where('ip', 'like', '%' . r('search') . '%'));
+                    }
+
+                    if (r('type') === 'account') {
+                        $_->where('username', 'ilike', '%' . r('search') . '%');
+                    }
+
+                    if (r('type') === 'profile') {
+                        $_->whereHas('profile', fn($__) => $__->where('title', 'like', '%' . r('search') . '%'));
+                    }
+                }
             )
             ->when(
                 r('tags'),
@@ -112,7 +127,9 @@ class AccountController extends Controller
     {
         return Account::query()->select(
             'username', 'password', 'category_id',
-            'instagram_state', 'app_state',
+            'instagram_state', 'app_state', 'color_id', 'is_used',
+            'avatar_changed', 'username_changed', 'initial_posts_deleted',
+            'has_enough_posts', 'next_login'
         )
             ->find(r('id'));
     }
@@ -136,14 +153,20 @@ class AccountController extends Controller
         );
     }
 
-
     public function delete()
     {
-        return tryCatch(
-            fn() => Account::query()
+        return tryCatch(function () {
+
+            Account::query()
                 ->whereIn('id', r('ids'))
-                ->delete(),
-            'Account(s) deleted successfully',
+                ->get()
+                ->each(function ($account) {
+                    $account->delete();
+                    $account->profile && $account->profile->deleteRecords();
+                    sleep(3);
+                });
+        },
+            'Account(s) deleted successfully'
         );
     }
 
@@ -161,20 +184,13 @@ class AccountController extends Controller
                     'password' => r('password'),
                     'instagram_state' => r('instagram_state'),
                     'category_id' => r('category_id'),
+                    'color_id' => r('color_id'),
+                    'is_used' => r('is_used'),
+                    'avatar_changed' => r('avatar_changed'),
+                    'username_changed' => r('username_changed'),
+                    'has_enough_posts' => r('has_enough_posts'),
                 ]),
             'Account updated successfully',
-        );
-    }
-
-    public function changeProperty()
-    {
-        return tryCatch(
-            fn() => Account::query()
-                ->whereIn('id', r('ids'))
-                ->update([
-                    r('key') => r('value')
-                ]),
-            r('msg'),
         );
     }
 
@@ -205,6 +221,122 @@ class AccountController extends Controller
             'Problem updating account',
         );
 
+    }
+
+    public function makeActive()
+    {
+        return tryCatch(
+            fn() => Account::whereIn('id', r('ids'))->get()
+                ->each(fn($account) => $account->makeActive()),
+            'Warning(s) deleted successfully',
+            'Problem updating account',
+        );
+    }
+
+    public function clearNextLogin()
+    {
+        return tryCatch(
+            function () {
+                Account::whereIn('id', r('ids'))
+                    ->get()
+                    ->each(function (Account $account) {
+                        $account->next_login = null;
+                        $account->save();
+                    });
+            },
+            'Next login deleted successfully',
+            'Problem updating account',
+        );
+
+    }
+
+    public function fetchAccounts()
+    {
+        return Account::query()
+            ->select('id', 'username')
+            ->where('username', 'like', '%' . request('q') . '%')
+            ->get();
+    }
+
+    public function clearProfile()
+    {
+        return tryCatch(
+            function () {
+                $accounts = Account::whereIn('id', r('ids'))->get();
+
+                foreach ($accounts as $account) {
+                    $account->profile_id = null;
+                    $account->save();
+                }
+            },
+            'Profile(s) deleted successfully',
+            'Problem updating account',
+        );
+    }
+
+    public function get2faCode()
+    {
+        try {
+            $secretKey = r('secretKey');
+
+            $proxy = 'http://paichb:yNckWHb3@207.230.104.78:29842';
+
+            $resp = Http::withOptions(['proxy' => $proxy])->withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
+            return $resp->json()['data']['otp'];
+
+        } catch (\Exception $exception) {
+
+            return "Error getting 2fa code : " . $exception->getMessage();
+        }
+    }
+
+    public function changeProfileProxyToCustom()
+    {
+        return tryCatch(
+            function () {
+                $accounts = Account::query();
+                r('ids') ? $accounts->whereIn('id', r('ids')) : $accounts->where('instagram_state', '!=', 'active');
+
+//                $accounts = Account::whereIn('id', r('ids'))->get();
+
+
+//                foreach ($accounts as $account) {
+//                    $account->profile_id = null;
+//                    $account->save();
+//                }
+
+            },
+            'Profile(s) proxy changed successfully'
+        );
+    }
+
+    public function getProxyApi()
+    {
+        return Account::query()->find(r('id'))->getProxy();
+    }
+
+    public function changeProfileProxyToResidentialApi()
+    {
+        try {
+            $account = Account::query()->find(r('id'));
+
+            return $account->updateProfileProxyToResidential();
+
+        } catch (\Exception $exception) {
+            return $exception->getMessage() . $exception->getTraceAsString();
+        }
+    }
+
+    public function changeProfileProxyToCustomApi()
+    {
+        try {
+            $account = Account::query()->find(r('id'));
+
+            return $account->updateProfileProxyFromResidentialToCustom();
+
+        } catch (\Exception $exception) {
+            return $exception->getMessage() . $exception->getTraceAsString();
+        }
     }
 }
 

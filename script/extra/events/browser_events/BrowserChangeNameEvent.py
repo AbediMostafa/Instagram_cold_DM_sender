@@ -42,7 +42,15 @@ class BrowserChangeNameEvent(InstagramMiddleware):
 
         self.base.go_to_profile_page()
         self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click()
-        self.ig.page.locator('a[aria-label="Name"]').click()
+
+        self.ig.pause(3000, 4000)
+
+        try:
+            self.ig.page.get_by_label("Name", exact=True).click(timeout=3000)
+        except Exception as e:
+            self.ig.account.add_cli(str(e))
+            self.ig.page.locator('a[aria-label="Name"]').click()
+
         self.ig.pause(3000, 4000)
 
         self.fill_name()

@@ -6,15 +6,15 @@ class SettingAdapter:
 
     @classmethod
     def max_account_for_one_proxy(cls):
-        return Setting.get_value('Max Account For One Proxy', 2)
+        return Setting.get_value('Max Account For One Proxy', 10)
 
     @classmethod
     def max_dm(cls):
-        return Setting.get_value('Max DM', 35)
+        return Setting.get_value('Max DM', 28)
 
     @classmethod
     def dm_chunk(cls):
-        return Setting.get_value('DM Chunk', 10)
+        return Setting.get_value('DM Chunk', 9)
 
     @classmethod
     def max_follow(cls):
@@ -22,7 +22,7 @@ class SettingAdapter:
 
     @classmethod
     def max_like(cls):
-        return Setting.get_value('Max Like', 200)
+        return Setting.get_value('Max Like', 20)
 
     @classmethod
     def max_comment(cls):
@@ -73,8 +73,8 @@ class SettingAdapter:
 
     @classmethod
     def minimum_time_for_next_login(cls):
-        return Setting.get_value('Minimum time for next login', 1)
+        return Setting.get_value('Minimum time for next login', 4)
 
     @classmethod
     def maximum_time_for_next_login(cls):
-        return Setting.get_value('Maximum time for next login', 3)
+        return Setting.get_value('Maximum time for next login', 6)

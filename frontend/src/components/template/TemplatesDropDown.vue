@@ -44,11 +44,10 @@
           />
         </el-select>
 
-        <!-- Filter by Statuses -->
+        <!-- Filter by Types -->
         <el-select
             class="mt-2"
-            v-model="store.templates.queryParams.types"
-            multiple
+            v-model="store.templates.queryParams.type"
             clearable
             placeholder="Filter by Types"
         >
@@ -57,6 +56,22 @@
               :key="status"
               :label="status"
               :value="status"
+          />
+        </el-select>
+
+        <!-- Filter by Colors -->
+        <el-select
+            class="mt-2"
+            v-model="store.templates.queryParams.color"
+            clearable
+            placeholder="Filter by Colors"
+            v-if="store.templates.receivedType === 'carousel'"
+        >
+          <el-option
+              v-for="color in store.colors"
+              :key="color.id"
+              :label="color.title"
+              :value="color.id"
           />
         </el-select>
         <div class="fill-flex d-flex align-items-center mt-4">
@@ -83,6 +98,7 @@ const tagLoading = ref(false);
 onMounted(() => {
   categoryStore.getCategories();
   store.fetchTypes();
+  store.fetchColors();
 });
 
 // Method to fetch tags based on the search query

@@ -12,4 +12,7 @@ class RecordLastActivityHook:
     def update_last_activity(self):
         self.account.add_cli("Recording last activity time ...")
         new_time = self.account.update_last_activity()
-        self.account.add_cli(f"Account will start at {new_time} again")
+
+        # Calculate the time difference in hours
+        hours = round((new_time - datetime.now()).total_seconds() / 3600, 2)
+        self.account.add_cli(f"Account will start {hours} hours later")

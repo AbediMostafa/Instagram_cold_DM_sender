@@ -13,7 +13,7 @@ return new class extends Migration {
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', Setting::$types);
+            $table->enum('type', Setting::$types)->default('text');
             $table->enum('category', Setting::$categories)->nullable();
             $table->string('key');
             $table->text('value');

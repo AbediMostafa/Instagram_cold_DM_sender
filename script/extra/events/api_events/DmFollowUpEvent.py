@@ -1,7 +1,7 @@
 import traceback
 from .BaseActionState import BaseActionState
 from script.extra.actions.DmFollowUp import DmFollowUp
-from script.extra.helper import pause,test_accounts
+from script.extra.helper import pause
 
 
 class DmFollowUpEvent(BaseActionState):

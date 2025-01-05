@@ -1,4 +1,5 @@
 import random
+import math
 
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
@@ -13,17 +14,24 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
     db_message = None
     text = None
     scroll_top_value = None
-    users_container = 'div[aria-label="Chats"] .x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x1xzczws.x6ikm8r.x1rife3k.x1n2onr6.xh8yej3.x16o0dkt'
-    chat_container = 'div.x1uipg7g.xu3j5b3.xol2nv.xlauuyb .x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x1xzczws.x6ikm8r.x1rife3k.x1n2onr6.xh8yej3.x16o0dkt'
+    min_chat_box_scroll_top = -800
+    max_chat_box_scroll_top = -700
+
+    min_chat_box_scroll_down = 300
+    max_chat_box_scroll_down = 400
+
+    users_container = 'div[aria-label="Chats"] .x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x1xzczws.x6ikm8r.x1n2onr6.xh8yej3.x16o0dkt'
+    chat_container = 'div.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.xc8icb0.x6ikm8r.x10wlt62.x1ja2u2z  div.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x1xzczws.x6ikm8r.x1odjw0f.x1n2onr6.xh8yej3.x16o0dkt'
     text_container = 'div.x1eb86dx div.html-div.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1gslohp.x11i5rnm.x12nagc.x1mh8g0r.x1yc453h.x126k92a.x18lvrbx'
     unread_conversation_selector = 'div[role="listitem"]:has(span.x6s0dn4.xzolkzo.x12go9s9.x1rnf11y.xprq8jg.x9f619.x3nfvp2.xl56j7k.x1tu34mt.xdk7pt.x1xc55vz.x1emribx)'
+    read_conversation_selector = 'div.x13dflua.x19991ni>div[role="button"].x1i10hfl.x1qjc9v5.xjqpnuy.xa49m3k.xqeqjp1.x2hbi6w.x13fuv20.xu3j5b3.x1q0q8m5.x26u7qi.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x1ypdohk'
 
     def execute(self):
         self.ig.account.add_cli('Getting unread messages ...')
 
-        self.base = BrowserBaseEvent(self.ig)
         self.base.go_to_threads()
-        self.scroll_and_process_unread_conversations(20)
+        self.ig.turn_on_notif()
+        self.scroll_and_process_unread_conversations(random.randint(10, 13))
 
     def scroll_and_process_unread_conversations(self, scroll_times):
         self.ig.account.add_cli(f'Starting to scroll and process unread conversations over {scroll_times} scrolls')
@@ -35,7 +43,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
     def scroll(self, element, min_length, max_length, min_pause, max_pause):
         scroll_length = random.randint(min_length, max_length)
 
-        self.scroll_top_value = self.ig.page.evaluate('''
+        self.ig.page.evaluate('''
             ({selector, scrollLength}) => {
                 const element = document.querySelector(selector);
                 if (element) {
@@ -43,14 +51,24 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
                         top: scrollLength,
                         behavior: 'smooth'
                     });
-                    return element.scrollTop; 
                 }
-                return null;
             }
         ''', {'selector': element, 'scrollLength': scroll_length})
 
         # Pause for the specified duration
         self.ig.pause(min_pause, max_pause)
+
+    def get_scroll_top(self, element):
+
+        self.scroll_top_value = self.ig.page.evaluate('''
+            selector => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    return element.scrollTop; 
+                }
+                throw new Error("Element not found: " + selector);
+            }
+        ''', element)
 
     def get_and_process_unread_conversations(self):
         unread_conversations = self.ig.page.locator(self.unread_conversation_selector).all()
@@ -78,12 +96,25 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
 
             self.extract_messages()
 
+    def get_number_of_scrolls(self, scroll_height):
+        number_of_scrolls = self.scroll_top_value / scroll_height
+        return math.ceil(abs(number_of_scrolls))
+
     def extract_messages(self):
+        self.get_scroll_top(self.chat_container)
+
         self.scroll_to_top()
 
-        for _ in range(10):
+        number_of_scrolls = self.get_number_of_scrolls(self.min_chat_box_scroll_down)
+        self.ig.account.add_cli(f'Number of scrolls down: {number_of_scrolls}')
+
+        for _ in range(number_of_scrolls):
+            self.ig.account.add_cli(f'Scrolling down for {_} time')
             self.get_messages()
-            self.scroll(self.chat_container, 300, 400, 1000, 1900)
+            self.scroll(
+                self.chat_container,
+                self.min_chat_box_scroll_down,
+                self.max_chat_box_scroll_down, 3000, 3900)
 
     def get_messages(self):
         parent_elements = self.ig.page.locator(self.text_container).all()
@@ -98,7 +129,6 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
             self.db_message = Message.select().where(
                 (Message.thread == self.thread) &
                 (Message.text == self.text)
-                # (Message.text.contains(self.text))
             ).first()
 
             if not self.db_message:
@@ -110,8 +140,12 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
 
     def scroll_to_top(self):
 
-        for _ in range(13):
-            self.scroll(self.chat_container, -600, -400, 2000, 2900)
+        self.ig.account.add_cli(f'Scroll top value : {self.scroll_top_value}')
+        number_of_scrolls = self.get_number_of_scrolls(self.max_chat_box_scroll_top)
+        self.ig.account.add_cli(f'Number of scrolls up: {number_of_scrolls}')
+
+        for _ in range(number_of_scrolls):
+            self.scroll(self.chat_container, self.min_chat_box_scroll_top, self.max_chat_box_scroll_top, 2000, 2900)
             self.ig.account.add_cli(f'scroll top value {self.scroll_top_value}')
 
     def new_message_process(self):

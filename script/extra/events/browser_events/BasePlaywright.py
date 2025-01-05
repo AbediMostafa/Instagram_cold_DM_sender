@@ -1,15 +1,19 @@
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 import random
 import traceback
-from script.extra.helper import get_random_user_agent, give_a_good_resolution, get_proxy_details
+from script.extra.helper import *
 from script.extra.instagram.browser.InstagramSuspensionHandlerMixin import InstagramSuspensionHandlerMixin
 from script.extra.instagram.browser.InstagramButtonHandlerMixin import InstagramButtonHandlerMixin
 from script.extra.exceptions import *
+from script.extra.events.browser_events.ApplyStealth import ApplyStealth
+from script.extra.modules.multilogin.Requests import Requests
 import json
 
 
 # Your account has been disabled
 class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixin):
+    resolution = None
+    apply_stealth = None
 
     def __init__(self, account):
         self.account = account
@@ -17,35 +21,134 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
         self.browser = None
         self.context = None
         self.page = None
-        self.start_browser()
+        self.mlx_url = None
+        self.profile_id = None
 
     def start_browser(self):
 
         self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(
+        self.run_with_profile() if self.account.profile else self.run_with_proxy()
+        # self.run_with_proxy()
+
+        return self
+
+    def run_with_profile(self):
+        self.profile_id = self.account.profile.profile_id
+
+        self.mlx_url = Requests().get_mlx_endpoint_url(self.profile_id)
+        self.browser = self.playwright.chromium.connect_over_cdp(self.mlx_url)
+        self.context = self.browser.contexts[0]
+        self.page = self.context.pages[0]
+
+    def run_with_proxy(self):
+        if not self.account.proxy:
+            self.account.get_proxy()
+
+        self.resolution = give_a_good_resolution()
+        proxy_details = get_proxy_details(self.account.proxy.ip)
+        locale = proxy_details["locale"],
+        #     timezone_id=proxy_details["timezone"],
+
+        self.context = self.playwright.chromium.launch_persistent_context(
+            user_data_dir=f'C:\\Users\\Administrator\\Desktop\\browser_data\\browser_{self.account.id}',
+            bypass_csp=True,
+            user_agent=get_random_user_agent(),
+            permissions=["geolocation", "notifications"],
+            geolocation={"longitude": proxy_details['longitude'], "latitude": proxy_details['latitude']},
+            locale=proxy_details["locale"],
+            timezone_id=proxy_details["timezone"],
+            viewport={'width': self.account.screen_resolution.width, 'height': self.account.screen_resolution.height},
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--disable-features=IsolateOrigins,site-per-process",
+                "--disable-site-isolation-trials",
+                "--disable-dev-shm-usage"
+            ],
             proxy={
                 "server": f"http://{self.account.proxy.ip}:{self.account.proxy.port}",
                 "username": self.account.proxy.username,
                 "password": self.account.proxy.password
             },
             headless=False)
+
         self.randomize_browser_context()
-        self.page = self.context.new_page()
-        self.apply_stealth()
+        self.page = self.context.pages[0]
+
+        # Apply stealth
+        self.apply_stealth = ApplyStealth(self.account, self.page)
+        self.apply_stealth.init()
+
+        # self.context.route("**/*", self.intercept_request)
+
+    def intercept_request(self, route, request):
+        # Generate spoofed Sec-CH-UA headers
+        spoofed_headers = {
+            "Sec-CH-UA": '"Not_A;Brand";v="99", "Chromium";v="97", "Google Chrome";v="97"',
+            "Sec-CH-UA-Platform": "Windows",
+            "Sec-CH-UA-Mobile": "?0",
+        }
+
+        # Merge spoofed headers with existing request headers
+        headers = request.headers
+        headers.update(spoofed_headers)
+
+        # Continue the request with modified headers
+        route.continue_(headers=headers)
+
+    def randomize_browser_context(self):
+        pass
+
+        # self.context.set_permissions(["geolocation", "notifications"])
+        # self.page.set_viewport_size(self.resolution)
+        #
+        # self.context = self.browser.new_context(
+        #     locale=proxy_details["locale"],
+        #     timezone_id=proxy_details["timezone"],
+        #     user_agent=get_random_user_agent(),
+        #     storage_state=self.account.get_session(),
+        #     bypass_csp=True
+        # )
+
+    def go_to_instagram(self):
+        self.account.add_cli('Going to Instagram page ...')
+        self.pause(4000, 5000)
+        retries = 3
+        for attempt in range(retries):
+            try:
+                self.page.goto('https://www.instagram.com/', timeout=200000)
+                break
+            except Exception as e:
+                self.account.add_cli(f"Attempt {attempt + 1} failed: {e}")
+                if attempt == retries - 1:
+                    raise e
+                self.pause(2000, 3000)
+
+        self.account.add_cli('After Instagram loaded and before timeout')
+        self.pause(4000, 6000)
 
     def cleanup(self):
-        if self.page:
-            self.page.close()
-        if self.context:
-            self.context.close()
+
         if self.browser:
             self.browser.close()
+
         if self.playwright:
+            self.account.add_cli('Stopping Playwright ...........................')
             self.playwright.stop()
+
+        Requests().close_mlx_profile(self.profile_id)
 
     def goto(self, url, timeout=30000):
         try:
             self.page.goto(url, timeout=timeout)
+            self.pause(2000, 3000)
+            went_wrong = self.something_went_wrong()
+            automated_behaviour = self.suspect_automate_behavior_handler()
+
+            if went_wrong or automated_behaviour:
+                self.page.goto(url, timeout=timeout)
+
+            self.turn_on_notif()
+
         except PlaywrightTimeoutError:
             self.handle_exception(f'Timeout while trying to go to {url}')
 
@@ -114,7 +217,14 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
     def something_went_wrong(self):
         if self.is_visible_by_text("There's an issue and the page could not be loaded"):
             self.account.add_cli("There's an issue and the page could not be loaded")
-            self.page.get_by_role("button", name="Reload page").click()
+
+            try:
+                self.pause(2000, 3000)
+                self.page.get_by_role("button", name="Reload page").click()
+
+            except Exception as e:
+                self.account.add_cli(str(e))
+                pass
             return True
 
         return False
@@ -133,56 +243,6 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
             raise NotConnectedToTheInternetError(
                 "We couldn't connect to Instagram. Make sure you're connected to the internet and try again.")
 
-    def spoof_canvas(self):
-        self.page.add_init_script("""
-        // Intercept and modify the canvas fingerprinting attempt
-        HTMLCanvasElement.prototype.getContext = (function(original) {
-            return function(type, attributes) {
-                const context = original.call(this, type, attributes);
-                if (type === "2d") {
-                    const originalGetImageData = context.getImageData;
-                    context.getImageData = function(x, y, width, height) {
-                        const imageData = originalGetImageData.call(this, x, y, width, height);
-                        for (let i = 0; i < imageData.data.length; i += 4) {
-                            imageData.data[i] = imageData.data[i] ^ 255; // Invert color
-                        }
-                        return imageData;
-                    };
-                }
-                return context;
-            };
-        })(HTMLCanvasElement.prototype.getContext);
-        """)
-
-    def spoof_webgl(self):
-        self.page.add_init_script("""
-        // Spoof the WebGL parameters for fingerprinting evasion
-        const getParameter = WebGLRenderingContext.prototype.getParameter;
-        WebGLRenderingContext.prototype.getParameter = function(parameter) {
-            if (parameter === 37445) { // UNMASKED_VENDOR_WEBGL
-                return "MyCustomVendor";
-            }
-            if (parameter === 37446) { // UNMASKED_RENDERER_WEBGL
-                return "MyCustomRenderer";
-            }
-            return getParameter.call(this, parameter);
-        };
-        """)
-
-    def randomize_browser_context(self):
-        proxy_details = get_proxy_details(self.account.proxy.ip)
-
-        self.context = self.browser.new_context(
-            geolocation={"longitude": proxy_details['longitude'], "latitude": proxy_details['latitude']},
-            permissions=["geolocation", 'notifications'],
-            viewport=give_a_good_resolution(),
-            locale=proxy_details["locale"],
-            timezone_id=proxy_details["timezone"],
-            user_agent=get_random_user_agent(),
-            storage_state=self.account.get_session(),
-            bypass_csp=True
-        )
-
     def password_is_incorrect_handler(self):
         if self.is_visible_by_text('your password was incorrect'):
             self.account.set_state(state='suspended', log='Your password was incorrect')
@@ -194,12 +254,25 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
 
     def suspended_account_handler(self):
         if self.is_visible_by_text('We suspended your account'):
+            self.page.get_by_role("button", name="Appeal", exact=True).click(timeout=3000)
+            self.pause(5000, 6000)
+
             raise AccountSuspendedError('We suspended your account')
 
     def disabled_account_handler(self):
         if self.is_visible_by_text('Your account has been disabled') or self.is_visible_by_text(
                 'We disabled your account'):
             raise AccountDisabledError('We disabled your account')
+
+    def appeal_submitted_handler(self):
+        if self.is_visible_by_text('You submitted an appeal') or self.is_visible_by_text(
+                'It usually takes us just over a day to review your information'):
+            raise AppealSubmittedError('Appeal submitted')
+
+    def upload_your_id_handler(self):
+        if self.is_visible_by_text('Upload your ID') or self.is_visible_by_text(
+                'We need a photo of your official ID'):
+            raise UploadYourIdError('Upload your ID')
 
     def suspect_automate_behavior_handler(self):
 
@@ -208,6 +281,7 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
             'To prevent your account from being temporarily restricted or permanently disabled'):
 
             try:
+                self.pause(3000, 4000)
                 self.account.add_cli('We suspect automated behavior on your account')
                 self.page.get_by_role("button", name='Dismiss').click(timeout=5000)
                 return True
@@ -237,139 +311,26 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
     def turn_on_notif(self):
         self.account.add_cli('Turn on notification...')
         try:
+            self.pause(2000, 3000)
             self.page.get_by_role("button", name="Turn On", exact=True).click(timeout=3500)
             self.pause(5000, 6000)
         except:
             self.account.add_cli("Turn On doesn't exists")
             pass
 
+    def find_friends_and_accounts_like_you(self):
+
+        self.account.add_cli('Find friends and accounts you like ...')
+        if self.is_visible_by_text('Find friends and accounts you like'):
+
+            try:
+                self.pause(2000, 3000)
+                self.page.get_by_role("button", name="Next", exact=True).first.click(timeout=3500)
+            except:
+                pass
+
     def save_session(self):
 
         storage_state = self.page.context.storage_state()
         storage_state_json = json.dumps(storage_state)
         self.account.save_session(storage_state_json)
-
-    def apply_stealth(self):
-
-        self.page.add_init_script("""
-                   navigator.webdriver = false
-                   Object.defineProperty(navigator, 'webdriver', {
-                       get: () => false
-                   })
-               """)
-
-        # Adding fake Chrome object
-        self.page.add_init_script("""
-           window.chrome = {
-               runtime: {}
-           };
-           """)
-
-        # Faking the plugins array
-        self.page.add_init_script("""
-           Object.defineProperty(navigator, 'plugins', {
-               get: () => [1, 2, 3]
-           });
-           """)
-
-        # Faking the languages array
-        self.page.add_init_script("""
-           Object.defineProperty(navigator, 'languages', {
-               get: () => ['en-US', 'en']
-           });
-           """)
-
-        # Faking the getBattery method
-        self.page.add_init_script("""
-           navigator.getBattery = () => Promise.resolve({
-               charging: true,
-               chargingTime: 0,
-               dischargingTime: Infinity,
-               level: 1
-           });
-           """)
-
-        # Faking the permissions for notifications
-        self.page.add_init_script("""
-           const originalQuery = window.navigator.permissions.query;
-           window.navigator.permissions.query = (parameters) => (
-               parameters.name === 'notifications' ?
-               Promise.resolve({ state: Notification.permission }) :
-               originalQuery(parameters)
-           );
-           """)
-
-        # Faking the WebGL Vendor and Renderer
-        self.page.add_init_script("""
-           const getParameter = WebGLRenderingContext.prototype.getParameter;
-           WebGLRenderingContext.prototype.getParameter = function(parameter) {
-               if (parameter === 37445) { // UNMASKED_VENDOR_WEBGL
-                   return 'Intel Inc.';
-               }
-               if (parameter === 37446) { // UNMASKED_RENDERER_WEBGL
-                   return 'Intel Iris OpenGL Engine';
-               }
-               return getParameter(parameter);
-           };
-           """)
-
-        # Faking the Media Codecs
-        self.page.add_init_script("""
-           const canPlayType = HTMLMediaElement.prototype.canPlayType;
-           HTMLMediaElement.prototype.canPlayType = function(type) {
-               if (type === 'audio/mpeg') return 'probably';
-               if (type === 'audio/ogg') return 'probably';
-               if (type === 'video/mp4') return 'probably';
-               if (type === 'video/webm') return 'probably';
-               return '';
-           };
-           """)
-
-        # Faking the WebRTC IP leak protection
-        self.page.add_init_script("""
-           const getParameter = RTCPeerConnection.prototype.getParameters;
-           RTCPeerConnection.prototype.getParameters = function() {
-               return { iceServers: [] };
-           };
-           """)
-
-        # Faking the Hardware Concurrency
-        self.page.add_init_script("""
-           Object.defineProperty(navigator, 'hardwareConcurrency', {
-               get: () => 4
-           });
-           """)
-
-        self.page.add_init_script("""
-               // Intercept and modify the canvas fingerprinting attempt
-               HTMLCanvasElement.prototype.getContext = (function(original) {
-                   return function(type, attributes) {
-                       const context = original.call(this, type, attributes);
-                       if (type === "2d") {
-                           const originalGetImageData = context.getImageData;
-                           context.getImageData = function(x, y, width, height) {
-                               const imageData = originalGetImageData.call(this, x, y, width, height);
-                               for (let i = 0; i < imageData.data.length; i += 4) {
-                                   imageData.data[i] = imageData.data[i] ^ 255; // Invert color
-                               }
-                               return imageData;
-                           };
-                       }
-                       return context;
-                   };
-               })(HTMLCanvasElement.prototype.getContext);
-               """)
-
-        self.page.add_init_script("""
-                // Spoof the WebGL parameters for fingerprinting evasion
-                const getParameter = WebGLRenderingContext.prototype.getParameter;
-                WebGLRenderingContext.prototype.getParameter = function(parameter) {
-                    if (parameter === 37445) { // UNMASKED_VENDOR_WEBGL
-                        return "MyCustomVendor";
-                    }
-                    if (parameter === 37446) { // UNMASKED_RENDERER_WEBGL
-                        return "MyCustomRenderer";
-                    }
-                    return getParameter.call(this, parameter);
-                };
-                """)

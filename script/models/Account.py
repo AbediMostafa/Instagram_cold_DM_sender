@@ -4,26 +4,35 @@ import json
 from datetime import datetime, timedelta
 from .Proxy import Proxy
 from .Category import Category
+from .Profile import Profile
 from .Color import Color, get_next_color
+from .ScreenResolution import ScreenResolution, get_next_screen_resolution
 import random
+from dotenv import load_dotenv
+import os
+import requests
 
 
 class Account(BaseModel):
     proxy = ForeignKeyField(Proxy, backref='accounts', null=True)
     color = ForeignKeyField(Color, backref='accounts', null=True)
+    screen_resolution = ForeignKeyField(ScreenResolution, backref='accounts', null=True)
     category = ForeignKeyField(Category, backref='accounts', null=True)
+    profile = ForeignKeyField(Profile, backref='accounts', null=True)
 
     secret_key = CharField(null=True)
     username = CharField(unique=True)
     password = CharField()
     name = CharField(null=True)
     bio = TextField(null=True)
+    email = TextField(null=True)
     profile_pic_url = TextField(null=True)
     instagram_state = CharField(default='active')
     app_state = CharField(default='idle')
     avatar_changed = SmallIntegerField(default=0)
     username_changed = SmallIntegerField(default=0)
     initial_posts_deleted = SmallIntegerField(default=0)
+    has_enough_posts = SmallIntegerField(default=0)
     is_used = SmallIntegerField(default=0)
     is_active = SmallIntegerField(default=1)
     is_public = SmallIntegerField(default=0)
@@ -34,7 +43,28 @@ class Account(BaseModel):
     updated_at = DateTimeField(null=True)
     next_login = DateTimeField(null=True)
 
-    passed_days_since_creation = 0
+    # Possibilities
+    passed_days_since_creation = None
+    allowed_number_of_dms = None
+    allowed_number_of_dm_follow_ups = None
+    allowed_number_of_loom_follow_ups = None
+    todays_sent_dms = None
+
+    can_send_dm_today = None
+    can_send_dm_follow_up_today = None
+    can_send_loom_follow_up_today = None
+    number_of_custom_message_commands = None
+    custom_message_commands = None
+    current_chunk_dm = None
+
+    def delete_instance(self, *args, **kwargs):
+        from script.models.Taggable import Taggable
+
+        # Delete related Taggable records
+        Taggable.delete().where(Taggable.taggable_id == self.id,
+                                Taggable.taggable_type == 'App\\Models\\Account').execute()
+
+        super().delete_instance(*args, **kwargs)
 
     def set_state(self, state='suspended', _type='instagram_state', log=-1):
 
@@ -77,6 +107,11 @@ class Account(BaseModel):
         max_length = 200
         truncated_cause = (cause[:max_length]) if cause else ''
         truncated_path = (path[:max_length]) if path else ''
+
+        print('truncated_cause')
+        print(truncated_cause)
+        print('truncated_path')
+        print(truncated_path)
 
         ScreenShot.create(
             account=self,
@@ -132,7 +167,6 @@ class Account(BaseModel):
 
         return (Template.select().where(
             (Template.type == type) &
-            (Template.category == self.category) &
             ~(Template.id << (AccountTemplate
                               .select(AccountTemplate.template)
                               .join(Template)
@@ -171,19 +205,9 @@ class Account(BaseModel):
 
         self.passed_days_since_creation = (datetime.now() - self.created_at).days
 
-        self.passed_days_since_creation = 0 if self.passed_days_since_creation < 0 else self.passed_days_since_creation
+        self.passed_days_since_creation = 1 if self.passed_days_since_creation < 1 else self.passed_days_since_creation
 
-    def change_proxy(self):
-        from .AccountHelper import get_first_proxy_with_less_accounts
-
-        self.proxy = get_first_proxy_with_less_accounts(
-            [self.proxy.id]) if self.proxy else get_first_proxy_with_less_accounts()
-
-        if not self.proxy:
-            raise Exception('No Proxy left, try to add more')
-
-        self.save()
-        return self.proxy
+        return self.passed_days_since_creation
 
     def get_proxy(self):
         from .AccountHelper import get_first_proxy_with_less_accounts
@@ -206,7 +230,13 @@ class Account(BaseModel):
         try:
             import requests
             from script.extra.adapters.RequestAdapter import RequestAdapter
-            response = requests.get(RequestAdapter.bulkacc_api(self.secret_key))
+
+            proxy = {
+                'http': 'http://paichb:yNckWHb3@207.230.104.78:29842',
+                'https': 'http://paichb:yNckWHb3@207.230.104.78:29842',
+            }
+
+            response = requests.get(RequestAdapter.bulkacc_api(self.secret_key), proxies=proxy)
             return response.json()['data']['otp']
 
             time_remaining = 0
@@ -280,8 +310,15 @@ class Account(BaseModel):
 
         random_second = random.randint(1, 59)
         random_minute = random.randint(1, 59)
-        random_hour = random.randint(SettingAdapter.minimum_time_for_next_login(),
-                                     SettingAdapter.maximum_time_for_next_login())
+
+        min_hour_setting = SettingAdapter.minimum_time_for_next_login()
+        max_hour_setting = SettingAdapter.maximum_time_for_next_login()
+
+        min_hour = min_hour_setting if self.has_enough_posts else min_hour_setting + 5
+        max_hour = max_hour_setting if self.has_enough_posts else max_hour_setting + 5
+
+        # random_hour = random.randint(min_hour_setting, max_hour_setting)
+        random_hour = random.randint(min_hour, max_hour)
 
         time_delta = timedelta(seconds=random_second, minutes=random_minute, hours=random_hour)
         new_time = datetime.now() + time_delta
@@ -320,7 +357,7 @@ class Account(BaseModel):
                               .where(
             (Template.type == 'carousel') &
             (Template.color == self.get_color()) &
-            (Template.category == self.category) &
+            # (Template.category == self.category) &
             (~(Template.id << selected_templates_subquery))
         )
                               .order_by(fn.Random())
@@ -346,8 +383,7 @@ class Account(BaseModel):
         .where(
             (Template.type == 'video-post') &
             (Template.sub_type == 'video') &
-            (~(Template.id << selected_templates_subquery)) &
-            (Template.id.not_in([19525, 19526]))
+            (~(Template.id << selected_templates_subquery))
         )).first()
 
         if not video_template:
@@ -399,11 +435,48 @@ class Account(BaseModel):
         )
                 .exists())
 
+    def get_number_of_successful_posts(self):
+        from .Command import Command
+
+        return (Command
+                .select()
+                .where(
+            (Command.account == self) &
+            (Command.type.in_(['post image', 'post video', 'post carousel'])) &
+            (Command.state == 'success')
+        )
+                .count())
+
+    def get_latest_successful_command_time(self):
+        from .Command import Command
+
+        """
+        Get the latest successful post command (image, video, or carousel) post date in the format 'n hours ago'.
+        """
+        latest_command = (Command
+                          .select()
+                          .where(
+            (Command.account == self) &
+            (Command.type.in_(['post image', 'post video', 'post carousel'])) &
+            (Command.state == 'success')
+        )
+                          .order_by(Command.created_at.desc())
+                          .first())
+
+        if not latest_command:
+            return "No successful commands found"
+
+        time_difference = datetime.now() - latest_command.created_at
+        hours_ago = time_difference.total_seconds() // 3600
+
+        return f"{int(hours_ago)} hours ago"
+
     def determine_next_post_command(self):
         """
         Determine the next post command type based on the latest post commands.
         """
-        if self.sent_recent_post_command_within(random.randint(40, 50)):
+        if self.sent_recent_post_command_within(random.randint(24, 27)):
+            self.add_cli('We have sent a post recently')
             return None  # No post can be sent if one was sent
 
         # Fetch the latest three post commands
@@ -437,6 +510,185 @@ class Account(BaseModel):
 
         # Default action if none of the specific conditions match
         return 'post carousel'
+
+    def get_profile(self):
+        if self.profile:
+            return self.profile
+
+        self.assign_profile()
+
+        return self.profile
+
+    def assign_profile(self):
+
+        load_dotenv()
+
+        data = {
+            'username': os.getenv('API_USERNAME'),
+            'password': os.getenv('API_PASSWORD'),
+            'account_id': self.id,
+        }
+
+        response = requests.post(os.getenv('ASSIGN_PROFILE_TO_ACCOUNT_API_URL'), data=data)
+
+        return response.text
+
+    def has_tag(self, tag_title):
+        from script.models.Taggable import Taggable
+        from script.models.Tag import Tag
+
+        tag = Tag.select().where(Tag.title == tag_title).first()
+
+        return Taggable.select().where(
+            (Taggable.tag == tag) &
+            (Taggable.taggable_id == self.id) &
+            (Taggable.taggable_type == Taggable.get_taggable_class('Account'))
+        ).exists()
+
+    def tags(self, as_object=True):
+        from script.models.Taggable import Taggable
+        from script.models.Tag import Tag
+
+        # Get all tags associated with this account
+        tags = (Tag
+        .select()
+        .join(Taggable, on=(Taggable.tag == Tag.id))
+        .where(
+            (Taggable.taggable_id == self.id) &
+            (Taggable.taggable_type == Taggable.get_taggable_class('Account'))
+        ))
+
+        if as_object:
+            return tags
+
+        tag_titles = [tag.title for tag in tags]
+        tags = ", ".join(tag_titles)
+
+        # Join the titles into a single string separated by commas
+        return tags
+
+    def number_of_dm_strategy(self):
+        from script.extra.adapters.SettingAdapter import SettingAdapter
+
+        if self.passed_days_since_creation is None:
+            self.get_passed_days_since_creation()
+
+        max_dm = SettingAdapter.max_dm()
+        max_dm = random.randint(max_dm - 4, max_dm + 4)
+
+        self.allowed_number_of_dms = min(self.passed_days_since_creation, max_dm)
+
+        return self.allowed_number_of_dms
+
+    def get_sent_dms_within_passed_24hours(self):
+        from script.models.Command import performed_command_count
+
+        self.todays_sent_dms = performed_command_count(self, ['dm follow up'], 24)
+
+        return self.todays_sent_dms
+
+    def calculate_today_dms(self):
+        from script.extra.adapters.SettingAdapter import SettingAdapter
+
+        if self.allowed_number_of_dms is None:
+            self.number_of_dm_strategy()
+
+        if self.todays_sent_dms is None:
+            self.get_sent_dms_within_passed_24hours()
+
+        count = self.allowed_number_of_dms - self.todays_sent_dms
+        dm_chunk = SettingAdapter.dm_chunk()
+
+        final_allowed_number_of_dms = 0 if count < 1 else count
+
+        self.can_send_dm_today = True if final_allowed_number_of_dms > 0 else False
+
+        if self.can_send_dm_today:
+            if final_allowed_number_of_dms > dm_chunk:
+                lower_digit = 1 if (dm_chunk - 2) < 1 else dm_chunk - 2
+                higher_digit = dm_chunk + 3
+                self.current_chunk_dm = random.randint(lower_digit, higher_digit) if self.has_enough_posts else 1
+
+            else:
+                self.current_chunk_dm = final_allowed_number_of_dms if self.has_enough_posts else 1
+
+        return self
+
+    def get_number_of_dm_follow_ups(self):
+        from .Lead import Lead
+
+        forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
+
+        self.allowed_number_of_dm_follow_ups = Lead.select().where(
+            (Lead.last_state == 'dm follow up') &
+            (Lead.account == self) &
+            (Lead.times < 3) &
+            (Lead.last_command_send_date < forty_eight_hours_ago)
+        ).count()
+
+        self.can_send_dm_follow_up_today = True if self.allowed_number_of_dm_follow_ups > 0 else False
+
+        return self
+
+    def get_number_of_loom_follow_ups(self):
+        from .Lead import Lead
+        forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
+
+        self.allowed_number_of_loom_follow_ups = Lead.select().where(
+            (Lead.last_state == 'loom follow up') &
+            (Lead.account == self) &
+            (Lead.times < 11) &
+            (Lead.last_command_send_date < forty_eight_hours_ago)
+        ).count()
+
+        self.can_send_loom_follow_up_today = True if self.allowed_number_of_loom_follow_ups > 0 else False
+
+        return self
+
+    def get_custom_message_commands(self):
+        from .Command import Command
+        self.custom_message_commands = (Command.select()
+        .where(
+            (Command.account == self) &
+            (Command.type.in_(['send loom', 'custom message'])) &
+            (Command.state == 'pending')
+        ))
+
+        self.number_of_custom_message_commands = self.custom_message_commands.count()
+
+    def pick_a_resolution(self):
+        if not self.screen_resolution:
+            self.screen_resolution = get_next_screen_resolution()
+            self.save()
+
+    def get_exact_proxy(self):
+        load_dotenv()
+
+        base = os.getenv('SERVER_URL')
+        result = requests.post(base + '/account/get-proxy-api', {'id': self.id})
+
+        try:
+            return result.json()['host']
+
+        except Exception as e:
+            print(result.status_code)
+            print(result.text)
+
+    def update_proxy_to_residential(self):
+        load_dotenv()
+
+        base = os.getenv('SERVER_URL')
+        result = requests.post(base + '/account/change-profile-proxy-to-residential', {'id': self.id})
+
+        return result.text
+
+    def update_proxy_to_custom(self):
+        load_dotenv()
+
+        base = os.getenv('SERVER_URL')
+        result = requests.post(base + '/account/change-profile-proxy-to-custom-api', {'id': self.id})
+
+        return result.text
 
     class Meta:
         table_name = 'accounts'

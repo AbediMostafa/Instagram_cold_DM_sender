@@ -10,17 +10,19 @@ export const useTemplateStore = defineStore('TemplateStore', {
         return {
             checkedTemplateRows: [],
             templates: {
-                data: [],
+                data: {},
                 current_page: 1,
                 total: 0,
                 queryParams: {
                     tags: [],
                     category_id: '',
-                    types: [],
+                    type: 'username',
+                    color: 1,
                 },
-
+                receivedType:'username',
             },
             types: [],
+            colors: [],
             is: {
                 loading: false,
                 deleting: false,
@@ -41,7 +43,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 confirmButtonText: "Yes, delete it!"
             }).then((result) => {
                 if (result.isConfirmed) {
-                    ApiService.post('template/delete', {ids})
+                    ApiService.post('template/delete', {ids, receivedType:this.templates.receivedType})
                         .then(this.getTemplates)
                 }
             });
@@ -65,8 +67,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
             ApiService.post('templates', {page, ...this.templates.queryParams})
                 .then(response => {
                     this.templates.data = response.data.data
-                    this.templates.total = response.data.total
-                    this.templates.current_page = response.data.current_page
+                    this.templates.receivedType = response.data.type
                 })
                 .finally(() => {
                     this.checkedTemplateRows = [];
@@ -80,8 +81,12 @@ export const useTemplateStore = defineStore('TemplateStore', {
         },
 
         fetchTypes() {
-            ApiService.post('template/fetch-types', {})
+            return ApiService.post('template/fetch-types', {})
                 .then(response => this.types = response.data)
+        },
+        fetchColors() {
+            return ApiService.post('template/fetch-colors', {})
+                .then(response => this.colors = response.data)
         }
     }
 })

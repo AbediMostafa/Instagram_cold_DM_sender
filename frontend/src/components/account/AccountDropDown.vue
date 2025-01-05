@@ -13,18 +13,10 @@
         <el-dropdown-item @click="$emit('editClicked')">Edit</el-dropdown-item>
         <el-dropdown-item @click="store.deleteSelected([account?.id])">Delete</el-dropdown-item>
         <el-dropdown-item @click="store.deleteWarning([account?.id])">Delete Warning</el-dropdown-item>
-
-        <el-dropdown-item divided>
-          <a class="btn btn-light-danger btn-sm"
-             v-if="account?.is_active"
-             @click="store.changeProperty([account?.id], 'is_active',0, `${account.username} deactivated successfully`, ()=>store.getAccounts(store.accounts.current_page))"
-          >Deactivate</a>
-
-          <a class="btn btn-light-success btn-sm"
-             v-else
-             @click="store.changeProperty([account?.id], 'is_active',1, `${account.username} activated successfully`,()=> store.getAccounts(store.accounts.current_page))"
-          >Activate</a>
-        </el-dropdown-item>
+        <el-dropdown-item @click="store.makeActive([account?.id])">Make Active</el-dropdown-item>
+        <el-dropdown-item @click="store.clearNextLogin([account?.id])">Clear Next Login</el-dropdown-item>
+        <el-dropdown-item @click="store.clearProfile([account?.id])">Clear Profile</el-dropdown-item>
+        <el-dropdown-item @click="profileStore.assignProfiles([account?.id])">Assign Profile</el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -36,6 +28,7 @@ import {defineComponent} from "vue";
 import {useAccountStore} from "@/stores/Account";
 import AccountInstagramState from "@/components/account/AccountInstagramState.vue";
 import {showModal} from "@/core/helpers/modal";
+import {useProfileStore} from "@/stores/Profile";
 
 export default defineComponent({
   name: "account-drop-down",
@@ -45,7 +38,8 @@ export default defineComponent({
 
     return {
       showModal,
-      store: useAccountStore()
+      store: useAccountStore(),
+      profileStore:useProfileStore()
     }
 
   }

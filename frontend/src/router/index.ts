@@ -173,9 +173,19 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
+        path: "/profiles",
+        name: "profiles",
+        component: () => import("@/views/profile/Profiles.vue"),
+        meta: {
+          pageTitle: "Profiles",
+          breadcrumbs: ["Profiles"],
+        },
+      },
+
+      {
         path: "/templates",
         name: "templates",
-        component: () => import("@/views/template/Templates.vue"),
+        component: () => import("@/views/template/Temps.vue"),
         meta: {
           pageTitle: "Template",
           breadcrumbs: ["Template"],

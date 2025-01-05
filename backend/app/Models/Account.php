@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Classes\ProfileDelete;
+use App\Classes\ProfileUpdateProxy;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -134,6 +136,7 @@ class Account extends Model
                     'username' => $account[0],
                     'password' => $account[1],
                     'secret_key' => str_replace(' ', '', $account[2]),
+                    'email' => $account[3],
                     'created_at' => Carbon::now(),
                     'category_id' => request('category'),
                 ]);
@@ -154,5 +157,104 @@ class Account extends Model
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function profile()
+    {
+        return $this->belongsTo(Profile::class);
+    }
+
+    public function updateProfileProxyToResidential()
+    {
+        if ($this->profile) {
+            try {
+                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
+                $updateProxy->getProfile();
+                return $updateProxy->updateProxyToResidential();
+            } catch (\Exception $exception) {
+                return $exception->getMessage() . $exception->getTraceAsString();
+            }
+        }
+    }
+
+    public function updateProfileProxyFromResidentialToCustom()
+    {
+        if ($this->profile) {
+            sleep(5);
+            
+
+
+            try {
+                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
+                $updateProxy->getProfile();
+                return $updateProxy->updateProxyFromResidentialToCustom();
+
+            } catch (\Exception $exception) {
+                dump ($exception->getMessage() . $exception->getTraceAsString());
+            }
+        } else {
+            return "{$this->username} dont have profile";
+        }
+    }
+
+
+    public function updateProfileProxyToCustom(): void
+    {
+        if ($this->profile) {
+            try {
+                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
+                $updateProxy->getProfile()->updateProxyToCustom();
+            } catch (\Exception $exception) {
+                dump($exception->getMessage());
+                dump($this->username);
+            }
+        } else {
+            dump("{$this->username} dont have profile");
+        }
+    }
+
+    public function dumpProxy(): void
+    {
+        if ($this->profile) {
+            try {
+                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
+                $updateProxy->getProfile()->dumpProxy();
+            } catch (\Exception $exception) {
+                dump($exception->getMessage());
+                dump($this->username);
+
+            }
+        } else {
+            dump("{$this->username} dont have profile");
+        }
+    }
+
+    public function getProxy()
+    {
+        if($this->profile) {
+            try {
+                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
+                return $updateProxy->getProfile()->getProxy();
+            } catch (\Exception $exception) {
+                return $exception->getMessage() . $exception->getTraceAsString();
+            }
+        }
+        return 'Account dont have profile';
+    }
+
+
+    public function makeActive()
+    {
+        $this->warnings()->delete();
+        $this->instagram_state = 'active';
+        $this->next_login = null;
+        $this->save();
+    }
+
+    public static function getActive()
+    {
+        return Account::query()
+            ->where('instagram_state', 'active')
+            ->get();
     }
 }

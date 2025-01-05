@@ -1,8 +1,7 @@
-
-import { defineStore } from "pinia";
+import {defineStore} from "pinia";
 import ApiService from "@/core/services/ApiService";
-import { ref } from "vue";
-import { hideModal } from "@/core/helpers/modal";
+import {ref} from "vue";
+import {hideModal} from "@/core/helpers/modal";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 
 export const useProxyStore = defineStore('ProxyStore', {
@@ -14,6 +13,7 @@ export const useProxyStore = defineStore('ProxyStore', {
                 current_page: 1,
                 total: 0
             },
+            proxiesData: [],
             is: {
                 loading: false,
                 deleting: false,
@@ -34,7 +34,7 @@ export const useProxyStore = defineStore('ProxyStore', {
             }).then((result) => {
 // Read more about isConfirmed, isDenied below
                 if (result.isConfirmed) {
-                    ApiService.post('proxy/delete', { ids })
+                    ApiService.post('proxy/delete', {ids})
                         .then(this.getProxies)
                 }
             });
@@ -56,7 +56,7 @@ export const useProxyStore = defineStore('ProxyStore', {
             if (withLoading)
                 this.is.loading = true;
 
-            ApiService.post('proxies', { page })
+            ApiService.post('proxies', {page})
                 .then(response => {
                     this.proxies.data = response.data.data
                     this.proxies.total = response.data.total
@@ -71,5 +71,9 @@ export const useProxyStore = defineStore('ProxyStore', {
             this.checkedProxyRows = e.target.checked ?
                 this.proxies.data.map(proxy => proxy.id) : []
         },
+        fetchProxies() {
+            ApiService.post("proxies/fetch-proxies", {})
+                .then(response => this.proxiesData = response.data)
+        }
     }
 })

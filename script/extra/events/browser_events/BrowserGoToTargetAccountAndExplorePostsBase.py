@@ -53,7 +53,7 @@ class BrowserGoToTargetAccountAndExplorePostsBase(InstagramMiddleware):
             self.ig.page.get_by_role("link", name="Search Search").click()
             self.ig.account.add_cli('search clicked')
         except:
-            self.ig.account.add_cli('Search SEarch doesnt existss')
+            self.ig.account.add_cli('Search doesnt existss')
             self.ig.page.locator(
                 'span[aria-describedby=":ri:"] x9f619.x3nfvp2.xr9ek0c.xjpr12u.xo237n4.x6pnmvc.x7nr27j.x12dmmrz.xz9dl7a.xn6708d.xsag5q8.x1ye3gou.x80pfx3.x159b3zp.x1dn74xm.xif99yt.x172qv1o.x10djquj.x1lhsz42.xzauu7c.xdoji71').click(
                 timeout=3000)
@@ -97,7 +97,7 @@ class BrowserGoToTargetAccountAndExplorePostsBase(InstagramMiddleware):
         self.ig.pause(4000, 5000)
 
     def click_on_first_post(self):
-        elem = 'div.x1lliihq.x1n2onr6.xh8yej3.x4gyw5p.xfllauq.xo2y696.x11i5rnm.x2pgyrj a'
+        elem = 'div.x1lliihq.x1n2onr6.xh8yej3.x4gyw5p.x11i5rnm.x2pgyrj a'
         elem_1 = 'div.x1lliihq.x1n2onr6.xh8yej3.x4gyw5p.xfllauq a.x1i10hfl.xjbqb8w.x1ejq31n.xd10rxx.x1sy0etr.x17r0tee.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x11i5rnm.xat24cr'
 
         try:

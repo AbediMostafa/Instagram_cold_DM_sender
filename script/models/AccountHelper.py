@@ -3,9 +3,10 @@ from .Color import Color
 from peewee import fn, JOIN
 
 
-def free_account_query(tag_titles=None):
+def free_account_query(tag_titles=None, specific_ids=None):
     from .Tag import Tag
     from .Taggable import Taggable
+    from script.models.Profile import Profile
 
     """
     Query to select accounts that are not used and are active.
@@ -16,6 +17,19 @@ def free_account_query(tag_titles=None):
         (Account.is_used == 0) &
         (Account.is_active == 1)
     )
+
+    # query = (Account
+    # .select()
+    # .join(Profile, on=(Account.profile == Profile.id))  # Ensure the account has a profile
+    # .where(
+    #     (Account.is_used == 0) &  # Only unused accounts
+    #     # (Account.is_active == 1) &  # Only active accounts
+    #     (Profile.id.is_null(False))  # Ensure the profile exists
+    # ))
+
+    # If specific IPs are provided, filter accounts based on IPs
+    if specific_ids:
+        query = query.where(Account.id.in_(specific_ids))
 
     # If tag titles are provided, filter accounts based on tags
     if tag_titles:
@@ -31,13 +45,13 @@ def free_account_query(tag_titles=None):
     return query
 
 
-def get_next_account(tag_titles=None):
+def get_next_account(tag_titles=None, specific_ids=None):
     """
     Select the next free account, optionally filtered by tags.
     """
     print('Selecting account ...')
 
-    query = free_account_query(tag_titles)
+    query = free_account_query(tag_titles, specific_ids)
 
     # Refresh accounts if no free accounts exist
     if not query.exists():
@@ -55,6 +69,50 @@ def get_next_account(tag_titles=None):
         print(f'Selected account : {next_account.username}')
 
     return next_account
+
+
+def get_next_profile():
+    from .Profile import Profile
+
+    query = Profile.select().where((Profile.is_used == 0))
+
+    if not query.exists():
+        Profile.update(is_used=False).execute()
+
+    next_profile = (query
+                    .order_by(Profile.id)
+                    .first())
+
+    # Set the next account's is_used to True
+    if next_profile:
+        next_profile.is_used = True
+        next_profile.save()
+
+    print(f'selected profile {next_profile.id}')
+
+    return next_profile
+
+
+def get_next_proxy():
+    from .Proxy import Proxy
+
+    query = Proxy.select().where((Proxy.is_used == 0))
+
+    if not query.exists():
+        Proxy.update(is_used=False).execute()
+
+    next_proxy = (query
+                  .order_by(Proxy.id)
+                  .first())
+
+    # Set the next account's is_used to True
+    if next_proxy:
+        next_proxy.is_used = True
+        next_proxy.save()
+
+    print(f'selected Proxy {next_proxy.id}')
+
+    return next_proxy
 
 
 def get_first_proxy_with_less_accounts(exception_proxy_ids=None):

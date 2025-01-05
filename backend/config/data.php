@@ -7,11 +7,12 @@ return [
             'leads' => 50,
             'looms' => 50,
             'messages' => 10,
-            'templates' => 20,
+            'templates' => 400,
             'proxies' => 20,
             'spintaxes' => 20,
             'daily_dm_statistics' => 15,
             'categories' => 15,
+            'profiles' => 15,
         ]
     ],
     'template' => [

@@ -44,11 +44,13 @@ class BrowserDeleteInitialPostsEvent(InstagramMiddleware):
     def change_hook(self):
 
         posts = self.ig.page.locator(
-            'div._ac7v.xras4av.xgc1b0m.xat24cr.xzboxd6 > div.x1lliihq.x1n2onr6.xh8yej3.x4gyw5p.xfllauq.xo2y696.x11i5rnm.x2pgyrj')
+            'div._ac7v.x1f01sob.xcghwft.xat24cr.xzboxd6 > div.x1lliihq.x1n2onr6.xh8yej3.x4gyw5p.x1ntc13c.x9i3mqj.x11i5rnm.x2pgyrj')
 
         self.ig.account.add_cli(f'There are {posts.count()} initial posts')
 
-        for post in posts.all():
+        for _ in range(posts.count()):
+
+            post = posts.first
             post.locator('a').click()
             self.ig.pause(2000, 3000)
             self.ig.page.locator('div[role="button"]:has(svg[aria-label="More options"])').click()
@@ -56,7 +58,7 @@ class BrowserDeleteInitialPostsEvent(InstagramMiddleware):
             self.ig.page.locator('button:has-text("Delete")').click()
             self.ig.pause(2000, 3000)
             self.ig.page.locator('button:has-text("Delete")').click()
-            self.ig.pause(3000, 4500)
+            self.ig.pause(6000, 7500)
 
 
     def after_change_hook(self):

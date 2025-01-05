@@ -13,8 +13,8 @@ class BrowserLoomFollowUpEvent(InstagramMiddleware):
     base = None
 
     def execute(self):
-        self.base = BrowserBaseEvent(self.ig)
         self.base.go_to_threads()
+        self.ig.turn_on_notif()
         self.init()
 
     def init(self):
@@ -33,7 +33,7 @@ class BrowserLoomFollowUpEvent(InstagramMiddleware):
         for lead in self.leads:
             self.ig.account.add_cli(f"Sending Dm follow up to : {lead.username}")
             self.send_dm(lead)
-            self.ig.pause(30000, 50000)
+            self.ig.pause(8000, 12000)
 
     def send_dm(self, lead):
 
@@ -41,7 +41,7 @@ class BrowserLoomFollowUpEvent(InstagramMiddleware):
             times = lead.times + 1
             self.command = self.ig.account.create_command('loom follow up', 'processing', lead, times)
 
-            self.send_direct(lead)
+            self.base.send_direct(lead, direct_url_id=get_url_id(lead, self.ig.account))
             self.ig.account.add_direct_url_id(lead.dm_text, lead)
 
             lead.change_state(self.ig.account, 'loom follow up', add_history=True, times=times, update_date=True)
@@ -49,21 +49,10 @@ class BrowserLoomFollowUpEvent(InstagramMiddleware):
 
         except Exception as e:
             self.ig.account.add_cli(f"Failed to send Loom follow up : {str(e)}")
-            lead.change_state(self.ig.account, 'failed loom dm', add_history=True, update_date=True)
+            # lead.change_state(self.ig.account, 'failed loom dm', add_history=True, update_date=True)
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
-    def send_direct(self, lead):
-        self.url_id = get_url_id(lead, self.ig.account)
-
-        if not self.url_id:
-            raise Exception("Thread dont have url_id")
-
-        self.ig.page.goto(f'https://www.instagram.com/direct/t/{self.url_id}/')
-
-        self.ig.pause(4000, 4500)
-        self.ig.page.get_by_label("Message", exact=True).fill(lead.dm_text)
-        self.ig.pause(3000, 5000)
-        self.ig.page.get_by_role("button", name="Send", exact=True).click()
-        self.ig.pause(3000, 5000)
+            if str(e) == "Something went wrong":
+                raise Exception(str(e))

@@ -14,7 +14,7 @@ class DmFollowUp:
         self.account = account
         self.chunk_dm = SettingAdapter.dm_chunk()
 
-    def leads_to_send_dm_follow_ups(self):
+    def leads_to_send_dm_follow_ups(self, cnt):
         forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
 
         leads = Lead.select().where(
@@ -22,7 +22,7 @@ class DmFollowUp:
             (Lead.account == self.account) &
             (Lead.times < 3) &
             (Lead.last_command_send_date < forty_eight_hours_ago)
-        ).limit(random.randint(15, 20))
+        ).limit(cnt)
 
         self.account.add_cli(f'We have {len(leads)} leads for follow up')
 

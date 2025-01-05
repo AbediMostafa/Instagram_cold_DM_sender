@@ -33,17 +33,16 @@ class CommandController extends Controller
                     ->create([
                         'account_id' => $message->thread->account_id,
                         'lead_id' => $message->thread->lead_id,
-                        'type' => r('sendLoom') ? 'loom follow up' : 'custom message',
+                        'type' => r('sendLoom') ? 'send loom' : 'custom message',
                         'state' => 'pending',
                     ]);
 
-                r('sendLoom') &&
-                Lead::find($message->thread->lead_id)
-                    ->startLoomFollowUp()
-                    ->createHistory('loom follow up');
-
-
-                DB::afterCommit(fn() => runPythonProcess('send_custom_message.py', $command->id));
+//                r('sendLoom') &&
+//                Lead::find($message->thread->lead_id)
+//                    ->startLoomFollowUp()
+//                    ->createHistory('loom follow up');
+//
+//                DB::afterCommit(fn() => runPythonProcess('send_custom_message.py', $command->id));
 
                 return jsonSuccess('Message sent successfully');
             });
@@ -52,7 +51,6 @@ class CommandController extends Controller
 
             return jsonError($e->getMessage());
         }
-
     }
 
     public function createCustomMessage()
@@ -71,16 +69,12 @@ class CommandController extends Controller
                     ->create([
                         'account_id' => r('account_id'),
                         'lead_id' => r('lead_id'),
-                        'type' => r('sendLoom') ? 'loom follow up' : 'custom message',
+                        'type' => r('sendLoom') ? 'send loom' : 'custom message',
                         'state' => 'pending',
                     ]);
 
-                r('sendLoom') &&
-                Lead::find(r('lead_id'))
-                    ->startLoomFollowUp()
-                    ->createHistory('loom follow up');
+                return jsonSuccess(r('sendLoom')? 'Loom sent successfully' : 'Message sent successfully');
 
-                DB::afterCommit(fn() => runPythonProcess('send_custom_message.py', $command->id));
             });
         } catch (\Exception $e) {
 

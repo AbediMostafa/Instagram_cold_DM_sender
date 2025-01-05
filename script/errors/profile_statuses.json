@@ -1,0 +1,32 @@
+{
+  "0fc2edc7-ff80-4625-b3e8-b62758d53932": {
+    "message": "63803",
+    "status": "stopped",
+    "timestamp": 1730474593403
+  },
+  "11c70108-0e30-472a-bb44-0ace2c2a47b8": {
+    "message": "",
+    "status": "download_meta_error",
+    "timestamp": 1730284224441
+  },
+  "1922fef0-6810-4161-9420-565edf7f8447": {
+    "message": "",
+    "status": "download_meta_error",
+    "timestamp": 1730261911347
+  },
+  "3276cc6 5-fc9b-45e2-acd6-24e6ab013a78": {
+    "message": "49912",
+    "status": "stopped",
+    "timestamp": 1730262212955
+  },
+  "dae8ec11-1d88-4cf2-ac39-bbb4a624eb1b": {
+    "message": "",
+    "status": "download,_meta_error",
+    "timestamp": 1730261912151
+  },
+  "mimic_130.2": {
+    "message": "",
+    "status": "download_core_finished",
+    "timestamp": 1730261945974
+  }
+}

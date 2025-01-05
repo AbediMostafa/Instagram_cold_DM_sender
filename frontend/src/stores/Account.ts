@@ -3,6 +3,9 @@ import ApiService from "@/core/services/ApiService";
 import {ref} from "vue";
 import {hideModal} from "@/core/helpers/modal";
 import Swal from "sweetalert2/dist/sweetalert2.js";
+import {ElMessage} from "element-plus";
+import {copyToClipboard} from "@/core/helpers/helper";
+import {warningPromise} from "@/core/helpers/helper";
 
 export const useAccountStore = defineStore("AccountStore", {
     state() {
@@ -15,11 +18,13 @@ export const useAccountStore = defineStore("AccountStore", {
                 filters: [],
                 search: '',
                 dateRange: '',
-                sortBy:  'total_cold_dms',
+                sortBy: 'total_cold_dms',
                 sortDesc: true,
-                category_id:'',
-                tags:[],
+                category_id: '',
+                type:'',
+                tags: [],
             },
+            accountsData: [],
             accountStates: [
                 {value: "Active", label: "active"},
                 {value: "Suspended", label: "suspended"},
@@ -35,29 +40,8 @@ export const useAccountStore = defineStore("AccountStore", {
     actions: {
         deleteSelected(ids) {
             this.warnIfdosntSelected(ids) &&
-            Swal.fire({
-                title: "Are you sure you want to delete selected account(s)?",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, delete it!",
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    ApiService.post("account/delete", {ids}).then(this.getAccounts);
-                }
-            });
-        },
-
-        changeProperty(ids, key, value, msg, handler) {
-            this.warnIfdosntSelected(ids) &&
-            ApiService.post("account/change-property", {
-                ids,
-                key,
-                value,
-                msg,
-            }).then(handler);
+            warningPromise("Are you sure you want to delete selected account(s)?")
+                .then(() => ApiService.post("account/delete", {ids}).then(this.getAccounts))
         },
         warnIfdosntSelected(selected) {
             if (selected.length) return true;
@@ -69,7 +53,6 @@ export const useAccountStore = defineStore("AccountStore", {
 
             return false;
         },
-
         getAccounts(page = 1, withLoading = true) {
 
             if (withLoading) this.is.loading = true;
@@ -80,6 +63,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 page,
                 filter: this.accounts.filters,
                 search: this.accounts.search,
+                type: this.accounts.type,
                 dateRange: this.accounts.dateRange,
                 sortBy: this.accounts.sortBy,
                 sortDesc: this.accounts.sortDesc,
@@ -95,7 +79,6 @@ export const useAccountStore = defineStore("AccountStore", {
                     this.is.loading = false;
                 });
         },
-
         checkRows(e) {
             this.checkedAccountRows = e.target.checked
                 ? this.accounts.data.map((account) => account.id)
@@ -110,17 +93,10 @@ export const useAccountStore = defineStore("AccountStore", {
             }
             this.getAccounts(this.accounts.current_page);
         },
-
-        clearSort() {
-            this.accounts.sortBy = 'total_cold_dms';
-            this.accounts.sortDesc = true;
-            this.getAccounts(this.accounts.current_page);
-        },
-
-        setCategory(){
+        setCategory() {
             const data = {
-                categoryId:this.accounts.category_id,
-                accountIds :this.checkedAccountRows
+                categoryId: this.accounts.category_id,
+                accountIds: this.checkedAccountRows
             }
 
             this.warnIfdosntSelected(this.checkedAccountRows) &&
@@ -128,10 +104,45 @@ export const useAccountStore = defineStore("AccountStore", {
                 .then(this.getAccounts);
 
         },
-
-        deleteWarning(ids){
+        deleteWarning(ids) {
             ApiService.post('account/delete-warning', {ids})
                 .then(this.getAccounts);
+
+        },
+        makeActive(ids) {
+            ApiService.post('account/make-active', {ids})
+                .then(this.getAccounts);
+
+        },
+        clearNextLogin(ids) {
+            ApiService.post('account/clear-next-login', {ids})
+                .then(this.getAccounts);
+
+        },
+        clearProfile(ids) {
+            ApiService.post('account/clear-profile', {ids})
+                .then(this.getAccounts);
+
+        },
+        fetchAccounts(q) {
+            ApiService.post("accounts/fetch-accounts", {q})
+                .then(response => this.accountsData = response.data)
+        },
+        fetchOtpAndCopy(secretKey) {
+
+            ApiService.post("accounts/get-2fa-code", {secretKey})
+                .then(response => {
+                    copyToClipboard(response.data)
+                })
+                .catch(error => {
+                    ElMessage.error('Failed to fetch OTP:', error);
+                })
+        },
+
+        changeProfileProxy(ids){
+            const accountType = ids.length ? 'selected accounts':'challenging accounts'
+            warningPromise(`Are you sure you want to change ${accountType} profile proxy?`)
+                .then(() => ApiService.post("account/change-profile-proxy-to-custom", {ids}))
 
         }
     },

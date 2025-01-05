@@ -23,9 +23,12 @@ from script.extra.events.browser_events.BrowserLoomFollowUpEvent import BrowserL
 from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
+from script.extra.events.browser_events.BrowserSendCustomMessage import BrowserSendCustomMessage
 from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
+from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
+from script.extra.events.browser_events.BrowserSeeStories import BrowserSeeStories
 from script.extra.events.browser_events.BrowserGoToTargetAccountAndExplorePosts import \
     BrowserGoToTargetAccountAndExplorePosts
 
@@ -45,12 +48,10 @@ class HowManyEventsCanHandleStrategy:
         self.account = account
         self.browser_ig = browser_ig
         self.api_ig = api_ig
-        self.account.get_passed_days_since_creation()
-        self.account.add_cli(f'We are at the {self.account.passed_days_since_creation} day of account creation')
 
     def run(self):
 
-        self.post_hook()
+        self.pre_action_hook()
 
         """
         Sometimes, we have newly imported accounts with many actions to perform,
@@ -66,10 +67,17 @@ class HowManyEventsCanHandleStrategy:
             2: self.third_day_strategy,
             3: self.fourth_day_strategy,
             4: self.fifth_day_strategy,
-            5: self.more_than_five_days_strategy,
+            5: self.sixth_day_strategy,
+            6: self.seventh_day_strategy,
+            7: self.eighth_day_strategy,
+            8: self.ninth_day_strategy,
+            9: self.tenth_day_strategy,
+            10: self.eleventh_day_strategy,
+            11: self.other_days_strategy,
         }
 
-        offset = 5 if self.account.passed_days_since_creation > 5 else self.account.passed_days_since_creation
+        offset = 11 if self.account.passed_days_since_creation > 11 else self.account.passed_days_since_creation
+
         strategies[offset]()
         random.shuffle(self.events)
 
@@ -77,9 +85,16 @@ class HowManyEventsCanHandleStrategy:
             self.browser_ig.pause(1000, 3000)
             event.fire()
 
-    def post_hook(self):
+        self.post_action_hook()
+
+    def pre_action_hook(self):
+        BrowserSendCustomMessage(self.browser_ig).fire()
         BrowserGetThreadMessagesEvent(self.browser_ig).fire()
-        # self.post_a_media()
+
+    def post_action_hook(self):
+        if not self.account.has_enough_posts and self.account.initial_posts_deleted:
+            self.account.add_cli('We can post now')
+            self.post_a_media()
 
     def post_a_media(self):
         next_command = self.account.determine_next_post_command()
@@ -90,107 +105,140 @@ class HowManyEventsCanHandleStrategy:
 
         elif next_command == 'post video':
             self.account.add_cli('We should post video')
-            PostVideoEvent(self.account).fire()
+            BrowserPostVideoEvent(self.browser_ig).fire()
 
         elif next_command == 'post image':
             self.account.add_cli('We should post image')
             BrowserPostImageEvent(self.browser_ig).fire()
 
-    def first_day_strategy(self):
-        self.account.add_cli('running first day strategy')
-
-        self.events = [
-            BrowserMakeAccountPublic(self.browser_ig),
-            BrowserDeleteInitialPostsEvent(self.browser_ig),
-
-            BrowserGotoExploreEvent(self.browser_ig),
+    def select_random_explore_action(self):
+        # Define a list of random actions to choose from each day
+        random_actions = [
             BrowserScrollAndLikeEvent(self.browser_ig),
-        ]
-
-    def second_day_strategy(self):
-        self.account.add_cli('running second day strategy')
-
-        self.events = [
-            BrowserMakeAccountPublic(self.browser_ig),
-            BrowserDeleteInitialPostsEvent(self.browser_ig),
-            BrowserChangeUsernameEvent(self.browser_ig),
-
             BrowserGotoExploreEvent(self.browser_ig),
-            BrowserScrollAndLikeEvent(self.browser_ig),
-        ]
-
-    def third_day_strategy(self):
-        self.account.add_cli('running third day strategy')
-
-        self.events = [
-            BrowserMakeAccountPublic(self.browser_ig),
-            BrowserDeleteInitialPostsEvent(self.browser_ig),
-            BrowserChangeUsernameEvent(self.browser_ig),
-            BrowserChangeAvatarEvent(self.browser_ig),
-
-            BrowserGotoExploreEvent(self.browser_ig),
-            BrowserScrollAndLikeEvent(self.browser_ig),
-        ]
-
-    def fourth_day_strategy(self):
-        self.account.add_cli('running fourth day strategy')
-        self.events = [
-            BrowserMakeAccountPublic(self.browser_ig),
-            BrowserDeleteInitialPostsEvent(self.browser_ig),
-            BrowserChangeUsernameEvent(self.browser_ig),
-            BrowserChangeAvatarEvent(self.browser_ig),
-            BrowserChangeBioEvent(self.browser_ig),
-
-            BrowserGotoExploreEvent(self.browser_ig),
-            BrowserScrollAndLikeEvent(self.browser_ig),
-        ]
-
-    def fifth_day_strategy(self):
-        self.account.add_cli('running fifth day strategy')
-
-        self.events = [
-            BrowserMakeAccountPublic(self.browser_ig),
-            BrowserDeleteInitialPostsEvent(self.browser_ig),
-            BrowserChangeUsernameEvent(self.browser_ig),
-            BrowserChangeAvatarEvent(self.browser_ig),
-            BrowserChangeBioEvent(self.browser_ig),
-            BrowserChangeNameEvent(self.browser_ig),
-
-            BrowserGotoExploreEvent(self.browser_ig),
-            BrowserScrollAndLikeEvent(self.browser_ig),
-        ]
-
-    def more_than_five_days_strategy(self):
-        self.account.add_cli('running more than five days strategy')
-
-        self.events = [
-            BrowserDeleteInitialPostsEvent(self.browser_ig),
-            BrowserChangeUsernameEvent(self.browser_ig),
-            BrowserChangeAvatarEvent(self.browser_ig),
-            BrowserChangeBioEvent(self.browser_ig),
-            BrowserChangeNameEvent(self.browser_ig),
-            BrowserGotoExploreEvent(self.browser_ig),
-            BrowserScrollAndLikeEvent(self.browser_ig),
-            BrowserLoomFollowUpEvent(self.browser_ig),
-
+            BrowserSeeStories(self.browser_ig),
             # BrowserGoToTargetAccountAndExplorePosts(self.browser_ig, user_type='lead',
             #                                         user_numbers=random.randint(1, 4),
             #                                         post_numbers=random.randint(1, 4),
             #                                         load_more_comments_number=5, scroll_before_click=True,
             #                                         number_of_scrolls=random.randint(6, 10)),
-            # # #
             # BrowserGoToTargetAccountAndExplorePosts(self.browser_ig, user_type='account',
             #                                         user_numbers=random.randint(1, 3),
             #                                         post_numbers=random.randint(1, 5),
             #                                         load_more_comments_number=5, scroll_before_click=True,
             #                                         number_of_scrolls=random.randint(2, 7)),
-
             # BrowserGoToTargetAccountAndExplorePosts(self.browser_ig, user_type='random_user',
             #                                         user_numbers=random.randint(1, 3),
             #                                         post_numbers=random.randint(1, 5),
             #                                         load_more_comments_number=5, scroll_before_click=True,
             #                                         number_of_scrolls=random.randint(2, 7)),
+        ]
+        # Randomly choose one action from the list
+        return random.choice(random_actions)
+
+    def first_day_strategy(self):
+        self.account.add_cli('running first day strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
+
+    def second_day_strategy(self):
+        self.account.add_cli('running second day strategy')
+        self.events = [self.select_random_explore_action()]
+
+    def third_day_strategy(self):
+        self.account.add_cli('running third day strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
+
+    def fourth_day_strategy(self):
+        self.account.add_cli('running fourth day strategy')
+        self.events = [self.select_random_explore_action()]
+
+    def fifth_day_strategy(self):
+        self.account.add_cli('running fifth day strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
+
+    def sixth_day_strategy(self):
+        self.account.add_cli('running sixth day strategy')
+        self.events = [self.select_random_explore_action()]
+
+    def seventh_day_strategy(self):
+        self.account.add_cli('running seventh day strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
+
+    def eighth_day_strategy(self):
+        self.account.add_cli('running eighth day strategy')
+        self.events = [self.select_random_explore_action()]
+
+    def ninth_day_strategy(self):
+        self.account.add_cli('running ninth day strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+            BrowserChangeBioEvent(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
+
+    def tenth_day_strategy(self):
+        self.account.add_cli('running tenth day strategy')
+        self.events = [self.select_random_explore_action()]
+
+    def eleventh_day_strategy(self):
+        self.account.add_cli('running eleventh day strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+            BrowserChangeBioEvent(self.browser_ig),
+            BrowserChangeNameEvent(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
+
+    def other_days_strategy(self):
+        self.account.add_cli('running more than five days strategy')
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+            BrowserChangeBioEvent(self.browser_ig),
+            BrowserChangeNameEvent(self.browser_ig),
 
             BrowserSendDmEvent(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
         ]
+
+        self.events = required_actions + [self.select_random_explore_action()]

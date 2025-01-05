@@ -54,24 +54,12 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
         self.command = self.ig.account.create_command('set avatar', 'processing')
 
     def change_hook(self):
-        self.base.go_to_profile_page()
-        self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click()
-        self.ig.page.locator('a[aria-label="Profile picture"]').click()
-        self.ig.pause(3000, 4500)
-
-        self.ig.account.add_cli(
-            f"We selected : {self.template.text} avatar for the : {self.ig.account.username}")
-
-        self.ig.page.locator("input[accept='image/png,image/jpg,image/heif,image/heic']").nth(0).set_input_files(
-            self.image_path)
+        self.ig.page.goto('https://www.instagram.com/accounts/edit/')
         self.ig.pause(4000, 5000)
 
-        try:
-            self.ig.page.locator(f"button[name='Save']").click(timeout=3000)
-        except:
-            self.ig.page.locator('div[role="button"] span:text("Save")').first.click(force=True)
-
-        self.ig.pause(15000, 17000)
+        self.ig.page.locator("input[accept='image/jpeg,image/png']").nth(0).set_input_files(
+            self.image_path)
+        self.ig.pause(8000, 9000)
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')

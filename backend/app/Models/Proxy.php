@@ -22,6 +22,11 @@ class Proxy extends Model
         return $this->hasMany(Account::class);
     }
 
+    public function profiles()
+    {
+        return $this->hasMany(Profile::class);
+    }
+
     public static function createBulk()
     {
         $lines = explode("\n", request('proxies'));
@@ -63,5 +68,21 @@ class Proxy extends Model
             'username' => request('username'),
             'password' => request('password'),
         ]);
+    }
+
+    public static function getWithFewestProfiles()
+    {
+        return Proxy::query()
+            ->withCount('profiles')
+            ->orderBy('profiles_count', 'asc')
+            ->first();
+    }
+
+    public static function getWithFewestAccounts()
+    {
+        return Proxy::query()
+            ->withCount('accounts')
+            ->orderBy('accounts_count', 'asc')
+            ->first();
     }
 }

@@ -8,6 +8,8 @@ class Proxy(BaseModel):
     username = CharField()
     password = CharField()
     state = CharField()
+    is_used = SmallIntegerField(default=0)
+
 
     def deactivate(self):
         self.state = 'inactive'

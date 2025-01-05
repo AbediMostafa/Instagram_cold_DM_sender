@@ -35,7 +35,7 @@
       </div>
     </div>
     <div class="menu-item ">
-      <div class="menu-content px-3 fill-flex d-flex align-items-center">
+      <div class="px-3 fill-flex d-flex align-items-center">
         <a
             class="btn btn-light-danger btn-sm px-4"
             @click="store.deleteSelected(store.checkedAccountRows)"> Delete Selected </a>
@@ -45,13 +45,9 @@
       <div class="menu-content px-3 fill-flex d-flex align-items-center">
         <a
             class="btn btn-light-success btn-sm px-4 me-2"
-            @click="store.changeProperty(store.checkedAccountRows, 'is_active', 1, `Selected Accounts activated successfully`,store.getAccounts)">
-          Activate Selected
+            @click="store.changeProfileProxy(store.checkedAccountRows)">
+            Change Profile Proxy
         </a>
-        <a
-            class="btn btn-light-danger btn-sm px-4"
-            @click="store.changeProperty(store.checkedAccountRows, 'is_active', 0, `Selected Accounts deactivated successfully`,store.getAccounts)"
-        > Deactivate Selected </a>
       </div>
     </div>
     <div class="menu-item ">

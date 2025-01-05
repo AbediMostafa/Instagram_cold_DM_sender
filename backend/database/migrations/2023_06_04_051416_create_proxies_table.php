@@ -13,7 +13,7 @@ return new class extends Migration {
     {
         Schema::create('proxies', function (Blueprint $table) {
             $table->id();
-            $table->ipAddress('ip');
+            $table->string('ip');
             $table->integer('port');
             $table->string('username');
             $table->string('password');

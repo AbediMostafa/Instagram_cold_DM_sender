@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'secure' => true,
+    'secure' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -214,5 +214,5 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
-    'same_site' => 'none',
+    'same_site' => 'lax',
 ];

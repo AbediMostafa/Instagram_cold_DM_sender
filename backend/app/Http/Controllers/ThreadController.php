@@ -107,7 +107,7 @@ class ThreadController extends Controller
                 fn($_) => $_->where('category_id', r('search.category_id'))
             )
             ->groupBy('threads.id')
-            ->orderByRaw('latest_unseen_message_created_at DESC')
+            ->orderByRaw('latest_unseen_message_created_at DESC NULLS LAST')
             ->paginate(10);
     }
 

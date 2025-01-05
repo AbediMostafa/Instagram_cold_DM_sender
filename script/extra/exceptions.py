@@ -14,6 +14,14 @@ class AccountDisabledError(Exception):
     pass
 
 
+class AppealSubmittedError(Exception):
+    pass
+
+
+class UploadYourIdError(Exception):
+    pass
+
+
 class ProblemLogingYouError(Exception):
     pass
 
@@ -51,4 +59,8 @@ class FeedbackRequired(Exception):
 
 
 class EnterYourMobileError(Exception):
+    pass
+
+
+class SomethingWentWrong(Exception):
     pass

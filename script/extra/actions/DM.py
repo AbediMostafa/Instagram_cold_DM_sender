@@ -49,7 +49,7 @@ class DM:
 
         if self.can_send_dm_today:
             if self.can_send_dm_today > dm_chunk:
-                lower_digit = 1 if (dm_chunk - 4) < 1 else dm_chunk - 4
+                lower_digit = 1 if (dm_chunk - 2) < 1 else dm_chunk - 2
                 higher_digit = dm_chunk + 3
                 self.chunk_dm = random.randint(lower_digit, higher_digit)
 

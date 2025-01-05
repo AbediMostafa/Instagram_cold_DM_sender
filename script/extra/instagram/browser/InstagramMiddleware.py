@@ -21,7 +21,8 @@ class InstagramMiddleware:
             self.handle_exception(str(e))
 
         except (ProblemLogingYouError, YourPasswordWasIncorrectError, MultipleSomethingWentWrongError,
-                EnterYourEmailError, AddAPhoneNumberError, FeedbackRequired, EnterYourMobileError, HelpUsConfirmItsYouError) as e:
+                EnterYourEmailError, AddAPhoneNumberError, FeedbackRequired, EnterYourMobileError,
+                HelpUsConfirmItsYouError, SomethingWentWrong, AppealSubmittedError, UploadYourIdError) as e:
             self.ig.account.set_state('challenging')
             self.ig.account.add_warning(e, 500)
             self.take_screenshot(str(e))

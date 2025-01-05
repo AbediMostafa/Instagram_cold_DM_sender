@@ -3,24 +3,29 @@ from script.extra.helper import *
 
 
 class BrowserPostVideoEvent(InstagramMiddleware):
+    video_template = None
+    image_template = None
+    video_path = None
+    image_path = None
+    should_not_post = None
+    caption = None
+    tmp = None
     base = None
     command = 0
     template = None
-    video_path = 0
-    caption = 0
 
     def execute(self):
         self.ig.account.add_cli(f"Posting a video ...")
 
-        if self.ig.account.should_not_post('post video'):
-            return self.ig.account.add_cli("Cant post a video today")
+        # if self.ig.account.should_not_post('post video'):
+        #     return self.ig.account.add_cli("Cant post a video today")
 
-        self.template = self.ig.account.get_a_free_template('video-post')
+        self.image_template, self.video_template = self.ig.account.get_a_video()
 
-        if not self.template:
-            return self.ig.account.add_cli(f"We don't have a post video for this account")
+        if not self.video_template:
+            self.ig.account.add_cli(f"We don't have a video template for : {self.ig.account.username}")
 
-        self.generate_video()
+        self.generate_path()
         self.generate_caption()
 
         try:
@@ -33,22 +38,26 @@ class BrowserPostVideoEvent(InstagramMiddleware):
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
-            self.ig.account.add_cli(f"Problem changing avatar : {str(e)}")
+            self.ig.account.add_cli(f"Problem Posting video : {str(e)}")
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
             self.ig.page.goto("https://www.instagram.com/")
             self.ig.pause(3000, 4000)
 
-    def generate_video(self):
-        self.video_path = get_post_url(self.template.text)
-        self.tmp = generate_random_folder()
-        image_path = self.template.download_image(self.tmp)
+    def generate_path(self):
+        self.ig.account.add_cli("Generating path of video and thumbnail ...")
 
-        self.image_path = process_image(image_path, self.tmp)
+        self.tmp = generate_random_folder()
+
+        if self.image_template:
+            self.image_path = self.image_template.download_image(self.tmp)
+            self.image_path = process_image(self.image_path, self.tmp)
+
+        self.video_path = self.video_template.download_image(self.tmp)
 
     def generate_caption(self):
-        prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.template.caption}'
+        prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.video_template.caption}'
         self.caption = chat_ai(prompt)
 
     def before_change_hook(self):
@@ -77,9 +86,18 @@ class BrowserPostVideoEvent(InstagramMiddleware):
             "input[accept='image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
             0).set_input_files(self.video_path)
 
-        self.ig.pause(30000, 33500)
+        self.ig.pause(20000, 23500)
+
+        try:
+            self.ig.page.get_by_role("button", name="OK").click(timeout=3000)
+        except :
+            pass
+        self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Next").click()
+        self.ig.pause(2000, 3500)
+
+        self.ig.page.locator('input[accept="image/jpeg,image/png"]._ac69').nth(0).set_input_files(self.image_path)
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Next").click()
@@ -89,7 +107,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Share").click()
-        self.ig.pause(10000, 12000)
+        self.ig.pause(60000, 67000)
 
         try:
             self.ig.page.get_by_role("button", name="Close").press("Escape")
@@ -98,5 +116,9 @@ class BrowserPostVideoEvent(InstagramMiddleware):
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
-        self.ig.account.attach_template(self.template)
+
+        if self.image_template:
+            self.ig.account.attach_template(self.image_template)
+        self.ig.account.attach_template(self.video_template)
+
         self.ig.account.add_cli("Video posted successfully")

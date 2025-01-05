@@ -18,8 +18,8 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli(f"Posting an image ...")
 
-        if self.ig.account.should_not_post('post carousel', random.randint(20, 24)):
-            return self.ig.account.add_cli("Cant post an image today")
+        # if self.ig.account.should_not_post('post carousel', random.randint(20, 24)):
+        #     return self.ig.account.add_cli("Cant post an image today")
 
         self.carousel_dict = self.ig.account.get_a_carousel()
 

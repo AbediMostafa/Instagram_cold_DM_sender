@@ -23,13 +23,6 @@ class Command(BaseModel):
         setattr(self, col, val)
         self.save()
 
-    @classmethod
-    def get_pending_commands(cls, _type):
-        return cls.select().where(
-            (cls.type == _type) &
-            (cls.state == 'pending')
-        ).order_by(cls.account_id.desc())
-
     def get_commandable(self):
         model_class = self.get_model_from_type()
 

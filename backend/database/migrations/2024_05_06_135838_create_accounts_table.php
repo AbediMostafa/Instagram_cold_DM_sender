@@ -28,7 +28,12 @@ return new class extends Migration {
                 ->constrained('colors')
                 ->nullOnDelete();
 
-            $table->foreignId('proxy_id')
+            $table->foreignId('screen_resolution_id')
+                ->nullable()
+                ->constrained('screen_resolutions')
+                ->nullOnDelete();
+
+            $table->foreignId('profile_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
@@ -42,6 +47,7 @@ return new class extends Migration {
             $table->unsignedTinyInteger('avatar_changed')->default(0);
             $table->unsignedTinyInteger('username_changed')->default(0);
             $table->unsignedTinyInteger('initial_posts_deleted')->default(0);
+            $table->unsignedTinyInteger('has_enough_posts')->default(0);
             $table->unsignedTinyInteger('is_public')->default(0);
             $table->unsignedTinyInteger('is_active')->default(1);
             $table->text('web_session')->nullable();

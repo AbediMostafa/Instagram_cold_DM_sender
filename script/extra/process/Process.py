@@ -9,6 +9,7 @@ from script.extra.hooks.CheckNewMessageHooks import CheckNewMessageHooks
 from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
 from script.extra.hooks.CheckForLastLoginHook import CheckForLastLoginHook
 from script.extra.hooks.CheckForWarningsHook import CheckForWarningsHook
+from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook
 from time import sleep
 
 
@@ -22,49 +23,56 @@ class Process:
         """
         Sometimes we face Race condition and get_next_account() returns None
         """
-
         while not self.account:
-            # self.account = get_next_account(['created by mobile'])
+            # self.account = get_next_account(tag_titles=['12-16-2024'])
+            # self.account = get_next_account(specific_ids=[945])
             self.account = get_next_account()
 
     def start(self):
-        # try:
-        self.get_account()
-        self.account.get_proxy()
+        try:
+            self.get_account()
+            self.should_stop = self.before_process_hooks()
 
-        self.should_stop = self.before_process_hooks()
+            if self.should_stop:
+                return
 
-        if self.should_stop:
-            return
+            self.browser_ig = BasePlaywright(self.account)
+            self.browser_ig.start_browser().go_to_instagram()
 
-        self.browser_ig = BasePlaywright(self.account)
-        BrowserLoginEvent(self.browser_ig).fire()
-        self.account.set_state('processing', 'app_state')
-        self.account.set_state('active')
+            BrowserLoginEvent(self.browser_ig).fire()
+            self.account.set_state('processing', 'app_state')
+            self.account.set_state('active')
 
-        self.do_process()
-        self.account.set_state('idle', 'app_state')
+            self.start_process()
 
-        self.browser_ig.cleanup()
-        RecordLastActivityHook(self.account)
+        except Exception as e:
+            self.account.add_cli(str(e))
+            self.account.add_log(traceback.format_exc())
 
-    # except Exception as e:
-    #     self.account.add_cli(str(e))
-    #     self.account.add_log(traceback.format_exc())
-    #
-    # finally:
-    #     self.account.set_state('idle', 'app_state')
-    #
-    #     if self.browser_ig:
-    #         self.browser_ig.cleanup()
-    #
-    #     if not self.should_stop:  # Only record last activity if hooks did not stop the process
-    #         RecordLastActivityHook(self.account)
+        finally:
+            try:
+                if self.browser_ig:
+                    self.browser_ig.cleanup()
 
-    def do_process(self):
+                self.account.set_state('idle', 'app_state')
+
+                if not self.should_stop:  # Only record last activity if hooks did not stop the process
+                    RecordLastActivityHook(self.account)
+            except:
+                pass
+
+    def start_process(self):
         HowManyEventsCanHandleStrategy(self.account, self.browser_ig, self.api_ig).run()
 
     def before_process_hooks(self):
+        account_check = CheckForAccountActionsHook(self.account)
+
+        if account_check.have_custom_messages():
+            return False
+
+        if account_check.cant_start_schedule():
+            return True
+
         if CheckForWarningsHook(self.account).last_warning_has_not_expired():
             return True
 

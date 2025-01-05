@@ -15,8 +15,8 @@ class BrowserPostImageEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli(f"Posting an image ...")
 
-        if self.ig.account.should_not_post('post image', random.randint(20, 24)):
-            return self.ig.account.add_cli("Cant post an image today")
+        # if self.ig.account.should_not_post('post image', random.randint(20, 24)):
+        #     return self.ig.account.add_cli("Cant post an image today")
 
         self.template = self.ig.account.get_a_free_template('image-post')
 

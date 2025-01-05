@@ -88,7 +88,7 @@
                 />
               </el-select>
 
-            </div>
+            </div> 
 
             <div class="d-flex flex-column mb-8 fv-row">
               <!--begin::Label-->
@@ -103,6 +103,74 @@
                   <el-radio-button label="action ban" value="action ban" />
                   <el-radio-button label="suspended" value="suspended" />
                 </el-radio-group>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column mb-8 fv-row">
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span class="required">Color</span>
+              </label>
+              <el-select v-model="account.color_id" placeholder="Select color">
+                <el-option
+                  v-for="color in colors"
+                  :key="color.id"
+                  :label="color.title"
+                  :value="color.id"
+                />
+              </el-select>
+            </div>
+
+            <div class="d-flex flex-column mb-8 fv-row">
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span>Account Status</span>
+              </label>
+              <el-switch
+                v-model="account.is_used"
+                active-text="Used"
+                inactive-text="Not Used"
+              />
+            </div>
+
+            <div class="d-flex flex-column mb-8 fv-row">
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span>Profile Settings</span>
+              </label>
+              <div class="d-flex flex-column gap-3">
+                <el-switch
+                  v-model="account.avatar_changed"
+                  active-text="Avatar Changed"
+                />
+                <el-switch
+                  v-model="account.username_changed"
+                  active-text="Username Changed"
+                />
+                <el-switch
+                  v-model="account.initial_posts_deleted"
+                  active-text="Initial Posts Deleted"
+                />
+
+                <el-switch
+                  v-model="account.has_enough_posts"
+                  active-text="Has Enough Posts"
+                />
+              </div>
+            </div>
+
+            <div class="d-flex flex-column mb-8 fv-row">
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span>Next Login Time</span>
+              </label>
+              <div class="d-flex align-items-center gap-3">
+                <span v-if="account.next_login">
+                  Current: {{ new Date(account.next_login).toLocaleString() }}
+                </span>
+                <el-button
+                  type="warning"
+                  size="small"
+                  @click="account.next_login = null"
+                >
+                  Clear Next Login
+                </el-button>
               </div>
             </div>
 
@@ -174,6 +242,7 @@ export default defineComponent({
       gettingAccount: false
     });
     const categoryStore = useCategoryStore();
+    const colors = ref([]);
 
     const rules = ref({
       username: [{required: true, message: "Please input username", trigger: "blur"},],
@@ -183,8 +252,17 @@ export default defineComponent({
     const getAccount = () => {
       is.value.gettingAccount = true
       ApiService.post('account/get-account', {id: props.id})
-          .then(response => account.value = response.data)
-          .finally(() => is.value.gettingAccount = false)
+        .then(response => {
+          account.value = {
+            ...response.data,
+            is_used: Boolean(response.data.is_used),
+            avatar_changed: Boolean(response.data.avatar_changed),
+            username_changed: Boolean(response.data.username_changed), 
+            initial_posts_deleted: Boolean(response.data.initial_posts_deleted),
+            has_enough_posts: Boolean(response.data.has_enough_posts)
+          }
+        })
+        .finally(() => is.value.gettingAccount = false)
     }
 
     watch(() => props.id, () => getAccount())
@@ -206,7 +284,16 @@ export default defineComponent({
       });
     };
 
-    onMounted(categoryStore.getCategories)
+    const getColors = () => {
+      ApiService.post('colors', {}) 
+        .then(response => colors.value = response.data)
+        .catch(error => console.error('Failed to fetch colors'));
+    }
+
+    onMounted(() => {
+      categoryStore.getCategories();
+      getColors();
+    });
 
     return {
       is,
@@ -218,6 +305,7 @@ export default defineComponent({
       rules,
       getAssetPath,
       hideModal,
+      colors,
     };
   },
 });

@@ -58,7 +58,12 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
         self.ig.account.set('username_changed', 1)
 
     def get_username(self):
-        self.username = get_a('username', self.ig.account).text
+        result = get_a('username', self.ig.account)
+
+        if result is None or not result.text:
+            raise ValueError("No username available in the database.")
+
+        self.username = result.text
 
         # we delete this username from database to don't use for another account
         delete('username', self.username)

@@ -70,6 +70,14 @@ const MainMenuConfig: Array<MenuItem> = [
         allowed_roles:['user']
 
       },
+
+      {
+        heading: "profiles",
+        route: "/profiles",
+        keenthemesIcon: "calendar-8",
+        bootstrapIcon: "bi-calendar3-event",
+        allowed_roles:['user']
+      },
       // {
       //   heading: "settings",
       //   route: "/settings",

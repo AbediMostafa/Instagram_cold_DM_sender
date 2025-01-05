@@ -32,6 +32,18 @@
             <template #prepend>
               <el-button :icon="Search" @click="store.getAccounts"/>
             </template>
+
+            <template #append>
+              <el-select
+                  v-model="store.accounts.type"
+                  placeholder="Select"
+                  style="width: 115px"
+              >
+                <el-option label="Profile" value="profile"/>
+                <el-option label="Account" value="account"/>
+                <el-option label="Proxy" value="proxy"/>
+              </el-select>
+            </template>
           </el-input>
         </div>
         <div class="me-2">
@@ -119,7 +131,7 @@
 
             </th>
 
-            <th class="min-w-130px">ACTIVE</th>
+            <th class="min-w-130px">ENOUGH POSTS</th>
 
             <th class="min-w-200px cursor-pointer" @click="sortBy('created_at')">
               CREATED / SUSPENDED AT
@@ -177,19 +189,49 @@
                   </div>
 
                   <div class="ms-4">
-                    <a class="text-gray-900 fw-bold text-hover-primary fs-7">{{ account.id }} - {{
-                        account.username
-                      }}</a>
+                    <a
+                        class="text-gray-900 fw-bold text-hover-primary fs-7">
+                      <span
+                          @click="copyToClipboard(account.id)"
+                      >{{ account.id }}</span>
+                      -
+                      <span
+                          @click="copyToClipboard(account.username)"
+                      >{{ account.username }}</span>
+                    </a>
 
 
                     <div>
-                      <span class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>
+                      <span
+                          @click="copyToClipboard(account.password)"
+                          class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>
                       <account-instagram-state :state="account.instagram_state"/>
                       <account-app-state :state="account.app_state"/>
                     </div>
-                    <span class="text-muted fw-semibold text-muted d-block fs-8">
+                    <span
+                        @click="store.fetchOtpAndCopy(account.secret_key)"
+                        class="text-muted fw-semibold text-muted d-block fs-8">
                     {{ account.secret_key }}
                   </span>
+
+                    <div class="mt-1">
+                      <span
+                          @click="copyToClipboard(account.proxy)"
+                          v-if="account.proxy"
+                          class="text-muted fw-semibold text-muted py-1 px-2
+                        rounded border-dashed border-2 fs-8 border ">
+                        {{ account.proxy?.ip }}
+                      </span>
+
+                      <span
+                          v-if="account.profile"
+                          @click="copyToClipboard(account.profile?.title)"
+                          class="text-muted fw-semibold text-muted py-1 px-2
+                      rounded border-dashed border-2 fs-8 border ms-1">
+                        {{ account.profile?.title }}
+                      </span>
+
+                    </div>
 
 
                   </div>
@@ -207,11 +249,17 @@
                   >{{ tag.title }}</span>
                 </div>
 
-
+                <div>
+                  <span class="text-muted fw-semibold text-muted fs-8">{{ account.email }}</span>
+                </div>
               </td>
 
               <td>
-                <account-is-active :is-active="account.is_active"/>
+                <span v-if="account.has_enough_posts" class="badge badge-light-success mt-1 ms-1">
+                  yes
+                </span>
+                <span v-else class="badge badge-light-danger mt-1 ms-1">no</span>
+
               </td>
               <td>
                 <span class="text-muted fw-semibold text-muted fs-8">{{ account.created_at_ago }} / </span>
@@ -260,17 +308,13 @@ import {showModal} from "@/core/helpers/modal";
 import {useAppConfigStore} from "@/stores/AppConfig";
 import AccountInstagramState from "@/components/account/AccountInstagramState.vue";
 import AccountAppState from "@/components/account/AccountAppState.vue";
-import AccountIsActive from "@/components/account/AccountIsActive.vue";
-import AccountPost from "@/components/account/AccountPost.vue";
 import AccountsDropDown from "@/components/account/AccountsDropDown.vue";
 import AccountDropDown from "@/components/account/AccountDropDown.vue";
 import {useAccountStore} from "@/stores/Account";
 import EditAccountModal from "@/components/modals/account/EditAccountModal.vue";
-import {onBeforeRouteLeave} from "vue-router";
 import {useDebounceFn} from "@vueuse/core";
 import {Search} from '@element-plus/icons-vue'
-import {useCategoryStore} from "@/stores/Category";
-
+import {copyToClipboard} from "@/core/helpers/helper";
 
 const selectedId = ref(0);
 const store = useAccountStore();
@@ -292,16 +336,6 @@ const sortBy = (field) => {
   store.sortBy(field);
 };
 
-const clearSort = () => {
-  store.clearSort();
-};
-
-
 onMounted(store.getAccounts);
-// const getAccountsWithInterval = setInterval(
-//   () => store.getAccounts(store.accounts.current_page, false),
-//   4000
-// );
-//
-// onBeforeRouteLeave(() => clearInterval(getAccountsWithInterval));
+
 </script>

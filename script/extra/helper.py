@@ -117,35 +117,13 @@ def chat_ai(prompt, max_tokens=400, temperature=0.7, top_p=1.0, frequency_penalt
         raise Exception(e)
 
 
-def get_random_user_agent():
-    import random
-
-    user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.90 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        # "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.59 Safari/537.36",
-    ]
-
-    return random.choice(user_agents)
-
-
-def generate_random_word(length=10):
+def generate_random_word(length=14):
     characters = string.ascii_letters + string.digits
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
 
 
-def give_a_good_resolution():
-    resolutions = [
-        {'width': 1920, 'height': 1080},
-        {'width': 1366, 'height': 768},
-        {'width': 1280, 'height': 1024},
-    ]
 
-    return random.choice(resolutions)
-
-
-# Fetch geolocation, timezone, and locale information from the proxy IP
 def get_proxy_details(proxy_ip):
     try:
         response = requests.get(f'http://ipinfo.io/{proxy_ip}/json')
@@ -198,3 +176,25 @@ def get_proxy_details(proxy_ip):
             "timezone": 'America/Los_Angeles',  # Default timezone
             "locale": 'en-US'  # Default locale
         }
+
+
+def give_a_good_resolution():
+    resolutions = [
+        {'width': 1920, 'height': 1080},
+        {'width': 1366, 'height': 768},
+        {'width': 1280, 'height': 1024},
+    ]
+
+    return random.choice(resolutions)
+
+
+def get_random_user_agent():
+    import random
+
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        # "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        # "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.59 Safari/537.36",
+    ]
+
+    return random.choice(user_agents)
