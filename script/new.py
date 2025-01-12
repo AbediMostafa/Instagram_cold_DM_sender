@@ -37,6 +37,7 @@ from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmF
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
 from script.extra.events.browser_events.BrowserGotoExploreEvent import BrowserGotoExploreEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
+from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
 from script.models.Template import get_a, delete
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook
@@ -57,20 +58,25 @@ from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserP
 # BrowserSendDmEvent(browser_ig).fire()
 # BrowserLoginEvent(browser_ig).fire()
 # browser_ig.pause(4000000, 5000000)
-
-for i in range(10):
-    path = 'C:\\Users\\Administrator\\Desktop\\project\\backend\\storage\\app\\public\\uploads\\avatar\\10\\11\\uqXjpNaY1P7Wt67Qc3ors5s2dlyTfjWe9MvpuxPR.jpg'
-    folder = 'C:\\Users\\Administrator\\Desktop\\project\\backend\\storage\\app\\public\\uploads\\avatar\\10\\11'
-    process_image(path, folder)
+#
+# for i in range(50):
+#     path = 'C:\\Users\\Administrator\\Desktop\\project\\backend\\storage\\app\\public\\uploads\\avatar\\10\\11\\uqXjpNaY1P7Wt67Qc3ors5s2dlyTfjWe9MvpuxPR.jpg'
+#     folder = 'C:\\Users\\Administrator\\Desktop\\project\\backend\\storage\\app\\public\\uploads\\avatar\\10\\11'
+#     process_image(path, folder)
 
 #
-# account = Account.get_by_id(2476)
-#
-# CheckForAccountActionsHook(account)
+account = Account.get_by_id(2877)
+
+CheckForAccountActionsHook(account)
 # browser_ig = BasePlaywright(account)
 # browser_ig.start_browser().go_to_instagram()
-# BrowserLoginEvent(browser_ig).fire()
+# # BrowserLoginEvent(browser_ig).fire()
 #
-# BrowserPostCarouselEvent(browser_ig).fire()
+# print(account.number_of_custom_message_commands)
 #
+# for command in account.custom_message_commands:
+#     print(command.id)
+#
+# # BrowserChangeUsernameEvent(browser_ig).fire()
+# #
 

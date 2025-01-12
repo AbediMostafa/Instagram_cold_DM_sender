@@ -38,13 +38,17 @@
             <div class="d-flex flex-column mb-8 fv-row">
               <el-form-item label="Tags" prop="tags">
                 <el-select
+                    v-model="form.tags"
                     multiple
                     filterable
+                    remote
                     clearable
-                    v-model="form.tags"
-                    placeholder="Select Tags">
+                    placeholder="Search for tags"
+                    :remote-method="tagStore.fetchTags"
+                    :loading="tagLoading"
+                >
                   <el-option
-                      v-for="tag in tagStore.tags.data"
+                      v-for="tag in tagStore.searchedTags"
                       :key="tag.id"
                       :label="tag.title"
                       :value="tag.id"
@@ -89,6 +93,7 @@ export default defineComponent({
     const loading = ref(false);
     const categoryStore = useCategoryStore();
     const tagStore = useTagStore();
+    const tagLoading = ref<boolean>(false);
 
     const form = ref({
       numberOfLeads: null,
@@ -142,6 +147,7 @@ export default defineComponent({
       categoryStore,
       hideModal,
       tagStore,
+      tagLoading,
     };
   },
 });

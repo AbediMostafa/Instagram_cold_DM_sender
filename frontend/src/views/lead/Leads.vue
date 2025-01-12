@@ -66,10 +66,8 @@
               </td>
 
               <td>
-                <router-link :to="{ name: 'process-output', params: { id: lead.id } }">
                   <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ lead.username }}</a>
                   <lead-last-state :state="lead.last_state"/>
-                </router-link>
               </td>
 
               <td>

@@ -215,6 +215,8 @@ class BrowserLoginEvent(InstagramMiddleware):
                 self.ig.pause(5000, 6000)
                 return
 
+            self.ig.we_removed_some_content_or_messages_handler()
+            self.ig.your_post_goes_against_our_community_handler()
             self.ig.suspended_account_handler()
             self.ig.disabled_account_handler()
             self.ig.appeal_submitted_handler()
@@ -307,9 +309,6 @@ class BrowserLoginEvent(InstagramMiddleware):
 
     def follow_suggested(self):
 
-        if not self.ig.account.has_enough_posts:
-            return False
-        
         allowed_follows = random.randint(1, SettingAdapter.max_follow())
         allowed_follows = min(allowed_follows, self.ig.account.passed_days_since_creation)
 

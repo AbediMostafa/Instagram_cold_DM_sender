@@ -25,7 +25,7 @@ class Process:
         """
         while not self.account:
             # self.account = get_next_account(tag_titles=['12-16-2024'])
-            # self.account = get_next_account(specific_ids=[945])
+            # self.account = get_next_account(specific_ids=[2428])
             self.account = get_next_account()
 
     def start(self):
@@ -50,16 +50,13 @@ class Process:
             self.account.add_log(traceback.format_exc())
 
         finally:
-            try:
-                if self.browser_ig:
-                    self.browser_ig.cleanup()
+            if self.browser_ig:
+                self.browser_ig.cleanup()
 
-                self.account.set_state('idle', 'app_state')
+            self.account.set_state('idle', 'app_state')
 
-                if not self.should_stop:  # Only record last activity if hooks did not stop the process
-                    RecordLastActivityHook(self.account)
-            except:
-                pass
+            if not self.should_stop:  # Only record last activity if hooks did not stop the process
+                RecordLastActivityHook(self.account)
 
     def start_process(self):
         HowManyEventsCanHandleStrategy(self.account, self.browser_ig, self.api_ig).run()

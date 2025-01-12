@@ -45,30 +45,73 @@ use Dotenv\Dotenv;
 use \App\Classes\ProfileUpdateProxy;
 use \App\Http\Controllers\ColorController;
 
-function setHasEnoughPosts($accountId)
-{
-    $account = Account::query()->find($accountId);
-    $account->has_enough_posts = 0;
-    dd($account->save());
-}
-
-function residential($accountId)
-{
-    $account = Account::query()->find($accountId);
-    dd($account->updateProfileProxyToResidential());
-}
-
-function custom($accountId)
-{
-    $account = Account::query()->find($accountId);
-    dd($account->updateProfileProxyFromResidentialToCustom());
-}
-
+//
+//function setHasEnoughPosts($accountId)
+//{
+//    $account = Account::query()->find($accountId);
+//    $account->has_enough_posts = 0;
+//    dd($account->save());
+//}
+//
+//function residential($accountId)
+//{
+//    $account = Account::query()->find($accountId);
+//    dd($account->updateProfileProxyToResidential());
+//}
+//
+//function custom($accountId)
+//{
+//    $account = Account::query()->find($accountId);
+//    dd($account->updateProfileProxyFromResidentialToCustom());
+//}
+//
 
 Route::get('/', function () {
-    Account::query()->get()->each(function ($account) {
+
+//    $oldAccounts = DB::connection('old_pgsql')
+//        ->table('accounts')
+//        ->get()
+//        ->each(function ($account) {
+//            Account::query()->where('username', $account->username)->doesntExist() &&
+//            Account::query()->create([
+//                'secret_key' => $account->secret_key,
+//                'username' => $account->username,
+//                'email' => $account->email,
+//                'password' => $account->password,
+//                'name' => $account->name,
+//                'bio' => $account->bio,
+//                'profile_pic_url' => $account->profile_pic_url,
+//                'instagram_state' => $account->instagram_state,
+//                'app_state' => $account->app_state,
+//                'color_id' => $account->color_id,
+////                'screen_resolution_id' => $account->screen_resolution_id,
+////                'profile_id' => $account->profile_id,
+////                'category_id' => $account->category_id,
+//                'is_used' => $account->is_used,
+//                'avatar_changed' => $account->avatar_changed,
+//                'username_changed' => $account->username_changed,
+//                'initial_posts_deleted' => $account->initial_posts_deleted,
+////                'has_enough_posts' => $account->has_enough_posts,
+//                'is_public' => $account->is_public,
+//                'is_active' => $account->is_active,
+//                'web_session' => $account->web_session,
+//                'mobile_session' => $account->mobile_session,
+//                'log' => $account->log,
+//                'created_at' => $account->created_at,
+//                'updated_at' => $account->updated_at,
+//                'next_login' => $account->next_login,
+//            ]);
+//
+//        })
+//    ;
+//
+//    dd('$oldAccounts');
+
+    Account::query()->get()->each(function (Account $account) {
         $account->makeActive();
     });
+
+    dd('shod');
 
 //    ProfileMakerV2::getInstance()->iterateAndAssignProfile();
 

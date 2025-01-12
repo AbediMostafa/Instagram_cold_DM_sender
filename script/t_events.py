@@ -4,7 +4,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
-
+from datetime import datetime
 # from script.models.Account import Account
 # from script.models.Command import Command
 from script.models.AccountTemplate import AccountTemplate
@@ -48,10 +48,17 @@ from script.models.Thread import Thread
 from script.models.Message import Message
 from script.models.Command import Command
 from script.extra.actions.DM import DM
+from script.models.Template import get_a, delete
 
-account = Account.get_by_id(1816)
-# account = get_next_account()
-CheckForAccountActionsHook(account)
-browser_ig = BasePlaywright(account)
-BrowserChangeAvatarEvent(browser_ig).fire()
-browser_ig.pause(1000000, 2000000)
+
+print(random.randint(1,2))
+# account = Account.get_by_id(2442)
+# result = get_a('username')
+#
+# if result is None or not result.text:
+#     raise ValueError("No username available in the database.")
+#
+# username = result.text
+#
+# # we delete this username from database to don't use for another account
+# delete('username', username)

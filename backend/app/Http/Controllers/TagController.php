@@ -14,6 +14,11 @@ class TagController extends Controller
         return Tag::query()->paginate(5);
     }
 
+    public function getTags()
+    {
+        return Tag::query()->get();
+    }
+
     public function create(Request $request)
     {
         $request->validate([
@@ -49,7 +54,7 @@ class TagController extends Controller
     public function search()
     {
         return Tag::query()
-            ->where('title', 'like', '%' . request('q') . '%')
+            ->where('title', 'ilike', '%' . request('q') . '%')
             ->get();
     }
 }

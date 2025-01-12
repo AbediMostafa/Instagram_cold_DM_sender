@@ -178,7 +178,7 @@ class BrowserBaseEvent:
         self.ig.pause(2000, 3000)
 
         try:
-            self.ig.page.get_by_placeholder("Search").press_sequentially(lead.username, delay=120, timeout=6000)
+            self.ig.page.get_by_placeholder("Search").press_sequentially(lead.username, delay=120, timeout=7000)
 
         except:
             self.ig.account.add_cli('There is no locator with Search placeholder trying another method ...')

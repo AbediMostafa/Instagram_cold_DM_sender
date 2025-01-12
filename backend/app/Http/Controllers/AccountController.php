@@ -279,9 +279,7 @@ class AccountController extends Controller
         try {
             $secretKey = r('secretKey');
 
-            $proxy = 'http://paichb:yNckWHb3@207.230.104.78:29842';
-
-            $resp = Http::withOptions(['proxy' => $proxy])->withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
+            $resp = Http::withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
             return $resp->json()['data']['otp'];
 
         } catch (\Exception $exception) {

@@ -23,6 +23,10 @@ class LeadController extends Controller
                 'user:id,name,email',
             ])
             ->when(
+                r('queryParams.username'),
+                fn($_) => $_->where('username', 'ilike', '%' . r('queryParams.username') . '%')
+            )
+            ->when(
                 r('queryParams.tags'),
                 fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('queryParams.tags')))
             )
@@ -38,6 +42,7 @@ class LeadController extends Controller
                 r('queryParams.users'),
                 fn($_) => $_->whereIn('user_id', r('queryParams.users'))
             )
+            ->orderByDesc('id')
             ->paginate(
                 config('data.pagination.each_page.leads')
             );
@@ -110,17 +115,14 @@ class LeadController extends Controller
             $csv = Reader::createFromPath($file->getPathname(), 'r');
 
             foreach ($csv as $row) {
-                $leadExists = Lead::query()->whereUsername($row[0])->exists();
 
-                if (!$leadExists) {
-                    $lead = Lead::query()->create([
-                        'username' => $row[0],
-                    ]);
+                $lead = Lead::query()->firstOrCreate(
+                    ['username' => $row[0]] // Attributes to check for an existing record
+                );
 
-                    if (!empty(r('tags'))) {
-                        $tags = json_decode(r('tags'));
-                        $lead->tags()->attach($tags); // Attach the tags to the lead
-                    }
+                if (!empty(r('tags'))) {
+                    $tags = json_decode(r('tags'));
+                    $lead->tags()->attach($tags); // Attach the tags to the lead
                 }
             }
 
@@ -167,7 +169,7 @@ class LeadController extends Controller
                 ]);
 
                 $lead->histories()->create([
-                    'user_id'=>Auth::id()
+                    'user_id' => Auth::id()
                 ]);
             }
             // Create CSV for download
@@ -244,7 +246,7 @@ class LeadController extends Controller
                 ]);
 
                 $lead->histories()->create([
-                    'user_id'=>Auth::id()
+                    'user_id' => Auth::id()
                 ]);
             }
 

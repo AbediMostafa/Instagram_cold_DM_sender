@@ -475,7 +475,7 @@ class Account(BaseModel):
         """
         Determine the next post command type based on the latest post commands.
         """
-        if self.sent_recent_post_command_within(random.randint(24, 27)):
+        if self.sent_recent_post_command_within(random.randint(30, 40)):
             self.add_cli('We have sent a post recently')
             return None  # No post can be sent if one was sent
 
@@ -607,10 +607,11 @@ class Account(BaseModel):
             if final_allowed_number_of_dms > dm_chunk:
                 lower_digit = 1 if (dm_chunk - 2) < 1 else dm_chunk - 2
                 higher_digit = dm_chunk + 3
-                self.current_chunk_dm = random.randint(lower_digit, higher_digit) if self.has_enough_posts else 1
+                self.current_chunk_dm = random.randint(lower_digit,
+                                                       higher_digit) if self.has_enough_posts else random.randint(1, 5)
 
             else:
-                self.current_chunk_dm = final_allowed_number_of_dms if self.has_enough_posts else 1
+                self.current_chunk_dm = final_allowed_number_of_dms if self.has_enough_posts else random.randint(1, 5)
 
         return self
 

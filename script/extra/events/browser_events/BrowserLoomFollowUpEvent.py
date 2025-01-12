@@ -13,17 +13,15 @@ class BrowserLoomFollowUpEvent(InstagramMiddleware):
     base = None
 
     def execute(self):
-        self.base.go_to_threads()
-        self.ig.turn_on_notif()
-        self.init()
-
-    def init(self):
         self.ig.account.add_cli("Starting Loom Follow up process ...")
         self.dm = LoomFollowUp(self.ig.account)
         self.leads = self.dm.leads_to_send_loom_follow_ups()
 
         if not len(self.leads):
             return self.ig.account.add_cli("There is no lead to loom follow up")
+
+        self.base.go_to_threads()
+        self.ig.turn_on_notif()
 
         self.send_dms()
 

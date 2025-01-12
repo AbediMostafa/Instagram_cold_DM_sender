@@ -33,7 +33,6 @@
 
 import {onMounted, ref} from "vue";
 import ApiService from "@/core/services/ApiService";
-import {onBeforeRouteLeave} from "vue-router";
 
 const loading = ref(true);
 const processOutput = ref({});

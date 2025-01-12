@@ -17,7 +17,7 @@
               end-placeholder="End date"
               @change="actionClicked"
               value-format="YYYY-MM-DD"
-              style="max-width: 300px;"
+              style="max-width: 250px;"
           />
         </div>
         <div class="me-2">

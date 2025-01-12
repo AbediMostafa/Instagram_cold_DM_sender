@@ -4,6 +4,7 @@ from .Base import BaseModel
 from .Account import Account
 from .Message import Message
 from .Lead import Lead
+from datetime import datetime, timedelta
 
 
 class Command(BaseModel):
@@ -17,7 +18,7 @@ class Command(BaseModel):
     type = CharField()
     state = CharField()
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
+    created_at = DateTimeField(null=True, default=datetime.now)
 
     def update_cmd(self, col, val):
         setattr(self, col, val)
@@ -55,3 +56,20 @@ def performed_command_count(account, command_types, hours, times=0, state='succe
         (Command.created_at >= hours_ago)
     )
             .scalar())
+
+
+def sent_recent_command_within(account, _types, hours=24):
+    """
+    Check if any successful post command (image, video, or carousel) was sent within the last `hours`.
+    """
+    time_threshold = datetime.now() - timedelta(hours=hours)
+
+    return (Command
+            .select()
+            .where(
+        (Command.account == account) &
+        (Command.type.in_(_types)) &
+        (Command.state == 'success') &
+        (Command.created_at >= time_threshold)
+    )
+            .exists())

@@ -17,9 +17,9 @@ class BrowserSendDmEvent(InstagramMiddleware):
 
     def execute(self):
 
-        if not self.ig.account.has_enough_posts:
-            self.ig.account.add_cli("Account dont have enough post to send DM")
-            return
+        # if not self.ig.account.has_enough_posts:
+        #     self.ig.account.add_cli("Account dont have enough post to send DM")
+        #     return
 
         if not self.ig.account.can_send_dm_today:
             self.ig.account.add_cli("We can't send DM today")

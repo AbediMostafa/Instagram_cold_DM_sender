@@ -13,12 +13,6 @@ class BrowserDmFollowUpEvent(InstagramMiddleware):
     url_id = None
 
     def execute(self):
-        self.base.go_to_threads()
-        self.ig.pause(2000, 3000)
-        self.ig.turn_on_notif()
-        self.init()
-
-    def init(self):
         self.ig.account.add_cli("Starting DM Follow up process ...")
         self.dm = DmFollowUp(self.ig.account)
         cnt = random.randint(12, 17) if self.ig.account.has_enough_posts else 2
@@ -26,6 +20,9 @@ class BrowserDmFollowUpEvent(InstagramMiddleware):
 
         if not len(self.leads):
             return self.ig.account.add_cli("There is no lead to follow up")
+
+        self.base.go_to_threads()
+        self.ig.turn_on_notif()
 
         self.send_dms()
 

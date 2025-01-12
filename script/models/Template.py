@@ -19,7 +19,7 @@ def delete(_type, text):
 def get_a(_type, account=None):
     return Template.select().where(
         (Template.type == _type)
-    ).first()
+    ).order_by(fn.Random()).first()
 
 
 class Template(BaseModel):

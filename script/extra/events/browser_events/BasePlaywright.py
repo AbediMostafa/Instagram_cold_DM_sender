@@ -129,13 +129,24 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
     def cleanup(self):
 
         if self.browser:
-            self.browser.close()
+            try:
+                self.account.add_cli('Closing Browser ...')
+                self.browser.close()
+            except Exception as e:
+                self.account.add_cli(f'Problem closing browser : {str(e)}')
 
         if self.playwright:
-            self.account.add_cli('Stopping Playwright ...........................')
-            self.playwright.stop()
+            try:
+                self.account.add_cli('Stopping Playwright ...')
+                self.playwright.stop()
+            except Exception as e:
+                self.account.add_cli(f'Problem stopping playwright : {str(e)}')
 
-        Requests().close_mlx_profile(self.profile_id)
+        try:
+            self.account.add_cli('Closing MLX profile ...')
+            Requests().close_mlx_profile(self.profile_id)
+        except Exception as e:
+            self.account.add_cli(f'Problem Closing Profile : {str(e)}')
 
     def goto(self, url, timeout=30000):
         try:
@@ -237,6 +248,33 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
             return True
 
         return False
+
+    def we_removed_some_content_or_messages_handler(self):
+        if self.is_visible_by_text('What happened') or self.is_visible_by_text(
+                "We removed some content or messages"):
+            self.account.add_cli('We removed some content or messages')
+
+            try:
+                self.page.locator('div.wbloks_1[role="button"]').first.click()
+                self.pause(4000, 5000)
+
+                self.goto('https://www.instagram.com/')
+                self.pause(3000, 4000)
+            except Exception as e:
+                pass
+
+    def your_post_goes_against_our_community_handler(self):
+        if self.is_visible_by_text('Your Post Goes Against Our Community') or self.is_visible_by_text(
+                "We removed your post because it goes against our"):
+            self.account.add_cli('Your Post Goes Against Our Community')
+
+            try:
+                self.page.get_by_role("button", name="OK").first.click()
+            except Exception as e:
+                self.page.locator(
+                    'div.x1i10hfl.xjqpnuy.xa49m3k.xqeqjp1.x2hbi6w.x972fbf.xcfux6l.x1qhh985.xm0m39n.xdl72j9.x2lah0s.xe8uvvx.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x2lwn1j.xeuugli.xexx8yu').first.click()
+
+            self.pause(3000, 4000)
 
     def not_connect_to_the_internet(self):
         if self.is_visible_by_text("We couldn't connect to Instagram"):

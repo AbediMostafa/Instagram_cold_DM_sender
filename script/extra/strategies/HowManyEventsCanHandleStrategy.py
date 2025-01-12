@@ -170,6 +170,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -186,6 +190,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -203,12 +211,17 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
             BrowserChangeBioEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
 
     def tenth_day_strategy(self):
         self.account.add_cli('running tenth day strategy')
+
         self.events = [self.select_random_explore_action()]
 
     def eleventh_day_strategy(self):
@@ -221,6 +234,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeAvatarEvent(self.browser_ig),
             BrowserChangeBioEvent(self.browser_ig),
             BrowserChangeNameEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]

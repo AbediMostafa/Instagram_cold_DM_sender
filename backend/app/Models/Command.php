@@ -39,6 +39,7 @@ class Command extends Model
         'call booked',
         'make public',
         'number of active accounts',
+        'follow good pages',
     ];
 
     public function account()

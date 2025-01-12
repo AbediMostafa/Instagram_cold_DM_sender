@@ -10,19 +10,26 @@
         Filter
       </div>
       <div class="menu-content px-3 ">
+        <el-input
+            class="mt-2"
+            v-model="store.queryParams.username"
+            placeholder="Search by Username"
+            clearable
+        />
         <!-- Filter by Tags -->
         <el-select
+            class="mt-2"
             v-model="store.queryParams.tags"
             multiple
             filterable
             remote
             clearable
             placeholder="Filter by Tags"
-            :remote-method="fetchTags"
+            :remote-method="tagStore.fetchTags"
             :loading="tagLoading"
         >
           <el-option
-              v-for="tag in tagStore.tags.data"
+              v-for="tag in tagStore.searchedTags"
               :key="tag.id"
               :label="tag.title"
               :value="tag.id"
@@ -125,10 +132,10 @@
   <!--end::Menu 2-->
 </template>
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+import {defineComponent, onMounted, ref} from 'vue';
 import {useLeadStore} from "@/stores/Lead";
-import { useCategoryStore } from '@/stores/Category';
-import { useTagStore } from '@/stores/Tag';
+import {useCategoryStore} from '@/stores/Category';
+import {useTagStore} from '@/stores/Tag';
 import {useUserStore} from "@/stores/User";
 
 export default defineComponent({
@@ -144,28 +151,14 @@ export default defineComponent({
     // Fetch categories and tags when the component is mounted
     onMounted(() => {
       categoryStore.getCategories();
-      tagStore.getTags();
       store.getStatuses();
       userStore.getUsersByName()
     });
 
-    // Method to fetch tags based on the search query
-    const fetchTags = async (query) => {
-      if (!query) return;
-      tagLoading.value = true;
-      try {
-        await tagStore.getTags({ query });
-      } catch (error) {
-        console.error('Error fetching tags:', error);
-      } finally {
-        tagLoading.value = false;
-      }
-    };
 
     return {
       store,
       categoryStore,
-      fetchTags,
       tagLoading,
       tagStore,
       userStore,

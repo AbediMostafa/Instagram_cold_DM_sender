@@ -55,7 +55,7 @@ def download_image(image_url, download_path):
 
 
 def process_image(image_path, output_dir):
-    image_name = f'{generate_random_word(20)}.jpg'
+    image_name = f'{generate_random_word(10)}.jpg'
 
     # Load the image using skimage
     image = io.imread(image_path)

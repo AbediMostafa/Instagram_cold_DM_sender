@@ -64,3 +64,7 @@ class EnterYourMobileError(Exception):
 
 class SomethingWentWrong(Exception):
     pass
+
+
+class CantPerformAction(Exception):
+    pass

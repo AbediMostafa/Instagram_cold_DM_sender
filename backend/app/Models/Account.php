@@ -181,7 +181,7 @@ class Account extends Model
     {
         if ($this->profile) {
             sleep(5);
-            
+
 
 
             try {

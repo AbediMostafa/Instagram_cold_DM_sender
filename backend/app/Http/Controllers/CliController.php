@@ -11,6 +11,6 @@ class CliController extends Controller
     public function index()
     {
         return Account::query()->find(r('account_id'))
-            ->clis;
+            ->clis()->orderBy('id')->get();
     }
 }
