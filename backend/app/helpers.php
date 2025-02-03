@@ -190,3 +190,12 @@ function showProcesses(array $pids)
         dump($processInfo);
     }
 }
+
+function likeOperator()
+{
+    Dotenv::createImmutable(__DIR__ . "/..")->load();
+
+    $dbConnection = env('DB_CONNECTION', 'mysql'); // Default to MySQL if not set
+
+    return ($dbConnection === 'pgsql') ? 'ILIKE' : 'LIKE'; // Use ILIKE for PostgreSQL
+}

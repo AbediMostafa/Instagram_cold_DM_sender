@@ -2,7 +2,6 @@ import traceback
 from .BaseActionState import BaseActionState
 from script.extra.actions.DM import DM
 from script.extra.helper import pause
-from script.extra.helper import test_accounts
 
 
 class DmEvent(BaseActionState):

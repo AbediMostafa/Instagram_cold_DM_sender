@@ -107,30 +107,33 @@ class BrowserBaseEvent:
 
     def go_to_lead_page(self, lead):
         try:
-            self.go_to_lead_page_through_search(lead)
+            self.go_to_lead_page_through_search(lead.username)
         except:
             self.go_to_lead_page_through_url(lead)
 
         self.ig.pause(5000, 5500)
         self.page_is_not_visible_handler()
 
-    def go_to_lead_page_through_search(self, lead):
+    def search_for(self, phrase):
         try:
             search_button = self.ig.page.get_by_role("link", name="Search Search")
             search_button.wait_for(timeout=3000)
             search_button.click(timeout=3000)
 
         except:
-            self.ig.page.get_by_role("link", name="Search").click()
+            self.ig.page.get_by_role("link", name="Search").click(timeout=3000)
         self.ig.pause(3000, 3500)
 
         try:
-            self.ig.page.get_by_placeholder("Search").fill(lead.username)
+            self.ig.page.get_by_placeholder("Search").fill(phrase)
         except:
-            self.ig.page.locator("input[aria-label='Search input']").first.fill(lead.username)
+            self.ig.page.locator("input[aria-label='Search input']").first.fill(phrase)
 
+
+    def go_to_lead_page_through_search(self, username):
+        self.search_for(username)
         self.ig.pause(4000, 5500)
-        self.ig.page.locator(f'a[href*="/{lead.username}/"]').first.click(timeout=3000)
+        self.ig.page.locator(f'a[href*="/{username}/"]').first.click(timeout=3000)
 
     def go_to_lead_page_through_url(self, lead):
         self.ig.account.add_cli('Problem clicking on Lead button trying url intead')
@@ -215,6 +218,7 @@ class BrowserBaseEvent:
     def before_message_fill_part(self, lead):
         try:
             self.sending_direct_in_direct_page(lead)
+
             if not self.ig.is_visible_by_text(f'{lead.username} · Instagram'):
                 raise Exception('Could not send direct in direct page trying by search ...')
 

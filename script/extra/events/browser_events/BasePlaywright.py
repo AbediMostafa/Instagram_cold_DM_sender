@@ -6,7 +6,7 @@ from script.extra.instagram.browser.InstagramSuspensionHandlerMixin import Insta
 from script.extra.instagram.browser.InstagramButtonHandlerMixin import InstagramButtonHandlerMixin
 from script.extra.exceptions import *
 from script.extra.events.browser_events.ApplyStealth import ApplyStealth
-from script.extra.modules.multilogin.Requests import Requests
+from script.extra.modules.multilogin.Multilogin import Multilogin
 import json
 
 
@@ -27,87 +27,24 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
     def start_browser(self):
 
         self.playwright = sync_playwright().start()
-        self.run_with_profile() if self.account.profile else self.run_with_proxy()
-        # self.run_with_proxy()
+        self.run_with_profile()
 
         return self
 
     def run_with_profile(self):
         self.profile_id = self.account.profile.profile_id
 
-        self.mlx_url = Requests().get_mlx_endpoint_url(self.profile_id)
-        self.browser = self.playwright.chromium.connect_over_cdp(self.mlx_url)
+        self.mlx_url = Multilogin().get_endpoint_url(self.profile_id)
+
+        try:
+            self.browser = self.playwright.chromium.connect_over_cdp(self.mlx_url)
+        except Exception as e:
+            self.account.add_cli(f'Problem opening chromium over cdp: {str(e)}')
+            self.browser.close()
+
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
 
-    def run_with_proxy(self):
-        if not self.account.proxy:
-            self.account.get_proxy()
-
-        self.resolution = give_a_good_resolution()
-        proxy_details = get_proxy_details(self.account.proxy.ip)
-        locale = proxy_details["locale"],
-        #     timezone_id=proxy_details["timezone"],
-
-        self.context = self.playwright.chromium.launch_persistent_context(
-            user_data_dir=f'C:\\Users\\Administrator\\Desktop\\browser_data\\browser_{self.account.id}',
-            bypass_csp=True,
-            user_agent=get_random_user_agent(),
-            permissions=["geolocation", "notifications"],
-            geolocation={"longitude": proxy_details['longitude'], "latitude": proxy_details['latitude']},
-            locale=proxy_details["locale"],
-            timezone_id=proxy_details["timezone"],
-            viewport={'width': self.account.screen_resolution.width, 'height': self.account.screen_resolution.height},
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--disable-features=IsolateOrigins,site-per-process",
-                "--disable-site-isolation-trials",
-                "--disable-dev-shm-usage"
-            ],
-            proxy={
-                "server": f"http://{self.account.proxy.ip}:{self.account.proxy.port}",
-                "username": self.account.proxy.username,
-                "password": self.account.proxy.password
-            },
-            headless=False)
-
-        self.randomize_browser_context()
-        self.page = self.context.pages[0]
-
-        # Apply stealth
-        self.apply_stealth = ApplyStealth(self.account, self.page)
-        self.apply_stealth.init()
-
-        # self.context.route("**/*", self.intercept_request)
-
-    def intercept_request(self, route, request):
-        # Generate spoofed Sec-CH-UA headers
-        spoofed_headers = {
-            "Sec-CH-UA": '"Not_A;Brand";v="99", "Chromium";v="97", "Google Chrome";v="97"',
-            "Sec-CH-UA-Platform": "Windows",
-            "Sec-CH-UA-Mobile": "?0",
-        }
-
-        # Merge spoofed headers with existing request headers
-        headers = request.headers
-        headers.update(spoofed_headers)
-
-        # Continue the request with modified headers
-        route.continue_(headers=headers)
-
-    def randomize_browser_context(self):
-        pass
-
-        # self.context.set_permissions(["geolocation", "notifications"])
-        # self.page.set_viewport_size(self.resolution)
-        #
-        # self.context = self.browser.new_context(
-        #     locale=proxy_details["locale"],
-        #     timezone_id=proxy_details["timezone"],
-        #     user_agent=get_random_user_agent(),
-        #     storage_state=self.account.get_session(),
-        #     bypass_csp=True
-        # )
 
     def go_to_instagram(self):
         self.account.add_cli('Going to Instagram page ...')
@@ -144,7 +81,7 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
 
         try:
             self.account.add_cli('Closing MLX profile ...')
-            Requests().close_mlx_profile(self.profile_id)
+            Multilogin().close_browser(self.profile_id)
         except Exception as e:
             self.account.add_cli(f'Problem Closing Profile : {str(e)}')
 

@@ -48,7 +48,6 @@ class ProfileController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'folder' => 'required|string|max:255',
-            'proxy_id' => 'required|exists:proxies,id',
             'accounts' => 'required|array',
             'accounts.*' => 'required|exists:accounts,id',
         ]);

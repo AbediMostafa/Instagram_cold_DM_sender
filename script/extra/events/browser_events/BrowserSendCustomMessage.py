@@ -1,11 +1,4 @@
-from time import sleep
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
-from script.extra.adapters.SettingAdapter import SettingAdapter
-from spintax import spin
-from script.extra.actions.DM import DM
-from script.models.Lead import Lead
-from peewee import fn
-from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.Thread import get_url_id
 
 

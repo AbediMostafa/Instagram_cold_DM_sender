@@ -1,11 +1,10 @@
-import datetime
 from peewee import *
-from .Base import BaseModel
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from .Thread import Thread
 from .Loom import Loom
 
 
-class Message(BaseModel):
+class Message(BaseWithTimeZoneModel):
     message_id = CharField(null=True)
     thread = ForeignKeyField(Thread, backref='threads', null=True)
     text = TextField()
@@ -16,7 +15,6 @@ class Message(BaseModel):
     messageable_id = CharField()
     messageable_type = CharField()
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
 
     def update_state(self, state):
         self.state = state

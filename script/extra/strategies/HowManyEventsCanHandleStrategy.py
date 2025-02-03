@@ -1,17 +1,5 @@
 import random
 
-from script.extra.events.api_events.ChangeNameEvent import ChangeNameEvent
-from script.extra.events.api_events.ChangeUsernameEvent import ChangeUsernameEvent
-from script.extra.events.api_events.ChangeAvatarEvent import ChangeAvatarEvent
-from script.extra.events.api_events.ChangeBioEvent import ChangeBioEvent
-from script.extra.events.api_events.FollowEvent import FollowEvent
-from script.extra.events.api_events.DmEvent import DmEvent
-from script.extra.events.api_events.PostImageEvent import PostImageEvent
-from script.extra.events.api_events.PostVideoEvent import PostVideoEvent
-from script.extra.events.api_events.DmFollowUpEvent import DmFollowUpEvent
-from script.extra.events.api_events.LoomFollowUpEvent import LoomFollowUpEvent
-from script.extra.events.api_events.DeleteInitialPostsEvent import DeleteInitialPostsEvent
-from script.extra.events.api_events.GetThreadMessagesEvent import GetThreadMessagesEvent
 from script.extra.events.browser_events.BrowserScrollAndLikeEvent import BrowserScrollAndLikeEvent
 from script.extra.events.browser_events.BrowserDeleteInitialPostsEvent import BrowserDeleteInitialPostsEvent
 from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
@@ -32,9 +20,7 @@ from script.extra.events.browser_events.BrowserSeeStories import BrowserSeeStori
 from script.extra.events.browser_events.BrowserGoToTargetAccountAndExplorePosts import \
     BrowserGoToTargetAccountAndExplorePosts
 
-from script.extra.helper import pause
-from script.models.Command import Command
-from datetime import datetime, timedelta
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
 
 
 class HowManyEventsCanHandleStrategy:
@@ -141,13 +127,19 @@ class HowManyEventsCanHandleStrategy:
 
         required_actions = [
             BrowserMakeAccountPublic(self.browser_ig),
+            BrowserSendDmEvent(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
 
     def second_day_strategy(self):
         self.account.add_cli('running second day strategy')
-        self.events = [self.select_random_explore_action()]
+
+        required_actions = [
+            BrowserSendDmEvent(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
 
     def third_day_strategy(self):
         self.account.add_cli('running third day strategy')
@@ -155,13 +147,27 @@ class HowManyEventsCanHandleStrategy:
         required_actions = [
             BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
 
     def fourth_day_strategy(self):
         self.account.add_cli('running fourth day strategy')
-        self.events = [self.select_random_explore_action()]
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
 
     def fifth_day_strategy(self):
         self.account.add_cli('running fifth day strategy')
@@ -174,13 +180,25 @@ class HowManyEventsCanHandleStrategy:
             BrowserSendDmEvent(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
 
     def sixth_day_strategy(self):
         self.account.add_cli('running sixth day strategy')
-        self.events = [self.select_random_explore_action()]
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
 
     def seventh_day_strategy(self):
         self.account.add_cli('running seventh day strategy')
@@ -194,13 +212,27 @@ class HowManyEventsCanHandleStrategy:
             BrowserSendDmEvent(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
 
     def eighth_day_strategy(self):
         self.account.add_cli('running eighth day strategy')
-        self.events = [self.select_random_explore_action()]
+
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
 
     def ninth_day_strategy(self):
         self.account.add_cli('running ninth day strategy')
@@ -215,6 +247,7 @@ class HowManyEventsCanHandleStrategy:
             BrowserSendDmEvent(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -222,7 +255,20 @@ class HowManyEventsCanHandleStrategy:
     def tenth_day_strategy(self):
         self.account.add_cli('running tenth day strategy')
 
-        self.events = [self.select_random_explore_action()]
+        required_actions = [
+            BrowserMakeAccountPublic(self.browser_ig),
+            BrowserDeleteInitialPostsEvent(self.browser_ig),
+            BrowserChangeUsernameEvent(self.browser_ig),
+            BrowserChangeAvatarEvent(self.browser_ig),
+            BrowserChangeBioEvent(self.browser_ig),
+
+            BrowserSendDmEvent(self.browser_ig),
+            BrowserDmFollowUpEvent(self.browser_ig),
+            BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
+        ]
+
+        self.events = required_actions + [self.select_random_explore_action()]
 
     def eleventh_day_strategy(self):
         self.account.add_cli('running eleventh day strategy')
@@ -238,6 +284,7 @@ class HowManyEventsCanHandleStrategy:
             BrowserSendDmEvent(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -256,6 +303,7 @@ class HowManyEventsCanHandleStrategy:
             BrowserSendDmEvent(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
+            LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]

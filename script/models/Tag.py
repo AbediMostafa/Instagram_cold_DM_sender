@@ -1,12 +1,9 @@
-import datetime
 from peewee import *
-from .Base import BaseModel
-from datetime import datetime, timedelta
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 
-class Tag(BaseModel):
+class Tag(BaseWithTimeZoneModel):
     title = CharField()
-    created_at = DateTimeField(null=True, default=datetime.now)
 
     class Meta:
         table_name = 'tags'

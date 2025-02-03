@@ -1,10 +1,11 @@
-import datetime
 from peewee import *
-from .Base import BaseModel
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from .Account import Account
 from .Lead import Lead
+from script.extra.helper import tehran_now
 
-class Loom(BaseModel):
+
+class Loom(BaseWithTimeZoneModel):
 
     hashed_name = CharField()
     original_name = CharField()
@@ -15,8 +16,7 @@ class Loom(BaseModel):
     account = ForeignKeyField(Account, backref='looms', null=True)
     lead = ForeignKeyField(Lead, backref='looms', null=True)
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
-    updated_at = DateTimeField(null=True, default=datetime.datetime.now)
+    updated_at = DateTimeField(null=True, default=tehran_now)
 
     def update_state(self, state):
         self.state = state

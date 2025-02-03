@@ -46,13 +46,10 @@ class Profile extends Model
 
     public function deleteRecords(): void
     {
-        try {
-            $this->delete();
-            $updateProxy = new ProfileDelete($this->profile_id);
-            $updateProxy->deleteProfile();
-        } catch (\Exception $exception) {
-            dump($exception->getMessage());
-        }
+
+        $this->delete();
+        $updateProxy = new ProfileDelete($this->profile_id);
+        $updateProxy->deleteProfile();
     }
 
     public static function getWithoutAccountProfiles()
@@ -60,12 +57,12 @@ class Profile extends Model
 
         $request = new ProfileRequest();
 
-        $resp  = $request->request('get', 'https://launcher.mlx.yt:45001/api/v1/profile/statuses');
+        $resp = $request->request('get', 'https://launcher.mlx.yt:45001/api/v1/profile/statuses');
 
-        $data = collect($resp->json()[ "data"]["states"])->keys();
+        $data = collect($resp->json()["data"]["states"])->keys();
 
-        $resp = $request->request('post', 'https://api.multilogin.com/profile/metas', ['ids'=>$data]);
-        $profiles = $resp->json()[ "data"]["profiles"];
+        $resp = $request->request('post', 'https://api.multilogin.com/profile/metas', ['ids' => $data]);
+        $profiles = $resp->json()["data"]["profiles"];
 
         $profiles = collect($profiles)->pluck("name")->each(function ($title) {
 

@@ -1,9 +1,9 @@
 from script.extra.adapters.SettingAdapter import SettingAdapter
 
 from script.models.Lead import Lead
-from datetime import datetime, timedelta
+from datetime import timedelta
 from spintax import spin
-import random
+from script.extra.helper import hours_ago
 
 
 class DmFollowUp:
@@ -15,7 +15,7 @@ class DmFollowUp:
         self.chunk_dm = SettingAdapter.dm_chunk()
 
     def leads_to_send_dm_follow_ups(self, cnt):
-        forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
+        forty_eight_hours_ago = hours_ago(48)
 
         leads = Lead.select().where(
             (Lead.last_state == 'dm follow up') &

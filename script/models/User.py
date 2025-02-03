@@ -1,16 +1,14 @@
-import datetime
-
 from peewee import *
-from .Base import BaseModel
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
+from script.extra.helper import tehran_now
 
 
-class User(BaseModel):
+class User(BaseWithTimeZoneModel):
     name = CharField()
     email = CharField()
     password = CharField()
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
-    updated_at = DateTimeField(null=True, constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
+    updated_at = DateTimeField(null=True, default=tehran_now)
 
     class Meta:
         table_name = 'users'

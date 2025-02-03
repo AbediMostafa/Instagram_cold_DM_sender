@@ -54,7 +54,7 @@ class TagController extends Controller
     public function search()
     {
         return Tag::query()
-            ->where('title', 'ilike', '%' . request('q') . '%')
+            ->where('title', 'like', '%' . request('q') . '%')
             ->get();
     }
 }

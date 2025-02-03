@@ -10,6 +10,7 @@ use League\Csv\Reader;
 use League\Csv\Writer;
 use Nette\Schema\ValidationException;
 use PHPUnit\Exception;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LeadController extends Controller
 {
@@ -107,7 +108,7 @@ class LeadController extends Controller
     public function import()
     {
         r()->validate([
-            'file' => 'required|file|mimes:csv,txt',
+            'file' => 'required|file|mimes:csv,txt,xlsx',
         ]);
 
         try {
@@ -132,6 +133,8 @@ class LeadController extends Controller
             return $e->getMessage();
         }
     }
+
+
 
     public function getStatuses()
     {

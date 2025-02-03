@@ -2,63 +2,86 @@ import random
 import sys
 import os
 
+import requests
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
-from datetime import datetime
-# from script.models.Account import Account
-# from script.models.Command import Command
-from script.models.AccountTemplate import AccountTemplate
-from script.models.Template import Template
-# from datetime import datetime, timedelta
-# from script.extra.process.Process import Process
-from script.models.AccountHelper import *
+from script.models.Setting import Setting
+from script.models.Account import Account
+from script.models.AccountHelper import get_next_account
+import csv
+import requests
+from bs4 import BeautifulSoup
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
-from script.extra.adapters.SettingAdapter import SettingAdapter
-from spintax import spin
 
-from script.extra.instagram.api.InstagramMobile import InstagramMobile
-# from script.extra.events.api_events.GetThreadMessagesEvent import GetThreadMessagesEvent
-from script.extra.events.api_events.PostVideoEvent import PostVideoEvent
-from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
-from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
-from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
-from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
-from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
-from script.extra.events.browser_events.BrowserLoomFollowUpEvent import BrowserLoomFollowUpEvent
-from script.extra.events.browser_events.BrowserDeleteInitialPostsEvent import BrowserDeleteInitialPostsEvent
-from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
-from script.extra.events.browser_events.BrowserSendDmEvent import BrowserSendDmEvent
-# from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
-from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
-# from script.extra.events.api_events.ChangeAvatarEvent import ChangeAvatarEvent
-from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
-from script.extra.events.browser_events.BrowserGoToTargetAccountAndExplorePosts import \
-    BrowserGoToTargetAccountAndExplorePosts
-from script.extra.events.browser_events.BrowserGotoExploreEvent import BrowserGotoExploreEvent
-from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
-from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
-from script.extra.events.browser_events.BasePlaywright import BasePlaywright
-from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
-from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
-from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
-from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook
+# Input and output file paths
+input_csv = "noah - 50K.csv"  # Replace with your input CSV filename
+output_csv = "instagram_usernames_only.csv"
+max_retries = 3
+max_threads = 500
+timeout = 25  # Timeout in seconds for loading the website
 
-from script.models.Lead import Lead
-from script.models.Thread import Thread
-from script.models.Message import Message
-from script.models.Command import Command
-from script.extra.actions.DM import DM
-from script.models.Template import get_a, delete
+def extract_instagram_username(url):
+    for attempt in range(max_retries):
+        try:
+            # Send GET request to the website
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(url, headers=headers, timeout=timeout)
+            response.raise_for_status()
 
+            # Parse the HTML content
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-print(random.randint(1,2))
-# account = Account.get_by_id(2442)
-# result = get_a('username')
-#
-# if result is None or not result.text:
-#     raise ValueError("No username available in the database.")
-#
-# username = result.text
-#
-# # we delete this username from database to don't use for another account
-# delete('username', username)
+            # Find all <a> tags with href containing "instagram.com"
+            instagram_links = soup.find_all("a", href=re.compile(r"(https?://)?(www\.)?instagram\.com/"))
+
+            if instagram_links:
+                # Extract Instagram username from the first valid link
+                for link in instagram_links:
+                    href = link.get('href')
+                    if href:
+                        # Clean up the URL to extract the username
+                        username = re.sub(r"(https?://)?(www\.)?instagram\.com/", "", href).split('/')[0]
+                        username = username.split('?')[0]  # Remove query parameters if any
+                        return username
+            return None
+        except Exception as e:
+            print(f"Error processing {url} (Attempt {attempt + 1}): {e}")
+            sleep(1)  # Wait before retrying
+    return None
+
+def process_website(row):
+    website = row.get('Website')  # Adjust the column name if needed
+    if website:
+        username = extract_instagram_username(website)
+        print(f"Website: {website}, Instagram: {username}")
+        return username
+    return None
+
+# Read the input CSV and process websites using multithreading
+def scrape_instagram_usernames(input_csv, output_csv):
+    usernames = []
+
+    with open(input_csv, mode='r', encoding='utf-8') as infile:
+        reader = csv.DictReader(infile)
+        rows = list(reader)
+
+        with ThreadPoolExecutor(max_threads) as executor:
+            future_to_row = {executor.submit(process_website, row): row for row in rows}
+            for future in as_completed(future_to_row):
+                username = future.result()
+                if username:
+                    usernames.append(username)
+
+    # Write usernames to the output CSV
+    with open(output_csv, mode='w', encoding='utf-8', newline='') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(["Instagram Username"])  # Header
+        for username in usernames:
+            writer.writerow([username])
+
+    print(f"Instagram usernames have been saved to {output_csv}")
+
+# Run the scraper
+scrape_instagram_usernames(input_csv, output_csv)

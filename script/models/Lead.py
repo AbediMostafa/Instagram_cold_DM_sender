@@ -1,21 +1,20 @@
 import datetime
 from peewee import *
-from .Base import BaseModel
 from .Account import Account
 from dotenv import load_dotenv
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 import os
 import requests
 
 
-class Lead(BaseModel):
+class Lead(BaseWithTimeZoneModel):
     username = CharField()
     instagram_id = BigIntegerField(null=True)
     times = IntegerField(default=0)
     last_state = CharField(default='free')
     account = ForeignKeyField(Account, backref='leads', null=True)
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
-    last_command_send_date = DateTimeField(null=True, constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
+    last_command_send_date = DateTimeField(null=True)
 
     def set_account(self, account):
         self.account = account
@@ -26,6 +25,8 @@ class Lead(BaseModel):
         self.save()
 
     def change_state(self, account=None, state=None, add_history=None, times=0, update_date=None, user=None):
+        from script.extra.helper import tehran_now
+
         if account:
             self.account = account
 
@@ -33,7 +34,7 @@ class Lead(BaseModel):
             self.last_state = state
 
         if update_date:
-            self.last_command_send_date = datetime.datetime.now()
+            self.last_command_send_date = tehran_now()
 
         self.times = times
 
@@ -64,7 +65,6 @@ class Lead(BaseModel):
             account=account.id,
             user=user)
 
-
     @classmethod
     def get_leads(cls, count=1):
         load_dotenv()
@@ -86,7 +86,22 @@ class Lead(BaseModel):
 
             return leads
 
+    @classmethod
+    def get_unfollowed_leads(cls, account, cnt):
+        from .Command import Command
 
+        # Subquery to find leads that have been followed by the account
+        followed_leads = Command.select(Command.lead_id).where(
+            (Command.account == account) &
+            (Command.type == 'follow')
+        )
+
+        # Query to find leads that have not been followed by the account
+        unfollowed_leads = Lead.select().where(
+           Lead.id.not_in(followed_leads)
+        ).limit(cnt)
+
+        return list(unfollowed_leads)
 
     class Meta:
         table_name = 'leads'

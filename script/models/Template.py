@@ -1,7 +1,7 @@
 import datetime
 
 from peewee import *
-from .Base import BaseModel
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from .Color import Color
 from script.extra.helper import *
 from .Category import Category
@@ -17,12 +17,15 @@ def delete(_type, text):
 
 
 def get_a(_type, account=None):
+    load_dotenv()
+    random_function = fn.Random if os.getenv('DB_TYPE') == 'postgresql' else fn.Rand
+
     return Template.select().where(
         (Template.type == _type)
-    ).order_by(fn.Random()).first()
+    ).order_by(random_function()).first()
 
 
-class Template(BaseModel):
+class Template(BaseWithTimeZoneModel):
     text = CharField()
     caption = CharField()
     type = CharField()
@@ -31,8 +34,6 @@ class Template(BaseModel):
     uid = CharField(null=True)
     color = ForeignKeyField(Color, backref='templates', null=True)
     category = ForeignKeyField(Category, backref='templates', null=True)
-
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
 
     def download_image(self, tmp=None):
         # If no tmp folder is provided, generate a random one

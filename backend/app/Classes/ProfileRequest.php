@@ -19,24 +19,23 @@ class ProfileRequest
 
         Dotenv::createImmutable(__DIR__ . "/../..")->load();
 
-        $this->baseUrl = env('MLX_BASE');
+        $this->baseUrl = "https://api.multilogin.com/user/signin";
+//        $this->baseUrl = env('MLX_BASE');
         $this->email = env('MLX_USERNAME');
         $this->password = env('MLX_PASSWORD');
     }
 
     public function request(string $type, string $url, array $data = null)
     {
-        $token = Setting::getValue('mlx_token');
-
-        $headers = [
+        $getHeaders = fn() => [
             "Accept" => "application/json",
             "Content-Type" => "application/json",
-            "Authorization" => "Bearer {$token}",
+            "Authorization" => "Bearer " . Setting::getValue('mlx_token'),
         ];
 
         $sendRequest = fn() => $type === 'get'
-            ? Http::withoutVerifying()->withHeaders($headers)->get($url)
-            : Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
+            ? Http::withoutVerifying()->withHeaders($getHeaders())->get($url)
+            : Http::withoutVerifying()->withHeaders($getHeaders())->post($url, $data);
 
         $response = $sendRequest();
 
@@ -44,14 +43,6 @@ class ProfileRequest
         if ($response->unauthorized()) {
             $this->renewToken();
             return $sendRequest();
-//            $errorCode = $response->json('status.error_code') ?? null;
-//
-//            if (in_array($errorCode, ['EXPIRED_JWT_TOKEN', 'UNAUTHORIZED_REQUEST'])) {
-//
-//
-//                $this->renewToken();
-//                return $sendRequest();
-//            }
         }
 
         if ($response->failed()) {
@@ -84,6 +75,7 @@ class ProfileRequest
             if ($response->failed()) {
                 throw new \Exception("Error during login: " . $response->body());
             }
+
 
             $token = $response->json('data.token');
 

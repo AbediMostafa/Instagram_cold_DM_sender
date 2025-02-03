@@ -2,6 +2,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from script.extra.modules.multilogin.Multilogin import Multilogin
 
 import hashlib
 import requests
@@ -10,6 +11,7 @@ from playwright.sync_api import sync_playwright
 import json
 from script.models.Account import Account
 from script.models.Color import Color
+from script.models.Cli import Cli
 import time
 
 from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
@@ -29,7 +31,7 @@ from script.models.Tag import Tag
 from script.models.Taggable import Taggable
 import requests
 from dotenv import load_dotenv
-from script.extra.events.browser_events.BasePlaywright import BasePlaywright
+from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
 from script.extra.events.browser_events.BrowserSendDmEvent import BrowserSendDmEvent
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
@@ -41,6 +43,7 @@ from script.extra.events.browser_events.BrowserChangeUsernameEvent import Browse
 from script.models.Template import get_a, delete
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
 from script.models.Lead import Lead
 from datetime import datetime, timedelta
 from spintax import spin
@@ -49,13 +52,45 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlencode
 from script.extra.modules.bulkacc.TmpMail import TmpMail
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
+import pytz
+from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
+from script.extra.actions.Follow import Follow
+from script.models.Command import Command
+from script.models.Hashtag import Hashtag, get_hashtag
+from script.extra.parsers.GridPostParser import GridPostParser
+from script.extra.actions.send_dm.SendDmContext import SendDmContext
+#
+from script.models.Process import Process
 
-# accountId = 1151
-# account = Account.get_by_id(accountId)
+if len(sys.argv) < 2:
+    print("Usage: python main.py <account_id>")
+    sys.exit(1)
+
+account_id = sys.argv[1]
+account = Account.get_by_id(account_id)
+if not account:
+    sys.exit(1)
+try:
+    browser_ig = BasePlaywright(account)
+    browser_ig.start_browser().go_to_instagram()
+    login = BrowserLoginEvent(browser_ig)
+
+    if login.is_not_logged_in():
+        login.ig.account.add_cli('User is not logged in before trying to login ...')
+        login.fill_username_password()
+        login.ig.page.wait_for_timeout(5000)
+
+        if login.need_2f_authentication():
+            login.ig.two_factor_authentication_process()
+except:
+    pass
+
+
 # CheckForAccountActionsHook(account)
+#
 # browser_ig = BasePlaywright(account)
 # browser_ig.start_browser().go_to_instagram()
-# BrowserSendDmEvent(browser_ig).fire()
+# SendDmContext(browser_ig).fire()
 # BrowserLoginEvent(browser_ig).fire()
 # browser_ig.pause(4000000, 5000000)
 #
@@ -63,14 +98,18 @@ from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserP
 #     path = 'C:\\Users\\Administrator\\Desktop\\project\\backend\\storage\\app\\public\\uploads\\avatar\\10\\11\\uqXjpNaY1P7Wt67Qc3ors5s2dlyTfjWe9MvpuxPR.jpg'
 #     folder = 'C:\\Users\\Administrator\\Desktop\\project\\backend\\storage\\app\\public\\uploads\\avatar\\10\\11'
 #     process_image(path, folder)
-
 #
-account = Account.get_by_id(2877)
-
-CheckForAccountActionsHook(account)
+# cli = Cli.get_by_id(46721676)
+# print(cli.created_at)
+# account = Account.get_by_id(2334)
+# CheckForAccountActionsHook(account)
 # browser_ig = BasePlaywright(account)
 # browser_ig.start_browser().go_to_instagram()
+# BrowserSendDmEvent(browser_ig).fire()
 # # BrowserLoginEvent(browser_ig).fire()
+
+# RecordLastActivityHook(account)
+# account.create_command('dm follow up', 'processing')
 #
 # print(account.number_of_custom_message_commands)
 #
@@ -79,4 +118,3 @@ CheckForAccountActionsHook(account)
 #
 # # BrowserChangeUsernameEvent(browser_ig).fire()
 # #
-

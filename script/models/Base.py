@@ -3,7 +3,6 @@ from script.extra.config import *
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
 load_dotenv()
 
 # Get the values from environment variables
@@ -23,6 +22,7 @@ database = PostgresqlDatabase(
 )
 
 database.connect()
+
 
 class BaseModel(Model):
     class Meta:

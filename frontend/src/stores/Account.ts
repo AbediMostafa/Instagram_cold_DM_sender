@@ -43,6 +43,12 @@ export const useAccountStore = defineStore("AccountStore", {
             warningPromise("Are you sure you want to delete selected account(s)?")
                 .then(() => ApiService.post("account/delete", {ids}).then(this.getAccounts))
         },
+
+        startProfile(ids) {
+            ApiService.post("account/start-profile", {ids})
+        },
+
+
         warnIfdosntSelected(selected) {
             if (selected.length) return true;
 
@@ -93,17 +99,6 @@ export const useAccountStore = defineStore("AccountStore", {
             }
             this.getAccounts(this.accounts.current_page);
         },
-        setCategory() {
-            const data = {
-                categoryId: this.accounts.category_id,
-                accountIds: this.checkedAccountRows
-            }
-
-            this.warnIfdosntSelected(this.checkedAccountRows) &&
-            ApiService.post('account/set-category', data)
-                .then(this.getAccounts);
-
-        },
         deleteWarning(ids) {
             ApiService.post('account/delete-warning', {ids})
                 .then(this.getAccounts);
@@ -138,12 +133,5 @@ export const useAccountStore = defineStore("AccountStore", {
                     ElMessage.error('Failed to fetch OTP:', error);
                 })
         },
-
-        changeProfileProxy(ids){
-            const accountType = ids.length ? 'selected accounts':'challenging accounts'
-            warningPromise(`Are you sure you want to change ${accountType} profile proxy?`)
-                .then(() => ApiService.post("account/change-profile-proxy-to-custom", {ids}))
-
-        }
     },
 });

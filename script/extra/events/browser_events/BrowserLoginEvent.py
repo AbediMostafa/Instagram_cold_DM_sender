@@ -100,11 +100,14 @@ class BrowserLoginEvent(InstagramMiddleware):
         input2 = self.ig.page.get_by_label("Phone number, username or email address")
 
         try:
+            input1.fill('')
             input1.press_sequentially(self.ig.account.username, delay=100, timeout=4500)
         except:
+            input2.fill('')
             input2.press_sequentially(self.ig.account.username, delay=100)
 
         self.ig.pause(1800, 3000)
+        self.ig.page.get_by_label("Password").fill('')
         self.ig.page.get_by_label("Password").press_sequentially(self.ig.account.password, delay=100)
         self.ig.pause(2000, 3000)
         self.ig.page.get_by_role("button", name="Log in", exact=True).click()

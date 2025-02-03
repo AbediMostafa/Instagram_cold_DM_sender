@@ -19,7 +19,6 @@ class FollowGoodPagesContext(InstagramMiddleware):
                 strategy(self.ig.account).can()
 
         except CantPerformAction as e:
-            self.ig.account.add_cli(str(e))
             return True
 
         except Exception as e:

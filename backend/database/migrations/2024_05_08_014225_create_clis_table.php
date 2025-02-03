@@ -18,6 +18,10 @@ return new class extends Migration {
                 ->constrained('accounts')
                 ->cascadeOnDelete();
 
+            $table->foreignId('process_id')
+                ->constrained('processes')
+                ->nullOnDelete();
+
             $table->string('log');
 
             $table->timestamp('created_at')->useCurrent();

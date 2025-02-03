@@ -15,7 +15,7 @@ class BrowserDmFollowUpEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli("Starting DM Follow up process ...")
         self.dm = DmFollowUp(self.ig.account)
-        cnt = random.randint(12, 17) if self.ig.account.has_enough_posts else 2
+        cnt = random.randint(12, 17) if self.ig.account.has_enough_posts else random.randint(7, 10)
         self.leads = self.dm.leads_to_send_dm_follow_ups(cnt)
 
         if not len(self.leads):
@@ -32,7 +32,7 @@ class BrowserDmFollowUpEvent(InstagramMiddleware):
         for lead in self.leads:
             self.ig.account.add_cli(f"Sending Dm follow up to : {lead.username}")
             self.send_dm(lead)
-            self.ig.pause(10000, 20000)
+            self.ig.pause(5000, 8000)
 
     def send_dm(self, lead):
 

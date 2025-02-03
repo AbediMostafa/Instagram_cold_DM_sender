@@ -1,17 +1,15 @@
 from peewee import *
-from .Base import BaseModel
 from .Category import Category
-from datetime import datetime, timedelta
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 
-class Spintax(BaseModel):
+class Spintax(BaseWithTimeZoneModel):
     name = CharField()
     type = CharField()
     text = TextField()
 
     category = ForeignKeyField(Category, backref='spintaxes', null=True)
 
-    created_at = DateTimeField(null=True, default=datetime.now)
     updated_at = DateTimeField(null=True)
 
     @classmethod

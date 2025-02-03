@@ -37,44 +37,17 @@
     <div class="menu-item ">
       <div class="px-3 fill-flex d-flex align-items-center">
         <a
+            class="btn btn-light-success btn-sm px-4"
+            @click="store.startProfile(store.checkedAccountRows)">Start Profile</a>
+      </div>
+    </div>
+    <div class="menu-item ">
+      <div class="px-3 fill-flex d-flex align-items-center">
+        <a
             class="btn btn-light-danger btn-sm px-4"
             @click="store.deleteSelected(store.checkedAccountRows)"> Delete Selected </a>
       </div>
     </div>
-    <div class="menu-item ">
-      <div class="menu-content px-3 fill-flex d-flex align-items-center">
-        <a
-            class="btn btn-light-success btn-sm px-4 me-2"
-            @click="store.changeProfileProxy(store.checkedAccountRows)">
-            Change Profile Proxy
-        </a>
-      </div>
-    </div>
-    <div class="menu-item ">
-      <div class="menu-content px-3 justify-content-between d-flex align-items-center">
-        <el-select
-            v-if="categoryStore.categories.data.length"
-            style="width: 220px"
-            v-model="store.accounts.category_id" placeholder="Select Category">
-          <el-option
-              v-for="item in categoryStore.categories.data"
-              :key="item.id"
-              :label="item.title"
-              :value="item.id"
-          />
-
-          <el-option
-              label="Clear Category"
-              :value="null"
-          />
-        </el-select>
-
-        <a class="btn btn-sm btn-light-success ms-1" @click="store.setCategory()"> Set Category</a>
-      </div>
-    </div>
-
-
-
 
     <div class="menu-item">
       <div class="menu-content fs-6 text-gray-900 fw-bold px-3 py-4">

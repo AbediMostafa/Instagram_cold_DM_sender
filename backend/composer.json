@@ -9,6 +9,7 @@
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "league/csv": "^9.17",
+        "maatwebsite/excel": "^1.1",
         "santigarcor/laratrust": "^8.3"
     },
     "require-dev": {
@@ -67,5 +68,10 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "exclude-from-classmap": [
+        "vendor/league/flysystem-local/",
+        "vendor/league/flysystem/src/",
+        "vendor/laravel/pint/"
+    ]
 }

@@ -3,6 +3,7 @@ import os
 import traceback
 from datetime import datetime
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
+from script.extra.helper import tehran_now
 
 
 class InstagramMiddleware:
@@ -45,7 +46,7 @@ class InstagramMiddleware:
 
     def take_screenshot(self, cause):
         # Get current date components
-        now = datetime.now()
+        now = tehran_now()
         year = now.strftime("%Y")
         month = now.strftime("%m")
         day = now.strftime("%d")
@@ -70,3 +71,7 @@ class InstagramMiddleware:
 
         if _type == 'raise':
             raise Exception(reason)
+
+    def cant_perform(self):
+        for strategy in self.strategies:
+            strategy(self.ig.account).can()

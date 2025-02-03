@@ -1,13 +1,14 @@
 import datetime
 from peewee import *
-from .Base import BaseModel
 from .Account import Account
+from .Process import Process
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 
-class Cli(BaseModel):
+class Cli(BaseWithTimeZoneModel):
     log = TextField(null=True)
     account = ForeignKeyField(Account, backref='clis')
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
+    process = ForeignKeyField(Process, backref='processes')
 
     class Meta:
         table_name = 'clis'

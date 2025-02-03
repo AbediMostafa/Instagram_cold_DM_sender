@@ -4,12 +4,14 @@ import requests
 from script.models.Setting import Setting
 import hashlib
 
+
 load_dotenv()
 
 
-class Requests:
+class Multilogin:
 
     def __init__(self):
+        Setting.set_value('mlx_lock', False)
         pass
 
     def renew_token(self):
@@ -35,34 +37,31 @@ class Requests:
 
         Setting.set_value('mlx_lock', False)
 
-    def request(self, _type, url, data=None):
-
-        headers = {
+    def get_headers(self):
+        return {
             "Accept": "application/json",
             "Content-Type": "application/json",
             "Authorization": f"Bearer {Setting.get_value('mlx_token')}"
         }
 
-        def send_request():
-            return requests.get(url, headers=headers) if _type == 'get' else requests.post(url, headers=headers,
-                                                                                           data=data)
+    def send_request(self, _type, url, data=None):
+        return requests.get(url, headers=self.get_headers(), verify=False) if _type == 'get' else\
+            requests.post(url, data=data, verify=False)
 
-        resp = send_request()
+    def request(self, _type, url, data=None):
+
+        resp = self.send_request(_type, url, data)
 
         if resp.status_code == 401:
-            resp_json = resp.json()
-            error_code = resp_json['status']['error_code']
-
-            if error_code == "EXPIRED_JWT_TOKEN" or error_code == "UNAUTHORIZED_REQUEST":
-                self.renew_token()
-                return send_request()
+            self.renew_token()
+            return self.send_request(_type, url, data)
 
         if resp.status_code != 200:
             raise Exception(f"Error while Sending Multilogin {_type} Request : {resp.text}")
 
         return resp
 
-    def get_mlx_endpoint_url(self, profile_id):
+    def get_endpoint_url(self, profile_id):
 
         resp = self.request(
             "get",
@@ -75,9 +74,5 @@ class Requests:
 
         return url
 
-    def close_mlx_profile(self, profile_id):
-        try:
-            self.request('get', f"https://launcher.mlx.yt:45001/api/v1/profile/stop/p/{profile_id}")
-
-        except Exception as e:
-            print(f"Error while closing profile: {str(e)}")
+    def close_browser(self, profile_id):
+        self.request('get', f"https://launcher.mlx.yt:45001/api/v1/profile/stop/p/{profile_id}")

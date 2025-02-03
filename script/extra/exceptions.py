@@ -68,3 +68,7 @@ class SomethingWentWrong(Exception):
 
 class CantPerformAction(Exception):
     pass
+
+
+class DontHaveEnoughEntity(Exception):
+    pass

@@ -1,14 +1,14 @@
 import datetime
 from peewee import *
-from .Base import BaseModel
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
+from script.extra.helper import tehran_now
 
 
-class Category(BaseModel):
+class Category(BaseWithTimeZoneModel):
     title = CharField()
     description = TextField(null=True)
 
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
-    updated_at = DateTimeField(null=True, default=datetime.datetime.now)
+    updated_at = DateTimeField(null=True, default=tehran_now)
 
     class Meta:
         table_name = 'categories'

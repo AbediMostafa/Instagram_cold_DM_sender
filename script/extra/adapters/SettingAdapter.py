@@ -73,8 +73,8 @@ class SettingAdapter:
 
     @classmethod
     def minimum_time_for_next_login(cls):
-        return Setting.get_value('Minimum time for next login', 4)
+        return Setting.get_value('Minimum time for next login', 3)
 
     @classmethod
     def maximum_time_for_next_login(cls):
-        return Setting.get_value('Maximum time for next login', 6)
+        return Setting.get_value('Maximum time for next login', 5)

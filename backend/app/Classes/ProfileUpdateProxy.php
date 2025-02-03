@@ -2,6 +2,7 @@
 
 namespace App\Classes;
 
+use App\Models\Account;
 use App\Models\Profile;
 use \Illuminate\Support\Facades\Http;
 
@@ -32,6 +33,17 @@ class ProfileUpdateProxy
     public function dumpProxy()
     {
         dump($this->profile["parameters"]["proxy"]);
+
+        if ($this->profile["parameters"]["proxy"]['host'] == "gate.multilogin.com") {
+            $account = Account::query()->whereHas('profile',
+                function ($profile) {
+                    $profile->where('profile_id', $this->profileId);
+
+                }
+            )->first()->username;
+
+            dump($account);
+        }
 
     }
 

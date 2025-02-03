@@ -12,7 +12,6 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
     def scroll_and_like(self):
 
         for i in range(random.randint(10, 22)):
-            self.ig.account.add_cli(f'Scroll down for the {i} time ...')
             self.ig.page.mouse.wheel(0, random.randint(450, 650))
             self.ig.pause(2000, 4000)
 

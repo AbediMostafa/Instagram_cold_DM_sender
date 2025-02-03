@@ -1,9 +1,9 @@
 import os
 from time import sleep
-from script.models.Lead import Lead
-from script.extra.adapters.SettingAdapter import SettingAdapter
 import random
 import string
+import pytz
+from datetime import datetime, timedelta
 
 import numpy as np
 from skimage import io, util, transform, exposure
@@ -17,16 +17,6 @@ import requests
 
 def pause(_min, _max):
     sleep(randint(_min, _max))
-
-
-def test_accounts():
-    from spintax import spin
-
-    leads = Lead.select().where(Lead.id.in_([36979, 23365, 23366]))
-    for lead in leads:
-        lead.dm_text = spin(SettingAdapter.cold_dm_spintax())
-
-    return leads
 
 
 def generate_random_folder():
@@ -123,7 +113,6 @@ def generate_random_word(length=14):
     return password
 
 
-
 def get_proxy_details(proxy_ip):
     try:
         response = requests.get(f'http://ipinfo.io/{proxy_ip}/json')
@@ -178,16 +167,6 @@ def get_proxy_details(proxy_ip):
         }
 
 
-def give_a_good_resolution():
-    resolutions = [
-        {'width': 1920, 'height': 1080},
-        {'width': 1366, 'height': 768},
-        {'width': 1280, 'height': 1024},
-    ]
-
-    return random.choice(resolutions)
-
-
 def get_random_user_agent():
     import random
 
@@ -198,3 +177,80 @@ def get_random_user_agent():
     ]
 
     return random.choice(user_agents)
+
+
+def tehran_now():
+    tehran_tz = pytz.timezone('Asia/Tehran')
+
+    return datetime.now(tehran_tz).replace(tzinfo=None)
+
+
+def hours_ago(hours):
+    return tehran_now() - timedelta(hours=hours)
+
+
+def hours_later(hours):
+    return tehran_now() + timedelta(hours=hours)
+
+
+def calculate_daily_dms(account_age):
+    """
+    Calculate the allowed number of DMs an account can send based on its age,
+    with randomness for more natural behavior.
+
+    :param account_age: The age of the account in days (integer).
+    :return: Allowed number of daily DMs (integer).
+    """
+    if account_age <= 5:
+        return 1
+
+    if account_age <= 10:
+        return random.randint(2, 4)
+
+    if account_age <= 15:
+        return random.randint(3, 5)
+
+    if account_age <= 20:
+        return random.randint(5, 8)
+
+    if account_age <= 25:
+        return random.randint(7, 10)
+
+    if account_age <= 30:
+        return random.randint(10, 15)
+
+    if account_age <= 45:
+        return random.randint(15, 20)
+
+    if account_age <= 60:
+        return random.randint(20, 30)
+
+    return random.randint(29, 34)
+
+
+def get_dm_chunk(account_age):
+    if account_age <= 5:
+        return 1
+
+    if account_age <= 10:
+        return random.randint(2, 4)
+
+    if account_age <= 15:
+        return random.randint(2, 4)
+
+    if account_age <= 20:
+        return random.randint(4, 6)
+
+    if account_age <= 25:
+        return random.randint(4, 6)
+
+    if account_age <= 30:
+        return random.randint(5, 8)
+
+    if account_age <= 45:
+        return random.randint(7, 9)
+
+    if account_age <= 60:
+        return random.randint(8, 11)
+
+    return random.randint(9, 12)

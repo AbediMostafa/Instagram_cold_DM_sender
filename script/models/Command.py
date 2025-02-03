@@ -5,9 +5,11 @@ from .Account import Account
 from .Message import Message
 from .Lead import Lead
 from datetime import datetime, timedelta
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
+from script.extra.helper import hours_ago
 
 
-class Command(BaseModel):
+class Command(BaseWithTimeZoneModel):
     account = ForeignKeyField(Account, backref='commands')
     lead = ForeignKeyField(Lead, backref='commands', null=True)
 
@@ -17,8 +19,6 @@ class Command(BaseModel):
     times = IntegerField()
     type = CharField()
     state = CharField()
-
-    created_at = DateTimeField(null=True, default=datetime.now)
 
     def update_cmd(self, col, val):
         setattr(self, col, val)
@@ -42,9 +42,8 @@ class Command(BaseModel):
 
 
 def performed_command_count(account, command_types, hours, times=0, state='success'):
-    from datetime import datetime, timedelta
 
-    hours_ago = datetime.now() - timedelta(hours=hours)
+    time_threshold = hours_ago(hours)
 
     return (Command
             .select(fn.COUNT(Command.id).alias('count'))
@@ -53,7 +52,7 @@ def performed_command_count(account, command_types, hours, times=0, state='succe
         (Command.type.in_(command_types)) &
         (Command.times == times) &
         (Command.state == state) &
-        (Command.created_at >= hours_ago)
+        (Command.created_at >= time_threshold)
     )
             .scalar())
 
@@ -62,7 +61,7 @@ def sent_recent_command_within(account, _types, hours=24):
     """
     Check if any successful post command (image, video, or carousel) was sent within the last `hours`.
     """
-    time_threshold = datetime.now() - timedelta(hours=hours)
+    time_threshold = hours_ago(hours)
 
     return (Command
             .select()

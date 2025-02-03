@@ -1,11 +1,9 @@
-from script.extra.instagram.api.InstagramMobile import InstagramMobile
-from script.models.AccountHelper import *
+from script.models.AccountHelper import get_next_account
 from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEventsCanHandleStrategy
-from script.extra.events.browser_events.BasePlaywright import BasePlaywright
+from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
 import traceback
 
-from script.extra.hooks.CheckNewMessageHooks import CheckNewMessageHooks
 from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
 from script.extra.hooks.CheckForLastLoginHook import CheckForLastLoginHook
 from script.extra.hooks.CheckForWarningsHook import CheckForWarningsHook
@@ -24,9 +22,7 @@ class Process:
         Sometimes we face Race condition and get_next_account() returns None
         """
         while not self.account:
-            # self.account = get_next_account(tag_titles=['12-16-2024'])
-            # self.account = get_next_account(specific_ids=[2428])
-            self.account = get_next_account()
+            self.account = get_next_account() 
 
     def start(self):
         try:

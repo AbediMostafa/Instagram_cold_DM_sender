@@ -94,20 +94,21 @@ class BrowserPostVideoEvent(InstagramMiddleware):
             pass
         self.ig.pause(2000, 3500)
 
-        self.ig.page.get_by_role("button", name="Next").click()
+        self.ig.page.get_by_role("button", name="Next").click(timeout=3000)
         self.ig.pause(2000, 3500)
 
-        self.ig.page.locator('input[accept="image/jpeg,image/png"]._ac69').nth(0).set_input_files(self.image_path)
-        self.ig.pause(2000, 3500)
+        if self.image_path:
+            self.ig.page.locator('input[accept="image/jpeg,image/png"]._ac69').nth(0).set_input_files(self.image_path)
+            self.ig.pause(2000, 3500)
 
-        self.ig.page.get_by_role("button", name="Next").click()
+        self.ig.page.get_by_role("button", name="Next").click(timeout=3000)
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_label("Write a caption...").fill(self.caption)
         self.ig.pause(2000, 3500)
 
-        self.ig.page.get_by_role("button", name="Share").click()
-        self.ig.pause(60000, 67000)
+        self.ig.page.get_by_role("button", name="Share").click(timeout=3000)
+        self.ig.pause(80000, 87000)
 
         try:
             self.ig.page.get_by_role("button", name="Close").press("Escape")

@@ -40,6 +40,7 @@ class Command extends Model
         'make public',
         'number of active accounts',
         'follow good pages',
+        'explore hashtag',
     ];
 
     public function account()
@@ -54,6 +55,6 @@ class Command extends Model
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->morphOne(Category::class, 'categorizable');
     }
 }

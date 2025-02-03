@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Classes\MultiloginService;
 use App\Classes\ProfileDelete;
 use App\Classes\ProfileUpdateProxy;
 use Carbon\Carbon;
@@ -73,7 +74,7 @@ class Account extends Model
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->morphOne(Category::class, 'categorizable');
     }
 
     public function color()
@@ -183,14 +184,13 @@ class Account extends Model
             sleep(5);
 
 
-
             try {
                 $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
                 $updateProxy->getProfile();
                 return $updateProxy->updateProxyFromResidentialToCustom();
 
             } catch (\Exception $exception) {
-                dump ($exception->getMessage() . $exception->getTraceAsString());
+                dump($exception->getMessage() . $exception->getTraceAsString());
             }
         } else {
             return "{$this->username} dont have profile";
@@ -219,19 +219,18 @@ class Account extends Model
             try {
                 $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
                 $updateProxy->getProfile()->dumpProxy();
+                sleep(4);
             } catch (\Exception $exception) {
-                dump($exception->getMessage());
                 dump($this->username);
+                dd($exception->getMessage());
 
             }
-        } else {
-            dump("{$this->username} dont have profile");
         }
     }
 
     public function getProxy()
     {
-        if($this->profile) {
+        if ($this->profile) {
             try {
                 $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
                 return $updateProxy->getProfile()->getProxy();
@@ -251,10 +250,9 @@ class Account extends Model
         $this->save();
     }
 
-    public static function getActive()
+    public function startProfile()
     {
-        return Account::query()
-            ->where('instagram_state', 'active')
-            ->get();
+        $this->profile &&
+        (new MultiloginService())->startProfile($this->profile->profile_id);
     }
 }

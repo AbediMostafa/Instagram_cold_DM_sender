@@ -93,9 +93,6 @@ export default defineComponent({
     });
 
     const rules = ref({
-      selectedTags: [
-        { required: true, message: 'Please select at least one tag', trigger: 'blur' },
-      ],
       csvFile: [
         { required: true, message: 'Please upload a CSV file', trigger: 'change' },
       ],

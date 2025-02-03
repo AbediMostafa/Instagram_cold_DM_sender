@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Classes\MultiloginService;
 use App\Http\Resources\account\AccountCollection;
 use App\Models\Account;
 use App\Models\Message;
@@ -34,12 +35,14 @@ class AccountController extends Controller
                 'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
                     $query->where('type', 'dm follow up')
                         ->where('times', 0)
+                        ->where('state', 'success')
                         ->whereBetween('created_at', [$startDate, $endDate]);
                 },
 
                 'commands as total_follow_ups' => function ($query) use ($startDate, $endDate) {
                     $query->where('type', 'dm follow up')
                         ->whereIn('times', [1, 2, 3])
+                        ->where('state', 'success')
                         ->whereBetween('created_at', [$startDate, $endDate]);
                 },
 
@@ -70,15 +73,15 @@ class AccountController extends Controller
                 r('search'),
                 function ($_) {
                     if (r('type') === 'proxy') {
-                        $_->whereHas('proxy', fn($__) => $__->where('ip', 'like', '%' . r('search') . '%'));
+                        $_->whereHas('proxy', fn($__) => $__->where('ip', likeOperator(), '%' . r('search') . '%'));
                     }
 
                     if (r('type') === 'account') {
-                        $_->where('username', 'ilike', '%' . r('search') . '%');
+                        $_->where('username', likeOperator(), '%' . r('search') . '%');
                     }
 
                     if (r('type') === 'profile') {
-                        $_->whereHas('profile', fn($__) => $__->where('title', 'like', '%' . r('search') . '%'));
+                        $_->whereHas('profile', fn($__) => $__->where('title', likeOperator(), '%' . r('search') . '%'));
                     }
                 }
             )
@@ -162,7 +165,7 @@ class AccountController extends Controller
                 ->get()
                 ->each(function ($account) {
                     $account->delete();
-                    $account->profile && $account->profile->deleteRecords();
+//                    $account->profile && $account->profile->deleteRecords();
                     sleep(3);
                 });
         },
@@ -191,19 +194,6 @@ class AccountController extends Controller
                     'has_enough_posts' => r('has_enough_posts'),
                 ]),
             'Account updated successfully',
-        );
-    }
-
-    public function setCategory()
-    {
-        return tryCatch(
-            fn() => Account::query()
-                ->whereIn('id', r('accountIds'))
-                ->update([
-                    'category_id' => r('categoryId'),
-                ]),
-            'Account updated successfully',
-            'Problem updating account',
         );
     }
 
@@ -288,26 +278,6 @@ class AccountController extends Controller
         }
     }
 
-    public function changeProfileProxyToCustom()
-    {
-        return tryCatch(
-            function () {
-                $accounts = Account::query();
-                r('ids') ? $accounts->whereIn('id', r('ids')) : $accounts->where('instagram_state', '!=', 'active');
-
-//                $accounts = Account::whereIn('id', r('ids'))->get();
-
-
-//                foreach ($accounts as $account) {
-//                    $account->profile_id = null;
-//                    $account->save();
-//                }
-
-            },
-            'Profile(s) proxy changed successfully'
-        );
-    }
-
     public function getProxyApi()
     {
         return Account::query()->find(r('id'))->getProxy();
@@ -325,15 +295,27 @@ class AccountController extends Controller
         }
     }
 
-    public function changeProfileProxyToCustomApi()
+    public function startProfile()
     {
+
         try {
-            $account = Account::query()->find(r('id'));
+            $service = new MultiloginService();
 
-            return $account->updateProfileProxyFromResidentialToCustom();
+            Account::query()
+                ->whereIn('id', r('ids'))
+                ->get()
+                ->each(function (Account $account) use (&$service) {
+                    runPythonProcess('new.py', $account->id);
+//                    $account->profile ?
+//                        $service->startProfile($account->profile->profile_id) :
+//                        $service->addMessage("{$account->username} dont have profile");
+                });
 
-        } catch (\Exception $exception) {
-            return $exception->getMessage() . $exception->getTraceAsString();
+            return jsonSuccess('Profiles started ' . $service->getMessages());
+
+        } catch (Exception $e) {
+
+            return jsonError($e->getMessage());
         }
     }
 }

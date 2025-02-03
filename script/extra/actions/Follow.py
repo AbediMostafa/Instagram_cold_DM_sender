@@ -2,7 +2,8 @@ from script.extra.adapters.SettingAdapter import SettingAdapter
 import random
 from script.models.Command import Command
 from script.models.Lead import Lead
-from datetime import datetime, timedelta
+from datetime import timedelta
+from script.extra.helper import hours_ago
 from peewee import fn,SQL
 
 
@@ -23,7 +24,7 @@ class Follow:
         return allowed_follow
 
     def already_followed_within_passed_24hours(self):
-        twenty_hours_ago = datetime.now() - timedelta(hours=24)
+        twenty_hours_ago = hours_ago(24)
 
         followed = (Command
                     .select(fn.COUNT(Command.id).alias('count'))

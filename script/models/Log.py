@@ -1,14 +1,11 @@
-import datetime
-
 from peewee import *
-from .Base import BaseModel
 from .Account import Account
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 
-class Log(BaseModel):
+class Log(BaseWithTimeZoneModel):
     log = TextField(null=True)
     account = ForeignKeyField(Account, backref='logs')
-    created_at = DateTimeField(null=True, default=datetime.datetime.now)
 
     class Meta:
         table_name = 'logs'

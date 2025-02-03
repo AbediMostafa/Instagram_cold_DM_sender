@@ -44,6 +44,9 @@ use Symfony\Component\Process\Process;
 use Dotenv\Dotenv;
 use \App\Classes\ProfileUpdateProxy;
 use \App\Http\Controllers\ColorController;
+use \App\Models\Hashtag;
+use \App\Classes\ProfileGetProxy;
+
 
 //
 //function setHasEnoughPosts($accountId)
@@ -67,62 +70,43 @@ use \App\Http\Controllers\ColorController;
 //
 
 Route::get('/', function () {
+//    runPythonProcess('new.py', 2803);
 
-//    $oldAccounts = DB::connection('old_pgsql')
+//    $accounts = DB::connection('old_pgsql')
 //        ->table('accounts')
 //        ->get()
 //        ->each(function ($account) {
-//            Account::query()->where('username', $account->username)->doesntExist() &&
+//            Account::query()->where('username', $account->username)->doesntExist()&&
 //            Account::query()->create([
-//                'secret_key' => $account->secret_key,
-//                'username' => $account->username,
-//                'email' => $account->email,
-//                'password' => $account->password,
-//                'name' => $account->name,
-//                'bio' => $account->bio,
-//                'profile_pic_url' => $account->profile_pic_url,
-//                'instagram_state' => $account->instagram_state,
-//                'app_state' => $account->app_state,
-//                'color_id' => $account->color_id,
-////                'screen_resolution_id' => $account->screen_resolution_id,
-////                'profile_id' => $account->profile_id,
-////                'category_id' => $account->category_id,
-//                'is_used' => $account->is_used,
-//                'avatar_changed' => $account->avatar_changed,
-//                'username_changed' => $account->username_changed,
-//                'initial_posts_deleted' => $account->initial_posts_deleted,
-////                'has_enough_posts' => $account->has_enough_posts,
-//                'is_public' => $account->is_public,
-//                'is_active' => $account->is_active,
-//                'web_session' => $account->web_session,
-//                'mobile_session' => $account->mobile_session,
-//                'log' => $account->log,
-//                'created_at' => $account->created_at,
-//                'updated_at' => $account->updated_at,
-//                'next_login' => $account->next_login,
+//                'secret_key'=>$account->secret_key,
+//                'username'=>$account->username,
+//                'email'=>$account->email,
+//                'password'=>$account->password,
+//                'name'=>$account->name,
+//                'bio'=>$account->bio,
+//                'color_id'=>$account->color_id,
+//                'avatar_changed'=>$account->avatar_changed,
+//                'username_changed'=>$account->username_changed,
+//                'initial_posts_deleted'=>$account->initial_posts_deleted,
+//                'is_public'=>$account->is_public,
+//                'web_session'=>$account->web_session,
+//                'created_at'=>$account->created_at,
 //            ]);
-//
 //        })
 //    ;
 //
-//    dd('$oldAccounts');
+//    dd('$accounts');
+});
 
-    Account::query()->get()->each(function (Account $account) {
-        $account->makeActive();
-    });
+Route::get('/activate-accounts', function () {
 
-    dd('shod');
-
-//    ProfileMakerV2::getInstance()->iterateAndAssignProfile();
-
-//    $profile = Profile::query()->where('profile_id', '155686a9-2142-447c-938b-1430955cca95')->first();
-//    $profile->title = 9021;
-//    $profile->save();
-//    dd($profile->title);
-
-//    (new ProfileMakerV2())->createResidentialProfile();
+//    Account::all()->each(function ($account) {
+//        $account->makeActive();
+//    });
+//    dd('shod');
 
 
+//
 });
 
 Route::post('login', [AuthController::class, 'login']);
@@ -132,8 +116,7 @@ Route::post('categories/get-categories', [CategoryController::class, 'getCategor
 Route::post('app-config', [AppConfigController::class, 'index']);
 Route::post('account/get-proxy-api', [AccountController::class, 'getProxyApi']);
 Route::post('account/change-profile-proxy-to-residential', [AccountController::class, 'changeProfileProxyToResidentialApi']);
-Route::post('account/change-profile-proxy-to-custom-api', [AccountController::class, 'changeProfileProxyToCustomApi']);
-
+Route::post('account/start-profile', [AccountController::class, 'startProfile']);
 
 //Route::middleware('auth:sanctum')->group(function () {
 Route::post('accounts', [AccountController::class, 'index']);
@@ -143,14 +126,12 @@ Route::post('account/get-account', [AccountController::class, 'getAccount']);
 Route::post('account/view', [AccountController::class, 'view']);
 Route::post('account/delete', [AccountController::class, 'delete']);
 Route::post('account/edit', [AccountController::class, 'edit']);
-Route::post('account/set-category', [AccountController::class, 'setCategory']);
 Route::post('account/delete-warning', [AccountController::class, 'deleteWarning']);
 Route::post('account/make-active', [AccountController::class, 'makeActive']);
 Route::post('account/clear-next-login', [AccountController::class, 'clearNextLogin']);
 Route::post('accounts/fetch-accounts', [AccountController::class, 'fetchAccounts']);
 Route::post('account/clear-profile', [AccountController::class, 'clearProfile']);
 Route::post('accounts/get-2fa-code', [AccountController::class, 'get2faCode']);
-Route::post('account/change-profile-proxy-to-custom', [AccountController::class, 'changeProfileProxyToCustom']);
 
 Route::post('leads', [LeadController::class, 'index']);
 Route::post('lead/view', [LeadController::class, 'view']);

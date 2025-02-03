@@ -10,9 +10,9 @@
         <button 
           class="btn btn-sm btn-danger me-2" 
           @click="profileStore.deleteSelected([])"
-          v-if="profileStore.checkedProfileRows.length"
+          v-if="profileStore.checkedProfileRows?.length"
         >
-          Delete Selected ({{ profileStore.checkedProfileRows.length }})
+          Delete Selected ({{ profileStore.checkedProfileRows?.length }})
         </button>
         <button class="btn btn-sm btn-success me-2" @click="showModal('create_profile_modal')">Add Profile</button>
         <button class="btn btn-sm btn-light-success me-2" @click="profileStore.getProfiles">Refresh</button>

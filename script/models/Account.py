@@ -1,5 +1,4 @@
 from peewee import *
-from .Base import BaseModel
 import json
 from datetime import datetime, timedelta
 from .Proxy import Proxy
@@ -11,9 +10,11 @@ import random
 from dotenv import load_dotenv
 import os
 import requests
+from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
+from script.extra.helper import tehran_now, hours_ago, get_dm_chunk, calculate_daily_dms
 
 
-class Account(BaseModel):
+class Account(BaseWithTimeZoneModel):
     proxy = ForeignKeyField(Proxy, backref='accounts', null=True)
     color = ForeignKeyField(Color, backref='accounts', null=True)
     screen_resolution = ForeignKeyField(ScreenResolution, backref='accounts', null=True)
@@ -39,7 +40,6 @@ class Account(BaseModel):
     web_session = TextField(null=True)
     mobile_session = TextField(null=True)
     log = TextField(null=True)
-    created_at = DateTimeField(null=True, default=datetime.now)
     updated_at = DateTimeField(null=True)
     next_login = DateTimeField(null=True)
 
@@ -49,6 +49,7 @@ class Account(BaseModel):
     allowed_number_of_dm_follow_ups = None
     allowed_number_of_loom_follow_ups = None
     todays_sent_dms = None
+    final_allowed_number_of_dms = None
 
     can_send_dm_today = None
     can_send_dm_follow_up_today = None
@@ -87,19 +88,25 @@ class Account(BaseModel):
 
         Log.create(account=self, log=log)
 
-    def add_cli(self, log):
+    def add_cli(self, log, print_only=False):
         from .Cli import Cli
+        from .Process import Process
 
         log = f'[{self.username} -- {self.id}] ${log}'
 
         print(log)
 
+        if print_only:
+            return False
+
         truncated_log = (log[:254]) if log else ''
 
         self.log = truncated_log
+        process = Process.select().where(Process.pid == os.getpid()).first()
+
         self.save()
 
-        Cli.create(account=self, log=truncated_log)
+        Cli.create(account=self, log=truncated_log, process=process)
 
     def add_screen_shot(self, cause, path):
         from .ScreenShot import ScreenShot
@@ -152,7 +159,7 @@ class Account(BaseModel):
     def should_not_post(self, command_type, hours=24):
         from .Command import Command
 
-        n_hours_ago = datetime.now() - timedelta(hours=hours)
+        n_hours_ago = hours_ago(hours)
 
         return Command.select().where(
             (Command.account_id == self.id) &
@@ -165,6 +172,9 @@ class Account(BaseModel):
         from .Template import Template
         from .AccountTemplate import AccountTemplate
 
+        load_dotenv()
+        random_function = fn.Random if os.getenv('DB_TYPE') == 'postgresql' else fn.Rand
+
         return (Template.select().where(
             (Template.type == type) &
             ~(Template.id << (AccountTemplate
@@ -174,7 +184,7 @@ class Account(BaseModel):
                                      (Template.type == type))
                               ))
         )
-                .order_by(fn.Random())
+                .order_by(random_function())
                 .first())
 
     def attach_template(self, template):
@@ -191,7 +201,6 @@ class Account(BaseModel):
             state=state,
             lead=lead,
             times=times,
-            created_at=datetime.now()
         )
 
     def set(self, col, value):
@@ -200,14 +209,12 @@ class Account(BaseModel):
 
     def get_passed_days_since_creation(self):
         if not self.created_at:
-            self.created_at = datetime.now()
+            self.created_at = tehran_now()
             self.save()
 
-        self.passed_days_since_creation = (datetime.now() - self.created_at).days
+        self.passed_days_since_creation = (tehran_now() - self.created_at).days
 
-        self.passed_days_since_creation = 1 if self.passed_days_since_creation < 1 else self.passed_days_since_creation
-
-        return self.passed_days_since_creation
+        return 1 if self.passed_days_since_creation < 1 else self.passed_days_since_creation
 
     def get_proxy(self):
         from .AccountHelper import get_first_proxy_with_less_accounts
@@ -314,14 +321,10 @@ class Account(BaseModel):
         min_hour_setting = SettingAdapter.minimum_time_for_next_login()
         max_hour_setting = SettingAdapter.maximum_time_for_next_login()
 
-        min_hour = min_hour_setting if self.has_enough_posts else min_hour_setting + 5
-        max_hour = max_hour_setting if self.has_enough_posts else max_hour_setting + 5
-
-        # random_hour = random.randint(min_hour_setting, max_hour_setting)
-        random_hour = random.randint(min_hour, max_hour)
+        random_hour = random.randint(min_hour_setting, max_hour_setting)
 
         time_delta = timedelta(seconds=random_second, minutes=random_minute, hours=random_hour)
-        new_time = datetime.now() + time_delta
+        new_time = tehran_now() + time_delta
 
         self.next_login = new_time
         self.save()
@@ -332,8 +335,8 @@ class Account(BaseModel):
         if not self.next_login:
             return False, 0
 
-        time_delta = max(self.next_login - datetime.now(), timedelta(0))
-        return self.next_login > datetime.now(), time_delta
+        time_delta = max(self.next_login - tehran_now(), timedelta(0))
+        return self.next_login > tehran_now(), time_delta
 
     def get_color(self):
         if not self.color:
@@ -357,7 +360,6 @@ class Account(BaseModel):
                               .where(
             (Template.type == 'carousel') &
             (Template.color == self.get_color()) &
-            # (Template.category == self.category) &
             (~(Template.id << selected_templates_subquery))
         )
                               .order_by(fn.Random())
@@ -423,7 +425,7 @@ class Account(BaseModel):
         """
         Check if any successful post command (image, video, or carousel) was sent within the last `hours`.
         """
-        time_threshold = datetime.now() - timedelta(hours=hours)
+        time_threshold = tehran_now() - timedelta(hours=hours)
 
         return (Command
                 .select()
@@ -466,7 +468,7 @@ class Account(BaseModel):
         if not latest_command:
             return "No successful commands found"
 
-        time_difference = datetime.now() - latest_command.created_at
+        time_difference = tehran_now() - latest_command.created_at
         hours_ago = time_difference.total_seconds() // 3600
 
         return f"{int(hours_ago)} hours ago"
@@ -567,58 +569,24 @@ class Account(BaseModel):
         # Join the titles into a single string separated by commas
         return tags
 
-    def number_of_dm_strategy(self):
-        from script.extra.adapters.SettingAdapter import SettingAdapter
-
-        if self.passed_days_since_creation is None:
-            self.get_passed_days_since_creation()
-
-        max_dm = SettingAdapter.max_dm()
-        max_dm = random.randint(max_dm - 4, max_dm + 4)
-
-        self.allowed_number_of_dms = min(self.passed_days_since_creation, max_dm)
-
-        return self.allowed_number_of_dms
-
-    def get_sent_dms_within_passed_24hours(self):
+    def calculate_today_dms(self):
         from script.models.Command import performed_command_count
 
+        self.allowed_number_of_dms = calculate_daily_dms(self.get_passed_days_since_creation())
         self.todays_sent_dms = performed_command_count(self, ['dm follow up'], 24)
 
-        return self.todays_sent_dms
-
-    def calculate_today_dms(self):
-        from script.extra.adapters.SettingAdapter import SettingAdapter
-
-        if self.allowed_number_of_dms is None:
-            self.number_of_dm_strategy()
-
-        if self.todays_sent_dms is None:
-            self.get_sent_dms_within_passed_24hours()
-
         count = self.allowed_number_of_dms - self.todays_sent_dms
-        dm_chunk = SettingAdapter.dm_chunk()
 
-        final_allowed_number_of_dms = 0 if count < 1 else count
+        self.final_allowed_number_of_dms = 0 if count < 1 else count
 
-        self.can_send_dm_today = True if final_allowed_number_of_dms > 0 else False
+        self.current_chunk_dm = min(get_dm_chunk(self.passed_days_since_creation), self.final_allowed_number_of_dms)
 
-        if self.can_send_dm_today:
-            if final_allowed_number_of_dms > dm_chunk:
-                lower_digit = 1 if (dm_chunk - 2) < 1 else dm_chunk - 2
-                higher_digit = dm_chunk + 3
-                self.current_chunk_dm = random.randint(lower_digit,
-                                                       higher_digit) if self.has_enough_posts else random.randint(1, 5)
-
-            else:
-                self.current_chunk_dm = final_allowed_number_of_dms if self.has_enough_posts else random.randint(1, 5)
-
-        return self
+        return self.current_chunk_dm
 
     def get_number_of_dm_follow_ups(self):
         from .Lead import Lead
 
-        forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
+        forty_eight_hours_ago = hours_ago(48)
 
         self.allowed_number_of_dm_follow_ups = Lead.select().where(
             (Lead.last_state == 'dm follow up') &
@@ -633,7 +601,7 @@ class Account(BaseModel):
 
     def get_number_of_loom_follow_ups(self):
         from .Lead import Lead
-        forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
+        forty_eight_hours_ago = hours_ago(48)
 
         self.allowed_number_of_loom_follow_ups = Lead.select().where(
             (Lead.last_state == 'loom follow up') &
@@ -662,32 +630,11 @@ class Account(BaseModel):
             self.screen_resolution = get_next_screen_resolution()
             self.save()
 
-    def get_exact_proxy(self):
-        load_dotenv()
-
-        base = os.getenv('SERVER_URL')
-        result = requests.post(base + '/account/get-proxy-api', {'id': self.id})
-
-        try:
-            return result.json()['host']
-
-        except Exception as e:
-            print(result.status_code)
-            print(result.text)
-
     def update_proxy_to_residential(self):
         load_dotenv()
 
         base = os.getenv('SERVER_URL')
         result = requests.post(base + '/account/change-profile-proxy-to-residential', {'id': self.id})
-
-        return result.text
-
-    def update_proxy_to_custom(self):
-        load_dotenv()
-
-        base = os.getenv('SERVER_URL')
-        result = requests.post(base + '/account/change-profile-proxy-to-custom-api', {'id': self.id})
 
         return result.text
 

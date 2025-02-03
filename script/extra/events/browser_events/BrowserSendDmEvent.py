@@ -2,11 +2,7 @@ from time import sleep
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from spintax import spin
-from script.extra.actions.DM import DM
 from script.models.Lead import Lead
-from peewee import fn
-from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
-from script.models.Thread import get_url_id
 
 
 class BrowserSendDmEvent(InstagramMiddleware):
@@ -21,7 +17,7 @@ class BrowserSendDmEvent(InstagramMiddleware):
         #     self.ig.account.add_cli("Account dont have enough post to send DM")
         #     return
 
-        if not self.ig.account.can_send_dm_today:
+        if self.ig.account.final_allowed_number_of_dms < 1:
             self.ig.account.add_cli("We can't send DM today")
             return
 
@@ -45,6 +41,7 @@ class BrowserSendDmEvent(InstagramMiddleware):
             self.send_dm(lead)
             self.ig.pause(7000, 12000)
             self.allowed_leads_count -= 1
+
     def send_dm(self, lead):
 
         try:

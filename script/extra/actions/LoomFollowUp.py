@@ -1,7 +1,7 @@
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.models.Lead import Lead
 from datetime import datetime, timedelta
-from spintax import spin
+from script.extra.helper import hours_ago
 from script.extra.adapters.LoomFollowUpAdapter import LoomFollowUpAdapter
 
 
@@ -14,7 +14,7 @@ class LoomFollowUp:
         self.chunk_dm = SettingAdapter.dm_chunk()
 
     def leads_to_send_loom_follow_ups(self):
-        forty_eight_hours_ago = datetime.now() - timedelta(hours=48)
+        forty_eight_hours_ago = hours_ago(48)
 
         leads = Lead.select().where(
             (Lead.last_state == 'loom follow up') &

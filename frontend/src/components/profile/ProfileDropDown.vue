@@ -16,14 +16,14 @@
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import { useAccountStore } from "@/stores/Account";
+import {useProfileStore} from "@/stores/Profile";
 
 export default defineComponent({
   name: "ProfileDropDown",
   props: ['profile'],
   emits: ['editClicked'],
   setup(props, { emit }) {
-    const store = useAccountStore();
+    const store = useProfileStore();
 
     const openEditModal = () => {
       emit('editClicked', props.profile);

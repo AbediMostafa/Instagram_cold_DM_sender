@@ -748,8 +748,8 @@ class AccountCreator:
                 password=self.password,  # Set the password
                 name=self.full_name,  # Set the name
                 username_changed=1,  # Mark as username changed
-                created_at=datetime.now(),  # Set creation time
-                updated_at=datetime.now()  # Set the updated time
+                created_at=tehran_now(),  # Set creation time
+                updated_at=tehran_now()  # Set the updated time
             )
 
             automation_tag, created = Tag.get_or_create(title='automation')

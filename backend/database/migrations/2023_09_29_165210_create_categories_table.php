@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->integer('number_of_follow_ups');
             $table->text('description')->nullable();
             $table->timestamps();
         });

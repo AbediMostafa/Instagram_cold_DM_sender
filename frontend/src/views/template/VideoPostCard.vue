@@ -8,7 +8,7 @@
         <input
             class="form-check-input widget-13-check"
             type="checkbox"
-            :value="imageTemplate.carousel_id"
+            :value="videoTemplate.carousel_id"
             v-model="store.checkedTemplateRows"
         />
       </div>
@@ -29,13 +29,16 @@
         class="video-player"
     ></video>
     <!-- Caption -->
-    <div class="text-gray-700 fs-8">{{cutMorThanNCharacters(videoTemplate?.caption || imageTemplate?.caption, 200) }}</div>
+    <div class="text-gray-700 fs-8">{{
+        cutMorThanNCharacters(videoTemplate?.caption || imageTemplate?.caption, 200)
+      }}
+    </div>
   </el-card>
 </template>
 
 <script setup>
-import { defineProps, computed } from "vue";
-import { ElCard, ElImage } from "element-plus";
+import {defineProps, computed} from "vue";
+import {ElCard, ElImage} from "element-plus";
 import {useTemplateStore} from "@/stores/Template";
 import {cutMorThanNCharacters} from "@/core/helpers/helper";
 

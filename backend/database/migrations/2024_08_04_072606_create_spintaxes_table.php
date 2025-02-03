@@ -18,11 +18,6 @@ return new class extends Migration
             $table->enum('type', Spintax::$types)->default('cold dm');
             $table->text('text');
 
-            $table->foreignId('category_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-
             $table->timestamps();
         });
     }
