@@ -29,6 +29,11 @@ return new class extends Migration {
                 ->constrained('commands')
                 ->nullOnDelete();
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
+
             $table->integer('commandable_id')->nullable();
             $table->string('commandable_type')->nullable();
 

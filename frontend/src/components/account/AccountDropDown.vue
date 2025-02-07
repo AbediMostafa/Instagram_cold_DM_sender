@@ -17,6 +17,7 @@
         <el-dropdown-item @click="store.clearNextLogin([account?.id])">Clear Next Login</el-dropdown-item>
         <el-dropdown-item @click="store.clearProfile([account?.id])">Clear Profile</el-dropdown-item>
         <el-dropdown-item @click="profileStore.assignProfiles([account?.id])">Assign Profile</el-dropdown-item>
+        <el-dropdown-item @click="profileStore.changeProxyToResidential([account?.id])">Change Proxy To Residential</el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>

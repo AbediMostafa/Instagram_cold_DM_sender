@@ -29,8 +29,8 @@ class AccountController extends Controller
         $accounts = Account::query()
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email',
-                'name', 'password', 'created_at',
-                'secret_key', 'category_id', 'proxy_id', 'profile_id', 'has_enough_posts')
+                'name', 'password', 'created_at','category_id',
+                'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
             ->withCount([
                 'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
                     $query->where('type', 'dm follow up')
@@ -41,7 +41,7 @@ class AccountController extends Controller
 
                 'commands as total_follow_ups' => function ($query) use ($startDate, $endDate) {
                     $query->where('type', 'dm follow up')
-                        ->whereIn('times', [1, 2, 3])
+                        ->where('times', '>', 0)
                         ->where('state', 'success')
                         ->whereBetween('created_at', [$startDate, $endDate]);
                 },
@@ -56,8 +56,8 @@ class AccountController extends Controller
             ])
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
-                'category:id,title',
                 'profile:id,title',
+                'category:id,title',
                 'proxy:id,ip',
                 'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
@@ -110,11 +110,9 @@ class AccountController extends Controller
     {
         return Account::query()->select(
             'username', 'password', 'name', 'bio', 'id', 'avatar_changed',
-            'instagram_state', 'app_state', 'is_active', 'created_at', 'category_id'
-        )
+            'instagram_state', 'app_state', 'is_active', 'created_at')
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
-                'category:id,title',
             ])
             ->withCount([
                 'commands as following_count' => fn($_) => $_->where('type', 'follow')->where('state', 'success'),
@@ -129,7 +127,7 @@ class AccountController extends Controller
     public function getAccount()
     {
         return Account::query()->select(
-            'username', 'password', 'category_id',
+            'username', 'password',
             'instagram_state', 'app_state', 'color_id', 'is_used',
             'avatar_changed', 'username_changed', 'initial_posts_deleted',
             'has_enough_posts', 'next_login'
@@ -166,7 +164,7 @@ class AccountController extends Controller
                 ->each(function ($account) {
                     $account->delete();
 //                    $account->profile && $account->profile->deleteRecords();
-                    sleep(3);
+//                    sleep(3);
                 });
         },
             'Account(s) deleted successfully'
@@ -186,7 +184,6 @@ class AccountController extends Controller
                     'username' => r('username'),
                     'password' => r('password'),
                     'instagram_state' => r('instagram_state'),
-                    'category_id' => r('category_id'),
                     'color_id' => r('color_id'),
                     'is_used' => r('is_used'),
                     'avatar_changed' => r('avatar_changed'),
@@ -194,6 +191,19 @@ class AccountController extends Controller
                     'has_enough_posts' => r('has_enough_posts'),
                 ]),
             'Account updated successfully',
+        );
+    }
+
+    public function setCategory()
+    {
+        return tryCatch(
+            fn() => Account::query()
+                ->whereIn('id', r('accountIds'))
+                ->update([
+                    'category_id' => r('categoryId'),
+                ]),
+            'Account updated successfully',
+            'Problem updating account',
         );
     }
 
@@ -269,7 +279,9 @@ class AccountController extends Controller
         try {
             $secretKey = r('secretKey');
 
-            $resp = Http::withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
+            $proxy = 'http://paichb:yNckWHb3@193.31.107.98:29842';
+
+            $resp = Http::withOptions(['proxy' => $proxy])->withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
             return $resp->json()['data']['otp'];
 
         } catch (\Exception $exception) {
@@ -286,12 +298,15 @@ class AccountController extends Controller
     public function changeProfileProxyToResidentialApi()
     {
         try {
-            $account = Account::query()->find(r('id'));
-
-            return $account->updateProfileProxyToResidential();
+            Account::query()->whereIn('id', r('ids'))
+                ->get()
+                ->each(
+                    fn(Account $account) => $account->updateProfileProxyToResidential()
+                );
+            return jsonSuccess('Account(s) Profile proxies updated successfully');
 
         } catch (\Exception $exception) {
-            return $exception->getMessage() . $exception->getTraceAsString();
+            return jsonError($exception->getMessage() . $exception->getTraceAsString());
         }
     }
 

@@ -37,23 +37,24 @@
             <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
               <span class="text-muted">Name</span>
             </label>
-
             <span>
               {{store.spintax.name}}
             </span>
-
-            <!--end::Label-->
+            <span class="text-muted fs-8">{{store.spintaxTimeMap(store.spintax.times) }}</span>
           </div>
 
           <div class="d-flex flex-column mb-8 fv-row">
             <!--begin::Label-->
             <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-              <span class="text-muted">Type</span>
+              <span class="text-muted">Category</span>
             </label>
             <span>
-              {{store.spintax.type}}
+                {{
+                store.spintax?.category
+                    ? store.spintax.category?.title
+                    : 'No category available'
+              }}
             </span>
-
           </div>
 
           <div class="d-flex flex-column mb-8 fv-row">

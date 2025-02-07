@@ -3,8 +3,8 @@ from peewee import *
 from .Base import BaseModel
 from .Account import Account
 from .Message import Message
+from .Category import Category
 from .Lead import Lead
-from datetime import datetime, timedelta
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from script.extra.helper import hours_ago
 
@@ -12,6 +12,7 @@ from script.extra.helper import hours_ago
 class Command(BaseWithTimeZoneModel):
     account = ForeignKeyField(Account, backref='commands')
     lead = ForeignKeyField(Lead, backref='commands', null=True)
+    category = ForeignKeyField(Category, backref='commands', null=True)
 
     commandable_id = IntegerField()
     commandable_type = CharField()
@@ -42,7 +43,6 @@ class Command(BaseWithTimeZoneModel):
 
 
 def performed_command_count(account, command_types, hours, times=0, state='success'):
-
     time_threshold = hours_ago(hours)
 
     return (Command

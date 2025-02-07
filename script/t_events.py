@@ -14,20 +14,28 @@ from bs4 import BeautifulSoup
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
+import httpx
+
 
 # Input and output file paths
 input_csv = "noah - 50K.csv"  # Replace with your input CSV filename
 output_csv = "instagram_usernames_only.csv"
 max_retries = 3
-max_threads = 500
-timeout = 25  # Timeout in seconds for loading the website
+max_threads = 200
+timeout = 30  # Timeout in seconds for loading the website
 
 def extract_instagram_username(url):
     for attempt in range(max_retries):
         try:
             # Send GET request to the website
-            headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(url, headers=headers, timeout=timeout)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Connection": "keep-alive"
+            }
+            response = requests.get(url, headers=headers, timeout=timeout, verify=False)
             response.raise_for_status()
 
             # Parse the HTML content
@@ -43,8 +51,19 @@ def extract_instagram_username(url):
                     if href:
                         # Clean up the URL to extract the username
                         username = re.sub(r"(https?://)?(www\.)?instagram\.com/", "", href).split('/')[0]
+
                         username = username.split('?')[0]  # Remove query parameters if any
                         return username
+
+            instagram_data = soup.find(attrs={'data-options': True})
+            if instagram_data:
+                match = re.search(r'"avatars":{.*?"([^"]+)"', str(instagram_data))
+                if match:
+                    href = match.group(1)
+                    username = re.sub(r"(https?://)?(www\.)?instagram\.com/", "", href).split('/')[0]
+                    username = username.split('?')[0]
+                    return username
+
             return None
         except Exception as e:
             print(f"Error processing {url} (Attempt {attempt + 1}): {e}")

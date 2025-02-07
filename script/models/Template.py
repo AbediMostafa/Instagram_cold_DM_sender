@@ -3,8 +3,8 @@ import datetime
 from peewee import *
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from .Color import Color
-from script.extra.helper import *
 from .Category import Category
+from script.extra.helper import *
 
 
 def delete(_type, text):

@@ -30,9 +30,9 @@ class Thread extends Model
         return $this->hasMany(Notif::class);
     }
 
-    public function category()
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->morphOne(Category::class, 'categorizable');
+        return $this->belongsTo(Category::class);
     }
 
     public function makeSeenUnseenMessages()

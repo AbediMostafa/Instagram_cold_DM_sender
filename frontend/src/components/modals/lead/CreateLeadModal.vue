@@ -36,6 +36,23 @@
               </el-form-item>
             </div>
 
+            <div class="d-flex flex-column mb-8 fv-row">
+              <el-form-item label="Category" prop="category">
+                <el-select
+                    v-if="categoryStore.categories.data.length"
+                    v-model="form.category_id" placeholder="Category">
+                  <el-option
+                      v-for="item in categoryStore.categories.data"
+                      :key="item.id"
+                      :label="item.title"
+                      :value="item.id"
+                  />
+                </el-select>
+              </el-form-item>
+
+            </div>
+
+
             <!-- CSV Upload Section -->
             <div class="d-flex flex-column mb-8 fv-row">
               <el-form-item label="Upload CSV" prop="csvFile">
@@ -71,6 +88,7 @@ import { hideModal } from '@/core/helpers/modal';
 import ApiService from '@/core/services/ApiService';
 import { useLeadStore } from '@/stores/Lead';
 import {useTagStore} from "@/stores/Tag";
+import {useCategoryStore} from "@/stores/Category";
 
 export default defineComponent({
   name: 'create_lead_modal',
@@ -79,6 +97,7 @@ export default defineComponent({
     const loading = ref<boolean>(false);
     const store = useLeadStore();
     const tagStore = useTagStore();
+    const categoryStore = useCategoryStore();
 
     // For handling the CSV file upload
     const csvFile = ref<File | null>(null);
@@ -89,6 +108,7 @@ export default defineComponent({
 
     const form = ref({
       selectedTags: [],
+      category_id: '',
       csvFile: null,
     });
 
@@ -117,6 +137,8 @@ export default defineComponent({
         if (form.value.selectedTags.length > 0) {
           formData.append('tags', JSON.stringify(form.value.selectedTags));
         }
+
+        formData.append('category_id', form.value.category_id);
 
         ApiService.post('lead/import', formData, {
           headers: {
@@ -147,6 +169,7 @@ export default defineComponent({
       tagLoading,
       form,
       rules,
+      categoryStore,
     };
   },
 });

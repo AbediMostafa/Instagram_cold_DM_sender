@@ -11,6 +11,7 @@ from script.extra.playwright.base_actions.GoToAccountPageAction import GoToAccou
 from script.extra.playwright.base_actions.GetThreadUrlAction import GetThreadUrlAction
 from script.extra.playwright.ErrorIndicators import ErrorIndicators
 from script.models.Lead import Lead
+from script.models.Spintax import Spintax
 from spintax import spin
 from script.extra.adapters.SettingAdapter import SettingAdapter
 
@@ -26,6 +27,10 @@ class BrowserSendDmEvent:
         self.ig = ig
         self.error_indicators = ErrorIndicators(self.ig)
 
+        # Get the account's category to send spintax with that category to the lead with the same category
+        self.category_model = self.ig.account.category
+        self.category = self.category_model.title if self.category_model else None
+
     def init(self):
         GoToThreadsAction(self.ig).start()
         TurnOnNotificationAction(self.ig).start()
@@ -39,8 +44,8 @@ class BrowserSendDmEvent:
         self.ig.account.set_state('sending DM', 'app_state')
 
         while self.allowed_leads_count > 0:
-            self.lead = Lead.get_leads()[0]
-            self.lead.dm_text = spin(SettingAdapter.cold_dm_spintax())
+            self.lead = Lead.get_leads(category=self.category)[0]
+            self.lead.dm_text = spin(Spintax.get_value(times=0, category=self.category_model))
 
             self.send_dm()
             self.ig.pause(5000, 7000)
@@ -50,7 +55,8 @@ class BrowserSendDmEvent:
 
         try:
             self.ig.account.add_cli(f"Sending Dm to : {self.lead.username}")
-            self.command = self.ig.account.create_command('dm follow up', 'processing', self.lead)
+            self.command = self.ig.account.create_command('dm follow up', 'processing', self.lead,
+                                                          category=self.category_model)
             self.before_message_fill_part()
             self.after_message_fill_part()
 

@@ -5,22 +5,20 @@ from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 class Spintax(BaseWithTimeZoneModel):
     name = CharField()
-    type = CharField()
+    times = IntegerField()
     text = TextField()
-
-    category = ForeignKeyField(Category, backref='spintaxes', null=True)
+    category = ForeignKeyField(Category, backref='commands', null=True)
 
     updated_at = DateTimeField(null=True)
 
     @classmethod
-    def get_value(cls, _type, category=None, default=None):
-        record = (Spintax
-                  .select()
-                  .where(
-            (Spintax.type == _type) &
-            (Spintax.category == category)
-        )
-                  .first())
+    def get_value(cls, times, category=None, default=None):
+        query = Spintax.select().where(Spintax.times == times)
+
+        if category is not None:
+            query = query.where(Spintax.category == category)
+
+        record = query.first()
 
         return record.text if record else default
 

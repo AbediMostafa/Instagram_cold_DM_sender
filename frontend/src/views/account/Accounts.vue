@@ -142,9 +142,7 @@
             </th>
 
             <th class="text-end">
-
               ACTIONS
-
             </th>
           </tr>
           </thead>

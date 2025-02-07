@@ -24,6 +24,11 @@ return new class extends Migration {
                 ->constrained('colors')
                 ->nullOnDelete();
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
+
             $table->enum('type', Template::$types);
             $table->enum('sub_type', Template::$subTypes)->nullable();
             $table->timestamp('created_at')->nullable();

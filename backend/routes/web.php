@@ -10,6 +10,7 @@ use App\Models\Message;
 use App\Models\Profile;
 use App\Models\Proxy;
 use App\Models\Setting;
+use App\Models\Spintax;
 use App\Models\Thread;
 use App\Models\User;
 use Carbon\Carbon;
@@ -46,6 +47,7 @@ use \App\Classes\ProfileUpdateProxy;
 use \App\Http\Controllers\ColorController;
 use \App\Models\Hashtag;
 use \App\Classes\ProfileGetProxy;
+use \App\Models\Category;
 
 
 //
@@ -70,6 +72,28 @@ use \App\Classes\ProfileGetProxy;
 //
 
 Route::get('/', function () {
+
+//    Account::query()
+//        ->get()
+//        ->each(
+//            function (Account $account) {
+//
+////                $account->makeActive();
+//            }
+//        );
+//    dd(Category::all());
+
+//    return jsonSuccess('Account(s) Profile proxies updated successfully');
+
+
+
+//    $account = \App\Models\Template::find(1); // Get account1
+//    $category = Category::find(12); // Get category1
+//
+////
+//    $account->categories()->save($category);
+//    $account->save();
+//    dd($account->categories);
 //    runPythonProcess('new.py', 2803);
 
 //    $accounts = DB::connection('old_pgsql')
@@ -100,6 +124,7 @@ Route::get('/', function () {
 
 Route::get('/activate-accounts', function () {
 
+
 //    Account::all()->each(function ($account) {
 //        $account->makeActive();
 //    });
@@ -129,6 +154,7 @@ Route::post('account/edit', [AccountController::class, 'edit']);
 Route::post('account/delete-warning', [AccountController::class, 'deleteWarning']);
 Route::post('account/make-active', [AccountController::class, 'makeActive']);
 Route::post('account/clear-next-login', [AccountController::class, 'clearNextLogin']);
+Route::post('account/set-category', [AccountController::class, 'setCategory']);
 Route::post('accounts/fetch-accounts', [AccountController::class, 'fetchAccounts']);
 Route::post('account/clear-profile', [AccountController::class, 'clearProfile']);
 Route::post('accounts/get-2fa-code', [AccountController::class, 'get2faCode']);
@@ -179,6 +205,7 @@ Route::post('dashboard/running-accounts', [DashboardController::class, 'getRunni
 Route::post('spintaxes', [SpintaxController::class, 'index']);
 Route::post('spintaxe/view', [SpintaxController::class, 'view']);
 Route::post('spintaxe/create', [SpintaxController::class, 'create']);
+Route::post('spintaxe/update', [SpintaxController::class, 'update']);
 
 Route::post('categories', [CategoryController::class, 'index']);
 Route::post('categories/view', [CategoryController::class, 'view']);

@@ -106,10 +106,27 @@ class BasePlaywright:
             self.account.add_cli('We removed some content or messages')
 
             try:
-                self.page.locator('div.wbloks_1[role="button"]').first.click()
+                self.page.locator('div.wbloks_1[role="button"]').first.click(timeout=3500)
                 self.pause(4000, 5000)
 
-                self.goto('https://www.instagram.com/')
+                self.go_to_instagram()
+                self.pause(3000, 4000)
+            except Exception as e:
+                pass
+
+    def review_and_agree_handler(self):
+        if self.is_visible_by_text('Review and Agree') or self.is_visible_by_text(
+                "Changes to How We Manage Data"):
+            self.account.add_cli('Review and Agree, Changes to How We Manage Data')
+
+            try:
+                self.page.get_by_role("button", name="Next", exact=True).click(timeout=3500)
+                self.pause(4000, 5000)
+
+                self.page.get_by_role("button", name="Agree to Terms", exact=True).click(timeout=3500)
+                self.pause(4000, 5000)
+
+                self.go_to_instagram()
                 self.pause(3000, 4000)
             except Exception as e:
                 pass

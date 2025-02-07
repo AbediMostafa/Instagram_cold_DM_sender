@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->integer('number_of_follow_ups');
+            $table->integer('hour_interval')->default(24);
             $table->text('description')->nullable();
             $table->timestamps();
         });

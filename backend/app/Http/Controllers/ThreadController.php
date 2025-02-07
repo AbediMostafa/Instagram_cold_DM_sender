@@ -20,7 +20,7 @@ class ThreadController extends Controller
             ->leftJoin('messages', 'threads.id', '=', 'messages.thread_id')
             ->with([
                 'account:id,username',
-                'category:id,title',
+//                'category:id,title',
                 'lead:id,username,last_state',
                 'messages' => function ($query) {
                     $query->orderBy('created_at', 'ASC'); // Load messages ordered by creation date
@@ -49,10 +49,10 @@ class ThreadController extends Controller
                     }
                 }
             )
-            ->when(
-                r('search.category_id'),
-                fn($_) => $_->where('category_id', r('search.category_id'))
-            )
+//            ->when(
+//                r('search.category_id'),
+//                fn($_) => $_->where('category_id', r('search.category_id'))
+//            )
             ->groupBy('threads.id')
             ->orderByRaw('latest_unseen_message_created_at DESC NULLS LAST')
             ->orderByRaw('lead_sent_created_at DESC NULLS LAST')
@@ -68,7 +68,7 @@ class ThreadController extends Controller
         )
             ->leftJoin('messages', 'threads.id', '=', 'messages.thread_id')
             ->with([
-                'category:id,title',
+//                'category:id,title',
                 'account:id,username',
                 'lead:id,username,last_state',
                 'messages' => function ($query) {
@@ -102,10 +102,10 @@ class ThreadController extends Controller
                     }
                 }
             )
-            ->when(
-                r('search.category_id'),
-                fn($_) => $_->where('category_id', r('search.category_id'))
-            )
+//            ->when(
+//                r('search.category_id'),
+//                fn($_) => $_->where('category_id', r('search.category_id'))
+//            )
             ->groupBy('threads.id')
             ->orderByRaw('latest_unseen_message_created_at DESC NULLS LAST')
             ->paginate(10);

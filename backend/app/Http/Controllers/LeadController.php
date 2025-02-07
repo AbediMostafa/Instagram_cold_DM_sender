@@ -109,6 +109,7 @@ class LeadController extends Controller
     {
         r()->validate([
             'file' => 'required|file|mimes:csv,txt,xlsx',
+            'category_id' => 'required|exists:categories,id',
         ]);
 
         try {
@@ -121,9 +122,14 @@ class LeadController extends Controller
                     ['username' => $row[0]] // Attributes to check for an existing record
                 );
 
+                // Update category_id even if the lead already exists
+                $lead->update([
+                    'category_id' => r('category_id')
+                ]);
+
                 if (!empty(r('tags'))) {
                     $tags = json_decode(r('tags'));
-                    $lead->tags()->attach($tags); // Attach the tags to the lead
+                    $lead->tags()->syncWithoutDetaching($tags);
                 }
             }
 
@@ -133,7 +139,6 @@ class LeadController extends Controller
             return $e->getMessage();
         }
     }
-
 
 
     public function getStatuses()
@@ -166,7 +171,7 @@ class LeadController extends Controller
             // Mark the leads with the selected category and assign them to the logged-in user
             foreach ($leads as $lead) {
                 $lead->update([
-                    'category_id' => r()->categoryId,
+//                    'category_id' => r()->categoryId,
                     'user_id' => Auth::id(),
                     'export_date' => now(),
                 ]);
@@ -187,7 +192,8 @@ class LeadController extends Controller
                     $lead->id,
                     $lead->username,
                     $lead->export_date->format('Y-m-d H:i:s'), // Format date properly
-                    $lead->category->title ?? 'N/A', // Ensure no empty values
+                    'N/A', // Ensure no empty values
+//                    $lead->category->title ?? 'N/A', // Ensure no empty values
                 ]);
             }
 
@@ -214,7 +220,7 @@ class LeadController extends Controller
             'username' => 'required',
             'password' => 'required',
             'number_of_leads' => 'required|integer|min:1',
-            'category_id' => 'nullable|integer|exists:categories,id',
+//            'category_id' => 'nullable|integer|exists:categories,id',
         ]);
 
         $credentials = [
@@ -233,6 +239,10 @@ class LeadController extends Controller
             $leads = Lead::whereNull('user_id')
                 ->select('id', 'username')
                 ->where('last_state', 'free')
+                ->when(
+                    r('category'),
+                    fn($q) => $q->whereHas('category', fn($_) => $_->where('title', r('category')))
+                )
                 ->inRandomOrder()
                 ->limit(r('number_of_leads'))
                 ->get();
@@ -243,7 +253,6 @@ class LeadController extends Controller
 
             foreach ($leads as $lead) {
                 $lead->update([
-                    'category_id' => r('category_id'),
                     'user_id' => Auth::id(),
                     'export_date' => now(),
                 ]);

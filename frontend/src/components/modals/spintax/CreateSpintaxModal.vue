@@ -60,19 +60,16 @@
             <div class="d-flex flex-column mb-8 fv-row">
               <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Type</span>
+                <span class="required">Sequence</span>
               </label>
               <!--end::Label-->
 
-              <el-form-item prop="type">
-                <el-select v-model="store.createSpintaxData.type" placeholder="Select Type">
-                  <el-option
-                      v-for="type in spintaxTypes"
-                      :key="type"
-                      :label="type"
-                      :value="type"
-                  />
-                </el-select>
+              <el-form-item prop="times">
+                <el-input
+                    v-model="store.createSpintaxData.times"
+                    placeholder="Enter Sequence"
+                    name="times"
+                ></el-input>
               </el-form-item>
             </div>
 

@@ -61,6 +61,8 @@ from script.extra.parsers.GridPostParser import GridPostParser
 from script.extra.actions.send_dm.SendDmContext import SendDmContext
 #
 from script.models.Process import Process
+from spintax import spin
+
 
 if len(sys.argv) < 2:
     print("Usage: python main.py <account_id>")

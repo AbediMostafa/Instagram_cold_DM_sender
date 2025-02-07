@@ -6,15 +6,17 @@ from script.models.Lead import Lead
 
 import pandas as pd
 from peewee import *
+import requests
+import certifi
+import logging
+import httpx
+from bs4 import BeautifulSoup
+import re
+import zlib
 
+# Send GET request to the website
+lead = Lead.get_leads(1, category='copywriting')
 
-relative_path = '../csv/csv/de_fr_it_es_fi_no_se/below/below_20k_instagram_2.csv'
-# relative_path = '../csv/csv/au_nz/above/above_20k_instagram_1.csv'
-absolute_path = os.path.abspath(relative_path)
-
-df = pd.read_csv(absolute_path)
-usernames = df.iloc[:, 0]
-
-for username in usernames:
-    if not Lead.select().where(Lead.username == username).exists():
-        Lead.create(username=username)
+print(lead)
+print(lead[0])
+print(lead[0].username)

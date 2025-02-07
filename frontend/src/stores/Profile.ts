@@ -102,6 +102,13 @@ export const useProfileStore = defineStore('ProfileStore', {
                 .finally(() => {
                     this.is.assigning = false;
                 });
+        },
+        changeProxyToResidential(ids = []) {
+            this.is.assigning = true
+            ApiService.post("account/change-profile-proxy-to-residential", {ids})
+                .finally(() => {
+                    this.is.assigning = false;
+                });
         }
     }
 });

@@ -26,11 +26,15 @@ class CategoryController extends Controller
     {
         $request->validate([
             'title' => 'required|unique:categories|max:255',
+            'number_of_follow_ups' => 'required',
+            'hour_interval' => 'required',
             'description' => 'nullable|string',
         ]);
 
         return tryCatch(
-            fn() => Category::create($request->only('title', 'description')),
+            fn() => Category::create(
+                $request->only('title', 'description', 'number_of_follow_ups','hour_interval')
+            ),
             'Category created successfully'
         );
     }
@@ -43,7 +47,9 @@ class CategoryController extends Controller
         ]);
 
         return tryCatch(
-            fn() => Category::where('id', $id)->update($request->only('title', 'description')),
+            fn() => Category::where('id', $id)->update(
+                $request->only('title', 'description', 'number_of_follow_ups','hour_interval')
+            ),
             'Category updated successfully'
         );
     }

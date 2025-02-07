@@ -29,6 +29,11 @@ return new class extends Migration {
                 ->constrained()
                 ->nullOnDelete();
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
+
             $table->timestamp('export_date')
                 ->nullable()
                 ->comment('Date we pull lead');

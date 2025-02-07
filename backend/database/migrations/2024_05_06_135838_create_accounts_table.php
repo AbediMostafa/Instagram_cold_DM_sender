@@ -28,6 +28,11 @@ return new class extends Migration {
                 ->constrained('colors')
                 ->nullOnDelete();
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
+
             $table->foreignId('proxy_id')
                 ->nullable()
                 ->constrained()

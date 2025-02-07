@@ -72,9 +72,9 @@ class Account extends Model
         return $this->belongsTo(Proxy::class);
     }
 
-    public function category()
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->morphOne(Category::class, 'categorizable');
+        return $this->belongsTo(Category::class);
     }
 
     public function color()

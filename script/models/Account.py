@@ -1,9 +1,9 @@
 from peewee import *
 import json
-from datetime import datetime, timedelta
+from datetime import timedelta
 from .Proxy import Proxy
-from .Category import Category
 from .Profile import Profile
+from .Category import Category
 from .Color import Color, get_next_color
 from .ScreenResolution import ScreenResolution, get_next_screen_resolution
 import random
@@ -18,8 +18,8 @@ class Account(BaseWithTimeZoneModel):
     proxy = ForeignKeyField(Proxy, backref='accounts', null=True)
     color = ForeignKeyField(Color, backref='accounts', null=True)
     screen_resolution = ForeignKeyField(ScreenResolution, backref='accounts', null=True)
-    category = ForeignKeyField(Category, backref='accounts', null=True)
     profile = ForeignKeyField(Profile, backref='accounts', null=True)
+    category = ForeignKeyField(Category, backref='accounts', null=True)
 
     secret_key = CharField(null=True)
     username = CharField(unique=True)
@@ -192,7 +192,7 @@ class Account(BaseWithTimeZoneModel):
 
         return AccountTemplate.create(account=self, template=template)
 
-    def create_command(self, _type, state, lead=None, times=0):
+    def create_command(self, _type, state, lead=None, times=0, category=None):
         from .Command import Command
 
         return Command.create(
@@ -201,6 +201,7 @@ class Account(BaseWithTimeZoneModel):
             state=state,
             lead=lead,
             times=times,
+            category=category,
         )
 
     def set(self, col, value):

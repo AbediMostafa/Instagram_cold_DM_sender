@@ -15,8 +15,13 @@ return new class extends Migration
         Schema::create('spintaxes', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->enum('type', Spintax::$types)->default('cold dm');
+            $table->integer('times')->default(0);
             $table->text('text');
+
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
 
             $table->timestamps();
         });
@@ -30,3 +35,4 @@ return new class extends Migration
         Schema::dropIfExists('spintaxes');
     }
 };
+

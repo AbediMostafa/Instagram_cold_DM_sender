@@ -11,9 +11,9 @@ class SpintaxController extends Controller
     public function index()
     {
         return Spintax::query()
-            ->select('id', 'name', 'type', 'text', 'category_id')
-            ->with(['category:id,title'])
-            ->orderBy('type')
+            ->select('id', 'name', 'times', 'text', 'category_id')
+            ->with(['category:id,title,number_of_follow_ups'])
+            ->orderBy('times')
             ->paginate(
                 config('data.pagination.each_page.spintaxes')
             );
@@ -22,7 +22,8 @@ class SpintaxController extends Controller
     public function view()
     {
         return Spintax::query()
-            ->select('id', 'name', 'type', 'is_active', 'text')
+            ->select('id', 'name', 'times', 'text', 'category_id')
+            ->with(['category:id,title,number_of_follow_ups'])
             ->find(r('id'));
     }
 
@@ -31,10 +32,9 @@ class SpintaxController extends Controller
         r()->validate(
             [
                 'name' => 'unique:spintaxes,name',
-                'type' => [
+                'times' => [
                     'required',
-                    fn($attribute, $value, $fail) =>
-                        Spintax::where('type', $value)->where('category_id', r('category_id'))->exists() &&
+                    fn($attribute, $value, $fail) => Spintax::where('times', $value)->where('category_id', r('category_id'))->exists() &&
                         $fail('A spintax with this type and category already exists.'),
                 ],
 
@@ -45,6 +45,27 @@ class SpintaxController extends Controller
         return tryCatch(
             fn() => Spintax::query()->create(r()->all())
             , 'Spintax created successfully'
+        );
+    }
+
+    public function update()
+    {
+        r()->validate([
+            'data.name' => 'required',
+            'data.text' => 'required',
+            'data.times' => 'required',
+        ]);
+
+        return tryCatch(
+            fn() => Spintax::query()
+                ->where('name', r('data.name'))
+                ->update([
+                    'category_id' => r('data.category_id'),
+                    'name' => r('data.name'),
+                    'text' => r('data.text'),
+                    'times' => r('data.times'),
+                ]),
+            'Spintax updated successfully'
         );
     }
 }

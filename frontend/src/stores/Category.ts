@@ -24,6 +24,8 @@ export const useCategoryStore = defineStore('category', {
         categoryData: {
             title: '',
             description: '',
+            number_of_follow_ups: '',
+            hour_interval: '',
         }
     }),
     actions: {

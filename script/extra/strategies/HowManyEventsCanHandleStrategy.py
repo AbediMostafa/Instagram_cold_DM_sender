@@ -20,6 +20,8 @@ from script.extra.events.browser_events.BrowserSeeStories import BrowserSeeStori
 from script.extra.events.browser_events.BrowserGoToTargetAccountAndExplorePosts import \
     BrowserGoToTargetAccountAndExplorePosts
 
+from script.extra.actions.send_dm.SendDmContext import SendDmContext
+
 from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
 
 
@@ -127,7 +129,7 @@ class HowManyEventsCanHandleStrategy:
 
         required_actions = [
             BrowserMakeAccountPublic(self.browser_ig),
-            BrowserSendDmEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -136,7 +138,7 @@ class HowManyEventsCanHandleStrategy:
         self.account.add_cli('running second day strategy')
 
         required_actions = [
-            BrowserSendDmEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -149,7 +151,7 @@ class HowManyEventsCanHandleStrategy:
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             LeadGenerateThroughApiContext(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
             BrowserDmFollowUpEvent(self.browser_ig),
         ]
 
@@ -162,9 +164,9 @@ class HowManyEventsCanHandleStrategy:
             BrowserMakeAccountPublic(self.browser_ig),
             BrowserDeleteInitialPostsEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+            SendDmContext(self.browser_ig),
+            # BrowserDmFollowUpEvent(self.browser_ig),
+            # LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -177,10 +179,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -192,10 +194,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserDeleteInitialPostsEvent(self.browser_ig),
             BrowserChangeUsernameEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -209,10 +211,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -226,10 +228,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeUsernameEvent(self.browser_ig),
             BrowserChangeAvatarEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -244,10 +246,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeAvatarEvent(self.browser_ig),
             BrowserChangeBioEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -262,10 +264,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeAvatarEvent(self.browser_ig),
             BrowserChangeBioEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -281,10 +283,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeBioEvent(self.browser_ig),
             BrowserChangeNameEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]
@@ -300,10 +302,10 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeBioEvent(self.browser_ig),
             BrowserChangeNameEvent(self.browser_ig),
 
-            BrowserSendDmEvent(self.browser_ig),
-            BrowserDmFollowUpEvent(self.browser_ig),
+            SendDmContext(self.browser_ig),
+#             BrowserDmFollowUpEvent(self.browser_ig),
             BrowserLoomFollowUpEvent(self.browser_ig),
-            LeadGenerateThroughApiContext(self.browser_ig),
+#             LeadGenerateThroughApiContext(self.browser_ig),
         ]
 
         self.events = required_actions + [self.select_random_explore_action()]

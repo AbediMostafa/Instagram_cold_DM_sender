@@ -2,7 +2,7 @@
   <!--begin::Modal - New Spintax-->
   <div
       class="modal fade"
-      id="create_spintax_modal"
+      id="edit_spintax_modal"
       ref="newSpintaxModalRef"
       tabindex="-1"
       aria-hidden="true"
@@ -28,9 +28,9 @@
         <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
           <!--begin:Form-->
           <el-form
-              id="create_spintax_modal_form"
+              id="edit_spintax_modal_form"
               @submit.prevent="submit()"
-              :model="store.createSpintaxData"
+              :model="store.spintax"
               :rules="rules"
               ref="formRef"
               class="form"
@@ -60,19 +60,16 @@
             <div class="d-flex flex-column mb-8 fv-row">
               <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Type</span>
+                <span class="required">Sequence</span>
               </label>
               <!--end::Label-->
 
-              <el-form-item prop="type">
-                <el-select v-model="store.spintax.type" placeholder="Select Type">
-                  <el-option
-                      v-for="type in spintaxTypes"
-                      :key="type"
-                      :label="type"
-                      :value="type"
-                  />
-                </el-select>
+              <el-form-item prop="times">
+                <el-input
+                    v-model="store.spintax.times"
+                    placeholder="Enter Spintax Sequence"
+                    name="times"
+                ></el-input>
               </el-form-item>
             </div>
 
@@ -89,33 +86,46 @@
                     v-model="store.spintax.text"
                     placeholder="Enter Spintax Text"
                     name="text"
-                    :rows="6"
+                    :rows="12"
                 ></el-input>
               </el-form-item>
             </div>
+
+            <el-form-item prop="category">
+              <el-select
+                  v-if="categoryStore.categories.data.length"
+                  v-model="store.spintax.category_id" placeholder="Category">
+                <el-option
+                    v-for="item in categoryStore.categories.data"
+                    :key="item.id"
+                    :label="item.title"
+                    :value="item.id"
+                />
+              </el-select>
+            </el-form-item>
 
             <!--begin::Actions-->
             <div class="text-center">
               <button
                   type="reset"
-                  id="create_spintax_modal_cancel"
+                  id="edit_spintax_modal_cancel"
                   class="btn btn-light me-3"
-                  @click="hideModal('create_spintax_modal')"
+                  @click="hideModal('edit_spintax_modal')"
               >
                 Cancel
               </button>
 
               <!--begin::Button-->
               <button
-                  :data-kt-indicator="store.is.creating ? 'on' : null"
+                  :data-kt-indicator="store.is.updating ? 'on' : null"
                   class="btn btn-lg btn-primary"
                   type="submit"
               >
-                <span v-if="!store.is.creating" class="indicator-label">
+                <span v-if="!store.is.updating" class="indicator-label">
                   Submit
                   <KTIcon icon-name="arrow-right" icon-class="fs-3 ms-2 me-0"/>
                 </span>
-                <span v-if="store.is.creating" class="indicator-progress">
+                <span v-if="store.is.updating" class="indicator-progress">
                   Please wait...
                   <span
                       class="spinner-border spinner-border-sm align-middle ms-2"
@@ -131,31 +141,32 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {hideModal} from "@/core/helpers/modal";
 import {useSpintaxStore} from "@/stores/Spintax";
+import {useCategoryStore} from "@/stores/Category";
 
 const store = useSpintaxStore();
+const categoryStore = useCategoryStore()
+
 const formRef = ref(null);
 
 const rules = ref({
   name: [{required: true, message: "Please input name", trigger: "blur"}],
-  type: [{required: true, message: "Please select type", trigger: "change"}],
+  times: [{required: true, message: "Please select Sequence", trigger: "blur"}],
   text: [{required: true, message: "Please input text", trigger: "blur"}],
 });
-
-const spintaxTypes = ['cold dm',
-  'first dm follow up',
-  'second dm follow up',
-  'third dm follow up',];
-
 
 const submit = () => {
   if (!formRef.value)
     return;
 
-  formRef.value.validate((valid: boolean) => valid && store.createSpintax());
+  formRef.value.validate((valid: boolean) => valid && store.updateSpintax());
 };
+
+watch(() => store.selectedId, () => store.getSpintax(store.selectedId))
+onMounted(categoryStore.getCategories)
+
 
 </script>
 

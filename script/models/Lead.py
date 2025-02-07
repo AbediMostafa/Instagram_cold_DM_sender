@@ -1,10 +1,12 @@
 import datetime
 from peewee import *
 from .Account import Account
+from .Category import Category
 from dotenv import load_dotenv
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 import os
 import requests
+from script.extra.helper import tehran_now
 
 
 class Lead(BaseWithTimeZoneModel):
@@ -13,6 +15,7 @@ class Lead(BaseWithTimeZoneModel):
     times = IntegerField(default=0)
     last_state = CharField(default='free')
     account = ForeignKeyField(Account, backref='leads', null=True)
+    category = ForeignKeyField(Category, backref='leads', null=True)
 
     last_command_send_date = DateTimeField(null=True)
 
@@ -66,13 +69,14 @@ class Lead(BaseWithTimeZoneModel):
             user=user)
 
     @classmethod
-    def get_leads(cls, count=1):
+    def get_leads(cls, count=1, category=None):
         load_dotenv()
 
         data = {
             'username': os.getenv('API_USERNAME'),
             'password': os.getenv('API_PASSWORD'),
             'number_of_leads': count,
+            'category': category,
         }
 
         response = requests.post(os.getenv('GET_LEAD_API_URL'), data=data)
@@ -98,10 +102,18 @@ class Lead(BaseWithTimeZoneModel):
 
         # Query to find leads that have not been followed by the account
         unfollowed_leads = Lead.select().where(
-           Lead.id.not_in(followed_leads)
+            Lead.id.not_in(followed_leads)
         ).limit(cnt)
 
         return list(unfollowed_leads)
+
+    def passed_hours_since_last_follow_up(self):
+        return (tehran_now() - self.last_command_send_date).total_seconds() / 3600
+
+    def has_not_reached_dm_send_time_yet(self):
+        category = self.category
+
+        return self.passed_hours_since_last_follow_up() < category.hour_interval
 
     class Meta:
         table_name = 'leads'

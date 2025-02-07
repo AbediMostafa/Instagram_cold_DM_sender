@@ -45,8 +45,8 @@ class Multilogin:
         }
 
     def send_request(self, _type, url, data=None):
-        return requests.get(url, headers=self.get_headers(), verify=False) if _type == 'get' else\
-            requests.post(url, data=data, verify=False)
+        return requests.get(url, headers=self.get_headers()) if _type == 'get' else\
+            requests.post(url, data=data)
 
     def request(self, _type, url, data=None):
 

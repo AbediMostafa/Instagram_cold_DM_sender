@@ -59,7 +59,7 @@ class ProfileUpdateProxy
 
         $proxy = ProfileGetProxy::getResidentialProxy();
         $this->updateProxy($proxy);
-        $this->getProfileModel()->setProxyIdTo(null);
+//        $this->getProfileModel()->setProxyIdTo(null);
 
         return $proxy->host;
     }

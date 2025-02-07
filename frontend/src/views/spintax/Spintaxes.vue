@@ -57,11 +57,12 @@
                     {{ spintax.name }}
                   </a>
                   <div>
-                    <span :class="`badge ${store.getTypeClass(spintax.type)} mt-1`">{{ spintax.type }}</span>
+                    <span class="text-muted fs-8">{{store.spintaxTimeMap(spintax.times) }}</span>
                   </div>
                 </div>
                 <div class="col-2">
-                  <div class="text-gray-700 fs-7 p-2">{{ spintax.category?.title }}</div>
+                  <div class="text-gray-700 fs-7">{{ spintax.category?.title }}</div>
+                  <div class="text-muted fs-8">follow ups : {{ spintax.category?.number_of_follow_ups }}</div>
                 </div>
                 <div class="col-6">
                   <a class="text-gray-700 fs-7">
@@ -96,6 +97,7 @@
   </div>
   <create-spintax-modal/>
   <view-spintax-modal/>
+  <edit-spintax-modal/>
 </template>
 
 <script lang="ts" setup>
@@ -106,6 +108,7 @@ import {useAppConfigStore} from "@/stores/AppConfig";
 import SpintaxDropDown from "@/components/spintax/SpintaxDropDown.vue";
 import {useSpintaxStore} from "@/stores/Spintax";
 import ViewSpintaxModal from "@/components/modals/spintax/ViewSpintaxModal.vue";
+import EditSpintaxModal from "@/components/modals/spintax/EditSpintaxModal.vue";
 
 const configStore = useAppConfigStore();
 const store = useSpintaxStore();

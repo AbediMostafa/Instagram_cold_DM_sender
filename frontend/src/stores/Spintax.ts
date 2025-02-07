@@ -7,6 +7,7 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
     state() {
         return {
             checkedProxyRows: [],
+            selectedId: '',
             spintaxes: {
                 data: [],
                 current_page: 1,
@@ -19,10 +20,15 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
                 updating: false,
                 loadingSpintax: false
             },
-            spintax: {},
+            spintax: {
+                name:'',
+                times:'',
+                text:'',
+                category_id: '',
+            },
             createSpintaxData: {
                 name: '',
-                type: '',
+                times: '',
                 text: '',
                 category_id: '',
             }
@@ -63,10 +69,18 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
         viewSpintax(id) {
             this.is.loadingSpintax = true;
             showModal("view_spintax_modal")
+            this.getSpintax(id)
+        },
 
+        getSpintax(id) {
             ApiService.post('spintaxe/view', {id})
                 .then((response) => (this.spintax = response.data))
                 .finally(() => this.is.loadingSpintax = false)
+        },
+
+        editSpintax(id) {
+            this.selectedId = id;
+            showModal("edit_spintax_modal");
         },
 
         createSpintax() {
@@ -83,7 +97,7 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
         updateSpintax() {
             this.is.updating = true;
 
-            ApiService.post('spintaxe/update', {data: this.createSpintaxData})
+            ApiService.post('spintaxe/update', {data: this.spintax})
                 .then(this.getSpintaxes)
                 .finally(() => {
                     this.is.updating = false;
@@ -91,14 +105,24 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
                 })
         },
 
-        getTypeClass(type) {
+        spintaxTimeMap(time) {
+            if (time < 11)
+                return {
+                    0: 'Cold Dm',
+                    1: 'First Follow up',
+                    2: 'Second Follow up',
+                    3: 'Third Follow up',
+                    4: 'fourth Follow up',
+                    5: 'fifth Follow up',
+                    6: 'sixth Follow up',
+                    7: 'seventh Follow up',
+                    8: 'eighth Follow up',
+                    9: 'ninth Follow up',
+                    10: 'tenth Follow up',
+                }[time]
 
-            return {
-                'cold dm': 'badge-light-primary',
-                'first dm follow up': 'badge-light-success',
-                'second dm follow up': 'badge-light-info',
-                'third dm follow up': 'badge-light-warning',
-            }[type]
+            return `${time}th Follow up`
         }
+
     },
 });

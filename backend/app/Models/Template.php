@@ -38,9 +38,9 @@ class Template extends Model
         return $this->belongsTo(Color::class);
     }
 
-    public function category()
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->morphOne(Category::class, 'categorizable');
+        return $this->belongsTo(Category::class);
     }
 
     public function tags()

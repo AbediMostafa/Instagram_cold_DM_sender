@@ -15,6 +15,16 @@
               class="form-control form-control-solid mb-2"
               v-model="store.categoryData.title">
 
+          <input
+              placeholder="Number Of Follow ups"
+              class="form-control form-control-solid mb-2"
+              v-model="store.categoryData.number_of_follow_ups">
+
+          <input
+              placeholder="Hour Interval"
+              class="form-control form-control-solid mb-2"
+              v-model="store.categoryData.hour_interval">
+
           <textarea
               placeholder="Offer Description"
               class="form-control form-control-solid mb-2"
@@ -41,6 +51,16 @@
                   class="form-control form-control-solid mb-2"
                   v-model="store.categoryData.title">
 
+              <input
+                  placeholder="Category Title"
+                  class="form-control form-control-solid mb-2"
+                  v-model="store.categoryData.number_of_follow_ups">
+
+              <input
+                  placeholder="Category Title"
+                  class="form-control form-control-solid mb-2"
+                  v-model="store.categoryData.hour_interval">
+
               <textarea
                   placeholder="Category Description"
                   class="form-control form-control-solid mb-2"
@@ -50,7 +70,9 @@
 
             <div v-else>
               <div class="text-dark text-hover-primary fs-6">{{ category.title }}</div>
-              <span class="text-muted">{{ category.description }}</span>
+              <div class="text-muted">Follow ups : {{ category.number_of_follow_ups }}</div>
+              <div class="text-muted">Hour intervals : {{ category.hour_interval }}</div>
+              <div class="text-muted">{{ category.description }}</div>
             </div>
 
             <update-cancel-entity-pair

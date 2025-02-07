@@ -8,7 +8,7 @@
         <el-dropdown-item  @click="store.viewSpintax(props.id)">
             View
         </el-dropdown-item>
-        <el-dropdown-item @click="store.viewSpintax(props.id)">
+        <el-dropdown-item @click="store.editSpintax(props.id)">
           Edit
         </el-dropdown-item>
         <el-dropdown-item

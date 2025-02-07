@@ -50,26 +50,19 @@ class SettingAdapter:
 
     @classmethod
     def cold_dm_spintax(cls, account=None):
-        return Spintax.get_value(
-            'cold dm',
-            account.category if account else None,
-        )
+        return Spintax.get_value(0, account.category if account else None)
 
     @classmethod
     def first_dm_follow_up_spintax(cls, account=None):
-        return Spintax.get_value('first dm follow up', account.category if account else None)
+        return Spintax.get_value(1, account.category if account else None)
 
     @classmethod
     def second_dm_follow_up_spintax(cls, account=None):
-        return Spintax.get_value('second dm follow up', account.category if account else None)
+        return Spintax.get_value(2, account.category if account else None)
 
     @classmethod
     def third_dm_follow_up_spintax(cls, account=None):
-        return Spintax.get_value('third dm follow up', account.category if account else None)
-
-    @classmethod
-    def account_intervals(cls):
-        return Setting.get_value('Account intervals', 3)
+        return Spintax.get_value(3, account.category if account else None)
 
     @classmethod
     def minimum_time_for_next_login(cls):

@@ -10,15 +10,8 @@ class Spintax extends Model
     use HasFactory;
     protected $guarded = [];
 
-    public static array $types = [
-      'cold dm',
-      'first dm follow up',
-      'second dm follow up',
-      'third dm follow up',
-    ];
-
-    public function category()
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->morphOne(Category::class, 'categorizable');
+        return $this->belongsTo(Category::class);
     }
 }
