@@ -15,24 +15,37 @@ from script.models.AccountHelper import get_next_account
 from dotenv import load_dotenv
 from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
+from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
 from script.extra.actions.send_dm.SendDmContext import SendDmContext
 from script.extra.helper import tehran_now
-
-
-#
-# account = Account.get_by_id(15)
-# browser_ig = BasePlaywright(account)
-# browser_ig.start_browser().go_to_instagram()
-# SendDmContext(browser_ig).fire()
-
-lead = Lead.get_by_id(707456)
-account = Account.get_by_id(15)
-lead.change_state(account, 'dm follow up', add_history=True, times=1, update_date=True)
+from script.extra.actions.DmFollowUp import DmFollowUp
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
+from script.extra.helper import hours_ago
 
 #
+account = Account.get_by_id(1201)
+browser_ig = BasePlaywright(account)
+browser_ig.start_browser().go_to_instagram()
+SendDmContext(browser_ig).fire()
 
-print(tehran_now())
-print(((tehran_now() - lead.last_command_send_date).total_seconds()/3600)/24 )
+# lead = Lead.get_by_id(707456)
+# account = Account.get_by_id(2474)
+#
+# leads = DmFollowUp(account).leads_to_send_dm_follow_ups(100)
+#
+# for lead in leads:
+#     print('------------------------------------')
+#     print(lead.username)
+#     print(lead.dm_text)
+#     print('------------------------------------')
+
+
+# lead.change_state(account, 'dm follow up', add_history=True, times=1, update_date=True)
+#
+# #
+#
+# print(tehran_now())
+# print(((tehran_now() - lead.last_command_send_date).total_seconds()/3600)/24 )
 
 # print(account.categories())
 #

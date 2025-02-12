@@ -16,6 +16,11 @@ return new class extends Migration
             $table->string('title')->unique();
             $table->unsignedTinyInteger('is_used')->default(0);
 
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->nullOnDelete();
+
             $table->timestamp('created_at')->nullable()->useCurrent();
         });
     }

@@ -9,6 +9,7 @@ class BrowserLeadGenerateThroughApiEvent:
     ig = None
     base = None
     parser = None
+    category = None
 
     def __init__(self, ig):
         self.ig = ig
@@ -35,12 +36,16 @@ class BrowserLeadGenerateThroughApiEvent:
 
     def insert_leads(self):
         for username in self.parser.usernames:
-            Lead.get_or_create(username=username)
+            try:
+                Lead.get_or_create(username=username, category=self.category)
+            except Exception as e:
+                self.ig.account.add_cli(f"Failed to insert lead {username}: {str(e)}")
 
     def init(self, hashtag_count):
-        hashtags = get_hashtag(hashtag_count)
+        hashtags = get_hashtag(hashtag_count, self.ig.account.category)
 
         for hashtag in hashtags:
+            self.category = hashtag.category
             self.search_for.start(f'#{hashtag.title}')
             self.ig.pause(4000, 6000)
 

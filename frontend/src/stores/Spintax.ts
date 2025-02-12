@@ -45,7 +45,6 @@ export const useSpintaxStore = defineStore("SpintaxStore", {
                 cancelButtonColor: "#d33",
                 confirmButtonText: "Yes, delete it!",
             }).then((result) => {
-                // Read more about isConfirmed, isDenied below
                 if (result.isConfirmed) {
                     ApiService.post("spintax/delete", {ids}).then(this.getSpintaxes);
                 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Spintax;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,7 @@ class SpintaxController extends Controller
         return Spintax::query()
             ->select('id', 'name', 'times', 'text', 'category_id')
             ->with(['category:id,title,number_of_follow_ups'])
+            ->orderBy('category_id')
             ->orderBy('times')
             ->paginate(
                 config('data.pagination.each_page.spintaxes')
@@ -58,7 +60,7 @@ class SpintaxController extends Controller
 
         return tryCatch(
             fn() => Spintax::query()
-                ->where('name', r('data.name'))
+                ->where('id', r('data.id'))
                 ->update([
                     'category_id' => r('data.category_id'),
                     'name' => r('data.name'),
@@ -66,6 +68,14 @@ class SpintaxController extends Controller
                     'times' => r('data.times'),
                 ]),
             'Spintax updated successfully'
+        );
+    }
+
+    public function delete()
+    {
+        return tryCatch(
+            fn() => Spintax::query()->whereIn('id', r('id'))->delete(),
+            'Spintax deleted successfully'
         );
     }
 }

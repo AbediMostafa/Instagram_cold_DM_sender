@@ -6,6 +6,7 @@ return [
             'accounts' => 50,
             'leads' => 50,
             'looms' => 50,
+            'commands' => 50,
             'messages' => 10,
             'templates' => 400,
             'proxies' => 20,

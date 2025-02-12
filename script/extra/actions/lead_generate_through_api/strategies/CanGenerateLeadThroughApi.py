@@ -8,7 +8,7 @@ class CanGenerateLeadThroughApi:
         self.account = account
 
     def can(self):
-        hours = random.randint(40, 48)
+        hours = random.randint(15, 24)
         performed_commands = performed_command_count(self.account, ['explore hashtag'], hours)
 
         if performed_commands > 1:

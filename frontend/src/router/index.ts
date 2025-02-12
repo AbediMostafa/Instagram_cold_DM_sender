@@ -84,6 +84,16 @@ const routes: Array<RouteRecordRaw> = [
           breadcrumbs: ["Leads"],
         },
       },
+
+      {
+        path: "/commands",
+        name: "commands",
+        component: () => import("@/views/command/Commands.vue"),
+        meta: {
+          pageTitle: "Commands",
+          breadcrumbs: ["Commands"],
+        },
+      },
       {
         path: "/looms",
         name: "looms",

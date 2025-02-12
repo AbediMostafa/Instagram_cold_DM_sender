@@ -14,6 +14,38 @@ use \Symfony\Component\Process\Process;
 
 class CommandController extends Controller
 {
+    public function index()
+    {
+        return Command::query()
+            ->with([
+                'account:id,username',
+                'lead:id,username',
+            ])
+            ->when(
+                r('queryParams.account'),
+                fn($_) => $_->whereHas('account', fn($_) => $_->where('username', likeOperator(), '%' . r('queryParams.account') . '%'))
+            )
+            ->when(
+                r('queryParams.lead'),
+                fn($_) => $_->whereHas('lead', fn($_) => $_->where('username', likeOperator(), '%' . r('queryParams.lead') . '%'))
+            )
+            ->when(
+                r('queryParams.type'),
+                fn($_) => $_->where('type', r('queryParams.type'))
+            )
+            ->when(
+                r('queryParams.status'),
+                fn($_) => $_->where('state', r('queryParams.status'))
+            )
+            ->when(
+                r('queryParams.category_id'),
+                fn($_) => $_->where('category_id', r('queryParams.category_id'))
+            )
+            ->orderByDesc('id')
+            ->paginate(
+                config('data.pagination.each_page.commands')
+            );
+    }
 
     public function createCustomMessageWithMsgId()
     {
@@ -73,7 +105,7 @@ class CommandController extends Controller
                         'state' => 'pending',
                     ]);
 
-                return jsonSuccess(r('sendLoom')? 'Loom sent successfully' : 'Message sent successfully');
+                return jsonSuccess(r('sendLoom') ? 'Loom sent successfully' : 'Message sent successfully');
 
             });
         } catch (\Exception $e) {
@@ -164,6 +196,16 @@ class CommandController extends Controller
             $uploader->fileExists() && $uploader->deleteFile();
             abort(422, $e->getMessage());
         }
+    }
+
+    public function getTypes()
+    {
+        return Command::$types;
+    }
+
+    public function getStatuses()
+    {
+        return Command::$states;
     }
 
 }

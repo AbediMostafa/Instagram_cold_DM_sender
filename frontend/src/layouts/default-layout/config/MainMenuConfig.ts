@@ -25,6 +25,13 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-archive",
         allowed_roles:['user', 'external-user']
       },
+      {
+        heading: "commands",
+        route: "/commands",
+        keenthemesIcon: "element-plus",
+        bootstrapIcon: "bi-sticky",
+        allowed_roles:['user', 'external-user']
+      },
 
       {
         heading: "unibox",

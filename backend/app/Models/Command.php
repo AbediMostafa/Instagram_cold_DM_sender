@@ -42,10 +42,17 @@ class Command extends Model
         'follow good pages',
         'explore hashtag',
     ];
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s', // Change the format as needed
+    ];
 
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+    public function lead()
+    {
+        return $this->belongsTo(Lead::class);
     }
 
     public function commandable()

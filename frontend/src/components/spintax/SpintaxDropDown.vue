@@ -5,13 +5,13 @@
     </a>
     <template #dropdown>
       <el-dropdown-menu class="p-3">
-        <el-dropdown-item  @click="store.viewSpintax(props.id)">
-            View
+        <el-dropdown-item @click="store.viewSpintax(props.id)">
+          View
         </el-dropdown-item>
         <el-dropdown-item @click="store.editSpintax(props.id)">
           Edit
         </el-dropdown-item>
-        <el-dropdown-item
+        <el-dropdown-item @click="store.deleteSelected([props.id])"
         >Delete
         </el-dropdown-item>
         <el-dropdown-item divided>
@@ -25,7 +25,7 @@
 <script setup lang="ts">
 
 import {useSpintaxStore} from "@/stores/Spintax";
-import { defineProps } from "vue";
+import {defineProps} from "vue";
 
 const props = defineProps(['id']);
 const store = useSpintaxStore()

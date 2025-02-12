@@ -73,19 +73,18 @@ use \App\Models\Category;
 
 Route::get('/', function () {
 
-//    Account::query()
-//        ->get()
-//        ->each(
-//            function (Account $account) {
-//
-////                $account->makeActive();
-//            }
-//        );
-//    dd(Category::all());
-
-//    return jsonSuccess('Account(s) Profile proxies updated successfully');
+//    \App\Models\Lead::query()->whereHas('tags',
+//        fn($tag)=> $tag->where('title', 'woocommerce')
+//    )->get()
+//    ->each(fn($lead)=>$lead->delete());
 
 
+    $categories = Category::query()->get();
+
+    dd($categories);
+
+
+//    $hashtags =
 
 //    $account = \App\Models\Template::find(1); // Get account1
 //    $category = Category::find(12); // Get category1
@@ -124,11 +123,11 @@ Route::get('/', function () {
 
 Route::get('/activate-accounts', function () {
 
-
-//    Account::all()->each(function ($account) {
-//        $account->makeActive();
-//    });
-//    dd('shod');
+//
+    Account::all()->each(function ($account) {
+        $account->makeActive();
+    });
+    dd('shod');
 
 
 //
@@ -190,10 +189,14 @@ Route::post('thread/view', [ThreadController::class, 'view']);
 Route::post('thread/set-category', [ThreadController::class, 'setCategory']);
 
 Route::post('messages', [MessageController::class, 'index']);
+
+Route::post('commands', [CommandController::class, 'index']);
 Route::post('command/create-custom-message', [CommandController::class, 'createCustomMessage']);
 Route::post('command/create-custom-message-with-message_id', [CommandController::class, 'createCustomMessageWithMsgId']);
 Route::post('command/create-get-directs', [CommandController::class, 'createGetDirects']);
 Route::post('command/create-upload-loom', [CommandController::class, 'createUploadLoom']);
+Route::post('command/get-types', [CommandController::class, 'getTypes']);
+Route::post('command/get-statuses', [CommandController::class, 'getStatuses']);
 
 Route::post('looms', [LoomController::class, 'index']);
 Route::post('loom/delete', [LoomController::class, 'delete']);

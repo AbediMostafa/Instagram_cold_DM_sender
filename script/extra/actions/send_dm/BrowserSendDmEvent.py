@@ -60,7 +60,8 @@ class BrowserSendDmEvent:
             self.before_message_fill_part()
             self.after_message_fill_part()
 
-            self.ig.account.add_direct_url_id(self.lead.dm_text, self.lead, GetThreadUrlAction(self.ig).start())
+            url_id = GetThreadUrlAction(self.ig).start()
+            self.ig.account.add_direct_url_id(self.lead.dm_text, self.lead, url_id)
 
             self.lead.change_state(self.ig.account, 'dm follow up', add_history=True, update_date=True)
             self.command.update_cmd('state', 'success')
