@@ -55,7 +55,6 @@ class LeadController extends Controller
         return Lead::query()->with('account:id,username')->find(r('id'));
     }
 
-
     public function delete()
     {
         return tryCatch(
@@ -139,7 +138,6 @@ class LeadController extends Controller
             return $e->getMessage();
         }
     }
-
 
     public function getStatuses()
     {

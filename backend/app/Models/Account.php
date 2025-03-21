@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Classes\AdsPowerProfileUpdateProxy;
 use App\Classes\MultiloginService;
 use App\Classes\ProfileDelete;
 use App\Classes\ProfileUpdateProxy;
@@ -121,29 +122,28 @@ class Account extends Model
 
         foreach ($lines as $line) {
             $account = explode(',', $line);
-            if (count($account) > 2) {
 
-                $accountExists = Account::query()
-                    ->whereUsername($account[0])
-                    ->wherePassword($account[1])
-                    ->exists();
+            $accountExists = Account::query()
+                ->whereUsername($account[0])
+                ->wherePassword($account[1])
+                ->exists();
 
-                if ($accountExists) {
-                    $existsAccounts .= $account[0] . ':' . $account[0] . "\n";
-                    continue;
-                }
-
-                $accountObj = Account::query()->create([
-                    'username' => $account[0],
-                    'password' => $account[1],
-                    'secret_key' => str_replace(' ', '', $account[2]),
-                    'email' => $account[3],
-                    'created_at' => Carbon::now(),
-                    'category_id' => request('category'),
-                ]);
-
-                !empty(r('tags')) && $accountObj->tags()->attach(r('tags'));
+            if ($accountExists) {
+                $existsAccounts .= $account[0] . ':' . $account[0] . "\n";
+                continue;
             }
+
+            $accountObj = Account::query()->create([
+                'username' => $account[0],
+                'password' => $account[1],
+                'secret_key' => array_key_exists(2, $account) ? str_replace(' ', '', $account[2]) : null,
+                'email' => array_key_exists(3, $account) ? $account[3] : null,
+                'username_changed' => r('username_changed'),
+                'created_at' => Carbon::now(),
+                'category_id' => request('category'),
+            ]);
+
+            !empty(r('tags')) && $accountObj->tags()->attach(r('tags'));
         }
 
         abort_if($existsAccounts, 403, 'These accounts already exists :' . "\n" . $existsAccounts);
@@ -168,13 +168,15 @@ class Account extends Model
     public function updateProfileProxyToResidential()
     {
         if ($this->profile) {
-            try {
-                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
-                $updateProxy->getProfile();
-                return $updateProxy->updateProxyToResidential();
-            } catch (\Exception $exception) {
-                return $exception->getMessage() . $exception->getTraceAsString();
+            sleep(3);
+
+            if (Profile::is_('adspower')) {
+                return (new AdsPowerProfileUpdateProxy($this->profile->profile_id))->updateProxyToResidential();
             }
+
+            $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
+            $updateProxy->getProfile();
+            $updateProxy->updateProxyToResidential();
         }
     }
 
@@ -182,7 +184,6 @@ class Account extends Model
     {
         if ($this->profile) {
             sleep(5);
-
 
             try {
                 $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
@@ -198,9 +199,16 @@ class Account extends Model
     }
 
 
-    public function updateProfileProxyToCustom(): void
+    public function updateProfileProxyToCustom()
     {
         if ($this->profile) {
+            sleep(3);
+
+            if (Profile::is_('adspower')) {
+
+                return (new AdsPowerProfileUpdateProxy($this->profile->profile_id))->updateProxyToCustom($this->profile);
+            }
+
             try {
                 $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
                 $updateProxy->getProfile()->updateProxyToCustom();

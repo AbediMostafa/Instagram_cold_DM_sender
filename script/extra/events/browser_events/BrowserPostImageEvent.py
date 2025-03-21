@@ -1,4 +1,5 @@
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
+from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
 from script.extra.helper import *
 import shutil
 import random
@@ -15,13 +16,11 @@ class BrowserPostImageEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli(f"Posting an image ...")
 
-        # if self.ig.account.should_not_post('post image', random.randint(20, 24)):
-        #     return self.ig.account.add_cli("Cant post an image today")
-
         self.template = self.ig.account.get_a_free_template('image-post')
 
         if not self.template:
-            return self.ig.account.add_cli(f"We don't have a post image for this account")
+            self.ig.account.add_cli(f"We don't have a image template for account trying to post Carousel ...")
+            return BrowserPostCarouselEvent(self.ig).fire()
 
         try:
             self.generate_image()
@@ -51,8 +50,8 @@ class BrowserPostImageEvent(InstagramMiddleware):
         self.image_path = process_image(image_path, self.tmp)
 
     def generate_caption(self):
-        prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.template.caption}'
-        self.caption = chat_ai(prompt)
+        # prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.template.caption}'
+        self.caption = self.template.caption
 
     def before_change_hook(self):
         self.ig.account.set_state('post image', 'app_state')
@@ -88,7 +87,7 @@ class BrowserPostImageEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_label("Write a caption...").fill(self.caption)
-        self.ig.pause(2000, 3500)
+        self.ig.pause(3000, 4500)
 
         self.ig.page.get_by_role("button", name="Share").click()
         self.ig.pause(15000, 17000)

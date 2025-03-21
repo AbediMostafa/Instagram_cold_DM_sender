@@ -41,6 +41,9 @@ class Command extends Model
         'number of active accounts',
         'follow good pages',
         'explore hashtag',
+        'generate lead by followers',
+        'generate lead by page engagement',
+        'generate lead by post engagement',
     ];
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s', // Change the format as needed

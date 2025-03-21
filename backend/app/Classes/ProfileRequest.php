@@ -39,7 +39,6 @@ class ProfileRequest
 
         $response = $sendRequest();
 
-
         if ($response->unauthorized()) {
             $this->renewToken();
             return $sendRequest();

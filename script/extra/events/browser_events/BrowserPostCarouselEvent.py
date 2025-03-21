@@ -4,6 +4,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 from script.extra.helper import *
 import random
 import shutil
+from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
 
 
 class BrowserPostCarouselEvent(InstagramMiddleware):
@@ -18,13 +19,11 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli(f"Posting an image ...")
 
-        # if self.ig.account.should_not_post('post carousel', random.randint(20, 24)):
-        #     return self.ig.account.add_cli("Cant post an image today")
-
         self.carousel_dict = self.ig.account.get_a_carousel()
 
         if not self.carousel_dict:
-            return self.ig.account.add_cli("We don't have any carousel")
+            self.ig.account.add_cli("We don't have any carousel trying to post video ...")
+            return BrowserPostVideoEvent(self.ig).fire()
 
         try:
             self.generate_images()
@@ -62,9 +61,7 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
     def generate_caption(self):
         first_carousel = self.carousel_dict[0]
         self.ig.account.add_cli('Generating caption...')
-
-        prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{first_carousel.caption}'
-        self.caption = chat_ai(prompt)
+        self.caption = first_carousel.caption
 
     def before_change_hook(self):
         self.ig.account.set_state('post carousel', 'app_state')

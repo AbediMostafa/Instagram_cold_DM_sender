@@ -15,12 +15,8 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
         if self.ig.account.username_changed:
             return self.ig.account.add_cli(f"Account's username has been changed already.")
 
-        self.get_username()
-
-        if not self.username:
-            return self.ig.account.add_cli(f"We don't have a username for : {self.ig.account.username}")
-
         try:
+            self.get_username()
             self.before_change_hook()
             self.change_hook()
             self.after_change_hook()
@@ -45,7 +41,14 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
     def change_hook(self):
 
         self.base.go_to_profile_page()
-        self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click()
+        
+        try:
+            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
+        except Exception as e:
+            self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click()
+            self.ig.pause(2000, 2500)
+            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
+
         self.ig.page.locator(f"text=Username").click()
         self.ig.pause(3000, 4000)
 
@@ -58,7 +61,7 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
         self.ig.account.set('username_changed', 1)
 
     def get_username(self):
-        result = get_a('username', self.ig.account)
+        result = get_a('username')
 
         if result is None or not result.text:
             raise ValueError("No username available in the database.")

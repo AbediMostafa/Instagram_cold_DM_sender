@@ -70,4 +70,4 @@ class BrowserLeadGenerateThroughApiEvent:
 
             self.ig.page.keyboard.press('Escape')
 
-            self.base.scroll(15)
+            self.base.scroll(30)

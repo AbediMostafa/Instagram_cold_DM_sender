@@ -11,33 +11,10 @@ class TemplateController extends Controller
 {
     public function index()
     {
-//         Template::query()
-//            ->with([
-//                'category:id,title',
-//            ])
-//            ->when(
-//                r('tags'),
-//                fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
-//            )
-//            ->when(
-//                r('category_id'),
-//                fn($_) => $_->where('category_id', r('category_id'))
-//            )
-//            ->when(
-//                r('types'),
-//                fn($_) => $_->whereIn('type', r('types'))
-//            )
-//            ->orderBy('type')
-//            ->paginate(
-//                config('data.pagination.each_page.templates')
-//            );
-
-        $perPage = config('data.pagination.each_page.templates'); // Number of items per page, default to 10
-
-// Step 1: Paginate templates
 
         $templates = Template::query()
             ->where('type', r('type'))
+            ->with('category:id,title')
             ->when(r('type') == 'carousel', function ($query) {
                 $query->where('color_id', r('color'))
                     ->orderBy('color_id')
@@ -54,45 +31,6 @@ class TemplateController extends Controller
             'data' => $data,
             'type' => r('type')
         ];
-        $paginatedTemplates = \App\Models\Template::query()
-            ->orderBy('type')
-            ->paginate($perPage);
-
-// Step 2: Extract carousel_ids from the paginated result
-        $currentCarouselIds = $paginatedTemplates->getCollection()
-            ->where('type', 'carousel')
-            ->pluck('carousel_id')
-            ->unique()
-            ->filter();
-
-// Step 3: Fetch all items belonging to those carousel_ids
-        $allCarousels = \App\Models\Template::query()
-            ->whereIn('carousel_id', $currentCarouselIds)
-            ->orderBy('color_id')
-            ->orderBy('uid') // Order by uid
-            ->get()
-            ->groupBy('carousel_id');
-
-// Step 4: Group other items in the paginated collection by type
-        $groupedTemplates = $paginatedTemplates->getCollection()
-            ->where('type', '!=', 'carousel')
-            ->groupBy('type');
-
-// Step 5: Merge carousels into the grouped collection
-        $groupedTemplates['carousel'] = $allCarousels;
-
-// Step 6: Attach pagination metadata
-        $response = [
-            'data' => $groupedTemplates,
-            'pagination' => [
-                'current_page' => $paginatedTemplates->currentPage(),
-                'last_page' => $paginatedTemplates->lastPage(),
-                'per_page' => $paginatedTemplates->perPage(),
-                'total' => $paginatedTemplates->total(),
-            ],
-        ];
-
-        return response()->json($response);
     }
 
     public function create()
@@ -174,9 +112,9 @@ class TemplateController extends Controller
         if ($mediaType === 'carousel') {
             $color = Color::whereTitle($theme)->first();
 
-            if (!$color) {
-                return response()->json(['message' => "The $theme not recorded in the database"], 422);
-            }
+//            if (!$color) {
+//                return response()->json(['message' => "The $theme not recorded in the database"], 422);
+//            }
 
             $colorId = $color?->id;
         }
@@ -206,7 +144,6 @@ class TemplateController extends Controller
             'caption' => r('caption')
         ]);
     }
-
 
     public function delete()
     {
@@ -244,5 +181,20 @@ class TemplateController extends Controller
     public function fetchColors()
     {
         return Color::get();
+    }
+
+    public function view()
+    {
+        return Template::query()
+            ->select('id', 'category_id', 'caption')
+            ->findOrFail(r('id'));
+    }
+
+    public function update()
+    {
+        return tryCatch(
+            fn() => Template::query()->whereId(r('id'))->update(r()->except('id')),
+            'Template updated successfully',
+        );
     }
 }

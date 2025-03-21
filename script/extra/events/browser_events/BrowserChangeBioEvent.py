@@ -37,7 +37,6 @@ class BrowserChangeBioEvent(InstagramMiddleware):
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
-        delete('bio', self.bio)
 
         self.ig.account.add_cli('Going to Accounts profile page')
         self.ig.page.goto('https://www.instagram.com/accounts/edit/')
@@ -47,7 +46,7 @@ class BrowserChangeBioEvent(InstagramMiddleware):
 
     def change_hook(self):
         self.ig.page.locator('textarea[placeholder="Bio"]').fill(self.bio)
-        self.ig.pause(2000, 3000)
+        self.ig.pause(3000, 4000)
         self.ig.page.locator('div[role="button"]:has-text("Submit")').click()
         self.ig.pause(2000, 3000)
 

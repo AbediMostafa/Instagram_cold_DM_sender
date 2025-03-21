@@ -48,7 +48,7 @@ class BrowserLoginEvent(InstagramMiddleware):
         self.ig.save_session()
         self.ig.pause(4000, 5000)
 
-        self.follow_suggested()
+        # self.follow_suggested()
 
     def pre_login_hook(self):
 
@@ -75,7 +75,8 @@ class BrowserLoginEvent(InstagramMiddleware):
 
     def is_not_logged_in(self):
         return self.ig.is_visible_by_text('Phone number, username, or email') or self.ig.is_visible_by_text(
-            "Don't have an account")
+            "Don't have an account") or self.ig.is_visible_by_text(
+            "Mobile number, username or email")
 
     def enter_your_email(self):
         return self.ig.is_visible_by_text('Enter your email') or self.ig.is_visible_by_text(
@@ -98,13 +99,25 @@ class BrowserLoginEvent(InstagramMiddleware):
 
         input1 = self.ig.page.get_by_label("Phone number, username, or email")
         input2 = self.ig.page.get_by_label("Phone number, username or email address")
+        input3 = self.ig.page.get_by_label("Mobile number, username or email")
 
         try:
             input1.fill('')
             input1.press_sequentially(self.ig.account.username, delay=100, timeout=4500)
+            self.ig.account.add_cli('First locator didnt found')
         except:
-            input2.fill('')
-            input2.press_sequentially(self.ig.account.username, delay=100)
+            try:
+                input2.fill('')
+                input2.press_sequentially(self.ig.account.username, delay=100)
+                self.ig.account.add_cli('Second locator didnt found')
+
+            except:
+                input3.fill('')
+
+                try:
+                    input3.press_sequentially(self.ig.account.username, delay=100)
+                except:
+                    self.ig.account.add_cli('Third locator didnt found')
 
         self.ig.pause(1800, 3000)
         self.ig.page.get_by_label("Password").fill('')
@@ -223,6 +236,8 @@ class BrowserLoginEvent(InstagramMiddleware):
             self.ig.suspended_account_handler()
             self.ig.disabled_account_handler()
             self.ig.appeal_submitted_handler()
+            self.ig.check_your_text_messages()
+            self.ig.choose_a_way_to_confirm()
             self.ig.upload_your_id_handler()
 
             if self.ig.suspect_automate_behavior_handler():

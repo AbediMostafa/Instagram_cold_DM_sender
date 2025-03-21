@@ -34,7 +34,8 @@
       <div
           class="text-gray-700 fs-8">{{cutMorThanNCharacters(carousel[0].caption, 200) }}</div>
 
-      <span class="badge badge-light-info">Carousel</span>
+      <span class="badge badge-light-success">Carousel</span>
+      <span class="badge badge-light-info">{{ carousel[0]?.category?.title }}</span>
     </div>
   </div>
 </template>

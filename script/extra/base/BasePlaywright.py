@@ -56,7 +56,11 @@ class BasePlaywright:
                 try:
                     self.page.locator('button', has_text='Allow All Cookies').click(timeout=1500)
                 except:
-                    self.page.locator('button', has_text='Allow all cookies').click(timeout=1500)
+
+                    try:
+                        self.page.locator('button', has_text='Allow all cookies').click(timeout=1500)
+                    except:
+                        self.page.locator('div[role="button"]', has_text='Allow all cookies').click(timeout=1500)
 
                 self.account.add_cli(f'Clicked on allow cookies')
                 return True
@@ -204,6 +208,14 @@ class BasePlaywright:
     def feedback_required(self):
         if self.is_visible_by_text('feedback_required') or self.is_visible_by_text("feedback required"):
             raise FeedbackRequired("feedback required")
+
+    def check_your_text_messages(self):
+        if self.is_visible_by_text('Check your text messages'):
+            raise CheckYourTextMessages('Check your text messages')
+
+    def choose_a_way_to_confirm(self):
+        if self.is_visible_by_text('Choose a way to confirm'):
+            raise CheckYourTextMessages('Choose a way to confirm')
 
     def save_info(self):
         try:

@@ -36,10 +36,11 @@ class DmFollowUp:
 
             spintax = Spintax.get_value(lead.times + 1, lead.category)
 
+
             if not spintax:
                 continue
 
-            lead.dm_text = spintax
+            lead.dm_text = spin(spintax)
             self.leads.append(lead)
 
             self.counter += 1

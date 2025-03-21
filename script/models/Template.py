@@ -20,9 +20,14 @@ def get_a(_type, account=None):
     load_dotenv()
     random_function = fn.Random if os.getenv('DB_TYPE') == 'postgresql' else fn.Rand
 
-    return Template.select().where(
+    query = Template.select().where(
         (Template.type == _type)
-    ).order_by(random_function()).first()
+    )
+
+    if account:
+        query = query.where(Template.category == account.category)
+
+    return query.order_by(random_function()).first()
 
 
 class Template(BaseWithTimeZoneModel):

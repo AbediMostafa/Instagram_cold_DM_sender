@@ -10,7 +10,7 @@ class CanFollowToday:
         self.account = account
 
     def can(self):
-        hours = random.randint(24, 34)
+        hours = random.randint(40, 60)
         had_successful_command = sent_recent_command_within(self.account, ['follow good pages'], hours)
 
         if had_successful_command:

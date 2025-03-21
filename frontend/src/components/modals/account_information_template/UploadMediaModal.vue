@@ -99,7 +99,6 @@
             <!--begin::Label-->
             <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
               <span class="required">Category</span>
-              <span class="required">{{ category }}</span>
             </label>
             <!--end::Label-->
             <el-select

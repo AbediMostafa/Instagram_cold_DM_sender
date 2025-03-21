@@ -13,7 +13,7 @@ return [
             'spintaxes' => 20,
             'daily_dm_statistics' => 15,
             'categories' => 15,
-            'profiles' => 15,
+            'profiles' => 50,
         ]
     ],
     'template' => [

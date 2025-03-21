@@ -74,7 +74,7 @@ class SpintaxController extends Controller
     public function delete()
     {
         return tryCatch(
-            fn() => Spintax::query()->whereIn('id', r('id'))->delete(),
+            fn() => Spintax::query()->whereIn('id', r('ids'))->delete(),
             'Spintax deleted successfully'
         );
     }

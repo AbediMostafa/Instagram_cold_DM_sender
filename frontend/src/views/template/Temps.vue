@@ -72,8 +72,12 @@
                   <username-card :template="template"/>
                 </template>
 
-                <template  v-if="['avatar', 'image-post'].includes(store.templates.receivedType)">
+                <template  v-if="store.templates.receivedType === 'avatar'">
                   <avatar-card :template="template"/>
+                </template>
+
+                <template  v-if="store.templates.receivedType === 'image-post'">
+                  <image-post-card :template="template"/>
                 </template>
 
                 <template  v-if="store.templates.receivedType === 'carousel'">
@@ -82,6 +86,10 @@
 
                 <template  v-if="store.templates.receivedType === 'video-post'">
                   <video-post-card :templates="template"/>
+                </template>
+
+                <template  v-if="store.templates.receivedType === 'name'">
+                  <name-card :template="template"/>
                 </template>
               </div>
               <!--end::Col-->
@@ -92,6 +100,8 @@
     </div>
     <create-template-modal/>
     <upload-media-modal/>
+    <edit-media-modal />
+
   </div>
 </template>
 <script setup lang="ts">
@@ -104,11 +114,13 @@ import AvatarCard from "@/views/template/AvatarCard.vue";
 import CarouselCard from "@/views/template/CarouselCard.vue";
 import UsernameCard from "@/views/template/UsernameCard.vue";
 import VideoPostCard from "@/views/template/VideoPostCard.vue";
+import ImagePostCard from "@/views/template/ImagePostCard.vue";
+import NameCard from "@/views/template/NameCard.vue";
 import {showModal} from "@/core/helpers/modal";
 import UploadMediaModal from "@/components/modals/account_information_template/UploadMediaModal.vue";
 import CreateTemplateModal from "@/components/modals/account_information_template/CreateTemplateModal.vue";
 import TemplatesDropDown from "@/components/template/TemplatesDropDown.vue";
-
+import EditMediaModal from "@/components/modals/account_information_template/EditMediaModal.vue";
 
 const store = useTemplateStore();
 const configStore = useAppConfigStore();

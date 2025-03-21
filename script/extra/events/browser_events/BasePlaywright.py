@@ -8,6 +8,7 @@ from script.extra.exceptions import *
 from script.extra.events.browser_events.ApplyStealth import ApplyStealth
 from script.extra.modules.multilogin.Multilogin import Multilogin
 import json
+import re
 
 
 # Your account has been disabled
@@ -44,7 +45,6 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
 
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
-
 
     def go_to_instagram(self):
         self.account.add_cli('Going to Instagram page ...')
@@ -120,7 +120,7 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
 
     def is_visible_by_text(self, text):
         try:
-            return self.page.locator(f"text={text}").is_visible()
+            return self.page.locator(f"text=/^{re.escape(text)}$/i").is_visible()
         except Exception as e:
             return False
 
@@ -243,6 +243,15 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
         if self.is_visible_by_text('You submitted an appeal') or self.is_visible_by_text(
                 'It usually takes us just over a day to review your information'):
             raise AppealSubmittedError('Appeal submitted')
+
+    # Check your text messages
+    def check_your_text_messages(self):
+        if self.is_visible_by_text('Check your text messages'):
+            raise CheckYourTextMessages('Check your text messages')
+
+    def choose_a_way_to_confirm(self):
+        if self.is_visible_by_text('Choose a way to confirm'):
+            raise CheckYourTextMessages('Choose a way to confirm')
 
     def upload_your_id_handler(self):
         if self.is_visible_by_text('Upload your ID') or self.is_visible_by_text(

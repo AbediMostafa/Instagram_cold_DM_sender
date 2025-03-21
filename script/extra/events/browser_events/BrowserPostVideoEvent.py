@@ -17,13 +17,20 @@ class BrowserPostVideoEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli(f"Posting a video ...")
 
-        # if self.ig.account.should_not_post('post video'):
-        #     return self.ig.account.add_cli("Cant post a video today")
-
         self.image_template, self.video_template = self.ig.account.get_a_video()
 
         if not self.video_template:
-            self.ig.account.add_cli(f"We don't have a video template for : {self.ig.account.username}")
+            self.ig.account.add_cli(f"We don't have a video template for account trying to post an image ...")
+
+            if self.ig.account.get_a_free_template('image-post'):
+                from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
+                return BrowserPostImageEvent(self.ig).fire()
+
+            if self.ig.account.get_a_carousel():
+                from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
+                return BrowserPostCarouselEvent(self.ig).fire()
+
+            return self.ig.account.add_cli(f"We don't have a image template for account")
 
         self.generate_path()
         self.generate_caption()
@@ -57,8 +64,8 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.video_path = self.video_template.download_image(self.tmp)
 
     def generate_caption(self):
-        prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.video_template.caption}'
-        self.caption = chat_ai(prompt)
+        # prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.video_template.caption}'
+        self.caption = self.video_template.caption
 
     def before_change_hook(self):
         self.ig.account.set_state('post video', 'app_state')
@@ -90,7 +97,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
 
         try:
             self.ig.page.get_by_role("button", name="OK").click(timeout=3000)
-        except :
+        except:
             pass
         self.ig.pause(2000, 3500)
 
@@ -108,7 +115,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Share").click(timeout=3000)
-        self.ig.pause(80000, 87000)
+        self.ig.pause(90000, 98000)
 
         try:
             self.ig.page.get_by_role("button", name="Close").press("Escape")

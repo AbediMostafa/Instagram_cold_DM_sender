@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Classes\ProfileDelete;
+use App\Classes\ProfileDeleteAdsPower;
 use App\Classes\ProfileRequest;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Profile extends Model
 {
@@ -44,12 +46,24 @@ class Profile extends Model
         $this->save();
     }
 
-    public function deleteRecords(): void
+    public function deleteRecords()
     {
+        try {
+            DB::beginTransaction();
+            $this->delete();
 
-        $this->delete();
-        $updateProxy = new ProfileDelete($this->profile_id);
-        $updateProxy->deleteProfile();
+            $obj = Profile::is_('adspower') ?
+                new ProfileDeleteAdsPower($this->profile_id) : new ProfileDelete($this->profile_id);
+
+            $obj->deleteProfile();
+
+            DB::commit();
+
+        } catch (\Exception $exception) {
+
+            DB::rollBack();
+            throw $exception;
+        }
     }
 
     public static function getWithoutAccountProfiles()
@@ -70,5 +84,10 @@ class Profile extends Model
 
             $profileDb && dump($title);
         });
+    }
+
+    public static function is_($profileType)
+    {
+        return Setting::getValue('anti_detect_browser') === $profileType;
     }
 }

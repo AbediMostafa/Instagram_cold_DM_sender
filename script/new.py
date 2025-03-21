@@ -59,13 +59,16 @@ from script.models.Command import Command
 from script.models.Hashtag import Hashtag, get_hashtag
 from script.extra.parsers.GridPostParser import GridPostParser
 from script.extra.actions.send_dm.SendDmContext import SendDmContext
+from script.extra.actions.follow_good_pages.FollowGoodPagesContext import FollowGoodPagesContext
 #
 from script.models.Process import Process
 from spintax import spin
+import traceback
+
 
 
 if len(sys.argv) < 2:
-    print("Usage: python main.py <account_id>")
+    print("Usage: python new.py <account_id>")
     sys.exit(1)
 
 account_id = sys.argv[1]
@@ -77,14 +80,34 @@ try:
     browser_ig.start_browser().go_to_instagram()
     login = BrowserLoginEvent(browser_ig)
 
+    try:
+        try:
+            login.ig.page.locator('button', has_text='Allow All Cookies').click(timeout=1500)
+        except:
+            login.ig.page.locator('button', has_text='Allow all cookies').click(timeout=1500)
+
+        login.ig.account.add_cli(f'Clicked on allow cookies')
+    except Exception as e:
+        print(str(e))
+        pass
+
+    print('after allow cookies')
     if login.is_not_logged_in():
         login.ig.account.add_cli('User is not logged in before trying to login ...')
         login.fill_username_password()
-        login.ig.page.wait_for_timeout(5000)
+        login.ig.page.wait_for_timeout(8000)
 
         if login.need_2f_authentication():
             login.ig.two_factor_authentication_process()
-except:
+
+    login.ig.page.wait_for_timeout(4000)
+
+    FollowGoodPagesContext(browser_ig).fire()
+
+
+except Exception as e:
+    print(str(e))
+    print(traceback.format_exc())
     pass
 
 

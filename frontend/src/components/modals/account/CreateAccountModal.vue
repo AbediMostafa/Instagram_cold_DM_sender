@@ -126,6 +126,13 @@
                 </el-select>
 
               </div>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <el-switch
+                    v-model="targetData.username_changed"
+                    active-text="Username Changed"
+                />
+
+              </div>
 
               <div class="d-flex flex-column mb-8 fv-row">
                 <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
@@ -201,6 +208,13 @@
                       name="password"
                   ></el-input>
                 </el-form-item>
+              </div>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <el-switch
+                    v-model="targetData.username_changed"
+                    active-text="Username Changed"
+                />
+
               </div>
               <div class="d-flex flex-column mb-8 fv-row">
                 <!--begin::Label-->
@@ -318,6 +332,7 @@ export default defineComponent({
       secret_key: "",
       accounts: "",
       category: "",
+      username_changed: 0,
       bulk_insertion: false,
       tags: [],
     });

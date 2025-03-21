@@ -47,6 +47,7 @@
 
               <el-form-item prop="text">
                 <el-input
+                    :type="targetData.type =='bio' ? 'textarea' :'input'"
                     v-model="targetData.text"
                     placeholder="Enter text"
                     name="text"

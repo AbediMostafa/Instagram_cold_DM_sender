@@ -3,6 +3,7 @@ from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEvents
 from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
 import traceback
+from script.extra.actions.login.LoginContext import LoginContext
 
 from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
 from script.extra.hooks.CheckForLastLoginHook import CheckForLastLoginHook
@@ -22,7 +23,8 @@ class Process:
         Sometimes we face Race condition and get_next_account() returns None
         """
         while not self.account:
-            self.account = get_next_account() 
+            # self.account = get_next_account()
+            self.account = get_next_account(specific_ids=[1329])
 
     def start(self):
         try:
@@ -35,7 +37,7 @@ class Process:
             self.browser_ig = BasePlaywright(self.account)
             self.browser_ig.start_browser().go_to_instagram()
 
-            BrowserLoginEvent(self.browser_ig).fire()
+            LoginContext(self.browser_ig).fire()
             self.account.set_state('processing', 'app_state')
             self.account.set_state('active')
 
@@ -63,8 +65,9 @@ class Process:
         if account_check.have_custom_messages():
             return False
 
-        if account_check.cant_start_schedule():
-            return True
+        # if account_check.cant_start_schedule():
+        #     self.account.add_cli('Cant start schedule')
+        #     return True
 
         if CheckForWarningsHook(self.account).last_warning_has_not_expired():
             return True

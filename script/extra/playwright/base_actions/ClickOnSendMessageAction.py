@@ -11,7 +11,6 @@ class ClickOnSendMessageAction(BaseAction):
             self.ig.page.get_by_role("button", name="Message").click(timeout=3000)
         except:
             try:
-                self.ig.account.add_cli("There's not Message button in lead's page, Trying options instead ... ")
                 self.ig.page.get_by_role("button", name="Options").click()
                 self.ig.pause(2500, 3500)
                 self.ig.page.get_by_role("button", name="Send message").click(timeout=3000)

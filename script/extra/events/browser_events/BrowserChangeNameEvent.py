@@ -7,14 +7,18 @@ from script.models.Template import get_a, delete
 
 class BrowserChangeNameEvent(InstagramMiddleware):
     base = None
-    name = "Edward Air"
+    name = ""
     username_counter = 0
     command = 0
 
     def execute(self):
-
         if self.ig.account.has('name'):
             return self.ig.account.add_cli(f"Account has a name already.")
+
+        self.name = get_a('name', self.ig.account)
+
+        if not self.name:
+            return self.ig.account.add_cli(f"We dont have a name for this account")
 
         try:
             self.before_change_hook()
@@ -41,7 +45,13 @@ class BrowserChangeNameEvent(InstagramMiddleware):
     def change_hook(self):
 
         self.base.go_to_profile_page()
-        self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click()
+
+        try:
+            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
+        except Exception as e:
+            self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click()
+            self.ig.pause(2000, 2500)
+            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
 
         self.ig.pause(3000, 4000)
 
@@ -58,10 +68,10 @@ class BrowserChangeNameEvent(InstagramMiddleware):
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
-        self.ig.account.set('name', self.name)
+        self.ig.account.set('name', self.name.text)
 
     def fill_name(self):
-        self.ig.page.get_by_label("Name").fill(self.name)
+        self.ig.page.get_by_label("Name").fill(self.name.text)
         self.ig.pause(3000, 4000)
 
         self.ig.page.get_by_role("button", name="Done").click(timeout=5000)

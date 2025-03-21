@@ -89,7 +89,8 @@ class AccountController extends Controller
                 r('tags'),
                 fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
             )
-            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
+            ->orderBy('id', 'DESC')
+//            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
                 config('data.pagination.each_page.accounts')
             );
@@ -163,8 +164,8 @@ class AccountController extends Controller
                 ->get()
                 ->each(function ($account) {
                     $account->delete();
-//                    $account->profile && $account->profile->deleteRecords();
-//                    sleep(3);
+                    $account->profile && $account->profile->deleteRecords();
+                    sleep(3);
                 });
         },
             'Account(s) deleted successfully'
@@ -279,9 +280,7 @@ class AccountController extends Controller
         try {
             $secretKey = r('secretKey');
 
-            $proxy = 'http://paichb:yNckWHb3@193.31.107.98:29842';
-
-            $resp = Http::withOptions(['proxy' => $proxy])->withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
+            $resp = Http::withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
             return $resp->json()['data']['otp'];
 
         } catch (\Exception $exception) {
@@ -302,6 +301,21 @@ class AccountController extends Controller
                 ->get()
                 ->each(
                     fn(Account $account) => $account->updateProfileProxyToResidential()
+                );
+            return jsonSuccess('Account(s) Profile proxies updated successfully');
+
+        } catch (\Exception $exception) {
+            return jsonError($exception->getMessage() . $exception->getTraceAsString());
+        }
+    }
+
+    public function changeProfileProxyToCustom()
+    {
+        try {
+            Account::query()->whereIn('id', r('ids'))
+                ->get()
+                ->each(
+                    fn(Account $account) => $account->updateProfileProxyToCustom()
                 );
             return jsonSuccess('Account(s) Profile proxies updated successfully');
 

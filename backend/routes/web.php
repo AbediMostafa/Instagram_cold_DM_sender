@@ -1,5 +1,7 @@
 <?php
 
+use App\Classes\AdspowerProfileMaker;
+use App\Classes\AdsPowerProfileUpdateProxy;
 use App\Classes\ProfileDelete;
 use App\Classes\ProfileMaker;
 use App\Classes\ProfileMakerV2;
@@ -48,52 +50,22 @@ use \App\Http\Controllers\ColorController;
 use \App\Models\Hashtag;
 use \App\Classes\ProfileGetProxy;
 use \App\Models\Category;
+use \App\Models\Template;
+use \App\Models\LeadSource;
+use \App\Models\Lead;
 
-
-//
-//function setHasEnoughPosts($accountId)
-//{
-//    $account = Account::query()->find($accountId);
-//    $account->has_enough_posts = 0;
-//    dd($account->save());
-//}
-//
-//function residential($accountId)
-//{
-//    $account = Account::query()->find($accountId);
-//    dd($account->updateProfileProxyToResidential());
-//}
-//
-//function custom($accountId)
-//{
-//    $account = Account::query()->find($accountId);
-//    dd($account->updateProfileProxyFromResidentialToCustom());
-//}
-//
 
 Route::get('/', function () {
-
-//    \App\Models\Lead::query()->whereHas('tags',
-//        fn($tag)=> $tag->where('title', 'woocommerce')
-//    )->get()
-//    ->each(fn($lead)=>$lead->delete());
-
-
-    $categories = Category::query()->get();
-
-    dd($categories);
-
-
-//    $hashtags =
-
-//    $account = \App\Models\Template::find(1); // Get account1
-//    $category = Category::find(12); // Get category1
+//    $account = Account::query()->where('username', 'keshavarz_fm7')->first()->category_id;
 //
-////
-//    $account->categories()->save($category);
-//    $account->save();
-//    dd($account->categories);
-//    runPythonProcess('new.py', 2803);
+//    dd($account);
+
+//    $url = "http://local.adspower.net:50325/api/v1/user/list";
+//
+//    $response = Http::withoutVerifying()->get($url);
+//
+//    dd($response->json());
+
 
 //    $accounts = DB::connection('old_pgsql')
 //        ->table('accounts')
@@ -122,16 +94,15 @@ Route::get('/', function () {
 });
 
 Route::get('/activate-accounts', function () {
-
-//
-    Account::all()->each(function ($account) {
-        $account->makeActive();
-    });
-    dd('shod');
+//    Account::all()->each(function ($account) {
+//        $account->makeActive();
+//    });
+//    dd('shod');
 
 
 //
 });
+
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('sign-out', [AuthController::class, 'signOut']);
@@ -140,6 +111,7 @@ Route::post('categories/get-categories', [CategoryController::class, 'getCategor
 Route::post('app-config', [AppConfigController::class, 'index']);
 Route::post('account/get-proxy-api', [AccountController::class, 'getProxyApi']);
 Route::post('account/change-profile-proxy-to-residential', [AccountController::class, 'changeProfileProxyToResidentialApi']);
+Route::post('account/change-profile-proxy-to-custom', [AccountController::class, 'changeProfileProxyToCustom']);
 Route::post('account/start-profile', [AccountController::class, 'startProfile']);
 
 //Route::middleware('auth:sanctum')->group(function () {
@@ -170,7 +142,9 @@ Route::post('lead/export', [LeadController::class, 'export']);
 
 Route::post('templates', [TemplateController::class, 'index']);
 Route::post('template/delete', [TemplateController::class, 'delete']);
+Route::post('template/view', [TemplateController::class, 'view']);
 Route::post('template/create', [TemplateController::class, 'create']);
+Route::post('template/update', [TemplateController::class, 'update']);
 Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 Route::post('template/fetch-colors', [TemplateController::class, 'fetchColors']);
@@ -209,6 +183,7 @@ Route::post('spintaxes', [SpintaxController::class, 'index']);
 Route::post('spintaxe/view', [SpintaxController::class, 'view']);
 Route::post('spintaxe/create', [SpintaxController::class, 'create']);
 Route::post('spintaxe/update', [SpintaxController::class, 'update']);
+Route::post('spintax/delete', [SpintaxController::class, 'delete']);
 
 Route::post('categories', [CategoryController::class, 'index']);
 Route::post('categories/view', [CategoryController::class, 'view']);

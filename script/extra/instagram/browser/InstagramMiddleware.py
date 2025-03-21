@@ -17,22 +17,20 @@ class InstagramMiddleware:
         try:
             return self.execute()
 
-        except (ChangePasswordError, LoginAppearedAgainError, NotConnectedToTheInternetError) as e:
-            self.take_screenshot(str(e))
+        except (LoginAppearedAgainError, NotConnectedToTheInternetError) as e:
             self.handle_exception(str(e))
 
         except (ProblemLogingYouError, YourPasswordWasIncorrectError, MultipleSomethingWentWrongError,
                 EnterYourEmailError, AddAPhoneNumberError, FeedbackRequired, EnterYourMobileError,
-                HelpUsConfirmItsYouError, SomethingWentWrong, AppealSubmittedError, UploadYourIdError) as e:
+                HelpUsConfirmItsYouError, SomethingWentWrong, AppealSubmittedError, UploadYourIdError,
+                CheckYourTextMessages, FillCodeSentToError, ChangePasswordError) as e:
             self.ig.account.set_state('challenging')
             self.ig.account.add_warning(e, 500)
-            self.take_screenshot(str(e))
             self.handle_exception(str(e))
 
-        except (AccountSuspendedError, ConfirmYouOwnThisAccount, AccountDisabledError) as e:
+        except (AccountSuspendedError, ConfirmYouOwnThisAccount, AccountDisabledError, CheckTheSecurityCode) as e:
             self.ig.account.set_state('suspended')
             self.ig.account.add_warning(e, 500)
-            self.take_screenshot(str(e))
             self.handle_exception(str(e))
 
         except Exception as e:
@@ -41,7 +39,6 @@ class InstagramMiddleware:
             print(f"Exception type: {exception_type}")
             print(f"Exception class: {exception_class}")
             print(str(e))
-            self.take_screenshot(str(e))
             self.handle_exception(str(e))
 
     def take_screenshot(self, cause):

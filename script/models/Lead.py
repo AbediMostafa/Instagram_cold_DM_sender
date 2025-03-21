@@ -91,21 +91,53 @@ class Lead(BaseWithTimeZoneModel):
             return leads
 
     @classmethod
-    def get_unfollowed_leads(cls, account, cnt):
-        from .Command import Command
+    def get_leads_for_follow(cls, cnt):
 
-        # Subquery to find leads that have been followed by the account
-        followed_leads = Command.select(Command.lead_id).where(
-            (Command.account == account) &
-            (Command.type == 'follow')
+        return (Lead.select().where(
+            (Lead.account_id.is_null(True)) &
+            (Lead.last_state == 'free')
+
         )
+                .order_by(fn.Random())
+                .limit(cnt))
 
-        # Query to find leads that have not been followed by the account
-        unfollowed_leads = Lead.select().where(
-            Lead.id.not_in(followed_leads)
-        ).limit(cnt)
+    @classmethod
+    def get_leads_for_dm(cls, account, cnt):
 
-        return list(unfollowed_leads)
+        leads = (Lead.select().where(
+            (Lead.account == account) &
+            (Lead.last_state == 'followed')
+
+        )
+                          .order_by(fn.Random())
+                          .limit(cnt))
+
+        count = leads.count()
+
+        if count < cnt:
+            account.add_cli('Warning ==================================================================')
+            account.add_cli(f'We should send {cnt} DMs while we have {count} followed leads, increase follow rate')
+            account.add_cli('==========================================================================')
+
+        if not leads:
+            account.add_cli('Critical state ===========================================================')
+            account.add_cli(f"We ran out of followed leads trying to get free leads...")
+            account.add_cli('==========================================================================')
+
+            leads = (Lead.select().where(
+                (Lead.account_id.is_null(True)) &
+                (Lead.last_state == 'free')
+
+            )
+                     .order_by(fn.Random())
+                     .limit(cnt))
+
+            if not leads:
+                account.add_cli('Critical state =====================================')
+                account.add_cli(f"We dont have any free leads add more please...")
+                account.add_cli('====================================================')
+
+        return leads
 
     def passed_hours_since_last_follow_up(self):
         return (tehran_now() - self.last_command_send_date).total_seconds() / 3600

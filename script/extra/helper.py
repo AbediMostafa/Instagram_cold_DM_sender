@@ -54,7 +54,7 @@ def process_image(image_path, output_dir):
     # noisy_image = util.random_noise(image, mode='gaussian', var=0.01)
 
     # Apply a slight rotation
-    rotated_image = transform.rotate(image, angle=randint(1, 10), mode='wrap')
+    rotated_image = transform.rotate(image, angle=randint(1, 2), mode='wrap')
 
     # Adjust brightness and contrast
     adjusted_image = exposure.adjust_gamma(rotated_image, gamma=0.9)
@@ -205,25 +205,25 @@ def calculate_daily_dms(account_age):
         return 1
 
     if account_age <= 10:
-        return random.randint(2, 4)
+        return random.randint(4, 7)
 
     if account_age <= 15:
-        return random.randint(3, 5)
+        return random.randint(6, 10)
 
     if account_age <= 20:
-        return random.randint(5, 8)
-
-    if account_age <= 25:
-        return random.randint(7, 10)
-
-    if account_age <= 30:
         return random.randint(10, 15)
 
+    if account_age <= 25:
+        return random.randint(15, 22)
+
+    if account_age <= 30:
+        return random.randint(22, 27)
+
     if account_age <= 45:
-        return random.randint(15, 20)
+        return random.randint(27, 30)
 
     if account_age <= 60:
-        return random.randint(20, 30)
+        return random.randint(28, 33)
 
     return random.randint(29, 34)
 
@@ -233,24 +233,24 @@ def get_dm_chunk(account_age):
         return 1
 
     if account_age <= 10:
-        return random.randint(2, 4)
+        return random.randint(3, 4)
 
     if account_age <= 15:
-        return random.randint(2, 4)
+        return random.randint(3, 5)
 
     if account_age <= 20:
         return random.randint(4, 6)
 
     if account_age <= 25:
-        return random.randint(4, 6)
+        return random.randint(5, 7)
 
     if account_age <= 30:
-        return random.randint(5, 8)
-
-    if account_age <= 45:
         return random.randint(7, 9)
 
+    if account_age <= 45:
+        return random.randint(7, 10)
+
     if account_age <= 60:
-        return random.randint(8, 11)
+        return random.randint(9, 12)
 
     return random.randint(9, 12)

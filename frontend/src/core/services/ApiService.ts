@@ -21,7 +21,7 @@ class ApiService {
         //status code
         const status = error.response?.status;
 
-        const msg = error.response.data.errors
+        const msg = error.response?.data?.errors
             ? //Laravel validation
             Object.values(error.response.data.errors).flat().join("<br>")
             : //Custom error sent with `abort` method

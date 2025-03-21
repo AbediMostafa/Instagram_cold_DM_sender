@@ -59,7 +59,7 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
 
         self.ig.page.locator("input[accept='image/jpeg,image/png']").nth(0).set_input_files(
             self.image_path)
-        self.ig.pause(8000, 9000)
+        self.ig.pause(10000, 11000)
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')

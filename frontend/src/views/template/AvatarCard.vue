@@ -24,10 +24,9 @@
           />
         </div>
       </div>
-      <div
-          v-if="template.caption"
-          class="text-gray-700 fs-8">{{cutMorThanNCharacters(template.caption, 200) }}</div>
-      <span class="badge badge-light-success">Profile Picture</span>
+      <span class="badge badge-light-success">{{ template.type }}</span>
+      <span class="badge badge-light-info">{{ template.category?.title }}</span>
+
     </div>
   </div>
 </template>

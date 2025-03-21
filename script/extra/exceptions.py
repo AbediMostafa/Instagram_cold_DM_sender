@@ -18,11 +18,19 @@ class AppealSubmittedError(Exception):
     pass
 
 
+class CheckYourTextMessages(Exception):
+    pass
+
+
 class UploadYourIdError(Exception):
     pass
 
 
 class ProblemLogingYouError(Exception):
+    pass
+
+
+class FillCodeSentToError(Exception):
     pass
 
 
@@ -71,4 +79,16 @@ class CantPerformAction(Exception):
 
 
 class DontHaveEnoughEntity(Exception):
+    pass
+
+
+class IsNotProperServer(Exception):
+    pass
+
+
+class SuccessfulLogin(Exception):
+    pass
+
+
+class CheckTheSecurityCode(Exception):
     pass

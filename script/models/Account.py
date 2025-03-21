@@ -115,11 +115,6 @@ class Account(BaseWithTimeZoneModel):
         truncated_cause = (cause[:max_length]) if cause else ''
         truncated_path = (path[:max_length]) if path else ''
 
-        print('truncated_cause')
-        print(truncated_cause)
-        print('truncated_path')
-        print(truncated_path)
-
         ScreenShot.create(
             account=self,
             cause=truncated_cause,
@@ -177,6 +172,7 @@ class Account(BaseWithTimeZoneModel):
 
         return (Template.select().where(
             (Template.type == type) &
+            (Template.category == self.category) &
             ~(Template.id << (AccountTemplate
                               .select(AccountTemplate.template)
                               .join(Template)
@@ -235,16 +231,17 @@ class Account(BaseWithTimeZoneModel):
         if not self.secret_key:
             return ""
 
+        import pyotp
+
+        totp = pyotp.TOTP(self.secret_key)
+
+        return totp.now()
+
         try:
             import requests
             from script.extra.adapters.RequestAdapter import RequestAdapter
 
-            proxy = {
-                'http': 'http://paichb:yNckWHb3@207.230.104.78:29842',
-                'https': 'http://paichb:yNckWHb3@207.230.104.78:29842',
-            }
-
-            response = requests.get(RequestAdapter.bulkacc_api(self.secret_key), proxies=proxy)
+            response = requests.get(RequestAdapter.bulkacc_api(self.secret_key))
             return response.json()['data']['otp']
 
             time_remaining = 0
@@ -344,8 +341,11 @@ class Account(BaseWithTimeZoneModel):
             self.color = get_next_color()
             self.save()
 
-        self.add_cli(f"Account's color : {self.color.title}")
-        return self.color
+        if self.color:
+            self.add_cli(f"Account's color : {self.color.title}")
+            return self.color
+
+        return None
 
     def get_a_carousel(self):
         from .AccountTemplate import AccountTemplate
@@ -380,14 +380,16 @@ class Account(BaseWithTimeZoneModel):
                                        .select(AccountTemplate.template)
                                        .where(AccountTemplate.account == self))
 
-        # get a single free carousel
-        video_template = (Template
+        video_template = ((Template
         .select()
         .where(
             (Template.type == 'video-post') &
             (Template.sub_type == 'video') &
+            (Template.category == self.category) &
             (~(Template.id << selected_templates_subquery))
-        )).first()
+        ))
+                          .order_by(fn.Random())
+                          .first())
 
         if not video_template:
             return None, None
@@ -438,6 +440,23 @@ class Account(BaseWithTimeZoneModel):
         )
                 .exists())
 
+    def get_post_action(self):
+        next_command = self.determine_next_post_command()
+        return self.execute_posting(next_command)
+
+    def execute_posting(self, next_command):
+        from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
+        from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
+        from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
+
+        types = {
+            'post carousel': BrowserPostCarouselEvent,
+            'post video': BrowserPostVideoEvent,
+            'post image': BrowserPostImageEvent,
+        }
+
+        return types[next_command], next_command
+
     def get_number_of_successful_posts(self):
         from .Command import Command
 
@@ -478,40 +497,26 @@ class Account(BaseWithTimeZoneModel):
         """
         Determine the next post command type based on the latest post commands.
         """
-        if self.sent_recent_post_command_within(random.randint(30, 40)):
+        if self.sent_recent_post_command_within(random.randint(24, 26)):
             self.add_cli('We have sent a post recently')
             return None  # No post can be sent if one was sent
 
         # Fetch the latest three post commands
-        latest_commands = self.get_latest_post_commands()
+        latest_commands = self.get_latest_post_commands(1)
 
         # If no commands found, send 'post carousel' as default
         if not latest_commands:
-            return 'post carousel'
+            return 'post video'
 
         # Extract the types of the last commands (we'll have 0 to 3 depending on the data)
         latest_command_types = [cmd.type for cmd in latest_commands]
 
-        # Check conditions based on the number of latest commands found
-        if len(latest_command_types) == 3:
-            # If the last two commands are 'carousel' and the 3rd last is 'video'
-            if latest_command_types[0] == 'post carousel' and latest_command_types[1] == 'post carousel' and \
-                    latest_command_types[2] == 'post video':
-                return 'post image'
-            # If the last two commands are 'carousel' and the 3rd last is 'image'
-            elif latest_command_types[0] == 'post carousel' and latest_command_types[1] == 'post carousel' and \
-                    latest_command_types[2] == 'post image':
-                return 'post video'
+        if latest_command_types[0] == 'post carousel':
+            return 'post video'
 
-            elif latest_command_types[0] == 'post carousel' and latest_command_types[1] == 'post carousel':
-                return 'post image'
+        if latest_command_types[0] == 'post video':
+            return 'post image'
 
-        elif len(latest_command_types) == 2:
-            # If the last two commands are 'carousel'
-            if latest_command_types[0] == 'post carousel' and latest_command_types[1] == 'post carousel':
-                return 'post image'
-
-        # Default action if none of the specific conditions match
         return 'post carousel'
 
     def get_profile(self):

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Classes\AdspowerProfileMaker;
 use App\Classes\ProfileMaker;
 use App\Classes\ProfileMakerV2;
 use App\Models\Account;
@@ -86,7 +87,7 @@ class ProfileController extends Controller
             fn() => Profile::query()
                 ->whereIn('id', request('ids'))
                 ->get()
-                ->each(function($profile){
+                ->each(function ($profile) {
                     $profile->deleteRecords();
                     sleep(3);
                 })
@@ -118,6 +119,13 @@ class ProfileController extends Controller
 
     public function makeAndAssignProfiles()
     {
+        if (Profile::is_('adspower'))
+            return tryCatch(
+                fn() => AdspowerProfileMaker::getInstance(r('ids'))->iterateAndAssignProfile(),
+                'Profile assigned successfully',
+            );
+
+
         return tryCatch(
             fn() => ProfileMakerV2::getInstance(r('ids'))->iterateAndAssignProfile(),
             'Profile assigned successfully',

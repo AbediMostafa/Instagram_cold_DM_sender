@@ -109,6 +109,13 @@ export const useProfileStore = defineStore('ProfileStore', {
                 .finally(() => {
                     this.is.assigning = false;
                 });
+        },
+        changeProxyToCustom(ids = []) {
+            this.is.assigning = true
+            ApiService.post("account/change-profile-proxy-to-custom", {ids})
+                .finally(() => {
+                    this.is.assigning = false;
+                });
         }
     }
 });

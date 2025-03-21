@@ -9,6 +9,11 @@ export const useTemplateStore = defineStore('TemplateStore', {
     state() {
         return {
             checkedTemplateRows: [],
+            selectedTemplate: {
+                category_id: '',
+                caption: '',
+                id: ''
+            },
             templates: {
                 data: {},
                 current_page: 1,
@@ -16,16 +21,17 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 queryParams: {
                     tags: [],
                     category_id: '',
-                    type: 'username',
+                    type: 'video-post',
                     color: 1,
                 },
-                receivedType:'username',
+                receivedType: 'username',
             },
             types: [],
             colors: [],
             is: {
                 loading: false,
                 deleting: false,
+                gettingTemplate:false
             },
 
         }
@@ -43,7 +49,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 confirmButtonText: "Yes, delete it!"
             }).then((result) => {
                 if (result.isConfirmed) {
-                    ApiService.post('template/delete', {ids, receivedType:this.templates.receivedType})
+                    ApiService.post('template/delete', {ids, receivedType: this.templates.receivedType})
                         .then(this.getTemplates)
                 }
             });
@@ -75,6 +81,16 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 })
         },
 
+        getTemplate() {
+            this.is.gettingTemplate = true;
+
+            ApiService.post('template/view', {id: this.selectedTemplate.id})
+                .then(response => {
+                    this.selectedTemplate = {...response.data};
+                })
+                .finally(()=>this.is.gettingTemplate = false)
+        },
+
         checkRows(e) {
             this.checkedTemplateRows = e.target.checked ?
                 this.templates.data.map(template => template.id) : []
@@ -87,6 +103,13 @@ export const useTemplateStore = defineStore('TemplateStore', {
         fetchColors() {
             return ApiService.post('template/fetch-colors', {})
                 .then(response => this.colors = response.data)
+        },
+
+        updateTemplate(){
+            ApiService.post('template/update',  this.selectedTemplate)
+                .then(this.getTemplates)
+                .then(()=>hideModal("edit_media_modal"))
+
         }
     }
 })

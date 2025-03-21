@@ -9,6 +9,7 @@ from script.extra.playwright.base_actions.ClickOnChatAction import ClickOnChatAc
 from script.extra.playwright.base_actions.ClickOnSendMessageAction import ClickOnSendMessageAction
 from script.extra.playwright.base_actions.GoToAccountPageAction import GoToAccountPageAction
 from script.extra.playwright.base_actions.GetThreadUrlAction import GetThreadUrlAction
+from script.extra.playwright.base_actions.DirectlyGoToAccountPageAction import DirectlyGoToAccountPageAction
 from script.extra.playwright.ErrorIndicators import ErrorIndicators
 from script.models.Lead import Lead
 from script.models.Spintax import Spintax
@@ -32,24 +33,15 @@ class BrowserSendDmEvent:
         self.category = self.category_model.title if self.category_model else None
 
     def init(self):
-        GoToThreadsAction(self.ig).start()
-        TurnOnNotificationAction(self.ig).start()
-
         self.ig.account.add_cli("Starting DM process ...")
-
-        self.allowed_leads_count = self.ig.account.current_chunk_dm
-        self.send_dms()
-
-    def send_dms(self):
         self.ig.account.set_state('sending DM', 'app_state')
 
-        while self.allowed_leads_count > 0:
-            self.lead = Lead.get_leads(category=self.category)[0]
-            self.lead.dm_text = spin(Spintax.get_value(times=0, category=self.category_model))
+        leads = Lead.get_leads_for_dm(self.ig.account, self.ig.account.current_chunk_dm)
 
+        for self.lead in leads:
+            self.lead.dm_text = spin(Spintax.get_value(times=0, category=self.category_model))
             self.send_dm()
             self.ig.pause(5000, 7000)
-            self.allowed_leads_count -= 1
 
     def send_dm(self):
 
@@ -76,33 +68,7 @@ class BrowserSendDmEvent:
                 raise Exception(str(e))
 
     def before_message_fill_part(self):
-        try:
-            self.sending_direct_in_direct_page()
-
-            if not self.ig.is_visible_by_text(f'{self.lead.username} · Instagram'):
-                raise Exception('Could not send direct in direct page trying by search ...')
-
-        except Exception as e:
-
-            self.ig.account.add_cli(str(e))
-            self.ig.page.keyboard.press("Escape")
-            self.sending_direct_by_search()
-
-    def sending_direct_in_direct_page(self):
-        ClickOnNewMessageAction(self.ig).start()
-        self.ig.pause(2000, 3000)
-
-        FillAccountSearchForDmAction(self.ig).start(self.lead.username)
-        self.ig.pause(3000, 5000)
-
-        ClickOnFirstAccountSearchForDmAction(self.ig).start()
-        self.ig.pause(1000, 3000)
-
-        ClickOnChatAction(self.ig).start()
-        self.ig.pause(3000, 4000)
-
-    def sending_direct_by_search(self):
-        GoToAccountPageAction(self.ig).start(self.lead.username)
+        DirectlyGoToAccountPageAction(self.ig).start(self.lead.username)
         self.ig.pause(6000, 7000)
 
         ClickOnSendMessageAction(self.ig).start()

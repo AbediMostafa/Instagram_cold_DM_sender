@@ -15,6 +15,9 @@ pip3 install playwright-stealth --break-system-packages
 pip install puppeteer-extra --break-system-packages
 pip install pillow --break-system-packages
 pip install python-dotenv --break-system-packages
+pip install beautifulsoup4
+pip install pyotp
+
 
 playwright install-deps
 

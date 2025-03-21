@@ -20,6 +20,8 @@
           {{ template.text }}
         </div>
       </div>
+      <span class="badge badge-light-success">Username</span>
+      <span class="badge badge-light-info">{{ template.category?.title }}</span>
     </div>
   </div>
 </template>

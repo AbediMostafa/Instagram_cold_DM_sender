@@ -44,6 +44,20 @@
     <div class="menu-item ">
       <div class="px-3 fill-flex d-flex align-items-center">
         <a
+            class="btn btn-light-success btn-sm px-4"
+            @click="profileStore.changeProxyToResidential(store.checkedAccountRows)">Change Proxy To Residential</a>
+      </div>
+    </div>
+    <div class="menu-item ">
+      <div class="px-3 fill-flex d-flex align-items-center">
+        <a
+            class="btn btn-light-success btn-sm px-4"
+            @click="profileStore.changeProxyToCustom(store.checkedAccountRows)">Change Proxy To Custom</a>
+      </div>
+    </div>
+    <div class="menu-item ">
+      <div class="px-3 fill-flex d-flex align-items-center">
+        <a
             class="btn btn-light-danger btn-sm px-4"
             @click="store.deleteSelected(store.checkedAccountRows)"> Delete Selected </a>
       </div>
@@ -114,6 +128,7 @@ import {useAccountStore} from "@/stores/Account";
 import {useCategoryStore} from "@/stores/Category";
 import {useTagStore} from "@/stores/Tag";
 import {showModal} from "@/core/helpers/modal";
+import {useProfileStore} from "@/stores/Profile";
 import ApiService from "@/core/services/ApiService";
 
 export default defineComponent({
@@ -125,12 +140,13 @@ export default defineComponent({
     const tagStore = useTagStore()
     const tagLoading = ref(false)
 
-    onMounted(()=> {
+    onMounted(() => {
       categoryStore.getCategories();
     })
 
     return {
       store: useAccountStore(),
+      profileStore: useProfileStore(),
       categoryStore,
       tagStore,
       tagLoading,
