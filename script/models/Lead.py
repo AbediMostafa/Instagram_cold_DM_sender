@@ -104,38 +104,34 @@ class Lead(BaseWithTimeZoneModel):
     @classmethod
     def get_leads_for_dm(cls, account, cnt):
 
-        leads = (Lead.select().where(
-            (Lead.account == account) &
-            (Lead.last_state == 'followed')
+        # leads = (Lead.select().where(
+        #     (Lead.account == account) &
+        #     (Lead.last_state == 'followed')
+        #
+        # )
+        #                   .order_by(fn.Random())
+        #                   .limit(cnt))
+        # Order Number
+        # Order Number
 
+        leads = (Lead.select().where(
+            (Lead.account_id.is_null(True)) &
+            (Lead.last_state == 'free')
         )
-                          .order_by(fn.Random())
-                          .limit(cnt))
+                 .order_by(fn.Random())
+                 .limit(cnt))
 
         count = leads.count()
 
         if count < cnt:
-            account.add_cli('Warning ==================================================================')
-            account.add_cli(f'We should send {cnt} DMs while we have {count} followed leads, increase follow rate')
-            account.add_cli('==========================================================================')
+            account.add_cli('Warning =============================================')
+            account.add_cli(f'We should send {cnt} DMs while we have {count} leads')
+            account.add_cli('=====================================================')
 
         if not leads:
             account.add_cli('Critical state ===========================================================')
             account.add_cli(f"We ran out of followed leads trying to get free leads...")
             account.add_cli('==========================================================================')
-
-            leads = (Lead.select().where(
-                (Lead.account_id.is_null(True)) &
-                (Lead.last_state == 'free')
-
-            )
-                     .order_by(fn.Random())
-                     .limit(cnt))
-
-            if not leads:
-                account.add_cli('Critical state =====================================')
-                account.add_cli(f"We dont have any free leads add more please...")
-                account.add_cli('====================================================')
 
         return leads
 

@@ -8,7 +8,7 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/dashboard",
         keenthemesIcon: "element-11",
         bootstrapIcon: "bi-app-indicator",
-        allowed_roles:['user']
+        allowed_roles:['user', 'presenter']
       },
 
       {
@@ -23,14 +23,14 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/leads",
         keenthemesIcon: "element-plus",
         bootstrapIcon: "bi-archive",
-        allowed_roles:['user', 'external-user']
+        allowed_roles:['user', 'external-user', 'presenter']
       },
       {
         heading: "commands",
         route: "/commands",
         keenthemesIcon: "element-plus",
         bootstrapIcon: "bi-sticky",
-        allowed_roles:['user', 'external-user']
+        allowed_roles:['user', 'external-user', 'presenter']
       },
 
       {
@@ -38,7 +38,7 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/unibox",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['user']
+        allowed_roles:['user', 'presenter']
       },
       {
         heading: "loom unibox",
@@ -52,14 +52,14 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/templates",
         keenthemesIcon: "switch",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['user']
+        allowed_roles:['user', 'presenter']
       },
       {
         heading: "spintaxes",
         route: "/spintaxes",
         keenthemesIcon: "message-text-2",
         bootstrapIcon: "bi-chat-left",
-        allowed_roles:['user']
+        allowed_roles:['user', 'presenter']
       },
       {
         heading: "site variables",

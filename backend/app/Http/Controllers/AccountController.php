@@ -89,8 +89,8 @@ class AccountController extends Controller
                 r('tags'),
                 fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
             )
-            ->orderBy('id', 'DESC')
-//            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
+//            ->orderBy('id', 'DESC')
+            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
                 config('data.pagination.each_page.accounts')
             );
@@ -162,7 +162,7 @@ class AccountController extends Controller
             Account::query()
                 ->whereIn('id', r('ids'))
                 ->get()
-                ->each(function ($account) {
+                ->each(function (Account $account) {
                     $account->delete();
                     $account->profile && $account->profile->deleteRecords();
                     sleep(3);

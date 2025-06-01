@@ -90,9 +90,14 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
 
         for carousel_image in self.carousel_dict:
 
-            self.ig.page.locator(
-                "input[accept='image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
-                0).set_input_files(carousel_image.image_path)
+            try:
+                self.ig.page.locator(
+                    "input[accept='image/avif,image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
+                    0).set_input_files(carousel_image.image_path)
+            except:
+                self.ig.page.locator(
+                    "input[accept='image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
+                    0).set_input_files(carousel_image.image_path)
 
             if not clicked_on_filter:
                 self.ig.pause(2000, 2700)

@@ -92,3 +92,6 @@ class SuccessfulLogin(Exception):
 
 class CheckTheSecurityCode(Exception):
     pass
+
+class UploadedPostRecently(Exception):
+    pass

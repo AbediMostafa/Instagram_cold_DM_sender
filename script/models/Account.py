@@ -494,12 +494,12 @@ class Account(BaseWithTimeZoneModel):
         return f"{int(hours_ago)} hours ago"
 
     def determine_next_post_command(self):
+        from script.extra.exceptions import UploadedPostRecently
         """
         Determine the next post command type based on the latest post commands.
         """
         if self.sent_recent_post_command_within(random.randint(24, 26)):
-            self.add_cli('We have sent a post recently')
-            return None  # No post can be sent if one was sent
+            raise UploadedPostRecently('We have sent a post recently')  # No post can be sent if one was sent
 
         # Fetch the latest three post commands
         latest_commands = self.get_latest_post_commands(1)

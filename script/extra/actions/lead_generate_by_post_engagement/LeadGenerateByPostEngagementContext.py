@@ -1,5 +1,7 @@
-from script.extra.actions.lead_generate_by_post_engagement.strategies.CanGenerateLeadByPostEngagement import  \
+from script.extra.actions.lead_generate_by_post_engagement.strategies.CanGenerateLeadByPostEngagement import \
     CanGenerateLeadByPostEngagement
+
+from script.extra.actions.lead_generate_by_post_engagement.strategies.IsProperServer import IsProperServer
 from script.extra.exceptions import IsNotProperServer, CantPerformAction
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from .BrowserLeadGenerateByPostEngagementEvent import BrowserLeadGenerateByPostEngagementEvent
@@ -8,7 +10,7 @@ import traceback
 
 class LeadGenerateByPostEngagementContext(InstagramMiddleware):
     ig = None
-    strategies = [CanGenerateLeadByPostEngagement]
+    strategies = [IsProperServer, CanGenerateLeadByPostEngagement]
 
     def execute(self):
         try:

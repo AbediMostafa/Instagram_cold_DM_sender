@@ -7,7 +7,7 @@
         <span class="text-muted mt-1 fw-semibold fs-7">{{ store.leads.total }} leads</span>
       </h3>
 
-      <div class="card-toolbar">
+      <div class="card-toolbar" v-has-any-of-these-roles="['user']">
         <!--begin::Menu-->
         <a class="btn btn-sm btn-success me-2" @click="showModal('create_lead_modal')">Add Lead</a>
         <a class="btn btn-sm btn-light-success me-2" @click="showModal('export_leads_modal')">Get Lead</a>
@@ -23,7 +23,7 @@
           <KTIcon icon-name="category" icon-class="fs-2"/>
         </button>
 
-        <leads-drop-down/>
+          <leads-drop-down/>
       </div>
     </div>
     <!--end::Header-->
@@ -93,7 +93,7 @@
                   }}</a>
               </td>
 
-              <td class="text-end">
+              <td class="text-end" v-has-any-of-these-roles="['user']">
                 <lead-drop-down @editClicked="editClicked(lead.id)" :lead="lead"/>
               </td>
             </tr>

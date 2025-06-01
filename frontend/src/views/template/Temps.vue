@@ -13,7 +13,7 @@
           </span>
         </div>
         <!--begin::Controls-->
-        <div class="d-flex flex-wrap">
+        <div class="d-flex flex-wrap" v-has-any-of-these-roles="['user']">
           <!--begin::Tab nav-->
           <ul class="nav nav-pills mb-2 mb-sm-0">
             <li class="nav-item m-0 ">

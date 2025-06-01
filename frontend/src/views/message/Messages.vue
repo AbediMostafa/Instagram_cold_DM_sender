@@ -148,7 +148,7 @@
                 </div>
               </div>
 
-              <div class="d-flex flex-stack flex-wrap">
+              <div class="d-flex flex-stack flex-wrap" v-has-any-of-these-roles="['user']">
                 <div
                     class="d-flex align-items-center collapsible toggle collapsed w-100"
                     data-bs-toggle="collapse"

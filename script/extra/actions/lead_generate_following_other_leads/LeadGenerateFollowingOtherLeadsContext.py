@@ -1,12 +1,13 @@
 from script.extra.actions.lead_generate_following_other_leads.strategies.CanFollowLeadToday import CanFollowLeadToday
+from script.extra.actions.lead_generate_following_other_leads.strategies.IsProperServer import IsProperServer
 from script.extra.exceptions import CantPerformAction
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
-from BrowserLeadGenerateFollowingOtherLeadsEvent import BrowserLeadGenerateFollowingOtherLeadsEvent
+from .BrowserLeadGenerateFollowingOtherLeadsEvent import BrowserLeadGenerateFollowingOtherLeadsEvent
 
 
 class LeadGenerateFollowingOtherLeadsContext(InstagramMiddleware):
     ig = None
-    strategies = [CanFollowLeadToday]
+    strategies = [IsProperServer, CanFollowLeadToday]
 
     def execute(self):
 
@@ -14,8 +15,6 @@ class LeadGenerateFollowingOtherLeadsContext(InstagramMiddleware):
             return False
 
         BrowserLeadGenerateFollowingOtherLeadsEvent(self.ig).init()
-
-
 
     def cant_perform(self):
         try:

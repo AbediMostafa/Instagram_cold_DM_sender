@@ -34,6 +34,7 @@ class ProfileController extends Controller
                     }
                 }
             )
+            ->orderBy('id')
             ->paginate(
                 config('data.pagination.each_page.profiles')
             );

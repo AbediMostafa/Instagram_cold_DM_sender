@@ -23,6 +23,13 @@ class BrowserSendDmEvent:
     command = None
     lead = None
     error_indicators = None
+    delivery_counter = 0
+
+    message_sending_selector = 'svg[aria-label="igd message sending status icon" i]'
+    message_failed_selector = 'svg[aria-label="Failed to send" i]'
+
+    sending_icons = None
+    failed_icons = None
 
     def __init__(self, ig):
         self.ig = ig
@@ -39,7 +46,7 @@ class BrowserSendDmEvent:
         leads = Lead.get_leads_for_dm(self.ig.account, self.ig.account.current_chunk_dm)
 
         for self.lead in leads:
-            self.lead.dm_text = spin(Spintax.get_value(times=0, category=self.category_model))
+            self.lead.dm_text = spin(Spintax.get_value(times=0))
             self.send_dm()
             self.ig.pause(5000, 7000)
 
@@ -51,6 +58,7 @@ class BrowserSendDmEvent:
                                                           category=self.category_model)
             self.before_message_fill_part()
             self.after_message_fill_part()
+            self.check_message_delivery()
 
             url_id = GetThreadUrlAction(self.ig).start()
             self.ig.account.add_direct_url_id(self.lead.dm_text, self.lead, url_id)
@@ -72,7 +80,7 @@ class BrowserSendDmEvent:
         self.ig.pause(6000, 7000)
 
         ClickOnSendMessageAction(self.ig).start()
-        self.ig.pause(3000, 4000)
+        self.ig.pause(1500, 2000)
 
     def after_message_fill_part(self):
         self.error_indicators.something_went_wrong_handler()
@@ -94,3 +102,22 @@ class BrowserSendDmEvent:
             raise Exception("There's no Send button")
 
         self.ig.pause(3000, 5000)
+
+    def check_message_delivery(self):
+
+        self.sending_icons = self.ig.page.query_selector_all(self.message_sending_selector)
+
+        while self.sending_icons:
+            self.delivery_counter += 1
+
+            self.ig.account.add_cli('Sending message ...')
+            self.sending_icons = self.ig.page.query_selector_all(self.message_sending_selector)
+            self.ig.pause(1000, 1800)
+            if self.delivery_counter >= 7:
+                raise Exception("Failed to send message --> Stuck in sending message state")
+
+        self.ig.pause(2000, 2500)
+        self.failed_icons = self.ig.page.query_selector_all(self.message_failed_selector)
+
+        if self.failed_icons:
+            raise Exception("Failed to send message")

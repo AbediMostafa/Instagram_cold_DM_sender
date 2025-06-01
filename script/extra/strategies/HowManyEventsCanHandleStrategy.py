@@ -6,6 +6,7 @@ from script.extra.events.browser_events.BrowserChangeUsernameEvent import Browse
 from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
 from script.extra.events.browser_events.BrowserGotoExploreEvent import BrowserGotoExploreEvent
 from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
+from script.extra.events.browser_events.BrowserLoomFollowUpEvent import BrowserLoomFollowUpEvent
 from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
@@ -23,6 +24,7 @@ from script.extra.actions.make_account_public.MakeAccountPublicContext import Ma
 from script.extra.actions.delete_initial_posts.DeleteInitialPostsContext import DeleteInitialPostsContext
 from script.extra.actions.change_name.ChangeNameContext import ChangeNameContext
 from script.extra.actions.follow_good_pages.FollowGoodPagesContext import FollowGoodPagesContext
+from script.extra.actions.unfollow.UnfollowContext import UnfollowContext
 
 from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
 from script.extra.actions.lead_generate_by_followers.LeadGenerateByFollowersContext import \
@@ -58,14 +60,20 @@ class HowManyEventsCanHandleStrategy:
         BrowserGetThreadMessagesEvent(self.browser_ig).fire()
 
     def post_action_hook(self):
+        from script.extra.exceptions import UploadedPostRecently
+
         if not self.account.has_enough_posts and self.account.initial_posts_deleted:
             self.account.add_cli('We can post now')
 
-            # Get type of post and it's text
-            action, text = self.account.get_post_action()
+            try:
+                # Get type of post and it's text
+                action, text = self.account.get_post_action()
 
-            self.account.add_cli(f'We should {text}')
-            action(self.browser_ig).fire()
+                self.account.add_cli(f'We should {text}')
+                action(self.browser_ig).fire()
+
+            except UploadedPostRecently as e:
+                self.account.add_cli(str(e))
 
     def select_random_explore_action(self):
         # Define a list of random actions to choose from each day
@@ -105,11 +113,13 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeBioEvent,
 
             # Daily actions
-            FollowContext,
-            # SendDmContext,
+            # FollowContext,
+            SendDmContext,
             BrowserDmFollowUpEvent,
+            BrowserLoomFollowUpEvent,
 
             # Periodical actions
+            # UnfollowContext,
             FollowGoodPagesContext,
             LeadGenerateByFollowersContext,
             LeadGenerateByPageEngagementContext,

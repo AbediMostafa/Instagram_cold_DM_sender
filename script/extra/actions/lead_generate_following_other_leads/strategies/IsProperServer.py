@@ -7,5 +7,5 @@ class IsProperServer:
         self.account = account
 
     def can(self):
-        if Setting.get_value('can_generate_lead_by_followers') == "0":
-            raise IsNotProperServer('This server cant generate lead by followers')
+        if Setting.get_value('can_generate_lead_following_other_leads') == "0":
+            raise IsNotProperServer('This server cant generate lead following other leads')

@@ -7,7 +7,7 @@
       </h3>
       <div class="card-toolbar">
         <!--begin::Menu-->
-        <div class="me-2">
+        <div class="me-2" v-has-any-of-these-roles="['user']">
           <a
               class="btn btn-sm btn-success"
               @click="showModal('create_spintax_modal')"
@@ -73,7 +73,7 @@
                     }}
                   </a>
                 </div>
-                <div class="col-1 text-end">
+                <div class="col-1 text-end" v-has-any-of-these-roles="['user']">
                   <spintax-drop-down :id="spintax.id"/>
                 </div>
               </div>

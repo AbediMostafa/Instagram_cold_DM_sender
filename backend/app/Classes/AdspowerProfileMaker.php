@@ -35,7 +35,7 @@ class AdspowerProfileMaker
 
     public function __construct(public $accountIds = [])
     {
-        $this->folderId = "5780347";
+        $this->folderId = "6014402";
     }
 
     public static function getInstance($accountIds = [],): AdspowerProfileMaker
@@ -108,7 +108,7 @@ class AdspowerProfileMaker
 
         $this->proxy = [
             "proxy_soft" => "other",
-            "proxy_type" => "socks5",
+            "proxy_type" => "http",
             "proxy_host" => $this->proxyObj->ip,
             "proxy_port" => $this->proxyObj->port,
             "proxy_user" => $this->proxyObj->username,
@@ -217,6 +217,6 @@ class AdspowerProfileMaker
 
     public function hitTheMaxProfileNumber()
     {
-        return Profile::query()->count() == 705;
+        return Profile::query()->count() == 605;
     }
 }

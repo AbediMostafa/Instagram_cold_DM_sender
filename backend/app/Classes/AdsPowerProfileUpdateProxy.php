@@ -16,17 +16,31 @@ class AdsPowerProfileUpdateProxy
     {
     }
 
+    public function updateProxyTo($type, $host, $port, $username, $password)
+    {
+
+        $payload = [
+            "user_id" => $this->profileId,
+            "user_proxy_config" => [
+                "proxy_soft" => "other",
+                "proxy_type" => $type,
+                "proxy_host" => $host,
+                "proxy_port" => $port,
+                "proxy_user" => $username,
+                "proxy_password" => $password,
+            ],
+        ];
+
+        $url = "http://local.adspower.net:50325/api/v1/user/update";
+
+        $res = Http::withoutVerifying()->post($url, $payload);
+        return $res;
+    }
+
 
     public function updateProxyToResidential()
     {
 
-//        $payload = [
-//            "user_id" => $this->profileId,
-//            "user_proxy_config" => [
-//                "proxy_soft" => "no_proxy",
-//            ],
-//        ];
-//        13522df7473a250c:RNW78Fm5@res.proxy-seller.com:10000
         $payload = [
             "user_id" => $this->profileId,
             "user_proxy_config" => [
@@ -55,7 +69,7 @@ class AdsPowerProfileUpdateProxy
                 "user_id" => $this->profileId,
                 "user_proxy_config" => [
                     "proxy_soft" => "other",
-                    "proxy_type" => "socks5",
+                    "proxy_type" => "http",
                     "proxy_host" => $proxy->ip,
                     "proxy_port" => $proxy->port,
                     "proxy_user" => $proxy->username,

@@ -27,6 +27,7 @@ class Command extends Model
         'post video',
         'post carousel',
         'follow',
+        'unfollow',
         'dm follow up',
         'like post',
         'comment post',

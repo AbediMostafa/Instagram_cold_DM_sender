@@ -23,8 +23,8 @@ class Process:
         Sometimes we face Race condition and get_next_account() returns None
         """
         while not self.account:
-            # self.account = get_next_account()
-            self.account = get_next_account(specific_ids=[1329])
+            self.account = get_next_account()
+            # self.account = get_next_account(specific_ids=[2672])
 
     def start(self):
         try:

@@ -14,7 +14,7 @@ import urllib.parse
 from time import sleep
 
 max_retries = 2
-max_threads = 200
+max_threads = 2
 timeout = 5
 
 log_file_path = 'app.log'  # Log file path
@@ -164,7 +164,7 @@ def write_html(url):
 
             if username:
                 try:
-                    Lead.get_or_create(username=username, category=category)
+                    # Lead.get_or_create(username=username, category=category)
                     logging.info(f"Lead Created successfully: {username}")
 
                 except Exception as e:
@@ -190,9 +190,12 @@ for agency_title in agency_titles:
             url = state_url if state else global_url
 
             response = first_request(url)
+            print(response.text)
 
             try:
                 data = response.json()
+
+                print(data)
 
                 try:
                     total_results = data["data"]["data"]["searchDashClustersByAll"]["paging"]["total"]

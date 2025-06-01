@@ -11,10 +11,10 @@ class ErrorIndicators(BaseAction):
 
     def something_went_wrong_handler(self):
         for _ in range(7):
-            if self.ig.is_visible_by_text("Something went wrong. Please try again"):
+            if self.ig.is_visible_by_text("Something went wrong"):
                 raise Exception("Something went wrong")
 
-            self.ig.pause(700, 800)
+            self.ig.pause(1000, 1100)
 
     def not_every_one_can_message_this_account_handler(self, lead):
         if self.ig.is_visible_by_text("Not everyone can message this account"):
@@ -69,6 +69,11 @@ class ErrorIndicators(BaseAction):
         if self.ig.is_visible_by_text('was a problem logging you into Instagram'):
             raise ProblemLogingYouError('There was a problem logging you into Instagram .please try again soon')
 
+    def login_info_is_incorrect(self):
+        # The login information you entered is incorrect
+        if self.ig.is_visible_by_text('login information you entered is incorrect'):
+            raise ProblemLogingYouError('login information you entered is incorrect')
+
     def page_could_not_be_loaded_handler(self):
         if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):
             self.ig.account.add_cli("There's an issue and the page could not be loaded")
@@ -84,6 +89,10 @@ class ErrorIndicators(BaseAction):
     def enter_your_mobile_number(self):
         if self.ig.is_visible_by_text('Enter your mobile number'):
             raise EnterYourMobileError('Enter your mobile number')
+
+    def we_sent_a_code_to_whatsapp(self):
+        if self.ig.is_visible_by_text('We sent a code to WhatsApp'):
+            raise EnterYourMobileError('We sent a code to WhatsApp')
 
     def suspended_account_handler(self):
         if self.ig.is_visible_by_text('We suspended your account'):
@@ -120,14 +129,20 @@ class ErrorIndicators(BaseAction):
                 "We’ll send a confirmation code to this email"):
             raise EnterYourEmailError('Enter your email address')
 
+    def enter_confirmation_code_handler(self):
+        if self.ig.is_visible_by_text('Enter confirmation code'):
+            raise EnterYourEmailError('Enter confirmation code')
+
     def add_a_phone_number(self):
         if self.ig.is_visible_by_text('Add a phone number to get back into Instagram') or self.ig.is_visible_by_text(
                 "We will send a confirmation code via SMS to your phone"):
             raise AddAPhoneNumberError('Add a phone number to get back into Instagram')
 
     def confirm_you_own_this_account(self):
+        # Help us confirm you own this account
         if self.ig.is_visible_by_text('confirm that you own this account') or self.ig.is_visible_by_text(
-                "You'll need to verify your identity"):
+                "You'll need to verify your identity") or self.ig.is_visible_by_text(
+                "Help us confirm you own this account"):
             raise ConfirmYouOwnThisAccount('Help us confirm that you own this account')
 
     def we_are_working_on_getting_this_fixed(self):

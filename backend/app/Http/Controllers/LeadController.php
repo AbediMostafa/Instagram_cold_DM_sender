@@ -57,6 +57,8 @@ class LeadController extends Controller
 
     public function delete()
     {
+        abort_if(Auth::user()->hasRole('presenter'), 403);
+
         return tryCatch(
             fn() => Lead::query()
                 ->whereIn('id', r('ids'))
@@ -67,6 +69,8 @@ class LeadController extends Controller
 
     public function edit()
     {
+        abort_if(Auth::user()->hasRole('presenter'), 403);
+
         r()->validate([
             'username' => 'required|unique:leads,username,' . r('id')
         ]);

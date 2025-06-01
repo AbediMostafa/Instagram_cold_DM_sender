@@ -89,9 +89,15 @@ class BrowserPostVideoEvent(InstagramMiddleware):
                 pass
 
         self.ig.pause(3000, 3500)
-        self.ig.page.locator(
-            "input[accept='image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
-            0).set_input_files(self.video_path)
+
+        try:
+            self.ig.page.locator(
+                "input[accept='image/avif,image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
+                0).set_input_files(self.video_path)
+        except:
+            self.ig.page.locator(
+                "input[accept='image/jpeg,image/png,image/heic,image/heif,video/mp4,video/quicktime']").nth(
+                0).set_input_files(self.video_path)
 
         self.ig.pause(20000, 23500)
 

@@ -1,20 +1,20 @@
-pip3 install instagrapi --break-system-packages
-pip3 install peewee --break-system-packages
-pip3 install pymysql --break-system-packages
-pip3 install apscheduler --break-system-packages
-pip3 install moviepy --break-system-packages
-pip3 install spintax --break-system-packages
-pip3 install cryptography --break-system-packages
-pip3 install numpy --break-system-packages
-pip3 install scikit-image --break-system-packages
-pip3 install openai --break-system-packages
-pip3 install pandas --break-system-packages
-pip3 install pycryptodomex --break-system-packages
-pip3 install pytest-playwright --break-system-packages
-pip3 install playwright-stealth --break-system-packages
-pip install puppeteer-extra --break-system-packages
-pip install pillow --break-system-packages
-pip install python-dotenv --break-system-packages
+pip install instagrapi
+pip install peewee
+pip install pymysql
+pip install apscheduler
+pip install moviepy
+pip install spintax
+pip install cryptography
+pip install numpy
+pip install scikit-image
+pip install openai
+pip install pandas
+pip install pycryptodomex
+pip install pytest-playwright
+pip install playwright-stealth
+pip install puppeteer-extra
+pip install pillow
+pip install python-dotenv
 pip install beautifulsoup4
 pip install pyotp
 
@@ -24,5 +24,5 @@ playwright install-deps
 
 
 
-pip3 install --upgrade playwright
-pip3 install --upgrade playwright-stealth
+pip install --upgrade playwright
+pip install --upgrade playwright-stealth
