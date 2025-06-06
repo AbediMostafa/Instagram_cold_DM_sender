@@ -25,6 +25,7 @@ from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserC
 from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
 from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
 from script.extra.actions.send_dm.SendDmContext import SendDmContext
+from script.extra.actions.unfollow.UnfollowContext import UnfollowContext
 from script.extra.actions.make_account_public.MakeAccountPublicContext import MakeAccountPublicContext
 from script.extra.actions.delete_initial_posts.DeleteInitialPostsContext import DeleteInitialPostsContext
 from script.extra.actions.change_name.ChangeNameContext import ChangeNameContext
@@ -34,8 +35,10 @@ from script.extra.actions.follow.FollowContext import FollowContext
 from script.extra.helper import tehran_now
 from script.extra.actions.DmFollowUp import DmFollowUp
 from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
-from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEngagementContext import LeadGenerateByPageEngagementContext
-from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext  import LeadGenerateByPostEngagementContext
+from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEngagementContext import \
+    LeadGenerateByPageEngagementContext
+from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext import \
+    LeadGenerateByPostEngagementContext
 from script.extra.actions.login.LoginContext import LoginContext
 from script.extra.helper import hours_ago
 from spintax import spin
@@ -43,50 +46,24 @@ from script.models.Command import performed_command_count
 from peewee import fn
 from script.extra.exceptions import CantPerformAction
 from script.models.Hashtag import get_hashtag
-
-# Setting.set_value('can_generate_lead_by_followers', True)
-# print('hast' if Setting.get_value('can_generate_lead_by_followers') else 'nist')
-
-account = Account.get_by_id(267)
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import \
+    LeadGenerateThroughApiContext
+from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEventsCanHandleStrategy
+import requests
+from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
+account = Account.get_by_id(2682)
 browser_ig = BasePlaywright(account)
 browser_ig.start_browser().go_to_instagram()
-LoginContext(browser_ig).fire()
+BrowserGetThreadMessagesEvent(browser_ig).fire()
 
+# UnfollowContext(browser_ig).fire()
 
-# lead = Lead.get_by_id(707456)
-# account = Account.get_by_id(2474)
-#
-# leads = DmFollowUp(account).leads_to_send_dm_follow_ups(100)
-#
-# for lead in leads:
-#     print('------------------------------------')
-#     print(lead.username)
-#     print(lead.dm_text)
-#     print('------------------------------------')
+# HowManyEventsCanHandleStrategy(account, browser_ig, None).post_action_hook()
 
+# action, text = account.get_post_action()
+#
+# account.add_cli(f'We should {text}')
+# action(browser_ig).fire()
 
-# lead.change_state(account, 'dm follow up', add_history=True, times=1, update_date=True)
-#
-# #
-#
-# print(tehran_now())
-# print(((tehran_now() - lead.last_command_send_date).total_seconds()/3600)/24 )
-
-# print(account.categories())
-#
-# def run_background_script():
-#     # Define the path to the background script
-#     background_script = "C:\\Users\\Administrator\\Desktop\\project\\script\\t.py"
-#
-#     # Run the background script in the background
-#     process = subprocess.Popen(
-#         [sys.executable, background_script],
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE)
-#
-#     Process.create(pid=process.pid)
-#
-#
-# if __name__ == "__main__":
-#     run_background_script()
-#     print("Background script started!")
+# BrowserGetThreadMessagesEvent(browser_ig).fire()
+# browser_ig.pause(4000000, 5000000)

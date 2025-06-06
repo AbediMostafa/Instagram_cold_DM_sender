@@ -11,7 +11,7 @@ class CanUnfollowToday:
         self.account = account
 
     def can(self):
-        hours = random.randint(24, 26)
+        hours = random.randint(40, 60)
         performed_commands = performed_command_count(self.account, ['unfollow'], hours)
 
         if performed_commands > 13:

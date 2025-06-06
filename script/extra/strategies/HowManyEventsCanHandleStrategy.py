@@ -119,8 +119,8 @@ class HowManyEventsCanHandleStrategy:
             BrowserLoomFollowUpEvent,
 
             # Periodical actions
-            # UnfollowContext,
-            FollowGoodPagesContext,
+            UnfollowContext,
+            # FollowGoodPagesContext,
             LeadGenerateByFollowersContext,
             LeadGenerateByPageEngagementContext,
             LeadGenerateByPostEngagementContext

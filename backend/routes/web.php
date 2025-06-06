@@ -61,9 +61,18 @@ use \App\Models\Lead;
 //\.
 //aea5145d4c7469bc:RNW78Fm5@res.proxy-seller.com:10000
 Route::get('/', function () {
-    \App\Models\Log::query()->delete();
+    $profiles = Account::query()->get();
+    $profiles = \App\Models\Log::query()->get();
+    dd($profiles);
 
-    dd('shod');
+//    $user = User::query()->first();
+//    $user->password = Hash::make('l7rXT5tKJ684rnqr6CcP');
+//    $user->save();
+//    dd($user);
+//
+//    $roles = \App\Models\Role::query()->get();
+//
+//    dd($roles);
 
 //
 //    $clis = \App\Models\Cli::query()
