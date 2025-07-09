@@ -210,6 +210,8 @@ def calculate_daily_dms(account_age):
     if account_age <= 15:
         return random.randint(6, 10)
 
+    return random.randint(10, 15)
+
     if account_age <= 20:
         return random.randint(10, 15)
 

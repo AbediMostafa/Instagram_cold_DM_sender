@@ -21,8 +21,8 @@ class DmFollowUp:
 
         leads = Lead.select().where(
             (Lead.last_state == 'dm follow up') &
-            (Lead.account == self.account) &
-            (Lead.last_command_send_date > hours_ago(72))
+            (Lead.account == self.account)
+            # (Lead.last_command_send_date > hours_ago(172))
         )
 
         for lead in leads:

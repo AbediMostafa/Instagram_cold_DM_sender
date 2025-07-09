@@ -13,7 +13,8 @@ class BasePlaywright:
         self.account = account
         self.handler = BrowserHandlerFactory.create_handler(account)
 
-    def start_browser(self):
+    def init(self):
+        self.handler.create_profile()
         self.handler.start_browser()
 
         self.browser = self.handler.get_browser()
@@ -44,6 +45,7 @@ class BasePlaywright:
 
     def cleanup(self):
         self.handler.cleanup()
+        self.handler.delete_profile()
 
     def pause(self, min_ms, max_ms):
         self.page.wait_for_timeout(random.randint(min_ms, max_ms))
@@ -248,6 +250,7 @@ class BasePlaywright:
                 pass
 
     def save_session(self):
+        self.account.add_cli('Save session ...')
 
         storage_state = self.page.context.storage_state()
         storage_state_json = json.dumps(storage_state)

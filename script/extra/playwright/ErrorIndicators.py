@@ -56,6 +56,19 @@ class ErrorIndicators(BaseAction):
 
             self.ig.page.wait_for_timeout(4000)
 
+    def choose_if_we_process_your_data_for_ads(self):
+        if self.ig.is_visible_by_text('if we process your data for ads'):
+
+            try:
+                self.ig.page.get_by_role("button", name='Not now').click(timeout=5000)
+            except:
+                try:
+                    self.ig.page.locator(
+                        'div.x1i10hfl.xjqpnuy.xc5r6h4.xqeqjp1.x1phubyo.x972fbf.x10w94by.x1qhh985.x14e42zd.xdl72j9.x2lah0s.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.x2lwn1j.xeuugli.xexx8yu.x18d9i69.x1hl2dhg.xggy1nq.x1ja2u2z.x1t137rt.x1q0g3np.x1lku1pv.x1a2a7pz.x6s0dn4.xjyslct.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x9f619.x1ypdohk.x78zum5.x1f6kntn.xwhw2v2.xl56j7k.x17ydfre.x1n2onr6.x2b8uid.xlyipyv.x87ps6o.x14atkfc.x5c86q.x18br7mf.x1i0vuye.x6nl9eh.x1a5l9x9.x7vuprf.x1mg3h75.x5kalc8.x106a9eq.x1xnnf8n.x1aavi5t.x1h6iz8e.xixcex4.xk4oym4.xl3ioum').click(
+                        timeout=3000)
+                except Exception as e:
+                    self.ig.page.locator("div:has-text('Not now')").click(timeout=4000)
+
     def not_connect_to_the_internet(self):
         if self.ig.is_visible_by_text("We couldn't connect to Instagram"):
             raise NotConnectedToTheInternetError(
@@ -133,6 +146,12 @@ class ErrorIndicators(BaseAction):
         if self.ig.is_visible_by_text('Enter confirmation code'):
             raise EnterYourEmailError('Enter confirmation code')
 
+    # Confirm you're human to use your account,
+
+    def confirm_you_are_human_to_use_your_account(self):
+        if self.ig.is_visible_by_text("Confirm you're human"):
+            self.ig.page.get_by_role("button", name="Continue").click(timeout=3000)
+
     def add_a_phone_number(self):
         if self.ig.is_visible_by_text('Add a phone number to get back into Instagram') or self.ig.is_visible_by_text(
                 "We will send a confirmation code via SMS to your phone"):
@@ -142,7 +161,7 @@ class ErrorIndicators(BaseAction):
         # Help us confirm you own this account
         if self.ig.is_visible_by_text('confirm that you own this account') or self.ig.is_visible_by_text(
                 "You'll need to verify your identity") or self.ig.is_visible_by_text(
-                "Help us confirm you own this account"):
+            "Help us confirm you own this account"):
             raise ConfirmYouOwnThisAccount('Help us confirm that you own this account')
 
     def we_are_working_on_getting_this_fixed(self):

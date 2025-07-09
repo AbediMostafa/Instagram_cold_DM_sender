@@ -8,7 +8,7 @@ class ClickOnSendMessageAction(BaseAction):
     def start(self):
 
         try:
-            self.ig.page.get_by_role("button", name="Message").click(timeout=3000)
+            self.ig.page.get_by_role("button", name="Message", exact=True).first.click(timeout=3000)
         except:
             try:
                 self.ig.page.get_by_role("button", name="Options").click()

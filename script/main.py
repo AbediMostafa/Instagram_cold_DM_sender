@@ -51,10 +51,31 @@ from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContex
 from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEventsCanHandleStrategy
 import requests
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
-account = Account.get_by_id(2682)
+# from script.models.AdsPowerLock import AdsPowerLock
+# from script.extra.modules.adspower.ProfileCreator import ProfileCreator
+from datetime import timedelta, datetime
+from time import sleep
+from peewee import OperationalError
+import pytz
+# from script.extra.modules.adspower.ProfileCreator import ProfileCreator
+
+from datetime import datetime, timedelta
+from time import sleep
+import pytz
+from peewee import OperationalError
+from script.extra.actions.DmFollowUp import DmFollowUp
+
+
+# account = Account.get_by_id(914)
+account = get_next_account()
+# creator = ProfileCreator(account)
+# creator.create()
+# creator.delete()
 browser_ig = BasePlaywright(account)
 browser_ig.start_browser().go_to_instagram()
-BrowserGetThreadMessagesEvent(browser_ig).fire()
+# BrowserDmFollowUpEvent(browser_ig).fire()
+SendDmContext(browser_ig).fire()
+# BrowserGetThreadMessagesEvent(browser_ig).fire()
 
 # UnfollowContext(browser_ig).fire()
 
@@ -67,3 +88,14 @@ BrowserGetThreadMessagesEvent(browser_ig).fire()
 
 # BrowserGetThreadMessagesEvent(browser_ig).fire()
 # browser_ig.pause(4000000, 5000000)
+
+# ThinkKit AI - Cathy Villalobos
+# ThinkKit AI - Cathy Villalobos
+
+# ThunkAI - Daniel Swope
+# ThunkAI - Daniel Swope
+
+#AMEUR JALLI#
+#AMEUR JALLI#
+#AMEUR JALLI#
+# {\"result\":\"error\",\"msg\":\"Invalid channel name '#AMEUR JALLI#'\",\"code\":\"BAD_REQUEST\"}\n"

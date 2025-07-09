@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 from script.models.Setting import Setting
+from script.models.AccountHelper import get_storage_state
 import json
 
 
@@ -16,8 +17,6 @@ class IBrowserHandler:
     def __init__(self, account):
         self.account = account
         self.server_type = Setting.get_value('server_type_by_account_count', 'fit')
-
-        self.profile_id = self.account.profile.profile_id
         self.playwright = sync_playwright().start()
 
     def start_browser(self):
@@ -31,31 +30,15 @@ class IBrowserHandler:
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
 
-        # If we run more accounts than our profiles should clear cookies to be ready for next account
-        if self.server_type == 'more':
-            if not self.get_storage_stats():
-                self.context.clear_cookies()
-
-            self.context.add_cookies(self.storage_state.get("cookies", []))
-
-    def get_storage_stats(self):
-        self.storage_state = self.account.web_session  # JSON string from DB
-
-        try:
-            self.storage_state = json.loads(self.storage_state)
-            if isinstance(self.storage_state, str):  # Handle double encoding
-                self.storage_state = json.loads(self.storage_state)
-        except Exception as e:
-            self.storage_state = {}
-
-        return self.storage_state
+        # # If we run more accounts than our profiles should clear cookies to be ready for next account
+        # if self.server_type == 'more':
+        #
+        # if not get_storage_state(self.account):
+        #     self.context.clear_cookies()
+        #
+        # self.context.add_cookies(self.storage_state.get("cookies", []))
 
     def cleanup(self):
-
-        if self.server_type == 'more':
-            if self.context:
-                self.account.add_cli('Clearing cookies ...')
-                self.context.clear_cookies()
 
         if self.browser:
             try:

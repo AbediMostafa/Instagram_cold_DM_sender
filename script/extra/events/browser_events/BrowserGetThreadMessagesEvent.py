@@ -23,7 +23,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
     users_container = 'div[aria-label="Chats"] .x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x1xzczws.x6ikm8r.x1n2onr6.xh8yej3.x16o0dkt'
     chat_container = 'div.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.xc8icb0.x6ikm8r.x10wlt62.x1ja2u2z  div.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x1xzczws.x6ikm8r.x1odjw0f.x1n2onr6.xh8yej3.x16o0dkt'
     text_container = 'div.x1eb86dx div.html-div.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1gslohp.x14z9mp.x12nagc.x1lziwak.x1yc453h.x126k92a.x18lvrbx'
-    unread_conversation_selector = 'div[role="button"]:has(span.x6s0dn4.xzolkzo.x12go9s9.x1rnf11y.xprq8jg.x9f619.x3nfvp2.xl56j7k.x1tu34mt.xdk7pt.x1xc55vz)'
+    unread_conversation_selector = 'div[role="button"]:has(span.x6s0dn4.x1iwo8zk.x1033uif.x179ill4.x1b60jn0.x9f619.x3nfvp2.xl56j7k.x1tu34mt.xdk7pt.x1xc55vz)'
     read_conversation_selector = 'div.x13dflua.x19991ni>div[role="button"].x1i10hfl.x1qjc9v5.xjqpnuy.xa49m3k.xqeqjp1.x2hbi6w.x13fuv20.xu3j5b3.x1q0q8m5.x26u7qi.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x1ypdohk'
 
     def execute(self):
@@ -163,8 +163,9 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
             'unseen loom reply': 'unseen loom reply',
             'seen loom reply': 'unseen loom reply',
             'failed loom dm': 'unseen loom reply',
-            'free': 'free'
-        }
+            'free': 'free',
+            'call booked': 'call booked'
+        } 
 
         self.thread.lead.change_state(
             account=self.ig.account,

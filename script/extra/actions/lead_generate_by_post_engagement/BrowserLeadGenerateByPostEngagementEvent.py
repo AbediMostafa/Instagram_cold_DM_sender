@@ -57,6 +57,8 @@ class BrowserLeadGenerateByPostEngagementEvent:
                 pass
 
     def init(self):
+        self.ig.page.goto('https://www.instagram.com')
+        self.ig.pause(4000, 5000)
 
         try:
             self.command = self.ig.account.create_command('generate lead by post engagement', 'processing',

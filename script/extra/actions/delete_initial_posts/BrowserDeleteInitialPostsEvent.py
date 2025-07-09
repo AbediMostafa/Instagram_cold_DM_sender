@@ -37,7 +37,8 @@ class BrowserDeleteInitialPostsEvent:
     def change_hook(self):
         posts = GetPostsAction(self.ig).start()
 
-        for _ in range(posts.count()):
+        for _ in range(7):
+        # for _ in range(posts.count()):
             post = posts.first
             post.locator('a').click(timeout=3000)
             self.ig.pause(2000, 3000)
@@ -50,4 +51,4 @@ class BrowserDeleteInitialPostsEvent:
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
-        self.ig.account.set('initial_posts_deleted', 1)
+        # self.ig.account.set('initial_posts_deleted', 1)

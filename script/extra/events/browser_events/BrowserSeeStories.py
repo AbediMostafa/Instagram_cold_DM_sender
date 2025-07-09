@@ -4,8 +4,8 @@ import random
 
 
 class BrowserSeeStories(InstagramMiddleware):
-    first_story_locator1 = "button[aria-label^='Story by ']"
-    first_story_locator2 = "button.x6s0dn4.xamitd3.xjbqb8w.x1ejq31n.xd10rxx.x1sy0etr.x17r0tee.x1ypdohk.x78zum5.xdt5ytf.x18d9i69.xexx8yu.x2b8uid.x1fu8urw"
+    first_story_locator1 = "div[aria-label^='Story by ']"
+    first_story_locator2 = "div.x6s0dn4.xamitd3.xjbqb8w"
     first_story_locator3 = 'button[role="menuitem"]'
 
     close_story_locator1 = 'button[aria-label^=]'
@@ -21,7 +21,7 @@ class BrowserSeeStories(InstagramMiddleware):
             self.ig.account.add_cli(f'Problem seeing stories: {str(e)}')
             return False
 
-        self.ig.pause(30000, 35000)
+        self.ig.pause(20000, 25000)
         self.close_the_stories()
 
     def click_on_first_story(self):

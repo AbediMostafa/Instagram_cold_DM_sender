@@ -104,19 +104,19 @@ class HowManyEventsCanHandleStrategy:
         required_actions = [
 
             # Account profile actions
-            MakeAccountPublicContext,
+            # MakeAccountPublicContext,
             DeleteInitialPostsContext,
 
-            ChangeNameContext,
-            BrowserChangeUsernameEvent,
-            BrowserChangeAvatarEvent,
-            BrowserChangeBioEvent,
+            # ChangeNameContext,
+            # BrowserChangeUsernameEvent,
+            # BrowserChangeAvatarEvent,
+            # BrowserChangeBioEvent,
 
             # Daily actions
             # FollowContext,
-            SendDmContext,
-            BrowserDmFollowUpEvent,
-            BrowserLoomFollowUpEvent,
+            # SendDmContext,
+            # BrowserDmFollowUpEvent,
+            # BrowserLoomFollowUpEvent,
 
             # Periodical actions
             UnfollowContext,

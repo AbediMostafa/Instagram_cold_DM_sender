@@ -6,6 +6,7 @@ from script.extra.exceptions import SuccessfulLogin
 import random
 import json
 import re
+# Confirm you're human to use your account, ecom_maven_tiktok_ed
 
 
 class BrowserLoginEvent:
@@ -20,13 +21,15 @@ class BrowserLoginEvent:
 
         self.ig.account.add_cli('Starting Login ...')
 
-        self.check_for_login()
-
         for _ in range(8):
+            self.check_for_login()
+
             self.ig.account.add_cli(f'Login loop for the {_} time ...')
             AllowCookiesAction(self.ig).start()
             self.errors.suspect_automate_behavior_handler()
             self.errors.continue_as_handler()
+            self.errors.choose_if_we_process_your_data_for_ads()
+            self.errors.confirm_you_are_human_to_use_your_account()
             self.errors.enter_your_mobile_number()
             self.errors.we_sent_a_code_to_whatsapp()
             self.errors.enter_confirmation_code_handler()
@@ -66,6 +69,7 @@ class BrowserLoginEvent:
         self.ig.page.goto("https://www.instagram.com/direct/inbox/", timeout=20000)
         self.ig.pause(2000, 3000)
         if self.ig.page.url.rstrip("/") == "https://www.instagram.com/direct/inbox":
+            self.save_session()
             raise SuccessfulLogin('Logged in successfully')
 
     def two_fa_process(self):
@@ -184,6 +188,7 @@ class BrowserLoginEvent:
                 pass
 
     def save_session(self):
+        self.ig.account.add_cli('Saving session ...')
 
         storage_state = self.ig.page.context.storage_state()
         storage_state_json = json.dumps(storage_state)

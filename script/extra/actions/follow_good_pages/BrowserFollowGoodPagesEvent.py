@@ -7,7 +7,7 @@ class BrowserFollowGoodPagesEvent:
     good_pages = [
         'khamenei.ir.iran',
         'khamenei_ir.iran',
-        'shahid.raisi.aziz',
+        'raisi.ir',
         'ostad_aali_official',
         'drrafiei_ir',
         'fateminia',

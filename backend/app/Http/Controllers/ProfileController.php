@@ -90,7 +90,6 @@ class ProfileController extends Controller
                 ->get()
                 ->each(function ($profile) {
                     $profile->deleteRecords();
-                    sleep(3);
                 })
             ,
             'Profile(s) deleted successfully'
@@ -149,6 +148,13 @@ class ProfileController extends Controller
         if (!Auth::attempt($credentials)) {
             return response()->json(['message' => 'Invalid credentials'], 422);
         }
+
+        if (Profile::is_('adspower'))
+            return tryCatch(
+                fn() => AdspowerProfileMaker::getInstance(r('ids'))->iterateAndAssignProfile(),
+                'Profile assigned successfully',
+            );
+
 
         return tryCatch(
             fn() => ProfileMakerV2::getInstance(r('ids'))->iterateAndAssignProfile(),

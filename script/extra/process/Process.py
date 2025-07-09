@@ -24,7 +24,6 @@ class Process:
         """
         while not self.account:
             self.account = get_next_account()
-            # self.account = get_next_account(specific_ids=[2672])
 
     def start(self):
         try:
@@ -35,7 +34,7 @@ class Process:
                 return
 
             self.browser_ig = BasePlaywright(self.account)
-            self.browser_ig.start_browser().go_to_instagram()
+            self.browser_ig.init()
 
             LoginContext(self.browser_ig).fire()
             self.account.set_state('processing', 'app_state')

@@ -12,19 +12,10 @@ def free_account_query(tag_titles=None, specific_ids=None):
     Optionally filter based on specific tags.
     """
     # Base query for free accounts
-    # query = Account.select().where(
-    #     (Account.is_used == 0) &
-    #     (Account.is_active == 1)
-    # )
-
-    query = (Account
-    .select()
-    .join(Profile, on=(Account.profile == Profile.id))  # Ensure the account has a profile
-    .where(
-        (Account.is_used == 0) &  # Only unused accounts
-        # (Account.is_active == 1) &  # Only active accounts
-        (Profile.id.is_null(False))  # Ensure the profile exists
-    ))
+    query = Account.select().where(
+        (Account.is_used == 0) &
+        (Account.is_active == 1)
+    )
 
     # If specific IPs are provided, filter accounts based on IPs
     if specific_ids:
@@ -158,3 +149,19 @@ def account_without_tags(tag_titles):
              .where(Account.id.not_in(excluded_accounts_subquery)))
 
     return list(query)
+
+
+def get_storage_state(account):
+    import json
+
+    storage_state = account.web_session  # JSON string from DB
+
+    try:
+        storage_state = json.loads(storage_state)
+        if isinstance(storage_state, str):  # Handle double encoding
+            storage_state = json.loads(storage_state)
+    except Exception as e:
+        storage_state = {}
+
+    return storage_state
+

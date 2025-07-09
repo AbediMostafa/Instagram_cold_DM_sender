@@ -4,11 +4,12 @@ namespace App\Classes;
 
 
 use App\Models\Account;
+use App\Models\Log;
 use App\Models\Profile;
 use App\Models\Proxy;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use Dotenv\Dotenv;
+use \Illuminate\Support\Facades\Log as laravelLog;
 
 
 class AdspowerProfileMaker
@@ -35,7 +36,7 @@ class AdspowerProfileMaker
 
     public function __construct(public $accountIds = [])
     {
-        $this->folderId = "6014402";
+        $this->folderId = "5780347";
     }
 
     public static function getInstance($accountIds = [],): AdspowerProfileMaker
@@ -49,9 +50,7 @@ class AdspowerProfileMaker
     {
 
         $all = Account::query()->get();
-//        $all = Account::whereInstagramState('active')->get();
         $selected = Account::query()->whereIn("id", $this->accountIds)->get();
-//        $selected = Account::whereInstagramState('active')->whereIn("id", $this->accountIds)->get();
 
         return $this->accountIds ? $selected : $all;
     }
@@ -108,7 +107,7 @@ class AdspowerProfileMaker
 
         $this->proxy = [
             "proxy_soft" => "other",
-            "proxy_type" => "http",
+            "proxy_type" => "socks5",
             "proxy_host" => $this->proxyObj->ip,
             "proxy_port" => $this->proxyObj->port,
             "proxy_user" => $this->proxyObj->username,

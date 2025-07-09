@@ -1,5 +1,5 @@
-from instagrapi import Client
-from instagrapi.exceptions import ProxyAddressIsBlocked, ChallengeRequired, UserNotFound, FeedbackRequired, \
+from ins_tagrapi import Client
+from ins_tagrapi.exceptions import ProxyAddressIsBlocked, ChallengeRequired, UserNotFound, FeedbackRequired, \
     ClientNotFoundError, ClientForbiddenError, ClientConnectionError, PleaseWaitFewMinutes, LoginRequired, \
     TwoFactorRequired, ChallengeUnknownStep, BadPassword, MediaUnavailable
 from .InstagramErrorHandler import InstagramErrorHandler

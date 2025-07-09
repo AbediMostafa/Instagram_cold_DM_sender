@@ -80,7 +80,12 @@ class BrowserSendDmEvent:
         self.ig.pause(6000, 7000)
 
         ClickOnSendMessageAction(self.ig).start()
-        self.ig.pause(1500, 2000)
+        self.ig.pause(4000, 5000)
+
+        try:
+            self.ig.page.get_by_role("button", name="Expand").click(timeout=3000)
+        except:
+            pass
 
     def after_message_fill_part(self):
         self.error_indicators.something_went_wrong_handler()

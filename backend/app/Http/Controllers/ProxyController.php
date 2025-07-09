@@ -32,7 +32,7 @@ class ProxyController extends Controller
             ]);
         } else {
             request()->validate([
-                'ip' => ['required', 'ip',
+                'ip' => ['required',
                     Rule::unique('proxies')->where(function ($query) {
                         return $query->where('ip', request('ip'))
                             ->where('port', request('port'));
