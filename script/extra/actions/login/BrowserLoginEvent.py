@@ -102,25 +102,25 @@ class BrowserLoginEvent:
 
         try:
             input2.fill('')
-            input2.press_sequentially(self.ig.account.username, delay=100, timeout=4500)
+            input2.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
             self.ig.account.add_cli('First locator didnt found')
         except:
             try:
                 input1.fill('')
-                input1.press_sequentially(self.ig.account.username, delay=100, timeout=4500)
+                input1.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
                 self.ig.account.add_cli('Second locator didnt found')
 
             except:
                 input3.fill('')
 
                 try:
-                    input3.press_sequentially(self.ig.account.username, delay=100, timeout=4500)
+                    input3.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
                 except:
                     self.ig.account.add_cli('Third locator didnt found')
 
         self.ig.pause(1800, 3000)
         self.ig.page.get_by_label("Password").fill('')
-        self.ig.page.get_by_label("Password").press_sequentially(self.ig.account.password, delay=100)
+        self.ig.page.get_by_label("Password").press_sequentially(self.ig.account.password, delay=100, timeout=6000)
         self.ig.pause(2000, 3000)
         self.ig.page.get_by_role("button", name="Log in", exact=True).click()
         self.ig.pause(5000, 6000)
