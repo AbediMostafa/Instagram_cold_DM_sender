@@ -121,7 +121,7 @@ class ProfileController extends Controller
     {
         if (Profile::is_('adspower'))
             return tryCatch(
-                fn() => AdspowerProfileMaker::getInstance(r('ids'))->iterateAndAssignProfile(),
+                fn() => AdspowerProfileMaker::getInstance(r('ids'))->handle(),
                 'Profile assigned successfully',
             );
 

@@ -2,28 +2,27 @@
 
 namespace App\Classes;
 
-
 use App\Models\Account;
-use App\Models\Log;
 use App\Models\Profile;
 use App\Models\Proxy;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use \Illuminate\Support\Facades\Log as laravelLog;
-
 
 class AdspowerProfileMaker
 {
     public $account;
+    public $profile;
     public $proxy;
+    public $proxyObj;
+    public $response;
     public $responseMessage = '';
+    public $responseData = '';
     public static $instance;
 
     public $payload = [
         "name" => "",
         "group_id" => "",
         "user_proxy_config" => [],
-
         "fingerprint_config" => [
             "language" => ["en-US", "en"],
             "language_switch" => 0,
@@ -39,69 +38,55 @@ class AdspowerProfileMaker
         $this->folderId = "5780347";
     }
 
-    public static function getInstance($accountIds = [],): AdspowerProfileMaker
+    public static function getInstance($accountIds = []): self
     {
-        self::$instance = new self($accountIds);
+        return new self($accountIds);
+    }
 
-        return self::$instance;
+    public function handle()
+    {
+        if (empty($this->accountIds)) {
+            // No accounts given — create AdsPower-only profiles until limit hit
+            while (!$this->hitTheMaxProfileNumber()) {
+                $this->createProfile(attachToAccount: false, useProxy: false);
+            }
+        } else {
+            // Assign profiles to accounts
+            $this->getAccounts()->each(function ($account) {
+                $this->setAccount($account)->assignProfile();
+            });
+        }
     }
 
     public function getAccounts()
     {
-
-        $all = Account::query()->get();
-        $selected = Account::query()->whereIn("id", $this->accountIds)->get();
-
-        return $this->accountIds ? $selected : $all;
+        return Account::query()->whereIn('id', $this->accountIds)->get();
     }
 
-    public function iterateAndAssignProfile()
-    {
-        $this->getAccounts()
-            ->each(
-                fn($account) => $this->setAccount($account)->assignProfile()
-            );
-    }
-
-    public function setAccount($account)
+    public function setAccount($account): self
     {
         $this->account = $account;
-
         return $this;
     }
 
     public function assignProfile()
     {
-        //If account has profile abort
         if ($this->account->profile) {
-            return 'Account has profile already';
+            return 'Account already has profile';
         }
 
-        //If we have a profile that doesn't have any accounts
         if ($this->profile = Profile::doesntHave('accounts')->first()) {
             return $this->updateAccount();
         }
 
-        /**
-         * Let's start create a profile for the account
-         */
-
-        //If we reach max profile number should assign proxy to account
         if ($this->hitTheMaxProfileNumber()) {
-
-            if ($this->account->proxy) {
-                return 'Account has proxy already';
-            }
-
-            return $this->account
-                ->proxy()
-                ->associate(Proxy::getWithFewestAccounts());
+            return 'Profile limit reached';
         }
 
-        $this->createProfile();
+        $this->createProfile(attachToAccount: true, useProxy: true);
     }
 
-    public function getProxy()
+    public function getProxy(): self
     {
         $this->proxyObj = Proxy::getWithFewestProfiles();
 
@@ -117,96 +102,83 @@ class AdspowerProfileMaker
         return $this;
     }
 
-    public function generateProfileName()
+    public function generateProfileName(): self
     {
-        $uid = $this->account ? $this->account->id : Str::uuid();
+        $uid = $this->account?->id ?? Str::uuid();
         $this->profileName = "profile_$uid";
         return $this;
     }
 
-    public function sendRequest()
+    public function sendRequest(): self
     {
         $url = "http://local.adspower.net:50325/api/v1/user/create";
         $this->response = Http::withoutVerifying()->post($url, $this->payload);
+        $json = $this->response->json();
 
-        $jsonResponse = $this->response->json();
-        $this->responseMessage = $jsonResponse["msg"];
-        $this->responseData = $jsonResponse["data"];
+        $this->responseMessage = $json['msg'] ?? '';
+        $this->responseData = $json['data'] ?? [];
 
         return $this;
     }
 
-    public function handleRequestErrors()
+    public function handleRequestErrors(): self
     {
         $statusCode = $this->response->status();
 
         abort_if(
-            $statusCode != 200,
+            $statusCode !== 200,
             403,
-            "Error : $statusCode _ $this->responseMessage"
+            "Error $statusCode: $this->responseMessage"
         );
 
         return $this;
     }
 
-    public function createProfileRecord()
+    public function createProfileRecord(): self
     {
-
-        $this->profile = Profile::query()->create([
+        $this->profile = Profile::create([
             'title' => $this->profileName,
             'folder' => $this->folderId,
-            'profile_id' => $this->responseData['id'],
-            'proxy_id' => $this->proxyObj ? $this->proxyObj->id : null,
+            'profile_id' => $this->responseData['id'] ?? null,
+            'proxy_id' => $this->proxyObj->id ?? null,
         ]);
 
         return $this;
     }
 
-    public function createProfile()
+    public function createProfile(bool $attachToAccount = false, bool $useProxy = true)
     {
-
         try {
             sleep(3);
             $this->generateProfileName();
+
             $this->payload['name'] = $this->profileName;
             $this->payload['group_id'] = $this->folderId;
 
-            $this->getProxy();
-
-            $this->payload["user_proxy_config"] = $this->proxy;
+            if ($useProxy) {
+                $this->getProxy();
+                $this->payload['user_proxy_config'] = $this->proxy;
+            } else {
+                $this->proxyObj = null;
+                $this->payload['user_proxy_config'] = [
+                    "proxy_soft" => "no_proxy"
+                ];
+            }
 
             $this->sendRequest()
                 ->handleRequestErrors()
-                ->createProfileRecord()
-                ->updateAccount();
+                ->createProfileRecord();
 
-        } catch (\Exception $exception) {
-            abort(403, $exception->getMessage() . $this->responseMessage);
+            if ($attachToAccount) {
+                $this->updateAccount();
+            }
+
+        } catch (\Exception $e) {
+            abort(403, $e->getMessage() . ' | ' . $this->responseMessage);
         }
-
     }
 
-    public function createResidentialProfile()
-    {
-        try {
-            $this->generateProfileName();
-            $this->payload['name'] = $this->profileName;
-            $this->payload['folder_id'] = $this->folderId;
-
-            $this->getResidentialProxy();
-            $this->payload['parameters']['proxy'] = $this->proxy;
-
-            $this->sendRequest()->handleRequestErrors();
-
-        } catch (\Exception $exception) {
-            abort(403, $exception->getMessage() . $this->responseMessage);
-        }
-
-        sleep(5);
-
-    }
-
-    public function updateAccount(): static
+    public function updateAccount(): self
     {
         $this->account->profile_id = $this->profile->id;
         $this->account->save();
@@ -214,8 +186,8 @@ class AdspowerProfileMaker
         return $this;
     }
 
-    public function hitTheMaxProfileNumber()
+    public function hitTheMaxProfileNumber(): bool
     {
-        return Profile::query()->count() == 605;
+        return Profile::count() >= 50;
     }
 }

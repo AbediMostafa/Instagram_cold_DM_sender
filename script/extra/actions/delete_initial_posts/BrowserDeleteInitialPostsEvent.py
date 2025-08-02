@@ -1,4 +1,5 @@
 from script.extra.playwright.base_actions.GetPostsAction import GetPostsAction
+from script.extra.exceptions import ThereIsNoPost
 
 
 class BrowserDeleteInitialPostsEvent:
@@ -14,6 +15,11 @@ class BrowserDeleteInitialPostsEvent:
         try:
             self.before_change_hook()
             self.change_hook()
+            self.after_change_hook()
+
+        except ThereIsNoPost as e:
+            self.ig.account.add_cli("We caught the initial post deleted ...")
+            self.ig.account.set('initial_posts_deleted', 1)
             self.after_change_hook()
 
         except Exception as e:
@@ -37,8 +43,10 @@ class BrowserDeleteInitialPostsEvent:
     def change_hook(self):
         posts = GetPostsAction(self.ig).start()
 
-        for _ in range(7):
-        # for _ in range(posts.count()):
+        count = min(posts.count(), 5)
+
+        for _ in range(count):
+            # for _ in range(posts.count()):
             post = posts.first
             post.locator('a').click(timeout=3000)
             self.ig.pause(2000, 3000)
@@ -51,4 +59,3 @@ class BrowserDeleteInitialPostsEvent:
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
-        # self.ig.account.set('initial_posts_deleted', 1)

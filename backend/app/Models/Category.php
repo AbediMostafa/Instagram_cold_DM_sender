@@ -16,6 +16,21 @@ class Category extends Model
         return $this->hasMany(Account::class);
     }
 
+    public function hashtags()
+    {
+        return $this->hasMany(Hashtag::class);
+    }
+
+    public function leadSources()
+    {
+        return $this->hasMany(LeadSource::class);
+    }
+
+    public function dmPost()
+    {
+        return $this->hasMany(DmPost::class);
+    }
+
     public function leads()
     {
         return $this->hasMany(Lead::class);

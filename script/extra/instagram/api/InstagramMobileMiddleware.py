@@ -1,5 +1,5 @@
-from ins_tagrapi import Client
-from ins_tagrapi.exceptions import ProxyAddressIsBlocked, ChallengeRequired, UserNotFound, FeedbackRequired, \
+from instagrapi import Client
+from instagrapi.exceptions import ProxyAddressIsBlocked, ChallengeRequired, UserNotFound, FeedbackRequired, \
     ClientNotFoundError, ClientForbiddenError, ClientConnectionError, PleaseWaitFewMinutes, LoginRequired, \
     TwoFactorRequired, ChallengeUnknownStep, BadPassword, MediaUnavailable
 from .InstagramErrorHandler import InstagramErrorHandler
@@ -15,20 +15,20 @@ class InstagramMobileMiddleware:
         self.account = account
         self.client = Client()
         # Set a custom User-Agent and device settings
-        self.client.set_device({
-            'phone_manufacturer': 'Samsung',
-            'phone_model': 'SM-G960F',
-            'android_version': 29,
-            'android_release': '10.0',
-            'dpi': '420dpi',
-            'resolution': '1080x1920',
-            'chipset': 'exynos9810',
-            'gpu': 'Mali-G72',
-            'cpu': 'Samsung Exynos 9810',
-            'os': 'android'
-        })
-        self.client.set_user_agent(
-            "Instagram 150.0.0.33.120 Android (29/10; 420dpi; 1080x1920; Samsung; SM-G960F; starlte; exynos9810; en_US; 217141713)")
+        # self.client.set_device({
+        #     'phone_manufacturer': 'Samsung',
+        #     'phone_model': 'SM-G960F',
+        #     'android_version': 29,
+        #     'android_release': '10.0',
+        #     'dpi': '420dpi',
+        #     'resolution': '1080x1920',
+        #     'chipset': 'exynos9810',
+        #     'gpu': 'Mali-G72',
+        #     'cpu': 'Samsung Exynos 9810',
+        #     'os': 'android'
+        # })
+        # self.client.set_user_agent(
+        #     "Instagram 150.0.0.33.120 Android (29/10; 420dpi; 1080x1920; Samsung; SM-G960F; starlte; exynos9810; en_US; 217141713)")
 
         self.error_handler = InstagramErrorHandler(self.account)
         self.client.delay_range = [1, 3]
@@ -69,9 +69,6 @@ class InstagramMobileMiddleware:
 
             except LoginRequired as e:
                 self.error_handler.handle_login_required_exception(str(e))
-
-            except BadPassword as e:
-                self.error_handler.handle_bad_password_exception(str(e))
 
             except MediaUnavailable as e:
                 pass
@@ -122,12 +119,21 @@ class InstagramMobileMiddleware:
         return lead.username
 
     @try_except
+    def get_user_id(self, username):
+        user = self.client.user_info_by_username_v1(username)
+        return user.pk
+
+    @try_except
     def follow(self, lead):
         self.client.user_follow(lead.instagram_id)
 
     @try_except
     def direct_send(self, user_ids, text):
         return self.client.direct_send(user_ids=user_ids, text=text)
+
+    @try_except
+    def profile_share(self, user_id, user_ids):
+        return self.client.direct_profile_share(user_id=user_id, user_ids=user_ids)
 
     @try_except
     def direct_send_video(self, path, thread_id):

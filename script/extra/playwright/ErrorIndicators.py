@@ -42,6 +42,51 @@ class ErrorIndicators(BaseAction):
             except Exception as e:
                 raise Exception(f'Problem clicking on Dismiss:{str(e)}')
 
+    def choose_if_we_process_your_data(self):
+        # Choose if we process your data for ads
+
+        if self.ig.is_visible_by_text('Choose if we process your data') or self.ig.is_visible_by_text(
+                'you can choose whether you consent to us processing'):
+
+            try:
+                self.ig.pause(1000, 2000)
+                self.ig.account.add_cli('Choose if we process your data for ads ...')
+                self.ig.page.get_by_role("button", name='Get started').click(timeout=5000)
+                self.ig.pause(5000, 6000)
+
+            except Exception as e:
+                raise Exception(f'Problem clicking on Dismiss:{str(e)}')
+
+            self.ig.pause(5000, 6000)
+
+            try:
+                self.ig.page.locator("role=radio[name='Use free of charge with ads']").click(timeout=5000)
+
+            except Exception as e:
+                self.ig.account.add_cli("Problem clicking on radio[name='Use free of charge with ads']")
+                self.ig.page.click("input[name='afs_choice_input_key'][value='PA']")
+
+            self.ig.pause(2000, 2500)
+
+            self.ig.page.get_by_role("button", name='Continue').click(timeout=3000)
+            self.ig.pause(3500, 5500)
+            self.ig.page.get_by_role("button", name='Agree').click(timeout=3000)
+            self.ig.pause(3500, 4500)
+            self.ig.page.get_by_role("button", name='Not interested').click(timeout=3000)
+            self.ig.pause(3500, 4500)
+
+    def changes_to_how_we_manage_data(self):
+        # Changes to How We Manage Data
+
+        if self.ig.is_visible_by_text('Changes to How We Manage Data') or self.ig.is_visible_by_text(
+                'Review and Agree'):
+            self.ig.pause(1000, 2000)
+            self.ig.account.add_cli('Changes to How We Manage Data ...')
+            self.ig.page.get_by_role("button", name='Next').click(timeout=5000)
+            self.ig.pause(5000, 6000)
+            self.ig.page.get_by_role("button", name='Agree to Terms').click(timeout=3000)
+            self.ig.pause(3500, 5500)
+
     def continue_as_handler(self):
         if self.ig.is_visible_by_text('Continue as') or self.ig.is_visible_by_text(
                 'Continue As') or self.ig.is_visible_by_text('continue As'):
@@ -104,7 +149,11 @@ class ErrorIndicators(BaseAction):
             raise EnterYourMobileError('Enter your mobile number')
 
     def we_sent_a_code_to_whatsapp(self):
-        if self.ig.is_visible_by_text('We sent a code to WhatsApp'):
+        # Check your WhatsApp messages
+        # Enter the code we sent to your WhatsApp account
+        if self.ig.is_visible_by_text('We sent a code to WhatsApp') or self.ig.is_visible_by_text(
+                'Check your WhatsApp messages') or self.ig.is_visible_by_text(
+                'Enter the code we sent to your WhatsApp account'):
             raise EnterYourMobileError('We sent a code to WhatsApp')
 
     def suspended_account_handler(self):
@@ -133,6 +182,7 @@ class ErrorIndicators(BaseAction):
             raise CheckYourTextMessages('Choose a way to confirm')
 
     def upload_your_id_handler(self):
+
         if self.ig.is_visible_by_text('Upload your ID') or self.ig.is_visible_by_text(
                 'We need a photo of your official ID'):
             raise UploadYourIdError('Upload your ID')

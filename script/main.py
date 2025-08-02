@@ -1,3 +1,4 @@
+import random
 import sys
 import os
 
@@ -14,6 +15,8 @@ from script.models.Template import Template, get_a
 from script.models.Setting import Setting
 from script.models.AccountHelper import get_next_account
 from script.models.LeadSource import LeadSource, get_lead_source
+from script.models.DmPost import DmPost
+from script.models.DmPostLead import DmPostLead
 from dotenv import load_dotenv
 from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
@@ -23,6 +26,7 @@ from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserCha
 from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
 from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
 from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
+from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
 from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
 from script.extra.actions.send_dm.SendDmContext import SendDmContext
 from script.extra.actions.unfollow.UnfollowContext import UnfollowContext
@@ -43,6 +47,7 @@ from script.extra.actions.login.LoginContext import LoginContext
 from script.extra.helper import hours_ago
 from spintax import spin
 from script.models.Command import performed_command_count
+from script.models.Profile import get_next
 from peewee import fn
 from script.extra.exceptions import CantPerformAction
 from script.models.Hashtag import get_hashtag
@@ -64,17 +69,96 @@ from time import sleep
 import pytz
 from peewee import OperationalError
 from script.extra.actions.DmFollowUp import DmFollowUp
+from script.models.DmPost import get_or_reset_dm_post_for_lead
+from script.extra.exceptions import UploadedPostRecently
+from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
+from script.extra.instagram.api.InstagramMobile import InstagramMobile
 
+
+def get_medias(account_instagram_id):
+    account.add_cli('Getting accounts medias')
+    account_medias = ig.user_medias(account_instagram_id, 10)
+
+    return random.choice(account_medias), account_medias
+
+
+def post_media(account, account_instagram_id):
+    account_media, account_medias = get_medias(account_instagram_id)
+
+    while account_media.media_type != 2:
+        account.add_cli(f'Account media type is {account_media.media_type} trying another one')
+        account_media = random.choice(account_medias)
+
+    if account_media.media_type == 2:
+        account.add_cli('Accounts media type is 2 trying to download the video ...')
+
+        media_path = ig.client.video_download(account_media.pk)
+        account.add_cli(f'media path {media_path}')
+
+        account.add_cli('Trying to upload the video ...')
+
+        ig.client.clip_upload(
+            media_path,
+            account_media.caption_text,
+        )
+
+    else:
+        account.add_cli('Media type is not video')
+
+
+# account_ids = [ 78, 80, 81, 82, 3153]
+account_ids = [75, 76, 77, 78, 80, 81, 82, 3153]
+
+for account_id in account_ids:
+    account = Account.get_by_id(account_id)
+    ig = InstagramMobile(account)
+    ig.log_in()
+    leads = Lead.get_leads_for_dm(account, random.randint(1, 3))
+
+    account.add_cli('Getting accounts id')
+    account_instagram_id = ig.get_user_id('moble.choob_zendegi')
+    media, medias = get_medias(account_instagram_id)
+    # post_media(account, account_instagram_id)
+
+    for lead in leads:
+        account.add_cli(f'Sending direct message to {lead.username}')
+        ig.user_id_from_username(lead)
+        ig.client.direct_media_share(media.id, [int(lead.instagram_id)])
+        text = '''
+        برترین‌تولید‌کننده‌تخصصی‌مبلمان‌راحتی 🔰
+            بهترین شرایط اقساط
+            برای دریافت مشاوره یا ثبت سفارش با شماره زیر تماس بگیرین
+            09129519606
+        '''
+        ig.direct_send([int(lead.instagram_id)], text)
+        sleep(random.randint(2, 5))
+
+# account = get_next_account()
+# browser_ig = BasePlaywright(account)
+# browser_ig.init()
+# LoginContext(browser_ig).fire()
+# SendDmWithPostContext(browser_ig).fire()
+# DeleteInitialPostsContext(browser_ig).fire()
+# UnfollowContext(browser_ig).fire()
+# lead = Lead.get_by_id(2950649)
+# dm_post = get_or_reset_dm_post_for_lead(lead)
+
+# print(dm_post)
+# dm = DmPostLead.select().first()
+# print(dm.lead_id)
+# print(dm.dm_post_id)
+# print(type(account.fingerprint))
+# print(account.fingerprint['fingerprint_config'])
 
 # account = Account.get_by_id(914)
-account = get_next_account()
+# account = get_next_account()
 # creator = ProfileCreator(account)
 # creator.create()
 # creator.delete()
-browser_ig = BasePlaywright(account)
-browser_ig.start_browser().go_to_instagram()
+# browser_ig = BasePlaywright(account)
+# browser_ig.start_browser().go_to_instagram()
 # BrowserDmFollowUpEvent(browser_ig).fire()
-SendDmContext(browser_ig).fire()
+# SendDmContext(browser_ig).fire()
 # BrowserGetThreadMessagesEvent(browser_ig).fire()
 
 # UnfollowContext(browser_ig).fire()
@@ -95,7 +179,7 @@ SendDmContext(browser_ig).fire()
 # ThunkAI - Daniel Swope
 # ThunkAI - Daniel Swope
 
-#AMEUR JALLI#
-#AMEUR JALLI#
-#AMEUR JALLI#
+# AMEUR JALLI#
+# AMEUR JALLI#
+# AMEUR JALLI#
 # {\"result\":\"error\",\"msg\":\"Invalid channel name '#AMEUR JALLI#'\",\"code\":\"BAD_REQUEST\"}\n"

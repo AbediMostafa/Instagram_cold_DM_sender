@@ -14,7 +14,9 @@ class BrowserLeadGenerateByFollowersEvent:
     category = None
     command = None
     scroll_times = 20
-    scroll_container = 'div.xyi19xy.x1ccrb07.xtf3nb5.x1pc53ja.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6'
+    # scroll_container = 'div.xyi19xy.x1ccrb07.xtf3nb5.x1pc53ja.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6'
+    # scroll_container = 'div.x7r02ix.x1bphaa0.x18nydb4.xcm95gh.x1vsb9q8.xb88tzc.xw2csxc.x1odjw0f.x5fp0pe'
+    scroll_container = 'div.x6nl9eh.x1a5l9x9.x7vuprf.x1mg3h75.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6'
 
     def __init__(self, ig):
         self.ig = ig

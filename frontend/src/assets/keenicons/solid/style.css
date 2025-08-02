@@ -25,6 +25,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.persian-font {
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+}
+
 .ki-abstract-1.ki-solid:before {
   content: "\e900";
 }

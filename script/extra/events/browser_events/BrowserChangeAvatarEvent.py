@@ -13,6 +13,9 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
 
     def execute(self):
 
+        if self.ig.account.get_passed_days_since_creation() < 3:
+            return self.ig.account.add_cli(f"Account is not old enough to change avatar")
+
         if self.ig.account.avatar_changed:
             return self.ig.account.add_cli(f"{self.ig.account.username}'s avatar has been changed already")
 
@@ -59,7 +62,7 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
 
         self.ig.page.locator("input[accept='image/jpeg,image/png']").nth(0).set_input_files(
             self.image_path)
-        self.ig.pause(10000, 11000)
+        self.ig.pause(19000, 20000)
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')

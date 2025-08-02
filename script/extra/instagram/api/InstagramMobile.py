@@ -24,7 +24,7 @@ class InstagramMobile(InstagramMobileMiddleware):
             self.account.add_cli(f'Before IP: {before_ip}')
 
             self.client.set_proxy(
-                f"http://{self.proxy.username}:{self.proxy.password}@{self.proxy.ip}:{self.proxy.port}")
+                f"socks5://{self.proxy.username}:{self.proxy.password}@{self.proxy.ip}:{self.proxy.port}")
             after_ip = self.client._send_public_request("https://api.ipify.org/")
 
             self.account.add_cli(f'After setting IP: {after_ip}')

@@ -12,4 +12,10 @@ class LeadSource extends Model
     protected $guarded = [];
     public const UPDATED_AT = null;
 
+
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
 }

@@ -14,6 +14,7 @@ class Adspower:
 
                 return ws_endpoint
 
+        print(response.text)
         raise Exception("Failed to start AdsPower browser.")
 
     def close_browser(self, profile_id):

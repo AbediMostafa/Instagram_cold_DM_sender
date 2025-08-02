@@ -84,7 +84,7 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
             except Exception as e:
                 pass
 
-        self.ig.pause(3000, 3500)
+        self.ig.pause(3000, 4000)
 
         clicked_on_filter = False
 
@@ -104,14 +104,14 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
                 self.ig.page.locator("button").filter(has_text="Open media gallery").click()
                 clicked_on_filter = True
 
-            self.ig.pause(3000, 3500)
+            self.ig.pause(4000, 4500)
 
         # try:
         #     self.ig.page.get_by_role("button", name="Next").click()
         # except:
         self.ig.page.get_by_role("button", name="Next").nth(0).click()
 
-        self.ig.pause(2000, 3500)
+        self.ig.pause(3000, 3500)
 
 #         try:
 #             self.ig.page.get_by_role("button", name="Next").click()
@@ -121,7 +121,7 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_label("Write a caption...").fill(self.caption)
-        self.ig.pause(2000, 3500)
+        self.ig.pause(3000, 3500)
 
         self.ig.page.get_by_role("button", name="Share").click()
         self.ig.pause(14000, 16000)

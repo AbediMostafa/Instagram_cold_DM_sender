@@ -125,4 +125,9 @@ class Lead extends Model
     {
         return $this->morphToMany(Tag::class, 'taggable');
     }
+
+    public function dmPosts()
+    {
+        return $this->belongsToMany(DmPost::class, 'dm_post_lead');
+    }
 }

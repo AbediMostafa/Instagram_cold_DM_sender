@@ -104,16 +104,6 @@ class Lead(BaseWithTimeZoneModel):
     @classmethod
     def get_leads_for_dm(cls, account, cnt):
 
-        # leads = (Lead.select().where(
-        #     (Lead.account == account) &
-        #     (Lead.last_state == 'followed')
-        #
-        # )
-        #                   .order_by(fn.Random())
-        #                   .limit(cnt))
-        # Order Number
-        # Order Number
-
         leads = (Lead.select().where(
             (Lead.account_id.is_null(True)) &
             (Lead.last_state == 'free')

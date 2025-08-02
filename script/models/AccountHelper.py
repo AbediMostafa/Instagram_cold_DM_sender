@@ -109,6 +109,8 @@ def get_first_proxy_with_less_accounts(exception_proxy_ids=None):
     from .Proxy import Proxy
     from script.extra.adapters.SettingAdapter import SettingAdapter
 
+    return Proxy.select().first()
+
     query = (Proxy
              .select(Proxy, Proxy.id, fn.COUNT(Account.id).alias('account_count'))
              .join(Account, JOIN.LEFT_OUTER)

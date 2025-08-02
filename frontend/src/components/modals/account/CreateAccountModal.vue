@@ -133,6 +133,13 @@
                 />
 
               </div>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <el-switch
+                    v-model="targetData.start_profile"
+                    active-text="Start Profile"
+                />
+
+              </div>
 
               <div class="d-flex flex-column mb-8 fv-row">
                 <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
@@ -333,6 +340,7 @@ export default defineComponent({
       accounts: "",
       category: "",
       username_changed: 0,
+      start_profile: 0,
       bulk_insertion: false,
       tags: [],
     });

@@ -108,9 +108,9 @@ function runPythonProcess($pythonFile, $commandId)
     $process->setTimeout(400);
     $process->run();
 
-    if (!$process->isSuccessful()) {
-        throw new ProcessFailedException($process);
-    }
+//    if (!$process->isSuccessful()) {
+//        throw new ProcessFailedException($process);
+//    }
 
     return jsonSuccess($process->getOutput());
 }

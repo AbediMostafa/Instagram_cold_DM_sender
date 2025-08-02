@@ -10,24 +10,111 @@ import csv
 import sys
 
 count = 0
+import random
+import sys
+import os
 
-csv.field_size_limit(10 ** 7)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import subprocess
+import sys
+from script.models.Process import Process
+from script.models.Account import Account
+from script.models.Lead import Lead
+from script.models.Command import Command
+from script.models.Spintax import Spintax
+from script.models.Category import Category
+from script.models.Template import Template, get_a
+from script.models.Setting import Setting
+from script.models.AccountHelper import get_next_account
+from script.models.LeadSource import LeadSource, get_lead_source
+from script.models.DmPost import DmPost
+from script.models.DmPostLead import DmPostLead
+from dotenv import load_dotenv
+from script.extra.base.BasePlaywright import BasePlaywright
+from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
+from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
+from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
+from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
+from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
+from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
+from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
+from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
+from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
+from script.extra.actions.send_dm.SendDmContext import SendDmContext
+from script.extra.actions.unfollow.UnfollowContext import UnfollowContext
+from script.extra.actions.make_account_public.MakeAccountPublicContext import MakeAccountPublicContext
+from script.extra.actions.delete_initial_posts.DeleteInitialPostsContext import DeleteInitialPostsContext
+from script.extra.actions.change_name.ChangeNameContext import ChangeNameContext
+from script.extra.actions.lead_generate_by_followers.LeadGenerateByFollowersContext import \
+    LeadGenerateByFollowersContext
+from script.extra.actions.follow.FollowContext import FollowContext
+from script.extra.helper import tehran_now
+from script.extra.actions.DmFollowUp import DmFollowUp
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
+from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEngagementContext import \
+    LeadGenerateByPageEngagementContext
+from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext import \
+    LeadGenerateByPostEngagementContext
+from script.extra.actions.login.LoginContext import LoginContext
+from script.extra.helper import hours_ago
+from spintax import spin
+from script.models.Command import performed_command_count
+from script.models.Profile import get_next
+from peewee import fn
+from script.extra.exceptions import CantPerformAction
+from script.models.Hashtag import get_hashtag
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import \
+    LeadGenerateThroughApiContext
+from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEventsCanHandleStrategy
+import requests
+from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
+# from script.models.AdsPowerLock import AdsPowerLock
+# from script.extra.modules.adspower.ProfileCreator import ProfileCreator
+from datetime import timedelta, datetime
+from time import sleep
+from peewee import OperationalError
+import pytz
+# from script.extra.modules.adspower.ProfileCreator import ProfileCreator
 
-input_file = r"C:\Users\M\Downloads\Telegram Desktop\l\l.csv"
-output_file = r"C:\Users\M\Downloads\Telegram Desktop\l\final.csv"
+from datetime import datetime, timedelta
+from time import sleep
+import pytz
+from peewee import OperationalError
+from script.extra.actions.DmFollowUp import DmFollowUp
+from script.models.DmPost import get_or_reset_dm_post_for_lead
+from script.extra.exceptions import UploadedPostRecently
+from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
+from script.extra.instagram.api.InstagramMobile import InstagramMobile
 
-with open(input_file, mode="r", encoding="utf-8") as infile, open(output_file, mode="w", encoding="utf-8",
-                                                                  newline="") as outfile:
-    reader = csv.DictReader(infile)  # Read input as a dictionary
-    writer = csv.writer(outfile)  # Write to output CSV
 
-    for row in reader:
-        count += 1
-        country_code = row.get("country_code", "").strip()
-        instagram = row.get("instagram", "")
-        platform = row.get("platform", "")
+account = get_next_account()
+browser_ig = BasePlaywright(account)
+browser_ig.init()
+LoginContext(browser_ig).fire()
+SendDmWithPostContext(browser_ig).fire()
+# DeleteInitialPostsContext(browser_ig).fire()
+# UnfollowContext(browser_ig).fire()
+# lead = Lead.get_by_id(2950649)
+# dm_post = get_or_reset_dm_post_for_lead(lead)
 
-        if country_code in ("US", "GB") and instagram and platform == 'Shopify':
-            writer.writerow([instagram, country_code, platform])
+# print(dm_post)
+# dm = DmPostLead.select().first()
+# print(dm.lead_id)
+# print(dm.dm_post_id)
+# print(type(account.fingerprint))
+# print(account.fingerprint['fingerprint_config'])
 
-print(count)
+# account = Account.get_by_id(914)
+# account = get_next_account()
+# creator = ProfileCreator(account)
+# creator.create()
+# creator.delete()
+# browser_ig = BasePlaywright(account)
+# browser_ig.start_browser().go_to_instagram()
+# BrowserDmFollowUpEvent(browser_ig).fire()
+# SendDmContext(browser_ig).fire()
+# BrowserGetThreadMessagesEvent(browser_ig).fire()
+
+# UnfollowContext(browser_ig).fire()
+
+# HowManyEventsCanHandleStrategy(account, browser_ig, None).post_action_hook()

@@ -237,23 +237,6 @@ class Account(BaseWithTimeZoneModel):
 
         return totp.now()
 
-        try:
-            import requests
-            from script.extra.adapters.RequestAdapter import RequestAdapter
-
-            response = requests.get(RequestAdapter.bulkacc_api(self.secret_key))
-            return response.json()['data']['otp']
-
-            time_remaining = 0
-
-            while time_remaining < 6:
-                time_remaining = response.json()['data']['timeRemaining']
-
-            return response.json()['data']['otp']
-
-        except:
-            pass
-
     def add_direct(self, text, lead, direct, sender='account', type='text'):
         from .Thread import Thread
         from .Message import Message
@@ -498,7 +481,7 @@ class Account(BaseWithTimeZoneModel):
         """
         Determine the next post command type based on the latest post commands.
         """
-        if self.sent_recent_post_command_within(random.randint(24, 26)):
+        if self.sent_recent_post_command_within(random.randint(24, 30)):
             raise UploadedPostRecently('We have sent a post recently')  # No post can be sent if one was sent
 
         # Fetch the latest three post commands

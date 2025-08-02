@@ -18,7 +18,6 @@ class BrowserLeadGenerateByPageEngagementEvent:
     category = None
     command = None
     counter = 0
-    scroll_times = random.randint(1, 60)
     lead_source_count = 1
     post_count = 4
     lead_source = None
@@ -107,8 +106,10 @@ class BrowserLeadGenerateByPageEngagementEvent:
             self.ig.pause(2000, 3000)
 
     def scroll(self):
-        self.ig.account.add_cli(f'Scrolling {self.scroll_times} times')
-        for _ in range(self.scroll_times):
+        scroll_times = random.randint(1, 30)
+
+        self.ig.account.add_cli(f'Scrolling {scroll_times} times')
+        for _ in range(scroll_times):
             ScrollAction(self.ig).start(None, 500, 700, 3000, 4000)
 
     def get_posts(self):

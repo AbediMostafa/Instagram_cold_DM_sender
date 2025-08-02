@@ -9,6 +9,11 @@ class BrowserSendCustomMessage(InstagramMiddleware):
     message = None
 
     def execute(self):
+
+        if len(self.ig.account.custom_message_commands) == 0:
+            self.ig.account.add_cli("This account dont have Custom messages")
+            return True
+
         self.base.go_to_threads()
         self.ig.turn_on_notif()
         self.init()

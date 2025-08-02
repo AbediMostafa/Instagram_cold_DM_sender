@@ -15,6 +15,7 @@ class LeadGenerateByPostEngagementContext(InstagramMiddleware):
     def execute(self):
         try:
             self.cant_perform()
+            self.ig.account.add_cli("Generating lead by Hashtags")
 
             BrowserLeadGenerateByPostEngagementEvent(self.ig).init()
 

@@ -1,36 +1,9 @@
 import sys
 import os
-
+sys.path.append(r"C:\Users\admin\AppData\Roaming\Python\Python312\site-packages")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from script.extra.modules.multilogin.Multilogin import Multilogin
 
-import hashlib
-import requests
-import time
-from playwright.sync_api import sync_playwright
-import json
-from script.models.Account import Account
-from script.models.Color import Color
-from script.models.Cli import Cli
-import time
-
-from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
-
-from script.extra.adapters.SettingAdapter import SettingAdapter
-from spintax import spin
-from script.extra.helper import *
-from script.models.Setting import Setting
-from script.models.Spintax import Spintax
-#
-from script.models.Account import Account
-from script.models.Lead import Lead
-from script.models.Profile import Profile
 from script.models.AccountHelper import *
-from script.models.Message import Message
-from script.models.Tag import Tag
-from script.models.Taggable import Taggable
-import requests
-from dotenv import load_dotenv
 from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
 from script.extra.events.browser_events.BrowserSendDmEvent import BrowserSendDmEvent
@@ -64,6 +37,7 @@ from script.extra.actions.follow_good_pages.FollowGoodPagesContext import Follow
 from script.models.Process import Process
 from spintax import spin
 import traceback
+from script.extra.actions.login.LoginContext import LoginContext
 
 
 
@@ -77,31 +51,8 @@ if not account:
     sys.exit(1)
 try:
     browser_ig = BasePlaywright(account)
-    browser_ig.start_browser().go_to_instagram()
-    login = BrowserLoginEvent(browser_ig)
-
-    try:
-        try:
-            login.ig.page.locator('button', has_text='Allow All Cookies').click(timeout=1500)
-        except:
-            login.ig.page.locator('button', has_text='Allow all cookies').click(timeout=1500)
-
-        login.ig.account.add_cli(f'Clicked on allow cookies')
-    except Exception as e:
-        print(str(e))
-        pass
-
-    print('after allow cookies')
-    if login.is_not_logged_in():
-        login.ig.account.add_cli('User is not logged in before trying to login ...')
-        login.fill_username_password()
-        login.ig.page.wait_for_timeout(8000)
-
-        if login.need_2f_authentication():
-            login.ig.two_factor_authentication_process()
-
-    login.ig.page.wait_for_timeout(4000)
-
+    browser_ig.init()
+    LoginContext(browser_ig).fire()
     FollowGoodPagesContext(browser_ig).fire()
 
 

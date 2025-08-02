@@ -15,7 +15,7 @@ class LeadGenerateByPageEngagementContext(InstagramMiddleware):
     def execute(self):
         try:
             self.cant_perform()
-
+            self.ig.account.add_cli("Generating lead by Well known pages")
             BrowserLeadGenerateByPageEngagementEvent(self.ig).init()
 
         except IsNotProperServer as e:

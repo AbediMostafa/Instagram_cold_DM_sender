@@ -21,7 +21,6 @@ class BrowserLeadGenerateByPostEngagementEvent:
     parser = None
     category = None
     command = None
-    scroll_times = random.randint(5, 25)
     hashtag_count = 1
     number_of_posts = 6
 
@@ -102,6 +101,7 @@ class BrowserLeadGenerateByPostEngagementEvent:
         self.ig.pause(4000, 5000)
 
     def scroll(self):
-        self.ig.account.add_cli(f'Scrolling {self.scroll_times} times')
-        for _ in range(self.scroll_times):
+        scroll_times = random.randint(5, 25)
+        self.ig.account.add_cli(f'Scrolling {scroll_times} times')
+        for _ in range(scroll_times):
             ScrollAction(self.ig).start(None, 500, 700, 3000, 4000)

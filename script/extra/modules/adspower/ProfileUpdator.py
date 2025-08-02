@@ -14,7 +14,7 @@ from script.models.Profile import Profile
 TIME_TO_SLEEP = 3
 
 
-class ProfileCreator:
+class ProfileUpdator:
     account = None
     proxy = None
     proxy_obj = None
@@ -31,8 +31,8 @@ class ProfileCreator:
         "cookie": "",
         "user_proxy_config": {},
         "fingerprint_config": {
-            "language": ["en-US", "en"],
             "language_switch": 0,
+            "language": ["en-US", "en"],
             "screen_resolution": "random",
             "random_ua": {
                 "ua_system_version": ["Windows 10"]
@@ -40,8 +40,19 @@ class ProfileCreator:
         }
     }
 
-    def __init__(self, account):
+    def __init__(self, account, profile=None):
         self.account = account
+        self.profile = profile
+
+    def assign_cookies(self):
+        import json
+
+        storage_state = get_storage_state(self.account)
+        if not storage_state or "cookies" not in storage_state:
+            return False
+
+        cookies = storage_state["cookies"]
+        self.payload["cookie"] = json.dumps(cookies)
 
     def get_proxy(self):
 
@@ -64,28 +75,22 @@ class ProfileCreator:
         }
         return self
 
-    def generate_profile_name(self):
+    def assign_profile_name(self):
         uid = self.account.id if self.account else str(uuid.uuid4())
         self.profile_name = f"profile_{uid}"
+        self.payload["name"] = self.profile_name
         return self
-
-    def extract_cookies(self):
-        import json
-
-        storage_state = get_storage_state(self.account)
-        cookies = storage_state["cookies"]
-        self.cookie = json.dumps(cookies)
 
     def create(self):
         self.account.add_cli('Creating account ....')
         try:
             sleep(3)
             self.get_proxy()
-            self.extract_cookies()
-            self.generate_profile_name()
-            self.payload["name"] = self.profile_name
+            self.assign_cookies()
+            self.assign_profile_name()
+            self.assign_screen_resolution()
+
             self.payload["group_id"] = self.folder_id
-            self.payload["cookie"] = self.cookie
             self.payload["user_proxy_config"] = self.proxy
 
             self.send_request() \
@@ -96,12 +101,73 @@ class ProfileCreator:
             self.account.add_cli(f"Error: {e} | {self.response_message}")
             raise Exception(f"{str(e)} | {self.response_message}")
 
+    def assign_screen_resolution(self):
+        import random
+
+        screen_resolutions = [
+            '1280_800',
+            '1280_960',
+            '1360_768',
+            '1400_900',
+            '1440_900',
+        ]
+
+        self.payload["fingerprint_config"]["screen_resolution"] = random.choice(screen_resolutions)
+
+    def update(self):
+        self.account.add_cli('Updating account ....')
+
+        try:
+            sleep(3)
+            self.assign_cookies()
+            self.payload = self.account.fingerprint
+            self.payload["profile_id"] = self.profile.profile_id
+
+            self.send_request() \
+                .update_account()
+
+        except Exception as e:
+            self.account.add_cli(f"Error: {e} | {self.response_message}")
+            raise Exception(f"{str(e)} | {self.response_message}")
+
     def send_request(self):
+        url = "http://local.adspower.net:50325/api/v1/user/create"
+        max_retries = 5
+        retry_delay = 2
+
+        for attempt in range(1, max_retries):
+            self.response = requests.post(url, json=self.payload, verify=False)
+
+            try:
+                json_response = self.response.json()
+                self.account.add_cli(f"Create response (Attempt {attempt})")
+                self.account.add_cli(json_response)
+            except Exception:
+                raise Exception(f"Invalid response: {self.response.text}")
+
+            self.response_message = json_response.get("msg", "")
+            self.response_data = json_response.get("data", {})
+
+            if json_response.get("code") == -1 and "Too many request" in self.response_message:
+                if attempt < max_retries:
+                    sleep(retry_delay)
+                    continue
+                else:
+                    raise Exception("Maximum retry attempts reached: Too many requests per second")
+            else:
+                break
+
+        return self
+
+    def send_request_(self):
         url = "http://local.adspower.net:50325/api/v1/user/create"
         self.response = requests.post(url, json=self.payload, verify=False)
 
         try:
             json_response = self.response.json()
+            self.account.add_cli("Create response")
+            self.account.add_cli(json_response)
+
         except Exception:
             raise Exception(f"Invalid response: {self.response.text}")
 

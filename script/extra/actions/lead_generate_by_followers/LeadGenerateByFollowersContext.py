@@ -16,7 +16,7 @@ class LeadGenerateByFollowersContext(InstagramMiddleware):
     def execute(self):
         try:
             self.cant_perform()
-
+            self.ig.account.add_cli("Generating lead by followers")
             BrowserLeadGenerateByFollowersEvent(self.ig).init(self.lead_source_count)
 
         except IsNotProperServer as e:

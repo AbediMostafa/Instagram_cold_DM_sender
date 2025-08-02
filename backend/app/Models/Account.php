@@ -144,6 +144,8 @@ class Account extends Model
             ]);
 
             !empty(r('tags')) && $accountObj->tags()->attach(r('tags'));
+
+            r('start_profile') && runPythonProcess('new.py', $accountObj->id);
         }
 
         abort_if($existsAccounts, 403, 'These accounts already exists :' . "\n" . $existsAccounts);

@@ -2,7 +2,8 @@ import requests
 from playwright.sync_api import sync_playwright
 from script.extra.base.IBrowserHandler import IBrowserHandler
 from script.extra.modules.adspower.Adspower import Adspower
-from script.extra.modules.adspower.ProfileCreator import ProfileCreator
+from script.extra.modules.adspower.ProfileUpdator import ProfileUpdator
+from script.models.Profile import get_next
 
 
 class AdsPowerHandler(IBrowserHandler):
@@ -10,12 +11,21 @@ class AdsPowerHandler(IBrowserHandler):
     def create_profile(self):
         self.account.add_cli('Creating Profile ....')
 
-        creator = ProfileCreator(self.account)
+        creator = ProfileUpdator(self.account)
         creator.call_action('create')
+
+    def update_profile(self):
+        self.account.add_cli('Updating Profile ....')
+
+        # Get next free profile to update
+        profile = get_next()
+
+        updator = ProfileUpdator(self.account, profile)
+        updator.call_action('update')
 
     def delete_profile(self):
         self.account.add_cli('Deleting Profile ....')
-        creator = ProfileCreator(self.account)
+        creator = ProfileUpdator(self.account)
         creator.call_action('delete')
 
     def start_browser(self):

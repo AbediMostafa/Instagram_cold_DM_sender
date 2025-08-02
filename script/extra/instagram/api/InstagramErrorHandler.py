@@ -1,5 +1,5 @@
 import traceback
-from ins_tagrapi.exceptions import PleaseWaitFewMinutes, LoginRequired
+from instagrapi.exceptions import PleaseWaitFewMinutes, LoginRequired
 
 
 class InstagramErrorHandler:

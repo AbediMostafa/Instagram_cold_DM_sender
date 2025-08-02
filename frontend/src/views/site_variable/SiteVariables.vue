@@ -9,6 +9,9 @@
         <div class="row g-5 g-xl-8">
           <categories/>
           <tags/>
+          <hashtags/>
+          <lead-source/>
+          <dm-post/>
         </div>
         <!--end::Row-->
       </div>
@@ -22,4 +25,7 @@
 <script lang="ts" setup>
 import Categories from "@/views/site_variable/Categories.vue";
 import Tags from "@/views/site_variable/Tags.vue";
+import Hashtags from "@/views/site_variable/Hashtags.vue";
+import LeadSource from "@/views/site_variable/LeadSource.vue";
+import DmPost from "@/views/site_variable/DmPost.vue";
 </script>

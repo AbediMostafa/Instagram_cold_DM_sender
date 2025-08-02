@@ -29,9 +29,18 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli('Getting unread messages ...')
 
-        self.base.go_to_threads()
+        if self.ig.is_visible_by_text('No messages found.'):
+            self.ig.account.add_cli('No messages found.')
+            return True
+
+        if not self.we_are_in_threads_page():
+            self.base.go_to_threads()
+
         self.ig.turn_on_notif()
         self.scroll_and_process_unread_conversations(random.randint(16, 18))
+
+    def we_are_in_threads_page(self):
+        return self.ig.page.url.rstrip("/") == "https://www.instagram.com/direct/inbox"
 
     def scroll_and_process_unread_conversations(self, scroll_times):
         self.ig.account.add_cli(f'Starting to scroll and process unread conversations over {scroll_times} scrolls')
@@ -165,7 +174,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
             'failed loom dm': 'unseen loom reply',
             'free': 'free',
             'call booked': 'call booked'
-        } 
+        }
 
         self.thread.lead.change_state(
             account=self.ig.account,

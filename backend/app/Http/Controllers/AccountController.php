@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use \App\Classes\Fingerprint;
 
 class AccountController extends Controller
 {
@@ -29,7 +30,7 @@ class AccountController extends Controller
         $accounts = Account::query()
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email',
-                'name', 'password', 'created_at','category_id',
+                'name', 'password', 'created_at', 'category_id',
                 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
             ->withCount([
                 'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
@@ -164,7 +165,7 @@ class AccountController extends Controller
                 ->get()
                 ->each(function (Account $account) {
                     $account->delete();
-                    $account->profile && $account->profile->deleteRecords();
+//                    $account->profile && $account->profile->deleteRecords();
                     sleep(3);
                 });
         },
@@ -328,24 +329,36 @@ class AccountController extends Controller
     {
 
         try {
-            $service = new MultiloginService();
 
             Account::query()
                 ->whereIn('id', r('ids'))
                 ->get()
-                ->each(function (Account $account) use (&$service) {
-                    runPythonProcess('new.py', $account->id);
-//                    $account->profile ?
-//                        $service->startProfile($account->profile->profile_id) :
-//                        $service->addMessage("{$account->username} dont have profile");
-                });
+                ->each(fn (Account $account)=> runPythonProcess('new.py', $account->id));
 
-            return jsonSuccess('Profiles started ' . $service->getMessages());
+            return jsonSuccess('Profiles started ');
 
         } catch (Exception $e) {
 
             return jsonError($e->getMessage());
         }
+    }
+
+    public function assignFingerprint()
+    {
+        $fingerprint = new Fingerprint();
+
+        $accountsQuery = Account::query();
+
+        r('ids') && $accountsQuery->whereIn('id', request('ids'));
+
+        return tryCatch(
+            fn()=>$accountsQuery->get()
+                ->each(function (Account $account) use ($fingerprint) {
+                    $account->fingerprint = $fingerprint->generate();
+                    $account->save();
+                }),
+            'Fingerprints assigned successfully',
+        );
     }
 }
 

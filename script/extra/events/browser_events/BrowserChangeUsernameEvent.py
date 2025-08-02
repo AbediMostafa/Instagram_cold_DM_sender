@@ -73,13 +73,13 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
         self.ig.account.add_cli(f'Selected username: {self.username}')
 
     def fill_username(self):
-        self.ig.page.get_by_label("Username").fill(self.username)
+        self.fill_locator()
         self.ig.pause(3000, 4000)
 
         while self.ig.is_visible_by_text('Username is not available'):
             self.ig.account.add_cli(f'Selected username is not available')
             self.get_username()
-            self.fill_username()
+            self.fill_locator()
             self.username_counter += 1
 
             if self.username_counter >= 3:
@@ -87,3 +87,19 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
 
         self.ig.page.get_by_role("button", name="Done").click(timeout=5000)
         self.ig.pause(4000, 5000)
+
+    def fill_locator(self):
+
+        try:
+            self.ig.page.locator("input[type='text']").first.fill(self.username, timeout=5000)
+            self.ig.account.add_cli("First input selector (input[type='text']) not available")
+        except:
+
+            try:
+                self.ig.page.locator("input#_r_m_").fill(self.username, timeout=5000)
+                self.ig.account.add_cli("Second input selector (input#_r_m_) not available")
+            except:
+                self.ig.page.locator("div.x6s0dn4.x78zum5.x1qughib.xh8yej3 input[type='text']").nth(0).fill(self.username, timeout=5000)
+
+
+

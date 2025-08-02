@@ -51,9 +51,9 @@ class HowManyEventsCanHandleStrategy:
 
     def run(self):
 
-        self.pre_action_hook()
+        # self.pre_action_hook()
         self.run_actions()
-        self.post_action_hook()
+        # self.post_action_hook()
 
     def pre_action_hook(self):
         BrowserSendCustomMessage(self.browser_ig).fire()
@@ -109,8 +109,8 @@ class HowManyEventsCanHandleStrategy:
 
             # ChangeNameContext,
             # BrowserChangeUsernameEvent,
-            # BrowserChangeAvatarEvent,
-            # BrowserChangeBioEvent,
+            BrowserChangeAvatarEvent,
+            BrowserChangeBioEvent,
 
             # Daily actions
             # FollowContext,
@@ -119,7 +119,7 @@ class HowManyEventsCanHandleStrategy:
             # BrowserLoomFollowUpEvent,
 
             # Periodical actions
-            UnfollowContext,
+            # UnfollowContext,
             # FollowGoodPagesContext,
             LeadGenerateByFollowersContext,
             LeadGenerateByPageEngagementContext,

@@ -65,8 +65,18 @@ class BrowserChangeNameEvent:
         self.ig.account.set('name', self.name.text)
 
     def fill_name(self):
-        self.ig.page.get_by_label("Name").fill(self.name.text)
+        self.fill_locator()
         self.ig.pause(3000, 4000)
 
         self.ig.page.get_by_role("button", name="Done").click(timeout=5000)
         self.ig.pause(4000, 5000)
+
+    def fill_locator(self):
+
+        try:
+            self.ig.page.locator("input#_r_l_").fill(self.name.text)
+            self.ig.account.add_cli("Problem filling first locator 'input#_r_l_'")
+        except:
+            self.ig.page.locator("div.x6s0dn4.x78zum5.x1qughib.xh8yej3 input[type='text']").first.fill(self.name.text)
+
+

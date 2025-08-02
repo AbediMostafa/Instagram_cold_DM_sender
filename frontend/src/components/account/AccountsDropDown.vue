@@ -52,7 +52,7 @@
       <div class="px-3 fill-flex d-flex align-items-center">
         <a
             class="btn btn-light-success btn-sm px-4"
-            @click="profileStore.changeProxyToCustom(store.checkedAccountRows)">Change Proxy To Custom</a>
+            @click="profileStore.assignFingerprint(store.checkedAccountRows)">Assign fingerprint</a>
       </div>
     </div>
     <div class="menu-item ">
