@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-5 mb-xl-8">
+  <div class="card mb-5 mb-xl-8 persian-font">
     <!--begin::Header-->
     <div class="card-header border-0 pt-5 mb-5">
       <h3 class="card-title align-items-start flex-column">

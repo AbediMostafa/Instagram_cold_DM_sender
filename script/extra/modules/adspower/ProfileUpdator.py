@@ -8,6 +8,7 @@ from script.extra.helper import tehran_now
 from peewee import OperationalError, fn, JOIN
 from script.models.AdsPowerLock import AdsPowerLock
 from script.models.Proxy import Proxy
+from script.models.Proxy import get_free_proxy
 from script.models.AccountHelper import get_storage_state
 from script.models.Profile import Profile
 
@@ -56,14 +57,7 @@ class ProfileUpdator:
 
     def get_proxy(self):
 
-        self.proxy_obj = (
-            Proxy
-            .select(Proxy, fn.COUNT(Profile.id).alias('profile_count'))
-            .join(Profile, JOIN.LEFT_OUTER, on=(Profile.proxy == Proxy.id))
-            .group_by(Proxy)
-            .order_by(fn.COUNT(Profile.id).asc())
-            .first()
-        )
+        self.proxy_obj = get_free_proxy()
 
         self.proxy = {
             "proxy_soft": "other",
@@ -233,3 +227,25 @@ class ProfileUpdator:
             except OperationalError:
                 print('Database is busy, waiting .5 seconds ...')
                 sleep(0.5)
+
+    def close_browser(self):
+        url = f'http://local.adspower.net:50325/api/v1/browser/stop?user_id={self.account.profile.profile_id}'
+        requests.get(url)
+
+    def check_account(self):
+
+        try:
+            url = f"http://local.adspower.net:50325/api/v1/browser/active?user_id={self.account.profile.profile_id}"
+            response = requests.get(url, verify=False)
+            status = response.json().get('data').get('status')
+
+            self.account.add_cli(f"Previous profile is : {status}")
+
+            if status == 'Active':
+                self.account.add_cli(f"Closing and deleting previous profile")
+
+                self.call_action('close_browser')
+                self.call_action('delete')
+
+        except Exception as e:
+            self.account.add_cli(f"Error checking previous account: {e}")

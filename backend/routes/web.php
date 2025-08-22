@@ -58,14 +58,46 @@ use \App\Models\Category;
 use \App\Models\Template;
 use \App\Models\LeadSource;
 use \App\Models\Lead;
+use \App\Models\Role;
+
+//پس باید یوزرنیم اینستاگرام واقعی‌پسند بسازم که:
+//
+//فقط حروف انگلیسی و عدد باشه (به‌همراه . یا _)
+//
+//زیر ۳۰ کاراکتر
+//
+//شامل کلمات mobleman، choob، یا zendegi باشه
+//
+//یونیک و بامسما باشه
 
 Route::get('/', function () {
 
-   $dm =  DmPost::query()->find(13);
-   $dm->priority = 0;
-   $dm->save();
-   dd($dm);
-//https://www.instagram.com/reel/DKtqpqVNPJc/
+//    $user = User::query()->create([
+//        'name'=>'user',
+//        'email'=>'user',
+//        'password'=>'user123321user',
+//    ]);
+
+//    $account = Account::query()->find(3862);
+//
+//    $account->web_session = null;
+//    $account->save();
+//    dd('sldfj');
+
+
+//
+//    $templates = [];r =
+//
+//    foreach ($usernames2 as $username) {
+//        $templates[] = [
+//            'text' => $username,
+//            'type'=>'username'
+//        ];
+//    }
+//
+//    Template::query()->insert($templates);
+
+
 });
 
 Route::get('/activate-accounts', function () {
@@ -85,7 +117,6 @@ Route::post('lead/api/export', [LeadController::class, 'exportApi']);
 Route::post('categories/get-categories', [CategoryController::class, 'getCategories']);
 Route::post('app-config', [AppConfigController::class, 'index']);
 Route::post('account/get-proxy-api', [AccountController::class, 'getProxyApi']);
-Route::post('account/change-profile-proxy-to-residential', [AccountController::class, 'changeProfileProxyToResidentialApi']);
 Route::post('account/change-profile-proxy-to-custom', [AccountController::class, 'changeProfileProxyToCustom']);
 Route::post('account/start-profile', [AccountController::class, 'startProfile']);
 
@@ -105,6 +136,7 @@ Route::post('accounts/fetch-accounts', [AccountController::class, 'fetchAccounts
 Route::post('account/clear-profile', [AccountController::class, 'clearProfile']);
 Route::post('accounts/get-2fa-code', [AccountController::class, 'get2faCode']);
 Route::post('account/assign-fingerprint', [AccountController::class, 'assignFingerprint']);
+Route::post('account/find-accounts', [AccountController::class, 'findAccounts']);
 
 Route::post('leads', [LeadController::class, 'index']);
 Route::post('lead/view', [LeadController::class, 'view']);

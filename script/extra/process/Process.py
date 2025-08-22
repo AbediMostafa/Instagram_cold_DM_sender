@@ -9,11 +9,14 @@ from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
 from script.extra.hooks.CheckForLastLoginHook import CheckForLastLoginHook
 from script.extra.hooks.CheckForWarningsHook import CheckForWarningsHook
 from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook
+from script.extra.modules.adspower.ProfileUpdator import ProfileUpdator
+
 from time import sleep
 
 
 class Process:
     account = None
+    previous_account = None
     browser_ig = None
     api_ig = None
     should_stop = None
@@ -22,11 +25,13 @@ class Process:
         """
         Sometimes we face Race condition and get_next_account() returns None
         """
-        while not self.account:
-            self.account = get_next_account()
+        # while not self.account:
+            # self.account = get_next_account(specific_ids=[3861])
+        self.previous_account = self.account = get_next_account()
 
     def start(self):
         try:
+            self.check_if_previous_browser_is_still_open()
             self.get_account()
             self.should_stop = self.before_process_hooks()
 
@@ -54,6 +59,12 @@ class Process:
 
             if not self.should_stop:  # Only record last activity if hooks did not stop the process
                 RecordLastActivityHook(self.account)
+
+    def check_if_previous_browser_is_still_open(self):
+        print('Checking previous account ... ')
+        if self.previous_account:
+            creator = ProfileUpdator(self.previous_account)
+            creator.call_action('check_account')
 
     def start_process(self):
         HowManyEventsCanHandleStrategy(self.account, self.browser_ig, self.api_ig).run()

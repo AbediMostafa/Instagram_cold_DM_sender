@@ -5,6 +5,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.Thread import Thread
 from script.models.Message import Message
+from script.models.Lead import Lead
 from datetime import datetime, timezone
 
 
@@ -29,7 +30,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
     def execute(self):
         self.ig.account.add_cli('Getting unread messages ...')
 
-        if self.ig.is_visible_by_text('No messages found.'):
+        if self.ig.is_visible_by_text('No messages found'):
             self.ig.account.add_cli('No messages found.')
             return True
 
@@ -37,7 +38,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
             self.base.go_to_threads()
 
         self.ig.turn_on_notif()
-        self.scroll_and_process_unread_conversations(random.randint(16, 18))
+        self.scroll_and_process_unread_conversations(random.randint(6, 8))
 
     def we_are_in_threads_page(self):
         return self.ig.page.url.rstrip("/") == "https://www.instagram.com/direct/inbox"
@@ -80,11 +81,13 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
         ''', element)
 
     def get_and_process_unread_conversations(self):
-        unread_conversations = self.ig.page.locator(self.unread_conversation_selector).all()
-
+        unread_conversations_locator = self.ig.page.locator(self.unread_conversation_selector)
         counter = 0
 
-        for conversation in unread_conversations:
+        while unread_conversations_locator.count():
+            self.ig.account.add_cli(f'There is {unread_conversations_locator.count()} unread conversation ...')
+
+            conversation = unread_conversations_locator.first
             counter += 1
             self.ig.account.add_cli(f'Processing {counter} unread conversation')
 
@@ -97,7 +100,24 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
                 continue
 
             self.ig.pause(3000, 3800)
-            self.thread = Thread.select().where(Thread.thread_url_id == self.base.get_thread_id()).first()
+
+            while self.ig.is_visible_by_text('No internet connection'):
+                self.ig.account.add_cli('No internet connection')
+                self.ig.page.reload()
+                self.ig.pause(3000, 3800)
+
+            full_text = self.ig.page.locator("span:has-text('Instagram')").nth(0).inner_text()
+
+            self.ig.account.add_cli(f'Full text : {full_text}')
+
+            # Split to get just the username
+            username = full_text.split("·")[0].strip()
+
+            self.ig.account.add_cli(f'Username: {username}')
+
+            lead = Lead.select().where(Lead.username == username)
+
+            self.thread = Thread.select().where(Thread.lead == lead).first()
 
             if not self.thread:
                 self.ig.account.add_cli(f'Thread with url_id {self.base.get_thread_id()} does not exist')

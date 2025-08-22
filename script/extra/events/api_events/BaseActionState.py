@@ -10,8 +10,9 @@ class BaseActionState:
     avatar_path = None
     tmp = None
 
-    def __init__(self, account):
+    def __init__(self, account, ig):
         self.account = account
+        self.ig = ig
 
     def fire(self):
         self.init_state()

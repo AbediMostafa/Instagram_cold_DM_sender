@@ -22,7 +22,37 @@ class DmFollowUp:
         leads = Lead.select().where(
             (Lead.last_state == 'dm follow up') &
             (Lead.account == self.account)
-            # (Lead.last_command_send_date > hours_ago(172))
+        )
+
+        for lead in leads:
+
+            if not lead.category:
+                self.account.add_cli(f'{lead.username} dont have category')
+                continue
+
+            if lead.has_not_reached_dm_send_time_yet():
+                continue
+
+            spintax = Spintax.get_value(lead.times + 1, lead.category)
+
+
+            if not spintax:
+                continue
+
+            lead.dm_text = spin(spintax)
+            self.leads.append(lead)
+
+            self.counter += 1
+
+            if self.counter >= cnt:
+                return self.leads
+
+        return self.leads
+    def leads_to_send_dm_follow_ups(self, cnt):
+
+        leads = Lead.select().where(
+            (Lead.last_state == 'dm follow up') &
+            (Lead.account == self.account)
         )
 
         for lead in leads:

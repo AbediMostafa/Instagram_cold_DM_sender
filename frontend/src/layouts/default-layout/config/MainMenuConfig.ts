@@ -85,6 +85,13 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-calendar3-event",
         allowed_roles:['user']
       },
+      {
+        heading: "2fa",
+        route: "/2fa",
+        keenthemesIcon: "design",
+        bootstrapIcon: "bi-shield-check",
+        allowed_roles:['employee','user']
+      },
       // {
       //   heading: "settings",
       //   route: "/settings",

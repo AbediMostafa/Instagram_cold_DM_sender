@@ -44,6 +44,7 @@ from script.extra.actions.send_dm.SendDmContext import SendDmContext
 from script.extra.actions.unfollow.UnfollowContext import UnfollowContext
 from script.extra.actions.make_account_public.MakeAccountPublicContext import MakeAccountPublicContext
 from script.extra.actions.delete_initial_posts.DeleteInitialPostsContext import DeleteInitialPostsContext
+from script.extra.actions.get_lead_pk.GetLeadPkContext import GetLeadPkContext
 from script.extra.actions.change_name.ChangeNameContext import ChangeNameContext
 from script.extra.actions.lead_generate_by_followers.LeadGenerateByFollowersContext import \
     LeadGenerateByFollowersContext
@@ -56,6 +57,8 @@ from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEng
 from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext import \
     LeadGenerateByPostEngagementContext
 from script.extra.actions.login.LoginContext import LoginContext
+from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
+
 from script.extra.helper import hours_ago
 from spintax import spin
 from script.models.Command import performed_command_count
@@ -81,17 +84,25 @@ from time import sleep
 import pytz
 from peewee import OperationalError
 from script.extra.actions.DmFollowUp import DmFollowUp
-from script.models.DmPost import get_or_reset_dm_post_for_lead
+from script.models.DmPost import get_dm_post_for_lead
+from script.models.Proxy import get_free_proxy
 from script.extra.exceptions import UploadedPostRecently
 from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
+from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
 
+# account = Account.get_by_id(3776)
+# browser_ig = BasePlaywright(account)
+# browser_ig.init()
+# LoginContext(browser_ig).fire()
+# GetContactInformationContext(browser_ig).fire()
+name = None
+name = other_name = 'some'
 
-account = get_next_account()
-browser_ig = BasePlaywright(account)
-browser_ig.init()
-LoginContext(browser_ig).fire()
-SendDmWithPostContext(browser_ig).fire()
+print(name)
+# url = f"http://local.adspower.net:50325/api/v1/browser/active?user_id=k13jpcns"
+# response = requests.get(url, verify=False)
+# print(response.json().get('data').get('status'))
 # DeleteInitialPostsContext(browser_ig).fire()
 # UnfollowContext(browser_ig).fire()
 # lead = Lead.get_by_id(2950649)

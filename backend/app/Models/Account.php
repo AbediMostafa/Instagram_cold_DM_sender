@@ -167,21 +167,6 @@ class Account extends Model
         return $this->belongsTo(Profile::class);
     }
 
-    public function updateProfileProxyToResidential()
-    {
-        if ($this->profile) {
-            sleep(3);
-
-            if (Profile::is_('adspower')) {
-                return (new AdsPowerProfileUpdateProxy($this->profile->profile_id))->updateProxyToResidential();
-            }
-
-            $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
-            $updateProxy->getProfile();
-            $updateProxy->updateProxyToResidential();
-        }
-    }
-
     public function updateProfileProxyFromResidentialToCustom()
     {
         if ($this->profile) {

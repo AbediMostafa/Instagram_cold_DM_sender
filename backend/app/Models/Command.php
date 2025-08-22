@@ -23,6 +23,7 @@ class Command extends Model
         'set username',
         'set bio',
         'set avatar',
+        'set phone',
         'post image',
         'post video',
         'post carousel',

@@ -45,7 +45,7 @@
       <div class="px-3 fill-flex d-flex align-items-center">
         <a
             class="btn btn-light-success btn-sm px-4"
-            @click="profileStore.changeProxyToResidential(store.checkedAccountRows)">Change Proxy To Residential</a>
+            @click="showModal('account_update_phone')">Update Phone</a>
       </div>
     </div>
     <div class="menu-item ">

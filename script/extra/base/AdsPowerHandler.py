@@ -37,6 +37,8 @@ class AdsPowerHandler(IBrowserHandler):
 
         try:
             self.account.add_cli('Closing Adspower profile ...')
-            Adspower().close_browser(self.account.profile.profile_id)
+            response = Adspower().close_browser(self.account.profile.profile_id)
+            self.account.add_cli(f'Close adspower status code : {response.status_code}')
+            self.account.add_cli(f'Close adspower json : {response.json()}')
         except Exception as e:
             self.account.add_cli(f'Problem Closing Profile : {str(e)}')

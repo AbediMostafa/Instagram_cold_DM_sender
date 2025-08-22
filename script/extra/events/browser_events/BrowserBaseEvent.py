@@ -17,12 +17,12 @@ class BrowserBaseEvent:
         for attempt in range(retries):
             try:
                 try:
-                    self.ig.page.get_by_role("link", name="Home Home").click(timeout=3000)
+                    self.ig.page.goto('https://www.instagram.com')
                 except:
                     try:
                         self.ig.page.get_by_role("link", name="Home").click()
                     except:
-                        self.ig.page.goto('https://www.instagram.com')
+                        self.ig.page.get_by_role("link", name="Home Home").click(timeout=3000)
 
                 break
 

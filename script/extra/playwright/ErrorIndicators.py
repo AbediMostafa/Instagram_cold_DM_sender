@@ -42,6 +42,24 @@ class ErrorIndicators(BaseAction):
             except Exception as e:
                 raise Exception(f'Problem clicking on Dismiss:{str(e)}')
 
+    def use_another_profile(self):
+        import re
+
+        if self.ig.is_visible_by_text('Use another profile'):
+
+            try:
+                self.ig.pause(1000, 2000)
+                self.ig.account.add_cli('Use another profile')
+                # self.ig.page.get_by_role("button", name='Use another profile').click(timeout=5000)
+                self.ig.page.get_by_role("button", name=re.compile(r"Use another profile", re.I)).click(timeout=3000)
+
+                self.ig.pause(5000, 6000)
+
+            except Exception as e:
+                raise Exception(f'Problem clicking on use_another_profile:{str(e)}')
+    #     Use another profile
+
+
     def choose_if_we_process_your_data(self):
         # Choose if we process your data for ads
 

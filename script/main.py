@@ -69,69 +69,95 @@ from time import sleep
 import pytz
 from peewee import OperationalError
 from script.extra.actions.DmFollowUp import DmFollowUp
-from script.models.DmPost import get_or_reset_dm_post_for_lead
+from script.models.DmPost import get_dm_post_for_lead
 from script.extra.exceptions import UploadedPostRecently
 from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
+from script.extra.events.api_events.DmEvent import DmEvent
 
 
-def get_medias(account_instagram_id):
-    account.add_cli('Getting accounts medias')
-    account_medias = ig.user_medias(account_instagram_id, 10)
+# def get_medias(account_instagram_id):
+#     account.add_cli('Getting accounts medias')
+#     account_medias = ig.user_medias(account_instagram_id, 10)
+#
+#     return random.choice(account_medias), account_medias
+#
+#
+# def post_media(account, account_instagram_id):
+#     account_media, account_medias = get_medias(account_instagram_id)
+#
+#     while account_media.media_type != 2:
+#         account.add_cli(f'Account media type is {account_media.media_type} trying another one')
+#         account_media = random.choice(account_medias)
+#
+#     if account_media.media_type == 2:
+#         account.add_cli('Accounts media type is 2 trying to download the video ...')
+#
+#         media_path = ig.client.video_download(account_media.pk)
+#         account.add_cli(f'media path {media_path}')
+#
+#         account.add_cli('Trying to upload the video ...')
+#
+#         ig.client.clip_upload(
+#             media_path,
+#             account_media.caption_text,
+#         )
+#
+#     else:
+#         account.add_cli('Media type is not video')
 
-    return random.choice(account_medias), account_medias
+
+# account_ids = [3498]
+# account_ids = [3505, 3508]
+account_ids = [77, 78, 80, 81, 82, 3153]
+# account_ids = [ 77, 78, 80, 81, 82, 3153]
+# account_ids = [3505, 3503, 75, 76, 77, 78, 80, 81, 82, 3153]
+while True :
+    try:
+        account = get_next_account()
+        ig = InstagramMobile(account)
+        ig.log_in()
+        DmEvent(account, ig).fire()
+    except Exception as e:
+        print(e)
 
 
-def post_media(account, account_instagram_id):
-    account_media, account_medias = get_medias(account_instagram_id)
 
-    while account_media.media_type != 2:
-        account.add_cli(f'Account media type is {account_media.media_type} trying another one')
-        account_media = random.choice(account_medias)
-
-    if account_media.media_type == 2:
-        account.add_cli('Accounts media type is 2 trying to download the video ...')
-
-        media_path = ig.client.video_download(account_media.pk)
-        account.add_cli(f'media path {media_path}')
-
-        account.add_cli('Trying to upload the video ...')
-
-        ig.client.clip_upload(
-            media_path,
-            account_media.caption_text,
-        )
-
-    else:
-        account.add_cli('Media type is not video')
-
-
-# account_ids = [ 78, 80, 81, 82, 3153]
-account_ids = [75, 76, 77, 78, 80, 81, 82, 3153]
-
-for account_id in account_ids:
-    account = Account.get_by_id(account_id)
-    ig = InstagramMobile(account)
-    ig.log_in()
-    leads = Lead.get_leads_for_dm(account, random.randint(1, 3))
-
-    account.add_cli('Getting accounts id')
-    account_instagram_id = ig.get_user_id('moble.choob_zendegi')
-    media, medias = get_medias(account_instagram_id)
-    # post_media(account, account_instagram_id)
-
-    for lead in leads:
-        account.add_cli(f'Sending direct message to {lead.username}')
-        ig.user_id_from_username(lead)
-        ig.client.direct_media_share(media.id, [int(lead.instagram_id)])
-        text = '''
-        برترین‌تولید‌کننده‌تخصصی‌مبلمان‌راحتی 🔰
-            بهترین شرایط اقساط
-            برای دریافت مشاوره یا ثبت سفارش با شماره زیر تماس بگیرین
-            09129519606
-        '''
-        ig.direct_send([int(lead.instagram_id)], text)
-        sleep(random.randint(2, 5))
+# for account_id in account_ids:
+#
+#     try:
+#         account = Account.get_by_id(account_id)
+#         ig = InstagramMobile(account)
+#         ig.log_in()
+#         leads = Lead.get_leads_for_dm(account, random.randint(3, 6))
+#         dm_post = DmPost.select().where(DmPost.priority == 1).first()
+#
+#         account.add_cli('Getting accounts id')
+#         # account_instagram_id = ig.get_user_id('moble.choob_zendegi')
+#         # media, medias = get_medias(account_instagram_id)
+#         # post_media(account, account_instagram_id)
+#
+#         for lead in leads:
+#             account.add_cli(f'Sending direct message to {lead.username}')
+#             ig.user_id_from_username(lead)
+#             ig.client.direct_media_share(dm_post.media_id, [int(lead.instagram_id)])
+#             text = '''
+#             سلام 👋 همراه‌گرامی 🌟
+# ما مشاور یکی از معتبرترین تولیدی‌های تخصصی مبلمان راحتی در کشور هستیم 🛋️
+# اگه دنبال چیدمانی مدرن برای خونت هستی، ما با قیمت‌های استثنایی کنارت هستیم ✨
+#
+#             برای دریافت راهنمای انتخاب مدل یا ثبت سفارش، فقط کافیه بهمون پیام بدی یا با این شماره تماس بگیری:
+#             📞 09129519606
+#
+# خوشحال میشم راهنماییت کنم 💬
+#
+#             https://choobozendegi.com
+#             '''
+#             ig.direct_send([int(lead.instagram_id)], text)
+#             sleep(random.randint(1, 3))
+#
+#     except Exception as e:
+#         print(e)
 
 # account = get_next_account()
 # browser_ig = BasePlaywright(account)

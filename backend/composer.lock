@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f92ecfe202c1bcce8e19fb0c07e9c371",
+    "content-hash": "342f53347aa093477db9323bf9a742a0",
     "packages": [
         {
             "name": "brick/math",
@@ -1049,6 +1049,55 @@
                 }
             ],
             "time": "2023-12-03T19:50:20+00:00"
+        },
+        {
+            "name": "imseyed/auth2fa",
+            "version": "v1.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/imseyed/Auth2FA.git",
+                "reference": "fe52a00dc691a580a78cdd74ad19576e441771ca"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/imseyed/Auth2FA/zipball/fe52a00dc691a580a78cdd74ad19576e441771ca",
+                "reference": "fe52a00dc691a580a78cdd74ad19576e441771ca",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "imseyed\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ali khalili",
+                    "email": "dev@alikhalili.ir",
+                    "homepage": "https://github.com/imseyed"
+                }
+            ],
+            "description": "PHP library provides functionality for generating Time-based One Time Passwords (TOTP) and HMAC-based One Time Passwords (HOTP), commonly used in two-factor authentication (2FA) systems.",
+            "homepage": "https://github.com/imseyed/Auth2FA",
+            "keywords": [
+                "2fa",
+                "Authentication",
+                "Two-factor Authentication",
+                "hotp",
+                "totp"
+            ],
+            "support": {
+                "issues": "https://github.com/imseyed/Auth2FA/issues",
+                "source": "https://github.com/imseyed/Auth2FA/tree/v1.1.2"
+            },
+            "time": "2024-08-06T09:00:09+00:00"
         },
         {
             "name": "kkszymanowski/traitor",
@@ -3381,6 +3430,87 @@
                 }
             ],
             "time": "2024-04-27T21:32:50+00:00"
+        },
+        {
+            "name": "robthree/twofactorauth",
+            "version": "v3.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/RobThree/TwoFactorAuth.git",
+                "reference": "6d70f9ca8e25568f163a7b3b3ff77bd8ea743978"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/RobThree/TwoFactorAuth/zipball/6d70f9ca8e25568f163a7b3b3ff77bd8ea743978",
+                "reference": "6d70f9ca8e25568f163a7b3b3ff77bd8ea743978",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.13",
+                "phpstan/phpstan": "^1.9",
+                "phpunit/phpunit": "^9"
+            },
+            "suggest": {
+                "bacon/bacon-qr-code": "Needed for BaconQrCodeProvider provider",
+                "endroid/qr-code": "Needed for EndroidQrCodeProvider"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RobThree\\Auth\\": "lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Rob Janssen",
+                    "homepage": "http://robiii.me",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Nicolas CARPi",
+                    "homepage": "https://github.com/NicolasCARPi",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Will Power",
+                    "homepage": "https://github.com/willpower232",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Two Factor Authentication",
+            "homepage": "https://github.com/RobThree/TwoFactorAuth",
+            "keywords": [
+                "Authentication",
+                "MFA",
+                "Multi Factor Authentication",
+                "Two Factor Authentication",
+                "authenticator",
+                "authy",
+                "php",
+                "tfa"
+            ],
+            "support": {
+                "issues": "https://github.com/RobThree/TwoFactorAuth/issues",
+                "source": "https://github.com/RobThree/TwoFactorAuth"
+            },
+            "funding": [
+                {
+                    "url": "https://paypal.me/robiii",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/RobThree",
+                    "type": "github"
+                }
+            ],
+            "time": "2024-10-24T15:14:25+00:00"
         },
         {
             "name": "santigarcor/laratrust",

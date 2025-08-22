@@ -11,7 +11,6 @@ class CheckForAccountActionsHook:
         self.account.get_number_of_dm_follow_ups()
         self.account.get_number_of_loom_follow_ups()
         self.account.get_custom_message_commands()
-        self.account.pick_a_resolution()
 
         self.account.add_cli('------------------------------------------', print_only=True)
         self.account.add_cli(f'Passed days since creation ----------- {self.account.passed_days_since_creation}',

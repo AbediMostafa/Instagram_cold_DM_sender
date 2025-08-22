@@ -123,7 +123,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Share").click(timeout=3000)
-        self.ig.pause(90000, 98000)
+        self.ig.pause(60000, 68000)
 
         try:
             self.ig.page.get_by_role("button", name="Close").press("Escape")

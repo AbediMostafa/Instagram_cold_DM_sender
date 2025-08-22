@@ -3,7 +3,7 @@
   <div>
     <!--begin::Aside-->
 
-    <div class="flex-lg-row-fluid">
+    <div class="flex-lg-row-fluid persian-font">
       <div class="d-flex flex-wrap flex-stack pb-7">
         <!--begin::Title-->
         <div class="d-flex flex-wrap align-items-center my-1">

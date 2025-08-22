@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use \App\Classes\Fingerprint;
+use \imseyed\Auth2FA;
 
 class AccountController extends Controller
 {
@@ -29,7 +30,7 @@ class AccountController extends Controller
 
         $accounts = Account::query()
             ->select(
-                'id', 'avatar_changed', 'username', 'instagram_state', 'email',
+                'id', 'avatar_changed', 'username', 'instagram_state', 'email','phone',
                 'name', 'password', 'created_at', 'category_id',
                 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
             ->withCount([
@@ -81,8 +82,16 @@ class AccountController extends Controller
                         $_->where('username', likeOperator(), '%' . r('search') . '%');
                     }
 
-                    if (r('type') === 'profile') {
+                    if (r('type') === 'prolfile') {
                         $_->whereHas('profile', fn($__) => $__->where('title', likeOperator(), '%' . r('search') . '%'));
+                    }
+
+                    if (r('type') === 'accountId') {
+                        $_->where('id', likeOperator(), '%' . r('search') . '%');
+                    }
+
+                    if (r('type') === 'phone') {
+                        $_->where('phone', likeOperator(), '%' . r('search') . '%');
                     }
                 }
             )
@@ -129,7 +138,7 @@ class AccountController extends Controller
     public function getAccount()
     {
         return Account::query()->select(
-            'username', 'password',
+            'username', 'password','name', 'bio',
             'instagram_state', 'app_state', 'color_id', 'is_used',
             'avatar_changed', 'username_changed', 'initial_posts_deleted',
             'has_enough_posts', 'next_login'
@@ -166,7 +175,7 @@ class AccountController extends Controller
                 ->each(function (Account $account) {
                     $account->delete();
 //                    $account->profile && $account->profile->deleteRecords();
-                    sleep(3);
+//                    sleep(3);
                 });
         },
             'Account(s) deleted successfully'
@@ -279,10 +288,15 @@ class AccountController extends Controller
     public function get2faCode()
     {
         try {
-            $secretKey = r('secretKey');
+//            $secretKey = r('secretKey');
+            $totp = Auth2FA::TOTP(r('secretKey'));
 
-            $resp = Http::withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
-            return $resp->json()['data']['otp'];
+
+            return $totp;
+
+
+//            $resp = Http::withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
+//            return $resp->json()['data']['otp'];
 
         } catch (\Exception $exception) {
 
@@ -293,21 +307,6 @@ class AccountController extends Controller
     public function getProxyApi()
     {
         return Account::query()->find(r('id'))->getProxy();
-    }
-
-    public function changeProfileProxyToResidentialApi()
-    {
-        try {
-            Account::query()->whereIn('id', r('ids'))
-                ->get()
-                ->each(
-                    fn(Account $account) => $account->updateProfileProxyToResidential()
-                );
-            return jsonSuccess('Account(s) Profile proxies updated successfully');
-
-        } catch (\Exception $exception) {
-            return jsonError($exception->getMessage() . $exception->getTraceAsString());
-        }
     }
 
     public function changeProfileProxyToCustom()
@@ -359,6 +358,20 @@ class AccountController extends Controller
                 }),
             'Fingerprints assigned successfully',
         );
+    }
+
+    public function findAccounts()
+    {
+        $queryStr = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], request('query'));
+
+        $query = Account::query()
+            ->select('id', 'username', 'phone')
+            ->whereRaw("username ILIKE ? ESCAPE '\\'", ["%{$queryStr}%"]);
+
+            return [
+                'accounts' => $query->orderBy('username')->get(),
+                'count' => $query->count(),
+            ];
     }
 }
 

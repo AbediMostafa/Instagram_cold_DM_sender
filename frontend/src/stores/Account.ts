@@ -11,6 +11,7 @@ export const useAccountStore = defineStore("AccountStore", {
     state() {
         return {
             checkedAccountRows: [],
+            currentStartingAccount:'',
             accounts: {
                 data: [],
                 current_page: 1,
@@ -21,7 +22,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 sortBy: 'id',
                 sortDesc: false,
                 category_id: '',
-                type:'',
+                type: '',
                 tags: [],
             },
             accountsData: [],
@@ -33,6 +34,7 @@ export const useAccountStore = defineStore("AccountStore", {
             is: {
                 loading: false,
                 deleting: false,
+                profileStarting: false,
             },
         };
     },
@@ -43,8 +45,16 @@ export const useAccountStore = defineStore("AccountStore", {
             warningPromise("Are you sure you want to delete selected account(s)?")
                 .then(() => ApiService.post("account/delete", {ids}).then(this.getAccounts))
         },
+        startSingleProfile(id){
+            this.currentStartingAccount = id;
+            this.startProfile([id]);
+        },
         startProfile(ids) {
+            this.is.profileStarting = true;
             ApiService.post("account/start-profile", {ids})
+                .finally(() => {
+                    this.is.profileStarting = false;
+                })
         },
         warnIfdosntSelected(selected) {
             if (selected.length) return true;
@@ -96,10 +106,10 @@ export const useAccountStore = defineStore("AccountStore", {
             }
             this.getAccounts(this.accounts.current_page);
         },
-        setCategory(){
+        setCategory() {
             const data = {
-                categoryId:this.accounts.category_id,
-                accountIds :this.checkedAccountRows
+                categoryId: this.accounts.category_id,
+                accountIds: this.checkedAccountRows
             }
 
             this.warnIfdosntSelected(this.checkedAccountRows) &&
@@ -135,6 +145,7 @@ export const useAccountStore = defineStore("AccountStore", {
             ApiService.post("accounts/get-2fa-code", {secretKey})
                 .then(response => {
                     copyToClipboard(response.data)
+                    return response.data
                 })
                 .catch(error => {
                     ElMessage.error('Failed to fetch OTP:', error);

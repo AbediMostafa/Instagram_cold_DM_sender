@@ -11,6 +11,10 @@ from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChan
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
 from script.extra.events.browser_events.BrowserSendCustomMessage import BrowserSendCustomMessage
+from script.extra.actions.get_lead_pk.GetLeadPkContext import GetLeadPkContext
+from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
+from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
+
 
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
 from script.extra.events.browser_events.BrowserSeeStories import BrowserSeeStories
@@ -20,6 +24,7 @@ from script.extra.events.browser_events.BrowserGoToTargetAccountAndExplorePosts 
     BrowserGoToTargetAccountAndExplorePosts
 
 from script.extra.actions.send_dm.SendDmContext import SendDmContext
+from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
 from script.extra.actions.make_account_public.MakeAccountPublicContext import MakeAccountPublicContext
 from script.extra.actions.delete_initial_posts.DeleteInitialPostsContext import DeleteInitialPostsContext
 from script.extra.actions.change_name.ChangeNameContext import ChangeNameContext
@@ -51,9 +56,9 @@ class HowManyEventsCanHandleStrategy:
 
     def run(self):
 
-        # self.pre_action_hook()
+        self.pre_action_hook()
         self.run_actions()
-        # self.post_action_hook()
+        self.post_action_hook()
 
     def pre_action_hook(self):
         BrowserSendCustomMessage(self.browser_ig).fire()
@@ -62,7 +67,7 @@ class HowManyEventsCanHandleStrategy:
     def post_action_hook(self):
         from script.extra.exceptions import UploadedPostRecently
 
-        if not self.account.has_enough_posts and self.account.initial_posts_deleted:
+        if self.account.initial_posts_deleted:
             self.account.add_cli('We can post now')
 
             try:
@@ -103,18 +108,22 @@ class HowManyEventsCanHandleStrategy:
     def run_actions(self):
         required_actions = [
 
-            # Account profile actions
             # MakeAccountPublicContext,
-            DeleteInitialPostsContext,
+            # DeleteInitialPostsContext,
 
-            # ChangeNameContext,
-            # BrowserChangeUsernameEvent,
+            ChangeNameContext,
+            BrowserChangeUsernameEvent,
             BrowserChangeAvatarEvent,
             BrowserChangeBioEvent,
 
+            GetContactInformationContext,
+            # GetProfileScreenShotContext,
+
             # Daily actions
             # FollowContext,
-            # SendDmContext,
+            SendDmWithPostContext,
+            # GetLeadPkContext,
+
             # BrowserDmFollowUpEvent,
             # BrowserLoomFollowUpEvent,
 
@@ -126,9 +135,9 @@ class HowManyEventsCanHandleStrategy:
             LeadGenerateByPostEngagementContext
         ]
 
-        events = required_actions + [self.select_random_explore_action()]
-
-        random.shuffle(events)
+        random.shuffle(required_actions)
+        # events = required_actions + [self.select_random_explore_action()]
+        events = required_actions
 
         for event in events:
             self.browser_ig.pause(1000, 3000)

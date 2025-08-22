@@ -43,7 +43,7 @@ class BrowserDeleteInitialPostsEvent:
     def change_hook(self):
         posts = GetPostsAction(self.ig).start()
 
-        count = min(posts.count(), 5)
+        count = min(posts.count(), 8)
 
         for _ in range(count):
             # for _ in range(posts.count()):

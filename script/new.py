@@ -40,26 +40,32 @@ import traceback
 from script.extra.actions.login.LoginContext import LoginContext
 
 
-
+# Ensure correct usage
 if len(sys.argv) < 2:
     print("Usage: python new.py <account_id>")
     sys.exit(1)
 
 account_id = sys.argv[1]
+
+# Fetch the account (you may need to import Account from your models)
 account = Account.get_by_id(account_id)
 if not account:
     sys.exit(1)
+
+try:
+    with open("log.txt", "a") as log_file:
+        log_file.write(f"{account.username} - {account.id}\n")
+except Exception as e:
+    print(f"Failed to write to log: {str(e)}")
+
 try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
     FollowGoodPagesContext(browser_ig).fire()
-
-
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
-    pass
 
 
 # CheckForAccountActionsHook(account)

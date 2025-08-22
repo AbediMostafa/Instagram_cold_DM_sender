@@ -30,13 +30,30 @@ class IBrowserHandler:
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
 
-        # # If we run more accounts than our profiles should clear cookies to be ready for next account
-        # if self.server_type == 'more':
-        #
-        # if not get_storage_state(self.account):
-        #     self.context.clear_cookies()
-        #
-        # self.context.add_cookies(self.storage_state.get("cookies", []))
+        # Inject CSS to hide any inline video
+        self.page.add_style_tag(content="video { display: none !important; }")
+
+        # Optionally remove existing <video> tags
+        self.page.evaluate("document.querySelectorAll('video').forEach(v => v.remove());")
+
+        self.page.route("**/*", self.handle_route)
+
+    def handle_route(self, route, request): 
+        url = request.url
+
+        blocked_domains = [
+            "instagram.fath3-3.fna.fbcdn",
+        ]
+
+        if any(domain in url for domain in blocked_domains):
+            return route.abort()
+
+        if "scontent-" in url and ".cdninstagram.com" in url:
+            return route.abort()
+
+        if request.resource_type in ['image', 'media']:
+            return route.abort()
+        return route.continue_()
 
     def cleanup(self):
 

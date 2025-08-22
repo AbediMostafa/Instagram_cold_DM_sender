@@ -109,15 +109,15 @@ class TemplateController extends Controller
             }
         }
 
-        if ($mediaType === 'carousel') {
-            $color = Color::whereTitle($theme)->first();
-
-//            if (!$color) {
-//                return response()->json(['message' => "The $theme not recorded in the database"], 422);
-//            }
-
-            $colorId = $color?->id;
-        }
+//        if ($mediaType === 'carousel') {
+//            $color = Color::whereTitle($theme)->first();
+//
+////            if (!$color) {
+////                return response()->json(['message' => "The $theme not recorded in the database"], 422);
+////            }
+//
+//            $colorId = $color?->id;
+//        }
 
         if ($mediaType === 'avatar' && $subType === 'video') {
             return response()->json(['message' => 'unhandled file extension for avatar type'], 422);

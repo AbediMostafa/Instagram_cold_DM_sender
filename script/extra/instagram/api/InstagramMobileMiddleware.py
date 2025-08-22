@@ -136,6 +136,10 @@ class InstagramMobileMiddleware:
         return self.client.direct_profile_share(user_id=user_id, user_ids=user_ids)
 
     @try_except
+    def media_share(self, media_id, user_ids):
+        return self.client.direct_media_share(media_id=media_id, user_ids=user_ids)
+
+    @try_except
     def direct_send_video(self, path, thread_id):
         return self.client.direct_send_video(path=path, thread_ids=[thread_id])
 

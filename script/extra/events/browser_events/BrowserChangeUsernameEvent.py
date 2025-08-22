@@ -41,14 +41,15 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
     def change_hook(self):
 
         self.base.go_to_profile_page()
-        
-        try:
-            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
-        except Exception as e:
-            self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click()
-            self.ig.pause(2000, 2500)
-            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
 
+        try:
+            self.ig.page.locator("a", has_text=self.ig.account.username).first.click(timeout=3000)
+        except Exception as e:
+            self.ig.account.add_cli(f"Problem clicking on a locator has text {self.ig.account.username} : {str(e)}")
+            self.ig.page.get_by_text("Profiles").click()
+            self.ig.pause(2000, 2500)
+            self.ig.page.locator("a", has_text=self.ig.account.username).first.click(timeout=3000)
+        
         self.ig.page.locator(f"text=Username").click()
         self.ig.pause(3000, 4000)
 
@@ -74,16 +75,17 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
 
     def fill_username(self):
         self.fill_locator()
-        self.ig.pause(3000, 4000)
+        self.ig.pause(4000, 5000)
 
         while self.ig.is_visible_by_text('Username is not available'):
             self.ig.account.add_cli(f'Selected username is not available')
             self.get_username()
             self.fill_locator()
             self.username_counter += 1
+            self.ig.pause(4000, 5000)
 
-            if self.username_counter >= 3:
-                raise Exception('3 Times username exists exceeded')
+            if self.username_counter >= 6:
+                raise Exception('6 Times username exists exceeded')
 
         self.ig.page.get_by_role("button", name="Done").click(timeout=5000)
         self.ig.pause(4000, 5000)

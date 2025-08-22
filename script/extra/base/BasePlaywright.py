@@ -70,8 +70,11 @@ class BasePlaywright:
                 pass
 
     def is_visible_by_text(self, text):
+        import re
+
         try:
-            return self.page.locator(f"text={text}").is_visible()
+            return self.page.locator(f"text=/{re.escape(text)}/i").is_visible()
+
         except Exception as e:
             return False
 

@@ -18,5 +18,5 @@ class Adspower:
         raise Exception("Failed to start AdsPower browser.")
 
     def close_browser(self, profile_id):
-        response = requests.get(
+        return requests.get(
             f'http://local.adspower.net:50325/api/v1/browser/stop?user_id={profile_id}')

@@ -100,13 +100,14 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, ref} from "vue";
+import {onMounted, ref, watch} from "vue";
 import ApiService from "@/core/services/ApiService";
 import {useAppConfigStore} from "@/stores/AppConfig";
 import {useUserStore} from "@/stores/User";
 
 const configStore = useAppConfigStore();
 const loading = ref(false);
+
 const dailyStatistics = ref({
   data: [],
   current_page: 1,

@@ -8,7 +8,7 @@
       aria-hidden="true"
   >
     <!--begin::Modal dialog-->
-    <div class="modal-dialog modal-dialog-centered mw-650px">
+    <div class="modal-dialog modal-dialog-centered mw-750px">
       <!--begin::Modal content-->
       <div class="modal-content rounded">
         <!--begin::Modal header-->

@@ -39,8 +39,10 @@
                   placeholder="Select"
                   style="width: 115px"
               >
-                <el-option label="Profile" value="profile"/>
                 <el-option label="Account" value="account"/>
+                <el-option label="Phone" value="phone"/>
+                <el-option label="Account Id" value="accountId"/>
+                <el-option label="Profile" value="profile"/>
                 <el-option label="Proxy" value="proxy"/>
               </el-select>
             </template>
@@ -99,6 +101,7 @@
               </div>
             </th>
             <th class="min-w-150px">USERNAME</th>
+            <th class="min-w-100px">QUICK ACTIONS</th>
 
             <th class="min-w-300px">
 
@@ -131,7 +134,6 @@
 
             </th>
 
-            <th class="min-w-130px">ENOUGH POSTS</th>
 
             <th class="min-w-200px cursor-pointer" @click="sortBy('created_at')">
               CREATED / SUSPENDED AT
@@ -207,6 +209,11 @@
                       <account-app-state :state="account.app_state"/>
                     </div>
                     <span
+                        @click="copyToClipboard(account.phone)"
+                        class="text-muted fw-semibold text-muted d-block fs-8">
+                    {{ account.phone }}
+                  </span>
+                    <span
                         @click="store.fetchOtpAndCopy(account.secret_key)"
                         class="text-muted fw-semibold text-muted d-block fs-8">
                     {{ account.secret_key }}
@@ -236,6 +243,20 @@
                 </div>
               </td>
               <td>
+                <a
+                    @click="store.startSingleProfile(account.id)"
+                    class="btn btn-light-success btn-sm fs-8 px-3 py-2">
+                  <span v-if="store.is.profileStarting && store.currentStartingAccount== account.id">
+                  Please wait...
+                  <span
+                      class="spinner-border spinner-border-sm align-middle ms-2"
+                  ></span>
+                </span>
+                  <span v-else>Start Profile</span>
+
+                </a>
+              </td>
+              <td>
                 <span class="fw-semibold fs-7 ">{{ account.total_cold_dms }} </span> /
                 <span class="fw-semibold fs-7 ">{{ account.total_follow_ups }}</span> /
                 <span class="fw-semibold fs-7 ">{{ account.total_replies }}</span>
@@ -252,13 +273,6 @@
                 </div>
               </td>
 
-              <td>
-                <span v-if="account.has_enough_posts" class="badge badge-light-success mt-1 ms-1">
-                  yes
-                </span>
-                <span v-else class="badge badge-light-danger mt-1 ms-1">no</span>
-
-              </td>
               <td>
                 <span class="text-muted fw-semibold text-muted fs-8">{{ account.created_at_ago }} / </span>
                 <span class="text-muted fw-semibold text-muted fs-8">{{ account.latest_warning_created_at_ago }}</span>
@@ -297,6 +311,7 @@
   </div>
   <create-account-modal/>
   <edit-account-modal :id="selectedId"/>
+  <account-update-phone-modal/>
 </template>
 
 <script lang="ts" setup>
@@ -310,6 +325,7 @@ import AccountsDropDown from "@/components/account/AccountsDropDown.vue";
 import AccountDropDown from "@/components/account/AccountDropDown.vue";
 import {useAccountStore} from "@/stores/Account";
 import EditAccountModal from "@/components/modals/account/EditAccountModal.vue";
+import AccountUpdatePhoneModal from "@/components/modals/account/AccountUpdatePhoneModal.vue";
 import {useDebounceFn} from "@vueuse/core";
 import {Search} from '@element-plus/icons-vue'
 import {copyToClipboard} from "@/core/helpers/helper";

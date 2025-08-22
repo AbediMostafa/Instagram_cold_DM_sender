@@ -5,7 +5,6 @@ from .Proxy import Proxy
 from .Profile import Profile
 from .Category import Category
 from .Color import Color, get_next_color
-from .ScreenResolution import ScreenResolution, get_next_screen_resolution
 import random
 from dotenv import load_dotenv
 import os
@@ -17,7 +16,6 @@ from script.extra.helper import tehran_now, hours_ago, get_dm_chunk, calculate_d
 class Account(BaseWithTimeZoneModel):
     proxy = ForeignKeyField(Proxy, backref='accounts', null=True)
     color = ForeignKeyField(Color, backref='accounts', null=True)
-    screen_resolution = ForeignKeyField(ScreenResolution, backref='accounts', null=True)
     profile = ForeignKeyField(Profile, backref='accounts', null=True)
     category = ForeignKeyField(Category, backref='accounts', null=True)
 
@@ -25,6 +23,7 @@ class Account(BaseWithTimeZoneModel):
     username = CharField(unique=True)
     password = CharField()
     name = CharField(null=True)
+    phone = CharField(null=True)
     bio = TextField(null=True)
     email = TextField(null=True)
     profile_pic_url = TextField(null=True)
@@ -37,6 +36,7 @@ class Account(BaseWithTimeZoneModel):
     is_used = SmallIntegerField(default=0)
     is_active = SmallIntegerField(default=1)
     is_public = SmallIntegerField(default=0)
+    screenshot_taken = SmallIntegerField(default=0)
     web_session = TextField(null=True)
     mobile_session = TextField(null=True)
     log = TextField(null=True)
@@ -613,11 +613,6 @@ class Account(BaseWithTimeZoneModel):
         ))
 
         self.number_of_custom_message_commands = self.custom_message_commands.count()
-
-    def pick_a_resolution(self):
-        if not self.screen_resolution:
-            self.screen_resolution = get_next_screen_resolution()
-            self.save()
 
     def update_proxy_to_residential(self):
         load_dotenv()

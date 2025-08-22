@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('threads', function (Blueprint $table) {
             $table->id();
             $table->string('thread_id')->nullable();
-            $table->string('thread_url_id');
+            $table->string('thread_url_id')->nullable();
 
             $table->foreignId('account_id')
                 ->nullable()

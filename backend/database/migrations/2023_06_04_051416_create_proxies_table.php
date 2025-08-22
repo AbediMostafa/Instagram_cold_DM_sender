@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->integer('port');
             $table->string('username');
             $table->string('password');
+            $table->unsignedTinyInteger('is_used')->default(0);
             $table->enum('state', Proxy::$states)->default('active');
         });
     }

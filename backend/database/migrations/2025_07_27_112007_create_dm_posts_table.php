@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('dm_posts', function (Blueprint $table) {
             $table->id();
             $table->string('title')->unique();
+            $table->string('media_id')->unique();
             $table->text('description')->nullable();
             $table->unsignedTinyInteger('priority')->default(0);
 

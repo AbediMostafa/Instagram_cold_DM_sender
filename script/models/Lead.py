@@ -125,6 +125,28 @@ class Lead(BaseWithTimeZoneModel):
 
         return leads
 
+    @classmethod
+    def get_leads_for_api_dm(cls, cnt):
+
+        return (Lead.select().where(
+            (Lead.account_id.is_null(True)) &
+            (Lead.instagram_id.is_null(False)) &
+            (Lead.last_state == 'free')
+        )
+                .order_by(fn.Random())
+                .limit(cnt))
+
+    @classmethod
+    def get_without_pk_leads(cls, cnt):
+
+        return (Lead.select().where(
+            (Lead.account_id.is_null(True)) &
+            (Lead.instagram_id.is_null(True)) &
+            (Lead.last_state == 'free')
+        )
+                .order_by(fn.Random())
+                .limit(cnt))
+
     def passed_hours_since_last_follow_up(self):
         return (tehran_now() - self.last_command_send_date).total_seconds() / 3600
 

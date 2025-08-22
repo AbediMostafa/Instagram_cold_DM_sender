@@ -294,6 +294,16 @@ const routes: Array<RouteRecordRaw> = [
           breadcrumbs: ["Pages", "Wizard"],
         },
       },
+      {
+        path: "2fa",
+        name: "2fa",
+        component: () =>
+            import("@/views/2Fa.vue"),
+        meta: {
+          pageTitle: "Vertical",
+          breadcrumbs: ["Pages", "Wizard"],
+        },
+      },
       // {
       //   path: "/crafted/account",
       //   name: "account",

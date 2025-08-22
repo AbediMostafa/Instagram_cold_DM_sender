@@ -9,7 +9,7 @@ from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 class Thread(BaseWithTimeZoneModel):
     thread_id = CharField()
-    thread_url_id = CharField()
+    thread_url_id = CharField(null=True)
     account = ForeignKeyField(Account, backref='threads', null=True)
     lead = ForeignKeyField(Lead, backref='threads', null=True)
     category = ForeignKeyField(Category, backref='threads', null=True)

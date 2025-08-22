@@ -202,16 +202,19 @@ def calculate_daily_dms(account_age):
     :return: Allowed number of daily DMs (integer).
     """
 
-    # if account_age <= 15:
+    # if account_age <= 4:
     #     return 0
 
-    return random.randint(4, 7)
-
-    if account_age <= 5:
+    if account_age <= 7:
         return 1
 
     if account_age <= 10:
-        return random.randint(4, 7)
+        return random.randint(1, 3)
+
+    if account_age <= 15:
+        return random.randint(3, 5)
+
+    return random.randint(9, 11)
 
     if account_age <= 15:
         return random.randint(6, 10)
@@ -237,10 +240,11 @@ def calculate_daily_dms(account_age):
 
 
 def get_dm_chunk(account_age):
-    if account_age <= 5:
+    if account_age <= 7:
         return 1
 
     return random.randint(3, 5)
+    # return random.randint(6, 8)
 
     if account_age <= 10:
         return random.randint(3, 4)
