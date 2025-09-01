@@ -38,7 +38,8 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
             self.base.go_to_threads()
 
         self.ig.turn_on_notif()
-        self.scroll_and_process_unread_conversations(random.randint(6, 8))
+        self.scroll_and_process_unread_conversations(1)
+        # self.scroll_and_process_unread_conversations(random.randint(4, 6))
 
     def we_are_in_threads_page(self):
         return self.ig.page.url.rstrip("/") == "https://www.instagram.com/direct/inbox"
@@ -48,7 +49,7 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
 
         for _ in range(scroll_times):
             self.get_and_process_unread_conversations()
-            self.scroll(self.users_container, 400, 600, 2000, 3000)  # Scroll a single time
+            self.scroll(self.users_container, 550, 750, 2000, 3000)  # Scroll a single time
 
     def scroll(self, element, min_length, max_length, min_pause, max_pause):
         scroll_length = random.randint(min_length, max_length)

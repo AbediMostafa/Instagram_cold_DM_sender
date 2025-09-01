@@ -41,7 +41,7 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
         finally:
             if self.tmp:
                 shutil.rmtree(self.tmp)
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
 
     def generate_image(self):
@@ -57,7 +57,7 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
         self.command = self.ig.account.create_command('set avatar', 'processing')
 
     def change_hook(self):
-        self.ig.page.goto('https://www.instagram.com/accounts/edit/')
+        go_to_page(self.ig, "https://www.instagram.com/accounts/edit/", "Edit page")
         self.ig.pause(4000, 5000)
 
         self.ig.page.locator("input[accept='image/jpeg,image/png']").nth(0).set_input_files(

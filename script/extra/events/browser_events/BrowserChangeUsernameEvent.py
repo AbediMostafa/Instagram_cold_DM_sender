@@ -3,6 +3,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 import random
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.Template import get_a, delete
+from script.extra.helper import go_to_page
 
 
 class BrowserChangeUsernameEvent(InstagramMiddleware):
@@ -30,7 +31,7 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
@@ -84,7 +85,7 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
             self.username_counter += 1
             self.ig.pause(4000, 5000)
 
-            if self.username_counter >= 6:
+            if self.username_counter >= 10:
                 raise Exception('6 Times username exists exceeded')
 
         self.ig.page.get_by_role("button", name="Done").click(timeout=5000)

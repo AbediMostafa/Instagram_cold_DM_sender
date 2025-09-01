@@ -1,5 +1,6 @@
 from script.extra.playwright.base_actions.SearchForAction import SearchForAction
 import random
+from script.extra.helper import go_to_page
 
 
 class BrowserGetContactInformationEvent:
@@ -14,7 +15,7 @@ class BrowserGetContactInformationEvent:
 
 
         try:
-            self.ig.page.goto("https://accountscenter.instagram.com/personal_info/")
+            go_to_page(self.ig, 'https://accountscenter.instagram.com/personal_info/', "Personal info")
 
             self.ig.pause(5000, 6000)
             phone = self.ig.page.locator("div.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.xyejjpt.x15dsfln.x193iq5w.xeuugli").nth(1).inner_text()
@@ -35,6 +36,8 @@ class BrowserGetContactInformationEvent:
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, 'https://www.instagram.com/', "Home")
+
+
             self.ig.pause(3000, 4000)
 

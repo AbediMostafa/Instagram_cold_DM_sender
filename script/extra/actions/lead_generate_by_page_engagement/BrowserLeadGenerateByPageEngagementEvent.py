@@ -1,5 +1,5 @@
 import random
-
+from script.extra.helper import go_to_page
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.LeadSource import get_lead_source
 from script.models.Lead import Lead
@@ -54,7 +54,8 @@ class BrowserLeadGenerateByPageEngagementEvent:
                 pass
 
     def init(self):
-        self.ig.page.goto('https://www.instagram.com')
+        go_to_page(self.ig, 'https://www.instagram.com/', "Home")
+
         self.ig.pause(4000, 5000)
 
         try:

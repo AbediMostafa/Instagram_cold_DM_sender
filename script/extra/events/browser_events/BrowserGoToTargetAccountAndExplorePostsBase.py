@@ -2,6 +2,7 @@ from time import sleep
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.models.Lead import Lead
 from script.models.Account import Account
+from script.extra.helper import go_to_page
 from peewee import *
 
 import random
@@ -88,7 +89,7 @@ class BrowserGoToTargetAccountAndExplorePostsBase(InstagramMiddleware):
     def go_to_user_page(self):
         self.ig.page.get_by_placeholder("Search").fill(self.username)
         self.ig.pause(4000, 5000)
-        self.ig.page.goto(f'https://www.instagram.com/{self.username}/')
+        go_to_page(self.ig, f'https://www.instagram.com/{self.username}/', "Lead")
 
         if self.ig.is_visible_by_text("Sorry, this page isn't available"):
             self.ig.account.add_cli("Current account's page doesnt exists ")

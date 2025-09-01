@@ -1,3 +1,5 @@
+from script.extra.helper import go_to_page
+
 class BrowserMakeAccountPublicEvent:
     command = None
 
@@ -28,14 +30,16 @@ class BrowserMakeAccountPublicEvent:
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, 'https://www.instagram.com/', "Home")
+
             self.ig.pause(3000, 4000)
         pass
 
     def change_hook(self):
 
         try:
-            self.ig.page.goto(f'https://www.instagram.com/{self.ig.account.username}')
+            go_to_page(self.ig, f'https://www.instagram.com/{self.ig.account.username}', "User")
+
             self.ig.pause(4000, 4500)
             self.ig.page.get_by_role("button", name="Options").click()
 
@@ -46,7 +50,8 @@ class BrowserMakeAccountPublicEvent:
             self.ig.page.get_by_role("link", name="Account privacy").click()
 
         except:
-            self.ig.page.goto('https://www.instagram.com/accounts/settings/v2/account_privacy/')
+            go_to_page(self.ig, 'https://www.instagram.com/accounts/settings/v2/account_privacy/', "Account Privacy")
+
 
         self.ig.pause(4000, 5000)
 

@@ -1,5 +1,6 @@
 from script.extra.playwright.base_actions.GetPostsAction import GetPostsAction
 from script.extra.exceptions import ThereIsNoPost
+from script.extra.helper import go_to_page
 
 
 class BrowserDeleteInitialPostsEvent:
@@ -31,13 +32,14 @@ class BrowserDeleteInitialPostsEvent:
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, f'https://www.instagram.com/', "Home")
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
         self.ig.account.set_state('delete initial posts', 'app_state')
         self.command = self.ig.account.create_command('delete initial posts', 'processing')
-        self.ig.page.goto(f'https://www.instagram.com/{self.ig.account.username}/')
+        go_to_page(self.ig, f'https://www.instagram.com/{self.ig.account.username}/', "User page")
+
         self.ig.pause(4000, 5000)
 
     def change_hook(self):

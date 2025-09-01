@@ -13,6 +13,7 @@ from script.extra.playwright.base_actions.ClickOnNextPostAction import ClickOnNe
 from script.extra.playwright.base_actions.ClickOnFirstPostAction import ClickOnFirstPostAction
 import re
 from script.models.Hashtag import get_hashtag
+from script.extra.helper import go_to_page
 
 
 class BrowserLeadGenerateByPostEngagementEvent:
@@ -56,7 +57,7 @@ class BrowserLeadGenerateByPostEngagementEvent:
                 pass
 
     def init(self):
-        self.ig.page.goto('https://www.instagram.com')
+        go_to_page(self.ig, 'https://www.instagram.com/', "Home")
         self.ig.pause(4000, 5000)
 
         try:
@@ -76,7 +77,8 @@ class BrowserLeadGenerateByPostEngagementEvent:
             SearchForAction(self.ig).start(f'#{hashtag.title}')
             self.ig.pause(4000, 6000)
 
-            self.ig.page.goto(f'https://www.instagram.com/explore/search/keyword/?q=%23{hashtag.title.lower()}')
+            go_to_page(self.ig, f'https://www.instagram.com/explore/search/keyword/?q=%23{hashtag.title.lower()}', "Hashtag")
+
             self.ig.pause(6000, 7000)
             self.get_leads()
             self.scroll()

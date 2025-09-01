@@ -119,8 +119,13 @@ class BasePlaywright(InstagramButtonHandlerMixin, InstagramSuspensionHandlerMixi
                 pass
 
     def is_visible_by_text(self, text):
+
+        print('we are in the main')
         try:
-            return self.page.locator(f"text=/^{re.escape(text)}/i").is_visible()
+            # return self.page.locator(f"text=/^{re.escape(text)}/i").is_visible()
+            regex = re.compile(re.escape(text), re.I)
+
+            return self.page.get_by_text(regex).is_visible()
         except Exception as e:
             return False
 

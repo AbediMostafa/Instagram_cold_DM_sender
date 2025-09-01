@@ -30,15 +30,10 @@ class IBrowserHandler:
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
 
-        # Inject CSS to hide any inline video
-        self.page.add_style_tag(content="video { display: none !important; }")
+        # self.page.route("**/*", self.handle_route)
 
-        # Optionally remove existing <video> tags
-        self.page.evaluate("document.querySelectorAll('video').forEach(v => v.remove());")
 
-        self.page.route("**/*", self.handle_route)
-
-    def handle_route(self, route, request): 
+    def handle_route(self, route, request):
         url = request.url
 
         blocked_domains = [

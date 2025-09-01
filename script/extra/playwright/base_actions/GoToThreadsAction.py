@@ -1,4 +1,5 @@
 from .BaseAction import BaseAction
+from script.extra.helper import go_to_page
 
 
 class GoToThreadsAction(BaseAction):
@@ -10,7 +11,8 @@ class GoToThreadsAction(BaseAction):
 
         except:
             try:
-                self.ig.page.goto("https://www.instagram.com/direct/inbox/")
+                go_to_page(self.ig, 'https://www.instagram.com/direct/inbox/', "Inbox")
+
             except:
                 try:
                     self.ig.page.locator('a[aria-label^="Direct messaging"]').first.click()

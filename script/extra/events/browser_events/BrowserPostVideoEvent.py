@@ -49,7 +49,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
 
     def generate_path(self):
@@ -123,7 +123,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Share").click(timeout=3000)
-        self.ig.pause(60000, 68000)
+        self.ig.pause(70000, 80000)
 
         try:
             self.ig.page.get_by_role("button", name="Close").press("Escape")

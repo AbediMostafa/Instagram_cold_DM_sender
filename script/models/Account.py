@@ -34,6 +34,7 @@ class Account(BaseWithTimeZoneModel):
     initial_posts_deleted = SmallIntegerField(default=0)
     has_enough_posts = SmallIntegerField(default=0)
     is_used = SmallIntegerField(default=0)
+    api_is_used = SmallIntegerField(default=0)
     is_active = SmallIntegerField(default=1)
     is_public = SmallIntegerField(default=0)
     screenshot_taken = SmallIntegerField(default=0)
@@ -172,7 +173,7 @@ class Account(BaseWithTimeZoneModel):
 
         return (Template.select().where(
             (Template.type == type) &
-            (Template.category == self.category) &
+            # (Template.category == self.category) &
             ~(Template.id << (AccountTemplate
                               .select(AccountTemplate.template)
                               .join(Template)
@@ -224,7 +225,6 @@ class Account(BaseWithTimeZoneModel):
         if not self.proxy:
             raise Exception('No Proxy left, try to add more')
 
-        self.save()
         return self.proxy
 
     def get_verification_code(self):
@@ -232,8 +232,9 @@ class Account(BaseWithTimeZoneModel):
             return ""
 
         import pyotp
+        clean_secret = self.secret_key.replace(" ", "")  # حذف فاصله‌ها
 
-        totp = pyotp.TOTP(self.secret_key)
+        totp = pyotp.TOTP(clean_secret)
 
         return totp.now()
 

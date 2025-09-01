@@ -1,5 +1,6 @@
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.models.Template import get_a, delete
+from script.extra.helper import go_to_page
 
 
 class BrowserChangeBioEvent(InstagramMiddleware):
@@ -36,13 +37,13 @@ class BrowserChangeBioEvent(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
 
         self.ig.account.add_cli('Going to Accounts profile page')
-        self.ig.page.goto('https://www.instagram.com/accounts/edit/')
+        go_to_page(self.ig, "https://www.instagram.com/accounts/edit/", "Edit page")
         self.ig.pause(3000, 4000)
         self.ig.account.set_state('set bio', 'app_state')
         self.command = self.ig.account.create_command('set bio', 'processing')

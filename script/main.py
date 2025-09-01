@@ -14,6 +14,7 @@ from script.models.Category import Category
 from script.models.Template import Template, get_a
 from script.models.Setting import Setting
 from script.models.AccountHelper import get_next_account
+from script.models.AccountHelper import get_next_account_for_api
 from script.models.LeadSource import LeadSource, get_lead_source
 from script.models.DmPost import DmPost
 from script.models.DmPostLead import DmPostLead
@@ -74,8 +75,6 @@ from script.extra.exceptions import UploadedPostRecently
 from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
 from script.extra.events.api_events.DmEvent import DmEvent
-
-
 # def get_medias(account_instagram_id):
 #     account.add_cli('Getting accounts medias')
 #     account_medias = ig.user_medias(account_instagram_id, 10)
@@ -105,21 +104,37 @@ from script.extra.events.api_events.DmEvent import DmEvent
 #
 #     else:
 #         account.add_cli('Media type is not video')
+import pyotp
 
 
-# account_ids = [3498]
-# account_ids = [3505, 3508]
-account_ids = [77, 78, 80, 81, 82, 3153]
-# account_ids = [ 77, 78, 80, 81, 82, 3153]
-# account_ids = [3505, 3503, 75, 76, 77, 78, 80, 81, 82, 3153]
-while True :
-    try:
-        account = get_next_account()
-        ig = InstagramMobile(account)
-        ig.log_in()
-        DmEvent(account, ig).fire()
-    except Exception as e:
-        print(e)
+
+import logging
+
+
+# تنظیمات لاگر
+logging.basicConfig(
+    level=logging.INFO,  # سطح لاگ: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("app.log"),  # ذخیره در فایل
+        logging.StreamHandler()          # چاپ در کنسول
+    ]
+)
+ids =  [68,69,74, 77,83]
+
+# while True :
+#     try:
+account = Account.get_by_id(5648)
+# account = get_next_account_for_api()
+# account = get_next_account()
+ig = InstagramMobile(account)
+ig.log_in()
+sleep(2)
+bio = get_a('bio', account)
+ig.change_bio(bio.text)
+        # DmEvent(account, ig).fire()
+    # except Exception as e:
+    #     print(e)
 
 
 

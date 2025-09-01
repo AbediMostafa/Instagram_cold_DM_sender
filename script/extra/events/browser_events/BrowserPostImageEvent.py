@@ -3,6 +3,7 @@ from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserP
 from script.extra.helper import *
 import shutil
 import random
+from script.extra.helper import go_to_page
 
 
 class BrowserPostImageEvent(InstagramMiddleware):
@@ -40,7 +41,7 @@ class BrowserPostImageEvent(InstagramMiddleware):
         finally:
             if self.tmp:
                 shutil.rmtree(self.tmp)
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
 
     def generate_image(self):

@@ -243,7 +243,7 @@ def get_dm_chunk(account_age):
     if account_age <= 7:
         return 1
 
-    return random.randint(3, 5)
+    return random.randint(4, 6)
     # return random.randint(6, 8)
 
     if account_age <= 10:
@@ -268,3 +268,19 @@ def get_dm_chunk(account_age):
         return random.randint(9, 12)
 
     return random.randint(9, 12)
+
+
+def go_to_page(ig, target, name):
+    max_retries = 5
+
+    for attempt in range(max_retries):
+
+        try:
+            ig.page.goto(target, timeout=20000)
+            ig.account.add_cli(f"{name} page loaded")
+            return True
+
+        except Exception as e:
+            ig.account.add_cli(f"Attempt {attempt + 1} failed for loading the page : {name}")
+
+    raise Exception(f"Failed to reach {name} after 5 attempts.")

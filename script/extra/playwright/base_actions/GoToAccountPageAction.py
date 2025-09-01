@@ -1,5 +1,6 @@
 from .BaseAction import BaseAction
 from .SearchForAction import SearchForAction
+from script.extra.helper import go_to_page
 
 
 class GoToAccountPageAction(BaseAction):
@@ -13,4 +14,4 @@ class GoToAccountPageAction(BaseAction):
 
         except:
             self.ig.account.add_cli('Problem clicking on Lead button trying url instead')
-            self.ig.page.goto(f'https://www.instagram.com/{phrase}/')
+            go_to_page(self.ig, f'https://www.instagram.com/{phrase}/', "Account")

@@ -1,5 +1,6 @@
 from script.extra.playwright.base_actions.BaseAction import BaseAction
 from script.extra.exceptions import *
+from script.extra.helper import go_to_page
 
 
 class ErrorIndicators(BaseAction):
@@ -155,7 +156,9 @@ class ErrorIndicators(BaseAction):
             self.ig.account.add_cli("There's an issue and the page could not be loaded")
 
             self.ig.pause(2000, 3000)
-            self.ig.page.goto('https://www.instagram.com/', timeout=20000)
+            go_to_page(self.ig, 'https://www.instagram.com/', "Home")
+
+
             self.ig.pause(2000, 3000)
 
     def fill_code_sent_to_email(self):

@@ -203,6 +203,7 @@ class ProfileUpdator:
         It's possible for multiple account to call account creation API,
         so we need to call the API through a lock system
         '''
+        return getattr(self, action)()
         while True:
             try:
                 lock_row = AdsPowerLock.select().first()

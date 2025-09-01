@@ -1,5 +1,6 @@
 from script.models.Template import get_a
 from script.extra.playwright.base_actions.GoToProfilePageAction import GoToProfilePageAction
+from script.extra.helper import go_to_page
 
 
 class BrowserChangeNameEvent:
@@ -30,7 +31,7 @@ class BrowserChangeNameEvent:
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, f'https://www.instagram.com/', "Home")
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):

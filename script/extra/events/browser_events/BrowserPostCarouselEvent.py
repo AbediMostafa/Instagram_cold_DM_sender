@@ -42,7 +42,7 @@ class BrowserPostCarouselEvent(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
             shutil.rmtree(self.tmp)
 

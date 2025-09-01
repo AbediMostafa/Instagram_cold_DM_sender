@@ -1,4 +1,5 @@
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
+from script.extra.helper import go_to_page
 
 
 class BrowserMakeAccountPublic(InstagramMiddleware):
@@ -22,7 +23,8 @@ class BrowserMakeAccountPublic(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, 'https://www.instagram.com/', "Home")
+
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
@@ -34,7 +36,7 @@ class BrowserMakeAccountPublic(InstagramMiddleware):
             try:
                 self.ig.page.get_by_role("link", name=f"{self.ig.account.username}'s profile picture Profile").click()
             except:
-                self.ig.page.goto(f'https://www.instagram.com/{self.ig.account.username}')
+                go_to_page(self.ig, f'https://www.instagram.com/{self.ig.account.username}/', "User page")
 
             self.ig.pause(4000, 4500)
             self.ig.page.get_by_role("button", name="Options").click()
@@ -46,7 +48,7 @@ class BrowserMakeAccountPublic(InstagramMiddleware):
             self.ig.page.get_by_role("link", name="Account privacy").click()
 
         except:
-            self.ig.page.goto('https://www.instagram.com/accounts/settings/v2/account_privacy/')
+            go_to_page(self.ig, 'https://www.instagram.com/accounts/settings/v2/account_privacy/', "Account privacy")
 
         self.ig.pause(4000, 5000)
 

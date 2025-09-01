@@ -26,6 +26,7 @@ from script.models.Category import Category
 from script.models.Template import Template, get_a
 from script.models.Setting import Setting
 from script.models.AccountHelper import get_next_account
+from script.models.AccountHelper import get_next_account_for_api
 from script.models.LeadSource import LeadSource, get_lead_source
 from script.models.DmPost import DmPost
 from script.models.DmPostLead import DmPostLead
@@ -88,19 +89,20 @@ from script.models.DmPost import get_dm_post_for_lead
 from script.models.Proxy import get_free_proxy
 from script.extra.exceptions import UploadedPostRecently
 from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
 
-# account = Account.get_by_id(3776)
-# browser_ig = BasePlaywright(account)
-# browser_ig.init()
-# LoginContext(browser_ig).fire()
-# GetContactInformationContext(browser_ig).fire()
-name = None
-name = other_name = 'some'
+# account_id = sys.argv[1]
 
-print(name)
-# url = f"http://local.adspower.net:50325/api/v1/browser/active?user_id=k13jpcns"
+account = Account.get_by_id(5995)
+# account = get_next_account()
+browser_ig = BasePlaywright(account)
+browser_ig.init()
+LoginContext(browser_ig).fire()
+BrowserChangeNameEvent(browser_ig).fire()
+# BrowserChangeBioEvent(browser_ig).fire()
+# GetContactInformationContext(browser_ig).fire()
 # response = requests.get(url, verify=False)
 # print(response.json().get('data').get('status'))
 # DeleteInitialPostsContext(browser_ig).fire()

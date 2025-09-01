@@ -118,6 +118,7 @@ class BrowserSendDmEvent:
             self.ig.account.add_cli('Sending message ...')
             self.sending_icons = self.ig.page.query_selector_all(self.message_sending_selector)
             self.ig.pause(1000, 1800)
+
             if self.delivery_counter >= 7:
                 raise Exception("Failed to send message --> Stuck in sending message state")
 

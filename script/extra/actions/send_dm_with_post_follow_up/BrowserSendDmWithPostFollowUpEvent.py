@@ -5,6 +5,7 @@ from script.models.Spintax import Spintax
 from spintax import spin
 from script.models.DmPost import get_dm_post_for_lead
 from script.extra.actions.DmFollowUp import DmFollowUp
+from script.extra.helper import go_to_page
 
 
 class BrowserSendDmWithPostFollowUpEvent:
@@ -58,7 +59,8 @@ class BrowserSendDmWithPostFollowUpEvent:
             self.update_all_failed_statuses(e)
 
     def send_dms(self):
-        self.ig.page.goto(self.dm_post.title)
+        go_to_page(self.ig, self.dm_post.title, "Dm post")
+
         self.ig.pause(4000, 6000)
         self.click_on_share_button()
         self.ig.pause(4000, 6000)

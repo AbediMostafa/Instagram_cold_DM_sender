@@ -1,5 +1,6 @@
 from time import sleep
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
+from script.extra.helper import go_to_page
 import random
 
 
@@ -19,7 +20,7 @@ class BrowserGotoExploreEvent(InstagramMiddleware):
                 try:
                     self.ig.page.get_by_role("link", name="Explore Explore").click(timeout=3000)
                 except:
-                    self.ig.page.goto("https://www.instagram.com/explore/")
+                    go_to_page(self.ig, "https://www.instagram.com/explore/", "Explore")
 
                 break
             except Exception as e:

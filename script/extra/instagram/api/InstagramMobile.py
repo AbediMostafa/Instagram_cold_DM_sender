@@ -1,5 +1,10 @@
+import random
+import time
+
 from script.extra.instagram.api.InstagramMobileMiddleware import InstagramMobileMiddleware
 from script.extra.events.api_events.GetThreadMessagesEvent import GetThreadMessagesEvent
+from script.models.Proxy import Proxy
+from script.models.AccountHelper import get_next_proxy
 
 
 class InstagramMobile(InstagramMobileMiddleware):
@@ -12,7 +17,9 @@ class InstagramMobile(InstagramMobileMiddleware):
     def set_proxy(self):
 
         try:
-            self.proxy = self.account.get_proxy()
+            # self.proxy = Proxy.get_by_id(177)
+            self.proxy = get_next_proxy(mobile_only=True)
+            # self.proxy = self.account.get_proxy()
             self.account.add_cli('Setting proxy')
 
             if not self.proxy:
@@ -49,27 +56,27 @@ class InstagramMobile(InstagramMobileMiddleware):
             super().login(
                 self.account.username,
                 self.account.password,
-                verification_code=self.account.get_verification_code()
+                account=self.account
             )
 
-            try:
-                self.account.add_cli("Trying to get feeds")
-                self.feeds = self.get_timeline_feed()
-
-            except Exception as e:
-                self.account.add_cli(str(e))
-                old_session = self.client.get_settings()
-
-                self.client.set_settings({})
-                self.client.set_uuids(old_session["uuids"])
-                super().login(
-                    self.account.username,
-                    self.account.password,
-                    verification_code=self.account.get_verification_code()
-                )
-
-                self.account.add_cli("Trying to get feeds again ... ")
-                self.feeds = self.get_timeline_feed()
+            # try:
+            #     self.account.add_cli("Trying to get feeds")
+            #     self.feeds = self.get_timeline_feed()
+            #
+            # except Exception as e:
+            #     self.account.add_cli(str(e))
+            #     old_session = self.client.get_settings()
+            #
+            #     self.client.set_settings({})
+            #     self.client.set_uuids(old_session["uuids"])
+            #     super().login(
+            #         self.account.username,
+            #         self.account.password,
+            #         account=self.account
+            #     )
+            #
+            #     self.account.add_cli("Trying to get feeds again ... ")
+            #     self.feeds = self.get_timeline_feed()
 
             self.account.save_mobile_session(self.client.get_settings())
 

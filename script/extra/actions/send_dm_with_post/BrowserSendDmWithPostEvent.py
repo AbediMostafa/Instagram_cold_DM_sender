@@ -9,6 +9,8 @@ from script.models.Spintax import Spintax
 from spintax import spin
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.models.DmPost import get_dm_post_for_lead
+from script.extra.helper import go_to_page
+import re
 
 
 class BrowserSendDmWithPostEvent:
@@ -64,7 +66,7 @@ class BrowserSendDmWithPostEvent:
             self.update_all_failed_statuses(e)
 
     def send_dms(self):
-        self.ig.page.goto(self.dm_post.title)
+        self.go_to_post_page()
         self.ig.pause(4000, 6000)
         self.click_on_share_button()
         self.ig.pause(4000, 6000)
@@ -76,6 +78,22 @@ class BrowserSendDmWithPostEvent:
         self.ig.pause(2000, 2500)
         self.click_on_send_separately()
         self.ig.pause(7000, 8000)
+
+    def go_to_post_page(self):
+        max_retries = 5
+
+        for attempt in range(max_retries):
+
+            try:
+                go_to_page(self.ig, self.dm_post.title, "Dm post")
+
+                self.ig.account.add_cli("Post page loaded")
+                return True
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for loading post page")
+
+        raise Exception("Failed to reach Instagram direct inbox after 5 attempts.")
 
     def update_all_failed_statuses(self, e):
         self.ig.account.add_cli(f"Failed to send DM : {str(e)}")
@@ -138,11 +156,13 @@ class BrowserSendDmWithPostEvent:
         for lead in self.leads:
             self.ig.account.add_cli(f"Appending lead : {lead.username}")
 
+            self.ig.page.locator(self.first_fill_username_input_selector).fill('')
+
             (self.ig.page
              .locator(self.first_fill_username_input_selector)
              .press_sequentially(lead.username, delay=100, timeout=6000))
 
-            self.ig.pause(5000, 7000)
+            self.ig.pause(6000, 8000)
 
             if self.ig.is_visible_by_text('No results found'):
                 self.ig.account.add_cli("No results found")
@@ -150,8 +170,10 @@ class BrowserSendDmWithPostEvent:
                 continue
 
             try:
-                self.ig.page.click(f"text={lead.username}", timeout=3000)
+                self.ig.page.locator(f"text={lead.username}").first.click(timeout=3000)
+
             except Exception as e:
+                self.ig.account.add_cli(str(e))
                 self.ig.account.add_cli("Problem clicking on username")
                 continue
 

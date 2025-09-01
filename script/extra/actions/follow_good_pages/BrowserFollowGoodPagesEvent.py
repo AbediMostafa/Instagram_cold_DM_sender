@@ -1,5 +1,6 @@
 from script.extra.playwright.base_actions.SearchForAction import SearchForAction
 import random
+from script.extra.helper import *
 
 
 class BrowserFollowGoodPagesEvent:
@@ -53,7 +54,7 @@ class BrowserFollowGoodPagesEvent:
 
     def click_on_search(self, user):
         try:
-            self.ig.page.goto(f'https://www.instagram.com/{user}')
+            go_to_page(self.ig, f'https://www.instagram.com/{user}', "User page")
 
         except Exception as e:
             self.ig.account.add_cli(f'Problem clicking on first a lead_source {str(e)}')

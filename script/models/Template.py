@@ -24,8 +24,8 @@ def get_a(_type, account=None):
         (Template.type == _type)
     )
 
-    if account:
-        query = query.where(Template.category == account.category)
+    # if account:
+    #     query = query.where(Template.category == account.category)
 
     return query.order_by(random_function()).first()
 

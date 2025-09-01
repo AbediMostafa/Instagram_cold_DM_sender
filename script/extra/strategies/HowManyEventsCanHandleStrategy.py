@@ -41,6 +41,9 @@ from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEng
 from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext import \
     LeadGenerateByPostEngagementContext
 
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
+
+
 
 class HowManyEventsCanHandleStrategy:
     events = None
@@ -114,7 +117,7 @@ class HowManyEventsCanHandleStrategy:
             ChangeNameContext,
             BrowserChangeUsernameEvent,
             BrowserChangeAvatarEvent,
-            BrowserChangeBioEvent,
+            # BrowserChangeBioEvent,
 
             GetContactInformationContext,
             # GetProfileScreenShotContext,
@@ -122,6 +125,7 @@ class HowManyEventsCanHandleStrategy:
             # Daily actions
             # FollowContext,
             SendDmWithPostContext,
+            CheckSystemUsernameWithIgUsernameContext,
             # GetLeadPkContext,
 
             # BrowserDmFollowUpEvent,
@@ -130,9 +134,9 @@ class HowManyEventsCanHandleStrategy:
             # Periodical actions
             # UnfollowContext,
             # FollowGoodPagesContext,
-            LeadGenerateByFollowersContext,
-            LeadGenerateByPageEngagementContext,
-            LeadGenerateByPostEngagementContext
+            # LeadGenerateByFollowersContext,
+            # LeadGenerateByPageEngagementContext,
+            # LeadGenerateByPostEngagementContext
         ]
 
         random.shuffle(required_actions)

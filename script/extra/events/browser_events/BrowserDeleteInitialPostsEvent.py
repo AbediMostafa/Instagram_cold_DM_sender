@@ -3,6 +3,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 import random
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.Template import get_a, delete
+from script.extra.helper import go_to_page
 
 
 class BrowserDeleteInitialPostsEvent(InstagramMiddleware):
@@ -29,12 +30,13 @@ class BrowserDeleteInitialPostsEvent(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
         self.ig.account.add_cli('Going to profile page')
-        self.ig.page.goto(f'https://www.instagram.com/{self.ig.account.username}/')
+        go_to_page(self.ig, f'https://www.instagram.com/{self.ig.account.username}/', "Username page")
+
         self.ig.pause(4000, 5000)
         self.ig.account.add_cli('We are on profile page')
 

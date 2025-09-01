@@ -3,6 +3,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 import random
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.Template import get_a, delete
+from script.extra.helper import go_to_page
 
 
 class BrowserChangeNameEvent(InstagramMiddleware):
@@ -34,7 +35,7 @@ class BrowserChangeNameEvent(InstagramMiddleware):
             self.ig.account.add_log(traceback.format_exc())
 
         finally:
-            self.ig.page.goto("https://www.instagram.com/")
+            go_to_page(self.ig, "https://www.instagram.com/", 'Home')
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
@@ -71,7 +72,16 @@ class BrowserChangeNameEvent(InstagramMiddleware):
         self.ig.account.set('name', self.name.text)
 
     def fill_name(self):
-        self.ig.page.get_by_label("Name").fill(self.name.text)
+        try:
+            locator = self.ig.page.get_by_role('textbox').first
+            locator.wait_for(state='visible', timeout=5000)
+            locator.fill(self.name.text)
+        except Exception as e:
+            self.ig.account.add_cli(f' Problem filling name for the first time {str(e)}')
+            locator = self.ig.page.locator('input[type="text"][dir="ltr"]').first
+            locator.wait_for(state='visible', timeout=5000)
+            locator.fill(self.name.text)
+
         self.ig.pause(3000, 4000)
 
         self.ig.page.get_by_role("button", name="Done").click(timeout=5000)

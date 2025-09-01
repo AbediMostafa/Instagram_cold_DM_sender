@@ -45,6 +45,7 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->unsignedTinyInteger('is_used')->default(0);
+            $table->unsignedTinyInteger('api_is_used')->default(0);
             $table->unsignedTinyInteger('avatar_changed')->default(0);
             $table->unsignedTinyInteger('username_changed')->default(0);
             $table->unsignedTinyInteger('initial_posts_deleted')->default(0);

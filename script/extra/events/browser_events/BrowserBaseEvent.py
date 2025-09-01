@@ -1,5 +1,6 @@
 from time import sleep
 import random
+from script.extra.helper import go_to_page
 
 
 class BrowserBaseEvent:
@@ -17,7 +18,7 @@ class BrowserBaseEvent:
         for attempt in range(retries):
             try:
                 try:
-                    self.ig.page.goto('https://www.instagram.com')
+                    go_to_page(self.ig, 'https://www.instagram.com', 'Home')
                 except:
                     try:
                         self.ig.page.get_by_role("link", name="Home").click()
@@ -36,9 +37,9 @@ class BrowserBaseEvent:
 
     def go_to_profile_page(self):
         self.ig.account.add_cli('Going to Accounts profile page')
-        self.ig.page.goto('https://www.instagram.com/accounts/edit/')
+        go_to_page(self.ig, 'https://www.instagram.com/accounts/edit/', 'Edit page')
         self.ig.pause(4000, 5000)
-        self.ig.page.goto("https://accountscenter.instagram.com/?entry_point=app_settings")
+        go_to_page(self.ig, 'https://accountscenter.instagram.com/?entry_point=app_settings', 'App Setting')
         self.ig.pause(3000, 4500)
         self.ig.account.add_cli('After profile load timeout')
 
@@ -49,7 +50,7 @@ class BrowserBaseEvent:
 
         except:
             try:
-                self.ig.page.goto("https://www.instagram.com/direct/inbox/")
+                go_to_page(self.ig, 'https://www.instagram.com/direct/inbox/', 'Direct page')
             except:
                 try:
                     self.ig.page.locator('a[aria-label^="Direct messaging"]').first.click()
@@ -137,7 +138,7 @@ class BrowserBaseEvent:
 
     def go_to_lead_page_through_url(self, lead):
         self.ig.account.add_cli('Problem clicking on Lead button trying url intead')
-        self.ig.page.goto(f'https://www.instagram.com/{lead.username}/')
+        go_to_page(self.ig, f'https://www.instagram.com/{lead.username}/', 'Lead page')
 
     def click_on_send_message(self):
         try:
@@ -251,7 +252,7 @@ class BrowserBaseEvent:
     def send_direct(self, lead, direct_url_id=None):
 
         if direct_url_id:
-            self.ig.page.goto(f'https://www.instagram.com/direct/t/{direct_url_id}/')
+            go_to_page(self.ig, f'https://www.instagram.com/direct/t/{direct_url_id}/','Conversation')
             self.ig.pause(3000, 5000)
 
         else:

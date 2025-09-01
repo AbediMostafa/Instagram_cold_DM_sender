@@ -5,6 +5,7 @@ from script.extra.parsers.FollowersParser import FollowersParser
 from script.extra.playwright.base_actions.SearchForAction import SearchForAction
 from script.extra.playwright.base_actions.ScrollAction import ScrollAction
 import re
+from script.extra.helper import go_to_page
 
 
 class BrowserLeadGenerateByFollowersEvent:
@@ -81,7 +82,8 @@ class BrowserLeadGenerateByFollowersEvent:
 
             except Exception as e:
                 self.ig.account.add_cli(f'Problem clicking on first a lead_source {str(e)}')
-                self.ig.page.goto(f'https://www.instagram.com/{lead_source.title}')
+                go_to_page(self.ig, f'https://www.instagram.com/{lead_source.title}', "Lead source")
+
 
             self.ig.pause(4000, 6000)
 

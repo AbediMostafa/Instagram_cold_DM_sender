@@ -13,8 +13,7 @@ def free_account_query(tag_titles=None, specific_ids=None):
     """
     # Base query for free accounts
     query = Account.select().where(
-        (Account.is_used == 0) &
-        (Account.is_active == 1)
+        (Account.is_used == 0)
     )
 
     # If specific IPs are provided, filter accounts based on IPs
@@ -61,6 +60,29 @@ def get_next_account(tag_titles=None, specific_ids=None):
     return next_account
 
 
+def get_next_account_for_api():
+    query = Account.select().where(
+        (Account.api_is_used == 0)
+    )
+
+    if not query.exists():
+        Account.update(api_is_used=False).execute()
+
+        # Get the first non-used account with the specified tags
+    next_account = (query
+                    .order_by(Account.id)
+                    .first())
+
+    # Set the next account's is_used to True
+    if next_account:
+        next_account.api_is_used = True
+        next_account.save()
+        print(f'Selected account : {next_account.id} -- {next_account.username}')
+
+    return next_account
+
+
+
 def get_next_profile():
     from .Profile import Profile
 
@@ -83,10 +105,13 @@ def get_next_profile():
     return next_profile
 
 
-def get_next_proxy():
+def get_next_proxy(mobile_only=False):
     from .Proxy import Proxy
 
     query = Proxy.select().where((Proxy.is_used == 0))
+
+    if mobile_only:
+        query = query.where(Proxy.ip == 'x488.fxdx.in')
 
     if not query.exists():
         Proxy.update(is_used=False).execute()
@@ -103,6 +128,7 @@ def get_next_proxy():
     print(f'selected Proxy {next_proxy.id}')
 
     return next_proxy
+
 
 
 def get_first_proxy_with_less_accounts(exception_proxy_ids=None):
