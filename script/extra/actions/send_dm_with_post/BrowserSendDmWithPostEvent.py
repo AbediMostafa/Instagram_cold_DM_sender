@@ -66,7 +66,9 @@ class BrowserSendDmWithPostEvent:
             self.update_all_failed_statuses(e)
 
     def send_dms(self):
-        self.go_to_post_page()
+        go_to_page(self.ig, self.dm_post.title, "Dm post")
+        self.ig.pause(4000, 6000)
+        self.like_or_share()
         self.ig.pause(4000, 6000)
         self.click_on_share_button()
         self.ig.pause(4000, 6000)
@@ -79,21 +81,144 @@ class BrowserSendDmWithPostEvent:
         self.click_on_send_separately()
         self.ig.pause(7000, 8000)
 
-    def go_to_post_page(self):
-        max_retries = 5
+    def like_or_share(self):
+        """
+        First run: like post, Second run: save post
+        """
+        try:
+            self.ig.account.add_cli("Starting like or save process...")
 
-        for attempt in range(max_retries):
-
-            try:
-                go_to_page(self.ig, self.dm_post.title, "Dm post")
-
-                self.ig.account.add_cli("Post page loaded")
+            # Try to like first
+            if self.try_like():
+                self.ig.account.add_cli("Post liked successfully")
+                self.ig.pause(2000, 3000)
                 return True
 
-            except Exception as e:
-                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for loading post page")
+            # If like failed/already done, try save
+            if self.try_save():
+                self.ig.account.add_cli("Post saved successfully")
+                self.ig.pause(2000, 3000)
+                return True
 
-        raise Exception("Failed to reach Instagram direct inbox after 5 attempts.")
+            # Check final status
+            liked = self.is_liked()
+            saved = self.is_saved()
+
+            if liked and saved:
+                self.ig.account.add_cli("Post already liked and saved")
+            elif liked:
+                self.ig.account.add_cli("Post liked but save failed")
+            elif saved:
+                self.ig.account.add_cli("Post saved but like failed")
+            else:
+                self.ig.account.add_cli("Like and save both failed")
+
+            return liked or saved
+
+        except Exception as e:
+            self.ig.account.add_cli(f"Error in like_or_share: {str(e)}")
+            return False
+
+    def try_like(self):
+        """
+        Try to like post with multiple selectors
+        """
+        if self.is_liked():
+            return False
+
+        selectors = [
+            'div:not([aria-label*="comment"]) div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
+            'div[style*="max-width"] section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
+            'div.x1ypdohk[data-visualcompletion="ignore-dynamic"] div.x1i10hfl.x972fbf.x10w94by[role="button"]',
+            'section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
+            'article div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
+        ]
+
+        for selector in selectors:
+            try:
+                element = self.ig.page.locator(selector).first
+                if element.count() > 0 and element.is_visible():
+                    element.click(timeout=3000)
+                    self.ig.pause(1000, 2000)
+                    if self.is_liked():
+                        return True
+            except:
+                continue
+
+        return False
+
+    def try_save(self):
+        """
+        Try to save post with multiple selectors
+        """
+        if self.is_saved():
+            return False
+
+        selectors = [
+            'div[role="button"]:has(svg[aria-label="Save"])',
+            'div.x14z9mp.xvc5jky div[role="button"]:has(svg[aria-label="Save"])',
+            'section div[role="button"]:has(svg) >> nth=2',
+            'div[data-visualcompletion="ignore-dynamic"] div[role="button"]:has(svg[aria-label="Save"])',
+            'svg[aria-label="Save"]',
+        ]
+
+        for selector in selectors:
+            try:
+                element = self.ig.page.locator(selector).first
+                if element.count() > 0 and element.is_visible():
+                    element.click(timeout=3000)
+                    self.ig.pause(1500, 2500)
+                    if self.is_saved():
+                        return True
+            except:
+                continue
+
+        return False
+
+    def is_liked(self):
+        """
+        Check if post is already liked
+        """
+        try:
+            selectors = [
+                'svg[aria-label="Unlike"]',
+                'div[role="button"]:has(svg[aria-label="Unlike"])',
+                'svg[fill="#ed4956"]',
+            ]
+
+            for selector in selectors:
+                try:
+                    if self.ig.page.locator(selector).first.count() > 0:
+                        if self.ig.page.locator(selector).first.is_visible():
+                            return True
+                except:
+                    continue
+            return False
+        except:
+            return False
+
+    def is_saved(self):
+        """
+        Check if post is already saved
+        """
+        try:
+            selectors = [
+                'svg[aria-label="Remove"]',
+                'svg[aria-label="Unsave"]',
+                'div[role="button"]:has(svg[aria-label="Remove"])',
+                'div[role="button"]:has(svg[aria-label="Unsave"])',
+            ]
+
+            for selector in selectors:
+                try:
+                    if self.ig.page.locator(selector).first.count() > 0:
+                        if self.ig.page.locator(selector).first.is_visible():
+                            return True
+                except:
+                    continue
+            return False
+        except:
+            return False
 
     def update_all_failed_statuses(self, e):
         self.ig.account.add_cli(f"Failed to send DM : {str(e)}")
