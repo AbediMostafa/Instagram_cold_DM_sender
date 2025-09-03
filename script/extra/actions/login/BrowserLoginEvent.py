@@ -24,7 +24,7 @@ class BrowserLoginEvent:
 
         self.ig.account.add_cli('Starting Login ...')
 
-        for _ in range(8):
+        for _ in range(4):
             self.check_for_login()
 
             self.ig.account.add_cli(f'Login loop for the {_} time ...')
@@ -72,12 +72,11 @@ class BrowserLoginEvent:
             self.ig.pause(1000, 1200)
 
     def check_for_login(self):
-        max_retries = 5
+        max_retries = 4
 
         for attempt in range(max_retries):
             try:
-                go_to_page(self.ig, 'https://www.instagram.com/', "Home")
-
+                self.ig.page.goto("https://www.instagram.com", timeout=80000)
                 self.ig.pause(2000, 3000)
 
                 if self.ig.is_visible_by_text('Notifications') or self.ig.is_visible_by_text(
@@ -270,8 +269,10 @@ class BrowserLoginEvent:
 
     def follow_suggested(self):
 
+        passed_days = self.ig.account.get_passed_days_since_creation() if self.ig.account.passed_days_since_creation is None else self.ig.account.passed_days_since_creation
+
         allowed_follows = random.randint(1, SettingAdapter.max_follow())
-        allowed_follows = min(allowed_follows, self.ig.account.passed_days_since_creation)
+        allowed_follows = min(allowed_follows, passed_days)
 
         command_count = performed_command_count(self.ig.account, ['follow'], 24)
 

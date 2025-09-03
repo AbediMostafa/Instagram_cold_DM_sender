@@ -157,8 +157,6 @@ class ErrorIndicators(BaseAction):
 
             self.ig.pause(2000, 3000)
             go_to_page(self.ig, 'https://www.instagram.com/', "Home")
-
-
             self.ig.pause(2000, 3000)
 
     def fill_code_sent_to_email(self):

@@ -14,7 +14,7 @@ class BrowserGotoExploreEvent(InstagramMiddleware):
 
     def go_to_explore(self):
         self.ig.account.add_cli('Going to explore page ...')
-        retries = 3
+        retries = 1
         for attempt in range(retries):
             try:
                 try:

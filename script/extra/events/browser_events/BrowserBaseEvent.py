@@ -14,7 +14,7 @@ class BrowserBaseEvent:
 
     def go_to_home(self):
         self.ig.account.add_cli('Going to home page ...')
-        retries = 3
+        retries = 1
         for attempt in range(retries):
             try:
                 try:

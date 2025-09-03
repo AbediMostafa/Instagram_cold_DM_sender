@@ -72,11 +72,10 @@ class BasePlaywright:
     def is_visible_by_text(self, text):
         import re
 
-
         try:
             # return self.page.get_by_text(re.compile(rf"^{re.escape(text)}", re.I)).is_visible()
             regex = re.compile(re.escape(text), re.I)
-            return self.page.get_by_text(regex).is_visible()
+            return self.page.get_by_text(regex).nth(0).is_visible()
 
         except Exception as e:
             return False

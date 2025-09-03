@@ -205,7 +205,7 @@ def calculate_daily_dms(account_age):
     # if account_age <= 4:
     #     return 0
 
-    if account_age <= 7:
+    if account_age <= 6:
         return 1
 
     if account_age <= 10:
@@ -240,7 +240,7 @@ def calculate_daily_dms(account_age):
 
 
 def get_dm_chunk(account_age):
-    if account_age <= 7:
+    if account_age <= 6:
         return 1
 
     return random.randint(4, 6)
@@ -276,7 +276,7 @@ def go_to_page(ig, target, name):
     for attempt in range(max_retries):
 
         try:
-            ig.page.goto(target, timeout=20000)
+            ig.page.goto(target, timeout=50000)
             ig.account.add_cli(f"{name} page loaded")
             return True
 
