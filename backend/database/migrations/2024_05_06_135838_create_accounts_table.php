@@ -53,6 +53,7 @@ return new class extends Migration {
             $table->unsignedTinyInteger('screenshot_taken')->default(0);
             $table->unsignedTinyInteger('is_public')->default(0);
             $table->unsignedTinyInteger('is_active')->default(1);
+            $table->unsignedTinyInteger('is_verify')->default(0);
             $table->text('web_session')->nullable();
             $table->text('mobile_session')->nullable();
             $table->text('log')->nullable();

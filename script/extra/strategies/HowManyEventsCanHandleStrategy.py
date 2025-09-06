@@ -14,6 +14,7 @@ from script.extra.events.browser_events.BrowserSendCustomMessage import BrowserS
 from script.extra.actions.get_lead_pk.GetLeadPkContext import GetLeadPkContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
+from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 
 
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
@@ -118,6 +119,7 @@ class HowManyEventsCanHandleStrategy:
             BrowserChangeUsernameEvent,
             BrowserChangeAvatarEvent,
             # BrowserChangeBioEvent,
+            RegisterEmailContext,
 
             GetContactInformationContext,
             # GetProfileScreenShotContext,
