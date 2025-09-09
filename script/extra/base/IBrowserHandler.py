@@ -30,7 +30,7 @@ class IBrowserHandler:
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
 
-        # self.page.route("**/*", self.handle_route)
+        self.page.route("**/*", self.handle_route)
 
 
     def handle_route(self, route, request):

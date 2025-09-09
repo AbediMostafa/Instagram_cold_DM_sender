@@ -276,7 +276,7 @@ def go_to_page(ig, target, name):
     for attempt in range(max_retries):
 
         try:
-            ig.page.goto(target, timeout=50000)
+            ig.page.goto(target, timeout=50000, wait_until="domcontentloaded")
             ig.account.add_cli(f"{name} page loaded")
             return True
 

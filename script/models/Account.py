@@ -38,6 +38,7 @@ class Account(BaseWithTimeZoneModel):
     is_active = SmallIntegerField(default=1)
     is_public = SmallIntegerField(default=0)
     screenshot_taken = SmallIntegerField(default=0)
+    is_verify = SmallIntegerField(default=0)
     web_session = TextField(null=True)
     mobile_session = TextField(null=True)
     log = TextField(null=True)

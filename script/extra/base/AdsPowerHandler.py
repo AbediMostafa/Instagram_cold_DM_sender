@@ -24,6 +24,9 @@ class AdsPowerHandler(IBrowserHandler):
         updator.call_action('update')
 
     def delete_profile(self):
+        if self.account.profile is None:
+            return self.account.add_cli('Account dont have profile to delete ...')
+
         self.account.add_cli('Deleting Profile ....')
         creator = ProfileUpdator(self.account)
         creator.call_action('delete')
@@ -34,6 +37,9 @@ class AdsPowerHandler(IBrowserHandler):
 
     def cleanup(self):
         super().cleanup()
+
+        if self.account.profile is None:
+            return self.account.add_cli('Dont have profile to Close ...')
 
         try:
             self.account.add_cli('Closing Adspower profile ...')

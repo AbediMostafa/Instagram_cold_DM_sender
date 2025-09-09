@@ -326,13 +326,16 @@ class AccountController extends Controller
 
     public function startProfile()
     {
-
         try {
 
             Account::query()
                 ->whereIn('id', r('ids'))
                 ->get()
-                ->each(fn (Account $account)=> runPythonProcess('new.py', $account->id));
+                ->each(function(Account $account){
+                    $account->makeActive();
+                    runPythonProcess('new.py', $account->id);
+                });
+//                ->each(fn (Account $account)=> runPythonProcess('new.py', $account->id));
 
             return jsonSuccess('Profiles started ');
 

@@ -92,15 +92,20 @@ from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmW
 from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
-
+# 33
+# 2417
 # account_id = sys.argv[1]
-
-account = Account.get_by_id(5995)
+# 450->email
+#524->unverify phone
+#27->phone and email
+#64 ->verify phone
+account = Account.get_by_id(3499)
 # account = get_next_account()
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-BrowserChangeNameEvent(browser_ig).fire()
+BrowserPostVideoEvent(browser_ig).fire()
+
 # BrowserChangeBioEvent(browser_ig).fire()
 # GetContactInformationContext(browser_ig).fire()
 # response = requests.get(url, verify=False)

@@ -12,7 +12,7 @@ from script.models.Proxy import get_free_proxy
 from script.models.AccountHelper import get_storage_state
 from script.models.Profile import Profile
 
-TIME_TO_SLEEP = 3
+TIME_TO_SLEEP = 550
 
 
 class ProfileUpdator:
@@ -208,14 +208,14 @@ class ProfileUpdator:
                 lock_row = AdsPowerLock.select().first()
                 last_executed_at = lock_row.last_executed_at
 
-                added_time = last_executed_at + timedelta(seconds=TIME_TO_SLEEP)
+                added_time = last_executed_at + timedelta(milliseconds=TIME_TO_SLEEP)
                 wait_seconds = (added_time - tehran_now()).total_seconds()
 
                 self.account.add_cli(f'wait seconds     : {wait_seconds}')
 
                 if wait_seconds > 0:
                     self.account.add_cli(f'We hav to wait {wait_seconds} seconds ...')
-                    sleep(1)
+                    sleep(0.5)
                     continue
 
                 getattr(self, action)()
@@ -233,6 +233,9 @@ class ProfileUpdator:
         requests.get(url)
 
     def check_account(self):
+
+        if self.account.profile is None:
+            return self.account.add_cli(f"Previous account didnt have a profile")
 
         try:
             url = f"http://local.adspower.net:50325/api/v1/browser/active?user_id={self.account.profile.profile_id}"

@@ -80,12 +80,11 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3000)
 
         try:
-            self.ig.page.locator('svg[aria-label="Post"]').click(timeout=3000)
+            self.ig.page.locator('a[href="#"]:has(svg[aria-label="Post"])').click(timeout=3000)
         except Exception as e:
             try:
                 self.ig.account.add_cli(f"Post button doesnt exists : {str(e)}")
-                self.ig.page.locator('a[href="#"]:has(svg[aria-label="Post"])').click(timeout=3000)
-
+                self.ig.page.locator('svg[aria-label="Post"]').click(timeout=3000)
             except Exception as e:
                 pass
 
@@ -112,8 +111,8 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         if self.image_path:
-            self.ig.page.locator('div.html-div.xdj266r.x14z9mp>div>form input[accept="image/jpeg,image/png"]._ac69').nth(0).set_input_files(self.image_path)
-            self.ig.page.locator('input[accept="image/jpeg,image/png"]._ac69').nth(0).set_input_files(self.image_path)
+            self.ig.page.locator('div.html-div.xdj266r.x14z9mp>div>form input[accept="image/jpeg,image/png"]').nth(0).set_input_files(self.image_path)
+            self.ig.page.locator('input[accept="image/jpeg,image/png"]').nth(0).set_input_files(self.image_path)
             self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Next").click(timeout=3000)
@@ -123,7 +122,7 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.ig.pause(2000, 3500)
 
         self.ig.page.get_by_role("button", name="Share").click(timeout=3000)
-        self.ig.pause(70000, 80000)
+        self.ig.pause(80000, 90000)
 
         try:
             self.ig.page.get_by_role("button", name="Close").press("Escape")

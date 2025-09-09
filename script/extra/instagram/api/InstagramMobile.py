@@ -59,24 +59,25 @@ class InstagramMobile(InstagramMobileMiddleware):
                 account=self.account
             )
 
-            # try:
-            #     self.account.add_cli("Trying to get feeds")
-            #     self.feeds = self.get_timeline_feed()
-            #
-            # except Exception as e:
-            #     self.account.add_cli(str(e))
-            #     old_session = self.client.get_settings()
-            #
-            #     self.client.set_settings({})
-            #     self.client.set_uuids(old_session["uuids"])
-            #     super().login(
-            #         self.account.username,
-            #         self.account.password,
-            #         account=self.account
-            #     )
-            #
-            #     self.account.add_cli("Trying to get feeds again ... ")
-            #     self.feeds = self.get_timeline_feed()
+            try:
+                time.sleep(random.randint(2,5))
+                self.account.add_cli("Trying to get feeds")
+                self.feeds = self.get_timeline_feed()
+
+            except Exception as e:
+                self.account.add_cli(str(e))
+                old_session = self.client.get_settings()
+
+                self.client.set_settings({})
+                self.client.set_uuids(old_session["uuids"])
+                super().login(
+                    self.account.username,
+                    self.account.password,
+                    account=self.account
+                )
+
+                self.account.add_cli("Trying to get feeds again ... ")
+                self.feeds = self.get_timeline_feed()
 
             self.account.save_mobile_session(self.client.get_settings())
 

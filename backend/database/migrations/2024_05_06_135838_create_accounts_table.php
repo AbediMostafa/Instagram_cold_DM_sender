@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->id();
             $table->string('secret_key')->nullable();
             $table->string('username')->unique();
-            $table->string('email')->nullable();
+            $table->string('email')->nullable() ;
             $table->string('password');
             $table->string('name')->nullable();
             $table->string('phone')->nullable();
@@ -45,6 +45,7 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->unsignedTinyInteger('is_used')->default(0);
+            $table->unsignedTinyInteger('is_verify')->default(0);
             $table->unsignedTinyInteger('api_is_used')->default(0);
             $table->unsignedTinyInteger('avatar_changed')->default(0);
             $table->unsignedTinyInteger('username_changed')->default(0);

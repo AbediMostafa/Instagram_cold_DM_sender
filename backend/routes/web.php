@@ -74,6 +74,9 @@ use \App\Models\Role;
 //حاصل رو توی یه آرایه پی اچ پی به من بده
 
 Route::get('/', function () {
+
+    // آرایه کامل براساس داده‌هایی که فرستادید
+
 //
 //    Account::query()->where('id','<', 4004)
 //        ->update([
@@ -95,287 +98,62 @@ Route::get('/', function () {
 });
 
 Route::get('/make-username', function () {
-    $usernames = [
-        'mobleman__choob__life',
-        'choob___mobleman.life',
-        'life__mobleman__choob',
-        'choob__zendegi__decor',
-        'wood__mobleman___life',
-        'living__choob__style',
-        'furniture__choob__life',
-        'choob__wood__living__',
-        'mobleman..choob__life',
-        'choob__zendegi..life',
-        'life___choob__decor',
-        'decor__mobleman__choob',
-        'wood__life__mobleman',
-        'living__choob___home',
-        'mobleman__wood__decor',
-        'choob__life__style__',
-        'style__choob__mobleman',
-        'life__wood__furniture',
-        'mobleman__decor__life',
-        'wood__choob__living__',
-        'choob__life__zendegi',
-        'zendegi__choob__life',
-        'mobleman__choob__2025',
-        'choob__living__2025',
-        'wood__life__design__',
-        'life__choob__decor__',
-        'choob__mobleman__style',
-        'living__choob__design',
-        'design__wood__mobleman',
-        'mobleman__life__choob',
-        'choob__mobleman__2024',
-        'style__life__choob__',
-        'choob__living__decor',
-        'decor__choob__living',
-        'wood__choob__mobleman',
-        'life__choob__living__',
-        'choob__style__mobleman',
-        'mobleman__wood__life__',
-        'choob__furniture__life',
-        'life__choob__furniture',
-        'choob__mobleman__design',
-        'design__choob__life',
-        'life__wood__choob__',
-        'choob__mobleman__living',
-        'living__mobleman__choob',
-        'choob__decor__life__',
-        'mobleman__choob__living',
-        'wood__choob__style__',
-        'life__choob__home__',
-        'choob__mobleman__home',
-        'mobleman__choob__home',
-        'home__choob__life__',
-        'style__choob__living',
-        'choob__mobleman__trend',
-        'trend__choob__life__',
-        'choob__mobleman__modern',
-        'modern__choob__life',
-        'choob__life__classic',
-        'classic__choob__life__',
-        'mobleman__choob__classic',
-        'choob__life__design__',
-        'life__choob__modern',
-        'modern__life__choob',
-        'choob__mobleman__living_',
-        'mobleman__choob__trendy',
-        'choob__furniture__decor',
-        'decor__choob__mobleman',
-        'mobleman__choob__world',
-        'world__choob__life__',
-        'choob__mobleman__dream',
-        'dream__choob__life',
-        'life__choob__dream__',
-        'choob__mobleman__wood',
-        'wood__choob__life',
-        'choob__mobleman__zone',
-        'zone__choob__life__',
-        'choob__style__wood__',
-        'style__choob__home',
-        'home__choob__living',
-        'choob__mobleman__house',
-        'house__choob__life__',
-        'choob__mobleman__villa',
-        'villa__choob__life__',
-        'choob__mobleman__trend_',
-        'choob__life__wood__',
-        'choob__mobleman__design_',
-        'choob__life__dream_',
-        'choob__wood__style__',
-        'style__wood__life',
-        'choob__wood__decor__',
-        'decor__wood__life__',
-        'mobleman__wood__dream',
-        'dream__wood__life__',
-        'choob__living__trend__',
-        'trend__life__choob__',
-        'choob__mobleman__classic_',
-        'classic__mobleman__choob',
-        'choob__mobleman__art',
-        'art__choob__life',
-        'life__choob__art__',
-        'choob__mobleman__2026',
-        'choob__mobleman__designs',
-        'choob__design__life__',
-        'design__choob__home',
-        'home__choob__decor',
-        'choob__mobleman__decor_',
-        'mobleman__choob__living_',
-        'living__choob__dream',
-        'dream__choob__home',
-        'choob__life__decor_',
-        'choob__mobleman__ideas',
-        'ideas__choob__life__',
-        'choob__mobleman__vision',
-        'vision__choob__life__',
-        'choob__style__dream',
-        'dream__choob__style__',
-        'choob__mobleman__modern_',
-        'mobleman__choob__future',
-        'future__choob__life',
-        'choob__mobleman__gold',
-        'gold__choob__life',
-        'life__choob__shine__',
-        'shine__choob__life',
-        'choob__mobleman__elite',
-        'elite__choob__life__',
-        'choob__mobleman__designs_',
-        'choob__style__classic',
-        'classic__style__choob',
-        'choob__mobleman__prime',
-        'prime__choob__life__',
-        'choob__wood__prime__',
-        'prime__wood__life',
-        'choob__mobleman__art_',
-        'choob__life__unique',
-        'unique__choob__life__',
-        'choob__wood__unique',
-        'choob__mobleman__decor__',
-        'choob__mobleman__space',
-        'space__choob__life',
-        'choob__mobleman__spot',
-        'spot__choob__life',
-        'choob__style__spot__',
-        'choob__wood__trend__',
-        'choob__mobleman__best',
-        'best__choob__life__',
-        'choob__life__trend__',
-        'trend__choob__living',
-        'choob__wood__living_',
-        'living__wood__choob__',
-        'choob__decor__wood__',
-        'choob__mobleman__decorx',
-        'choob__mobleman__style_',
-        'choob__life__artistic',
-        'artistic__choob__life__',
-        'choob__mobleman__house_',
-        'house__mobleman__choob',
-        'choob__mobleman__villa_',
-        'choob__mobleman__zone_',
-        'zone__mobleman__choob',
-        'choob__mobleman__ideas_',
-        'choob__mobleman__dream_',
-        'choob__mobleman__modern__',
-        'choob__mobleman__classic__',
-        'choob__mobleman__future_',
-        'choob__mobleman__gold_',
-        'choob__mobleman__shine_',
-        'choob__mobleman__prime_',
-        'choob__mobleman__vision_',
-        'choob__mobleman__spot_',
-        'choob__mobleman__world_',
-        'choob__mobleman__trend__',
-        'choob__mobleman__dream__',
-        'choob__mobleman__zone__',
-        'choob__mobleman__artistic',
-        'choob__mobleman__style__',
-        'choob__mobleman__elite_',
-        'choob__mobleman__decorx_',
-        'choob__mobleman__unique_',
-        'choob__mobleman__classic_',
-        'choob__mobleman__modernx',
-        'choob__mobleman__trendx',
-        'choob__mobleman__decor__x',
-        'choob__mobleman__life__x',
-        'choob__mobleman__woodx',
-        'choob__mobleman__dreamx',
-        'choob__mobleman__zonex',
-        'choob__mobleman__futurex',
-        'choob__mobleman__shinex',
-        'choob__mobleman__primex',
-        'choob__mobleman__visionx',
-        'choob__mobleman__spotx',
-        'choob__mobleman__goldx',
-        'choob__mobleman__artx',
-        'choob__mobleman__bestx',
-        'choob__mobleman__elitex',
-        'choob__mobleman__housex',
-        'choob__mobleman__villax',
-        'choob__mobleman__zonex',
-        'choob__mobleman__ideasx',
-        'choob__mobleman__dreamxx',
-        'choob__mobleman__trendxx',
-        'choob__mobleman__stylexx',
-        'choob__mobleman__modernxx',
-        'choob__mobleman__decorxx',
-        'choob__mobleman__classicxx',
-        'choob__mobleman__futurexx',
-        'choob__mobleman__primexx',
-        'choob__mobleman__visionxx',
-        'choob__mobleman__spotxx',
-        'choob__mobleman__goldxx',
-        'choob__mobleman__elitexx',
-        'choob__mobleman__artxx',
-        'choob__mobleman__bestxx',
-        'choob__mobleman__zonexx',
-        'choob__mobleman__dreamz',
-        'choob__mobleman__trendz',
-        'choob__mobleman__stylez',
-        'choob__mobleman__modernz',
-        'choob__mobleman__decorz',
-        'choob__mobleman__classicz',
-        'choob__mobleman__futurez',
-        'choob__mobleman__primez',
-        'choob__mobleman__visionz',
-        'choob__mobleman__spotz',
-        'choob__mobleman__goldz',
-        'choob__mobleman__elitez',
-        'choob__mobleman__artz',
-        'choob__mobleman__bestz',
-        'choob__mobleman__zonez',
-        'choob__mobleman__lifez',
-        'choob__mobleman__woodz',
-        'choob__mobleman__dreamzz',
-        'choob__mobleman__trendzz',
-        'choob__mobleman__stylezz',
-        'choob__mobleman__modernzz',
-        'choob__mobleman__decorzz',
-        'choob__mobleman__classiczz',
-        'choob__mobleman__futurezz',
-        'choob__mobleman__primezz',
-        'choob__mobleman__visionzz',
-        'choob__mobleman__spotzz',
-        'choob__mobleman__goldzz',
-        'choob__mobleman__elitezz',
-        'choob__mobleman__artzz',
-        'choob__mobleman__bestzz',
-        'choob__mobleman__zonezz',
-        'choob__mobleman__housezz',
-        'choob__mobleman__villazz',
-        'choob__mobleman__zonexzz',
-        'choob__mobleman__lifezz',
-        'choob__mobleman__woodzz',
-        'choob__mobleman__dream_zz',
-        'choob__mobleman__trend_zz',
-        'choob__mobleman__style_zz',
-        'choob__mobleman__modern_zz',
-        'choob__mobleman__decor_zz',
-        'choob__mobleman__classic_zz',
-        'choob__mobleman__future_zz',
-        'choob__mobleman__prime_zz',
-        'choob__mobleman__vision_zz',
-        'choob__mobleman__spot_zz',
-        'choob__mobleman__gold_zz',
-        'choob__mobleman__elite_zz',
-        'choob__mobleman__art_zz',
-        'choob__mobleman__best_zz',
-        'choob__mobleman__zone_zz'
-    ];
-    foreach ($usernames as $username) {
+    $keywords = ['mobleman', 'choob', 'zendegi', 'furniture', 'wood', 'life', 'style', 'new'];
+    $decorators = ['_', '.', '__', '___', '._', '_.', '._._.', '_._', '._.'];
+    $usernames = [];
+    $nums = [1404, 2025, 2024, 2023, 2000, 1400, 1401, 2002,];
+    while (count($usernames) < 500) {
+        // تصمیم: یک کلمه یا دوتا
+        $count = rand(1, 2);
+        $chosen = [];
+
+        // انتخاب تصادفی از آرایه
+        $keys = array_rand($keywords, $count);
+        if ($count === 1) {
+            $chosen[] = $keywords[$keys];
+        } else {
+            foreach ($keys as $k) {
+                $chosen[] = $keywords[$k];
+            }
+        }
+
+        $wordPart = implode('', $chosen); // ترکیب کلمات
+        $dec = $decorators[array_rand($decorators)];
+        $num = $nums[array_rand($nums)];
+
+        // اجزای ممکن
+        $parts = [$wordPart, (string)$num, $dec];
+
+        // جابجایی رندوم
+        shuffle($parts);
+
+        $username = implode('', $parts);
+
+        // 🔎 فیلتر قوانین اینستاگرام:
+        // 1. طول < 30
+        // 2. شروع نشدن با . یا _
+        // 3. تمام نشدن با . یا _
+        if (
+            strlen($username) < 30 &&
+            !in_array($username, $usernames) &&
+            !preg_match('/^[_\.]/', $username) &&   // شروع نشه با . یا _
+            !preg_match('/[_\.]$/', $username)      // تموم نشه با . یا _
+        ) {
+            $usernames[] = $username;
+        }
 
         Template::query()
-            ->where('type','username')
-            ->where('text',$username)
+            ->where('type', 'username')
+            ->where('text', $username)
             ->doesntExist()
-            &&
+        &&
         Template::query()
             ->create([
                 'text' => $username,
-                'type'=>'username'
+                'type' => 'username'
             ]);
     }
+    dd($usernames);
 });
 
 Route::get('/activate-accounts', function () {
