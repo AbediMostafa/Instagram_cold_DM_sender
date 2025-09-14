@@ -16,11 +16,17 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
         Initialize and execute the email registration process
         """
         try:
+            self.command = self.ig.account.create_command('register email', 'processing')
             self.ig.account.add_cli("Starting email registration process...")
             self._navigate_to_contact_info()
             self._analyze_contact_info()
+            self.command.update_cmd('state', 'success')
 
         except Exception as e:
+            import traceback
+
+            self.command.update_cmd('state', 'fail')
+            self.ig.account.add_log(traceback.format_exc())
             self.ig.account.add_cli(f"Email registration failed: {str(e)}")
         finally:
             go_to_page(self.ig, f'https://www.instagram.com/', "Home")
@@ -52,53 +58,71 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _click_on_profile(self):
         """Click on profile using different methods"""
-        profile_selectors = [
-            'span:has-text("Profile")',
-            f'a[href="/{self.ig.account.username}/"]',
-            f'img[alt*="{self.ig.account.username}\'s profile picture"]',
-            'a[role="link"]:has-text("Profile")'
-        ]
+        max_retries = 3
 
-        for selector in profile_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=8000)
-                self.ig.page.wait_for_load_state("domcontentloaded", timeout=15000)
-                self.ig.pause(2000, 3000)
-                if self._is_in_profile_page():
-                    return True
-            except Exception as e:
-                continue
+                profile_selectors = [
+                    'span:has-text("Profile")',
+                    f'a[href="/{self.ig.account.username}/"]',
+                    f'img[alt*="{self.ig.account.username}\'s profile picture"]',
+                    'a[role="link"]:has-text("Profile")'
+                ]
 
-        raise Exception("Could not access profile page with any method")
+                for selector in profile_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=8000)
+                        self.ig.page.wait_for_load_state("domcontentloaded", timeout=15000)
+                        self.ig.pause(2000, 3000)
+                        if self._is_in_profile_page():
+                            return True
+                    except Exception as e:
+                        continue
+
+                raise Exception("Could not access profile page with any method")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking profile")
+
+        raise Exception("Failed to click on profile after 3 attempts.")
 
     def _is_in_profile_page(self):
         """Check if we are in profile page"""
         current_url = self.ig.page.url
         url_check = f"/{self.ig.account.username}/" in current_url
         text_check = (self.ig.is_visible_by_text("posts") or
-                     self.ig.is_visible_by_text("followers") or
-                     self.ig.is_visible_by_text("following"))
+                      self.ig.is_visible_by_text("followers") or
+                      self.ig.is_visible_by_text("following"))
         return url_check and text_check
 
     def _click_on_options(self):
         """Click on Options button"""
-        options_selectors = [
-            'svg[aria-label="Options"]',
-            'div[role="button"]:has(svg[aria-label="Options"])',
-            'svg:has(title:text("Options"))',
-            'button:has(svg[aria-label="Options"])'
-        ]
+        max_retries = 3
 
-        for selector in options_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=10000)
-                self.ig.pause(2000, 3000)
-                if self._is_options_menu_open():
-                    return True
-            except:
-                continue
+                options_selectors = [
+                    'svg[aria-label="Options"]',
+                    'div[role="button"]:has(svg[aria-label="Options"])',
+                    'svg:has(title:text("Options"))',
+                    'button:has(svg[aria-label="Options"])'
+                ]
 
-        raise Exception("Could not click on Options button")
+                for selector in options_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=10000)
+                        self.ig.pause(2000, 3000)
+                        if self._is_options_menu_open():
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not click on Options button")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking options")
+
+        raise Exception("Failed to click on options after 3 attempts.")
 
     def _is_options_menu_open(self):
         """Check if options menu is opened"""
@@ -107,57 +131,75 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _click_on_settings_and_privacy(self):
         """Click on Settings and privacy button"""
-        settings_selectors = [
-            'button:has-text("Settings and privacy")',
-            'button[tabindex="0"]:has-text("Settings and privacy")',
-            '[role="button"]:has-text("Settings and privacy")'
-        ]
+        max_retries = 3
 
-        for selector in settings_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=10000)
-                self.ig.pause(2000, 3000)
-                if self._is_settings_page_open():
-                    return True
-            except:
-                continue
+                settings_selectors = [
+                    'button:has-text("Settings and privacy")',
+                    'button[tabindex="0"]:has-text("Settings and privacy")',
+                    '[role="button"]:has-text("Settings and privacy")'
+                ]
 
-        raise Exception("Could not click on Settings and privacy")
+                for selector in settings_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=10000)
+                        self.ig.pause(2000, 3000)
+                        if self._is_settings_page_open():
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not click on Settings and privacy")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking settings and privacy")
+
+        raise Exception("Failed to click on settings and privacy after 3 attempts.")
 
     def _is_settings_page_open(self):
         """Check if settings page is opened"""
         current_url = self.ig.page.url
         url_check = "accounts/edit" in current_url
         text_check = (self.ig.is_visible_by_text("Settings") or
-                     self.ig.is_visible_by_text("Edit profile"))
+                      self.ig.is_visible_by_text("Edit profile"))
         return url_check and text_check
 
     def _click_on_accounts_center(self):
         """Click on Accounts Center"""
-        accounts_center_selectors = [
-            'span:has-text("See more in Accounts Center")',
-            'a[href*="accountscenter.instagram.com"]',
-            'a:has-text("See more in Accounts Center")'
-        ]
+        max_retries = 3
 
-        for selector in accounts_center_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=15000)
-                self.ig.page.wait_for_url("*accountscenter.instagram.com*", timeout=10000)
-                self.ig.page.wait_for_load_state("domcontentloaded", timeout=15000)
-                self.ig.pause(3000, 4000)
-                if self._is_accounts_center_page_open():
-                    return True
-            except:
-                continue
+                accounts_center_selectors = [
+                    'span:has-text("See more in Accounts Center")',
+                    'a[href*="accountscenter.instagram.com"]',
+                    'a:has-text("See more in Accounts Center")'
+                ]
 
-        # Check if already in accounts center
-        current_url = self.ig.page.url
-        if "accountscenter.instagram.com" in current_url:
-            if self._is_accounts_center_page_open():
-                return True
+                for selector in accounts_center_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=15000)
+                        self.ig.page.wait_for_url("*accountscenter.instagram.com*", timeout=10000)
+                        self.ig.page.wait_for_load_state("domcontentloaded", timeout=15000)
+                        self.ig.pause(3000, 4000)
+                        if self._is_accounts_center_page_open():
+                            return True
+                    except:
+                        continue
 
-        raise Exception("Could not click on Accounts Center")
+                # Check if already in accounts center
+                current_url = self.ig.page.url
+                if "accountscenter.instagram.com" in current_url:
+                    if self._is_accounts_center_page_open():
+                        return True
+
+                raise Exception("Could not click on Accounts Center")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking accounts center")
+
+        raise Exception("Failed to click on accounts center after 3 attempts.")
 
     def _is_accounts_center_page_open(self):
         """Check if accounts center page is opened"""
@@ -168,9 +210,9 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
             if url_check:
                 for attempt in range(3):
                     text_check = (self.ig.is_visible_by_text("Accounts Center") or
-                                 self.ig.is_visible_by_text("Personal details") or
-                                 self.ig.is_visible_by_text("Account settings") or
-                                 self.ig.is_visible_by_text("Privacy"))
+                                  self.ig.is_visible_by_text("Personal details") or
+                                  self.ig.is_visible_by_text("Account settings") or
+                                  self.ig.is_visible_by_text("Privacy"))
                     if text_check:
                         return True
                     self.ig.pause(1000, 2000)
@@ -182,22 +224,31 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _click_on_personal_details(self):
         """Click on Personal details"""
-        personal_details_selectors = [
-            'span:has-text("Personal details")',
-            'a[href="/personal_info/"]',
-            'a:has-text("Personal details")'
-        ]
+        max_retries = 3
 
-        for selector in personal_details_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=10000)
-                self.ig.pause(2000, 3000)
-                if self._is_personal_details_page_open():
-                    return True
-            except:
-                continue
+                personal_details_selectors = [
+                    'span:has-text("Personal details")',
+                    'a[href="/personal_info/"]',
+                    'a:has-text("Personal details")'
+                ]
 
-        raise Exception("Could not click on Personal details")
+                for selector in personal_details_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=10000)
+                        self.ig.pause(2000, 3000)
+                        if self._is_personal_details_page_open():
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not click on Personal details")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking personal details")
+
+        raise Exception("Failed to click on personal details after 3 attempts.")
 
     def _is_personal_details_page_open(self):
         """Check if personal details page is opened"""
@@ -208,28 +259,37 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _click_on_contact_info(self):
         """Click on Contact info"""
-        contact_info_selectors = [
-            'div[role="listitem"]:has-text("Contact info")',
-            '[role="button"]:has-text("Contact info"):not(:has-text("Account ownership")):not(:has-text("Birthday"))'
-        ]
+        max_retries = 3
 
-        for selector in contact_info_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=10000)
-                self.ig.pause(2000, 3000)
-                if self._is_contact_info_page_open():
-                    return True
-            except:
-                continue
+                contact_info_selectors = [
+                    'div[role="listitem"]:has-text("Contact info")',
+                    '[role="button"]:has-text("Contact info"):not(:has-text("Account ownership")):not(:has-text("Birthday"))'
+                ]
 
-        raise Exception("Could not click on Contact info")
+                for selector in contact_info_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=10000)
+                        self.ig.pause(2000, 3000)
+                        if self._is_contact_info_page_open():
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not click on Contact info")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking contact info")
+
+        raise Exception("Failed to click on contact info after 3 attempts.")
 
     def _is_contact_info_page_open(self):
         """Check if contact info page is opened"""
         current_url = self.ig.page.url
         url_check = ("contact_points" in current_url or "contact_info" in current_url)
         text_check = (self.ig.is_visible_by_text("Contact information") or
-                     self.ig.is_visible_by_text("Add new contact"))
+                      self.ig.is_visible_by_text("Add new contact"))
         return url_check and text_check
 
     def _analyze_contact_info(self):
@@ -351,7 +411,7 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
             'temp-mail.org needs to review the security'
         ]
         return any(self.page1.locator(f'text="{indicator}"').is_visible()
-                  for indicator in verification_indicators)
+                   for indicator in verification_indicators)
 
     def _add_new_email(self):
         """Complete email addition flow"""
@@ -379,49 +439,67 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _click_add_new_contact(self):
         """Click on Add new contact button"""
-        add_contact_selectors = [
-            'div[aria-label="Add new contact Collapsed"]',
-            'button:has-text("Add new contact")',
-            '[role="button"]:has-text("Add new contact")'
-        ]
+        max_retries = 3
 
-        for selector in add_contact_selectors:
+        for attempt in range(max_retries):
             try:
-                self.ig.page.locator(selector).first.click(timeout=10000)
-                self.ig.pause(2000, 3000)
-                if self._is_add_contact_menu_open():
-                    return True
-            except:
-                continue
+                add_contact_selectors = [
+                    'div[aria-label="Add new contact Collapsed"]',
+                    'button:has-text("Add new contact")',
+                    '[role="button"]:has-text("Add new contact")'
+                ]
 
-        raise Exception("Could not click on Add new contact")
+                for selector in add_contact_selectors:
+                    try:
+                        self.ig.page.locator(selector).first.click(timeout=10000)
+                        self.ig.pause(2000, 3000)
+                        if self._is_add_contact_menu_open():
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not click on Add new contact")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking add new contact")
+
+        raise Exception("Failed to click on add new contact after 3 attempts.")
 
     def _is_add_contact_menu_open(self):
         """Check if add contact menu is opened"""
         self.ig.pause(1000, 2000)
         return (self.ig.is_visible_by_text("Add email") or
-               self.ig.is_visible_by_text("Add phone number"))
+                self.ig.is_visible_by_text("Add phone number"))
 
     def _click_add_email(self):
         """Click on Add email"""
-        add_email_selectors = [
-            'div[role="listitem"]:has-text("Add email")',
-            '[role="button"]:has-text("Add email")',
-            'button:has-text("Add email")'
-        ]
+        max_retries = 3
 
-        for selector in add_email_selectors:
+        for attempt in range(max_retries):
             try:
-                email_element = self.ig.page.locator(selector).first
-                if email_element.is_visible():
-                    email_element.click(timeout=10000)
-                    self.ig.pause(2000, 3000)
-                    if self._is_add_email_form_open():
-                        return True
-            except:
-                continue
+                add_email_selectors = [
+                    'div[role="listitem"]:has-text("Add email")',
+                    '[role="button"]:has-text("Add email")',
+                    'button:has-text("Add email")'
+                ]
 
-        raise Exception("Could not click on Add email")
+                for selector in add_email_selectors:
+                    try:
+                        email_element = self.ig.page.locator(selector).first
+                        if email_element.is_visible():
+                            email_element.click(timeout=10000)
+                            self.ig.pause(2000, 3000)
+                            if self._is_add_email_form_open():
+                                return True
+                    except:
+                        continue
+
+                raise Exception("Could not click on Add email")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking add email")
+
+        raise Exception("Failed to click on add email after 3 attempts.")
 
     def _is_add_email_form_open(self):
         """Check if add email form is opened"""
@@ -477,24 +555,33 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _click_next_button(self):
         """Click the Next button"""
-        next_button_selectors = [
-            'div[role="button"]:has(span:has-text("Next"))',
-            '[role="button"]:has-text("Next")',
-            'button:has-text("Next")'
-        ]
+        max_retries = 3
 
-        for selector in next_button_selectors:
+        for attempt in range(max_retries):
             try:
-                next_button = self.ig.page.locator(selector).first
-                if next_button.is_visible():
-                    next_button.click(timeout=10000)
-                    self.ig.page.wait_for_load_state("domcontentloaded", timeout=10000)
-                    self.ig.pause(3000, 4000)
-                    return True
-            except:
-                continue
+                next_button_selectors = [
+                    'div[role="button"]:has(span:has-text("Next"))',
+                    '[role="button"]:has-text("Next")',
+                    'button:has-text("Next")'
+                ]
 
-        raise Exception("Could not click Next button")
+                for selector in next_button_selectors:
+                    try:
+                        next_button = self.ig.page.locator(selector).first
+                        if next_button.is_visible():
+                            next_button.click(timeout=10000)
+                            self.ig.page.wait_for_load_state("domcontentloaded", timeout=10000)
+                            self.ig.pause(3000, 4000)
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not click Next button")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking next button")
+
+        raise Exception("Failed to click next button after 3 attempts.")
 
     def _wait_for_verification_code(self):
         """Wait for verification code"""
@@ -634,66 +721,84 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def _fill_verification_code(self):
         """Fill verification code"""
-        if not hasattr(self, 'code') or not self.code:
-            raise Exception("No verification code available")
+        max_retries = 3
 
-        self.ig.account.add_cli(f"Filling verification code: {self.code}")
-
-        code_input_selectors = [
-            'input[id="_r_o_"]',
-            'input[placeholder="Enter confirmation code"]',
-            'input[autocomplete="one-time-code"]',
-            'input[inputmode="numeric"][maxlength="6"]'
-        ]
-
-        for selector in code_input_selectors:
+        for attempt in range(max_retries):
             try:
-                code_input = self.ig.page.locator(selector).first
-                if code_input.is_visible():
-                    code_input.click()
-                    self.ig.pause(1000, 1500)
-                    code_input.fill("")
-                    code_input.type(self.code, delay=100)
-                    self.ig.pause(1000, 2000)
-                    self._click_submit_code_button()
-                    return True
-            except:
-                continue
+                if not hasattr(self, 'code') or not self.code:
+                    raise Exception("No verification code available")
 
-        raise Exception("Could not find verification code input field")
+                self.ig.account.add_cli(f"Filling verification code: {self.code}")
+
+                code_input_selectors = [
+                    'input[id="_r_o_"]',
+                    'input[placeholder="Enter confirmation code"]',
+                    'input[autocomplete="one-time-code"]',
+                    'input[inputmode="numeric"][maxlength="6"]'
+                ]
+
+                for selector in code_input_selectors:
+                    try:
+                        code_input = self.ig.page.locator(selector).first
+                        if code_input.is_visible():
+                            code_input.click()
+                            self.ig.pause(1000, 1500)
+                            code_input.fill("")
+                            code_input.type(self.code, delay=100)
+                            self.ig.pause(1000, 2000)
+                            self._click_submit_code_button()
+                            return True
+                    except:
+                        continue
+
+                raise Exception("Could not find verification code input field")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for filling verification code")
+
+        raise Exception("Failed to fill verification code after 3 attempts.")
 
     def _click_submit_code_button(self):
         """Click Next button after filling verification code"""
-        submit_button_selectors = [
-            'div[role="button"][tabindex="0"]:has(span:has-text("Next"))',
-            '[role="button"]:has-text("Next")',
-            'button:has-text("Next")'
-        ]
+        max_retries = 3
 
-        for selector in submit_button_selectors:
+        for attempt in range(max_retries):
             try:
-                submit_buttons = self.ig.page.locator(selector).all()
-                if submit_buttons:
-                    for button in submit_buttons:
-                        if button.is_visible():
-                            button.click(timeout=10000, force=True)
-                            self.ig.page.wait_for_load_state("domcontentloaded", timeout=15000)
-                            self.ig.pause(2000, 3000)
+                submit_button_selectors = [
+                    'div[role="button"][tabindex="0"]:has(span:has-text("Next"))',
+                    '[role="button"]:has-text("Next")',
+                    'button:has-text("Next")'
+                ]
 
-                            if self._check_for_wrong_code_error():
-                                self.ig.account.add_cli("Wrong verification code detected!")
-                                return False
+                for selector in submit_button_selectors:
+                    try:
+                        submit_buttons = self.ig.page.locator(selector).all()
+                        if submit_buttons:
+                            for button in submit_buttons:
+                                if button.is_visible():
+                                    button.click(timeout=10000, force=True)
+                                    self.ig.page.wait_for_load_state("domcontentloaded", timeout=15000)
+                                    self.ig.pause(2000, 3000)
 
-                            if self._is_email_added_successfully():
-                                self.ig.account.add_cli("Email successfully added!")
-                                self.ig.pause(4000, 4000)  # Wait 4 seconds after success
-                                return True
+                                    if self._check_for_wrong_code_error():
+                                        self.ig.account.add_cli("Wrong verification code detected!")
+                                        return False
 
-                            return True
-            except:
-                continue
+                                    if self._is_email_added_successfully():
+                                        self.ig.account.add_cli("Email successfully added!")
+                                        self.ig.pause(4000, 4000)  # Wait 4 seconds after success
+                                        return True
 
-        return False
+                                    return True
+                    except:
+                        continue
+
+                raise Exception("Could not click submit button")
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for clicking submit code button")
+
+        raise Exception("Failed to click submit code button after 3 attempts.")
 
     def _check_for_wrong_code_error(self):
         """Check if wrong verification code error is displayed"""
@@ -755,9 +860,17 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
 
     def close_temp_mail_tab_manually(self):
         """Manual method to close temp mail tab"""
-        try:
-            if hasattr(self, 'page1') and self.page1:
-                self.page1.close()
-                self.ig.account.add_cli("Temp mail tab closed manually")
-        except Exception as e:
-            self.ig.account.add_cli(f"Error closing temp mail tab: {str(e)}")
+        max_retries = 3
+
+        for attempt in range(max_retries):
+            try:
+                if hasattr(self, 'page1') and self.page1:
+                    self.page1.close()
+                    self.ig.account.add_cli("Temp mail tab closed manually")
+                    return True
+                return False
+
+            except Exception as e:
+                self.ig.account.add_cli(f"Attempt {attempt + 1} failed for closing temp mail tab: {str(e)}")
+
+        raise Exception("Failed to close temp mail tab after 3 attempts.")
