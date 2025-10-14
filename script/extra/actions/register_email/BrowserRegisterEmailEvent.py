@@ -10,17 +10,24 @@ class BrowserRegisterEmailEvent(InstagramMiddleware):
     """
     Event class for executing email registration on Instagram
     """
+    command = None
 
     def init(self):
         """
         Initialize and execute the email registration process
         """
         try:
+            self.command = self.ig.account.create_command('register email', 'processing')
             self.ig.account.add_cli("Starting email registration process...")
             self._navigate_to_contact_info()
             self._analyze_contact_info()
+            self.command.update_cmd('state', 'success')
 
         except Exception as e:
+            import traceback
+
+            self.command.update_cmd('state', 'fail')
+            self.ig.account.add_log(traceback.format_exc())
             self.ig.account.add_cli(f"Email registration failed: {str(e)}")
         finally:
             go_to_page(self.ig, f'https://www.instagram.com/', "Home")

@@ -125,7 +125,7 @@ class Account extends Model
 
             $accountExists = Account::query()
                 ->whereUsername($account[0])
-                ->wherePassword($account[1])
+//                ->wherePassword($account[1])
                 ->exists();
 
             if ($accountExists) {

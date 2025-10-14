@@ -46,6 +46,7 @@ return new class extends Migration {
 
             $table->unsignedTinyInteger('is_used')->default(0);
             $table->unsignedTinyInteger('is_verify')->default(0);
+            $table->unsignedTinyInteger('two_factor_activated')->default(0);
             $table->unsignedTinyInteger('api_is_used')->default(0);
             $table->unsignedTinyInteger('avatar_changed')->default(0);
             $table->unsignedTinyInteger('username_changed')->default(0);

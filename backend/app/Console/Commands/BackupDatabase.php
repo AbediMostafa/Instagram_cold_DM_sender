@@ -30,7 +30,7 @@ class BackupDatabase extends Command
         $dbhost = 'localhost';
         $dbport = 1363;
         $backupDir = 'C:\\Users\\bc';
-        $dbpass = 'ufY34numBHHKqoVpcata';
+        $dbpass = 'q9xud8U2vi8nQdr1HYbu';
 
         // Get current date
         $date = now()->format('Y-m-d');

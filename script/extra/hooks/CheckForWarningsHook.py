@@ -17,7 +17,7 @@ class CheckForWarningsHook:
             if warning.expiration_time_not_passed():
                 self.account.add_cli(f'We have a {warning.cause} warning for the account')
                 self.account.add_cli(f'{warning.get_hours_until_expiry()} hours remains until account relief')
-                pause(2, 4)
+                pause(1, 2)
                 return True
 
         return False

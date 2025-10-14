@@ -79,8 +79,7 @@ class BrowserLoginEvent:
                 self.ig.page.goto("https://www.instagram.com", timeout=80000)
                 self.ig.pause(2000, 3000)
 
-                if self.ig.is_visible_by_text('Notifications') or self.ig.is_visible_by_text(
-                        'Profile') or self.ig.is_visible_by_text('Explore'):
+                if self.ig.is_visible_by_text('Notifications') or self.ig.is_visible_by_text('Explore'):
                     self.ig.account.add_cli("User logged in before")
 
                     # if self.ig.page.url.rstrip("/") == "https://www.instagram.com/direct/inbox":
@@ -89,7 +88,7 @@ class BrowserLoginEvent:
                     self.turn_on_notif()
                     self.save_session()
                     self.find_friends_and_accounts_you_like()
-                    self.follow_suggested()
+                    # self.follow_suggested()
                     raise SuccessfulLogin("Logged in successfully")
 
                 # We're not logged in and should login
@@ -271,7 +270,7 @@ class BrowserLoginEvent:
 
         passed_days = self.ig.account.get_passed_days_since_creation() if self.ig.account.passed_days_since_creation is None else self.ig.account.passed_days_since_creation
 
-        allowed_follows = random.randint(1, SettingAdapter.max_follow())
+        allowed_follows = random.randint(15, SettingAdapter.max_follow())
         allowed_follows = min(allowed_follows, passed_days)
 
         command_count = performed_command_count(self.ig.account, ['follow'], 24)

@@ -14,7 +14,7 @@ class CheckForLastLoginHook:
 
         if next_login_has_not_reached:
             self.account.add_cli(f"{time_delta.total_seconds()//3600} hours remains for next login")
-            pause(8, 18)
+            pause(1, 2)
             return True
 
         return False

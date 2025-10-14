@@ -39,6 +39,7 @@ class Account(BaseWithTimeZoneModel):
     is_public = SmallIntegerField(default=0)
     screenshot_taken = SmallIntegerField(default=0)
     is_verify = SmallIntegerField(default=0)
+    two_factor_activated = SmallIntegerField(default=0)
     web_session = TextField(null=True)
     mobile_session = TextField(null=True)
     log = TextField(null=True)
@@ -228,12 +229,13 @@ class Account(BaseWithTimeZoneModel):
 
         return self.proxy
 
-    def get_verification_code(self):
+    def get_verification_code(self, secret_key =None):
         if not self.secret_key:
             return ""
 
         import pyotp
-        clean_secret = self.secret_key.replace(" ", "")  # حذف فاصله‌ها
+        s_key = secret_key or self.secret_key
+        clean_secret = s_key.replace(" ", "")
 
         totp = pyotp.TOTP(clean_secret)
 

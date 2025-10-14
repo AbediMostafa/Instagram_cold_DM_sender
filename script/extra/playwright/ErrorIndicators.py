@@ -1,6 +1,7 @@
 from script.extra.playwright.base_actions.BaseAction import BaseAction
 from script.extra.exceptions import *
 from script.extra.helper import go_to_page
+from script.extra.modules.adspower.Adspower import Adspower
 
 
 class ErrorIndicators(BaseAction):
@@ -58,8 +59,8 @@ class ErrorIndicators(BaseAction):
 
             except Exception as e:
                 raise Exception(f'Problem clicking on use_another_profile:{str(e)}')
-    #     Use another profile
 
+    #     Use another profile
 
     def choose_if_we_process_your_data(self):
         # Choose if we process your data for ads
@@ -172,7 +173,7 @@ class ErrorIndicators(BaseAction):
         # Enter the code we sent to your WhatsApp account
         if self.ig.is_visible_by_text('We sent a code to WhatsApp') or self.ig.is_visible_by_text(
                 'Check your WhatsApp messages') or self.ig.is_visible_by_text(
-                'Enter the code we sent to your WhatsApp account'):
+            'Enter the code we sent to your WhatsApp account'):
             raise EnterYourMobileError('We sent a code to WhatsApp')
 
     def suspended_account_handler(self):
@@ -219,7 +220,11 @@ class ErrorIndicators(BaseAction):
 
     def confirm_you_are_human_to_use_your_account(self):
         if self.ig.is_visible_by_text("Confirm you're human"):
-            self.ig.page.get_by_role("button", name="Continue").click(timeout=3000)
+
+            try:
+                self.ig.page.get_by_role("button", name="Continue").click(timeout=3000)
+            except:
+                raise HelpUsConfirmItsYouError("Confirm you're human")
 
     def add_a_phone_number(self):
         if self.ig.is_visible_by_text('Add a phone number to get back into Instagram') or self.ig.is_visible_by_text(
@@ -245,7 +250,10 @@ class ErrorIndicators(BaseAction):
 
     def feedback_required(self):
         if self.ig.is_visible_by_text('feedback_required') or self.ig.is_visible_by_text("feedback required"):
-            raise FeedbackRequired("feedback required")
+            self.ig.account("Setting this account's is_used to 0 ...")
+            self.ig.account.set('is_used', 0)
+
+            # raise FeedbackRequired("feedback required")
 
     def change_password_handler(self):
 

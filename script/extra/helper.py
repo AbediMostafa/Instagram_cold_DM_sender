@@ -204,17 +204,19 @@ def calculate_daily_dms(account_age):
 
     # if account_age <= 4:
     #     return 0
+    #
+    # if account_age <= 6:
+    #     return 0
+    #
+    # return random.randint(1, 3)
+    #
+    # if account_age <= 10:
+    #     return random.randint(1, 3)
+    #
+    # if account_age <= 15:
+    #     return random.randint(3, 5)
 
-    if account_age <= 6:
-        return 1
-
-    if account_age <= 10:
-        return random.randint(1, 3)
-
-    if account_age <= 15:
-        return random.randint(3, 5)
-
-    return random.randint(9, 11)
+    return random.randint(5, 7)
 
     if account_age <= 15:
         return random.randint(6, 10)
@@ -241,9 +243,9 @@ def calculate_daily_dms(account_age):
 
 def get_dm_chunk(account_age):
     if account_age <= 6:
-        return 1
+        return 0
 
-    return random.randint(4, 6)
+    return random.randint(3, 5)
     # return random.randint(6, 8)
 
     if account_age <= 10:
@@ -282,5 +284,7 @@ def go_to_page(ig, target, name):
 
         except Exception as e:
             ig.account.add_cli(f"Attempt {attempt + 1} failed for loading the page : {name}")
+
+        ig.pause(5000, 7000)
 
     raise Exception(f"Failed to reach {name} after 5 attempts.")

@@ -47,6 +47,9 @@ class Command extends Model
         'generate lead by page engagement',
         'generate lead by post engagement',
         'username match',
+        'register email',
+        'activate 2fa code',
+        'generate lead by linkedin',
     ];
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s', // Change the format as needed

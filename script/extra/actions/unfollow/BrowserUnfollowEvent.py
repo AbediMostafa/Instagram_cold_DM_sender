@@ -1,3 +1,5 @@
+import random
+
 from script.extra.playwright.base_actions.DirectlyGoToAccountPageAction import DirectlyGoToAccountPageAction
 from script.extra.playwright.base_actions.ClickOnFollowingAction import ClickOnFollowingAction
 from script.extra.playwright.base_actions.ScrollAction import ScrollAction
@@ -26,7 +28,8 @@ class BrowserUnfollowEvent:
         self.unfollow()
 
     def unfollow(self):
-        allowed_unfollow = int(Setting.get_value('Number of daily unfollow', 15))
+        n = random.randint(5, 7)
+        allowed_unfollow = int(Setting.get_value('Number of daily unfollow', n))
         unfollowed = 0
 
         while unfollowed < allowed_unfollow:

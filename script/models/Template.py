@@ -22,6 +22,7 @@ def get_a(_type, account=None):
 
     query = Template.select().where(
         (Template.type == _type)
+
     )
 
     # if account:

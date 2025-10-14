@@ -10,6 +10,8 @@ from script.extra.hooks.CheckForLastLoginHook import CheckForLastLoginHook
 from script.extra.hooks.CheckForWarningsHook import CheckForWarningsHook
 from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook
 from script.extra.modules.adspower.ProfileUpdator import ProfileUpdator
+from script.extra.exceptions import ProxyStuck
+from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContext import LeadGenerateByLinkedinContext
 
 from time import sleep
 
@@ -46,6 +48,9 @@ class Process:
             self.account.set_state('active')
 
             self.start_process()
+
+        except ProxyStuck:
+            raise
 
         except Exception as e:
             self.account.add_cli(str(e))

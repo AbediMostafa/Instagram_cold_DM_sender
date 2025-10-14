@@ -74,27 +74,11 @@ use \App\Models\Role;
 //حاصل رو توی یه آرایه پی اچ پی به من بده
 
 Route::get('/', function () {
-
-    // آرایه کامل براساس داده‌هایی که فرستادید
-
-//
-//    Account::query()->where('id','<', 4004)
-//        ->update([
-//            'is_used'=>1
-//        ]);
-//    $accounts = Account::query()->orderBy('id')->get()->pluck('is_used','id')->toArray();
-//    dd($accounts);
-//    Account::query()->where('id','!=',24)->update([
-//        'api_is_used'=>0
+//    \App\Models\EnrichedLead::query()->update([
+//        'is_used' => 1
 //    ]);
-////
-//    private.residential.proxyrack.net:10000:mostafaaabedi-country-DE:EHRMBAG-FUVSHPY-STBMCL5-FVPSB1F-FZZ1GQG-40OBXSB-KDRAQ6S
-//    private.residential.proxyrack.net:10001:mostafaaabedi-country-DE:EHRMBAG-FUVSHPY-STBMCL5-FVPSB1F-FZZ1GQG-40OBXSB-KDRAQ6S
-//    private.residential.proxyrack.net:10002:mostafaaabedi-country-DE:EHRMBAG-FUVSHPY-STBMCL5-FVPSB1F-FZZ1GQG-40OBXSB-KDRAQ6S
-//    private.residential.proxyrack.net:10003:mostafaaabedi-country-DE:EHRMBAG-FUVSHPY-STBMCL5-FVPSB1F-FZZ1GQG-40OBXSB-KDRAQ6S
-//    private.residential.proxyrack.net:10004:mostafaaabedi-country-DE:EHRMBAG-FUVSHPY-STBMCL5-FVPSB1F-FZZ1GQG-40OBXSB-KDRAQ6S
-
-
+//
+//    dd('shod');
 });
 
 Route::get('/make-username', function () {

@@ -14,6 +14,12 @@ class AdsPowerHandler(IBrowserHandler):
         creator = ProfileUpdator(self.account)
         creator.call_action('create')
 
+    def change_proxy(self):
+        self.account.add_cli('Change profile proxy ....')
+
+        creator = ProfileUpdator(self.account)
+        creator.call_action('change_proxy')
+
     def update_profile(self):
         self.account.add_cli('Updating Profile ....')
 

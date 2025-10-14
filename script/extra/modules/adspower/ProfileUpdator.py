@@ -11,8 +11,9 @@ from script.models.Proxy import Proxy
 from script.models.Proxy import get_free_proxy
 from script.models.AccountHelper import get_storage_state
 from script.models.Profile import Profile
+from script.extra.exceptions import ProxyStuck
 
-TIME_TO_SLEEP = 550
+TIME_TO_SLEEP = 400
 
 
 class ProfileUpdator:
@@ -55,9 +56,9 @@ class ProfileUpdator:
         cookies = storage_state["cookies"]
         self.payload["cookie"] = json.dumps(cookies)
 
-    def get_proxy(self):
+    def get_proxy(self, type='datacenter'):
 
-        self.proxy_obj = get_free_proxy()
+        self.proxy_obj = get_free_proxy(type=type)
 
         self.proxy = {
             "proxy_soft": "other",
@@ -90,6 +91,9 @@ class ProfileUpdator:
             self.send_request() \
                 .create_profile_record() \
                 .update_account()
+
+        except ProxyStuck:
+            raise
 
         except Exception as e:
             self.account.add_cli(f"Error: {e} | {self.response_message}")
@@ -153,8 +157,8 @@ class ProfileUpdator:
 
         return self
 
-    def send_request_(self):
-        url = "http://local.adspower.net:50325/api/v1/user/create"
+    def update_request(self):
+        url = "http://local.adspower.net:50325/api/v2/browser-profile/update"
         self.response = requests.post(url, json=self.payload, verify=False)
 
         try:
@@ -252,3 +256,10 @@ class ProfileUpdator:
 
         except Exception as e:
             self.account.add_cli(f"Error checking previous account: {e}")
+
+    def change_proxy(self):
+        self.get_proxy(type='private_residential')
+        self.payload["profile_id"] = self.account.profile.profile_id
+        self.payload["group_id"] = self.folder_id
+        self.payload["user_proxy_config"] = self.proxy
+        self.update_request()

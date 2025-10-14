@@ -100,3 +100,7 @@ class UploadedPostRecently(Exception):
 
 class ThereIsNoPost(Exception):
     pass
+
+
+class ProxyStuck(Exception):
+    pass

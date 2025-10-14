@@ -7,5 +7,5 @@ class IsProperServer:
         self.account = account
 
     def can(self):
-        if Setting.get_value('can_generate_lead_by_page_engagement') == '0':
-            raise IsNotProperServer('This server cant generate lead by page engagement')
+        if Setting.get_value('can_generate_lead_by_linkedin') == '0':
+            raise IsNotProperServer('This server cant generate lead by linkedin')

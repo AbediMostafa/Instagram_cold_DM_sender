@@ -15,6 +15,7 @@ from script.extra.actions.get_lead_pk.GetLeadPkContext import GetLeadPkContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
+from script.extra.actions.activated_2fa_code.Activate2faCodeContext import Activate2faCodeContext
 
 
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
@@ -60,9 +61,9 @@ class HowManyEventsCanHandleStrategy:
 
     def run(self):
 
-        self.pre_action_hook()
+        # self.pre_action_hook()
         self.run_actions()
-        self.post_action_hook()
+        # self.post_action_hook()
 
     def pre_action_hook(self):
         BrowserSendCustomMessage(self.browser_ig).fire()
@@ -113,23 +114,24 @@ class HowManyEventsCanHandleStrategy:
         required_actions = [
 
             # MakeAccountPublicContext,
-            # DeleteInitialPostsContext,
-
+            DeleteInitialPostsContext,
             ChangeNameContext,
-            BrowserChangeUsernameEvent,
+            # BrowserChangeUsernameEvent,
             BrowserChangeAvatarEvent,
-            RegisterEmailContext,
+            # RegisterEmailContext,
 
-            # BrowserChangeBioEvent,
+            BrowserChangeBioEvent,
+            # Activate2faCodeContext
 
-            GetContactInformationContext,
+            # GetContactInformationContext,
             # GetProfileScreenShotContext,
 
             # Daily actions
             # FollowContext,
-            SendDmWithPostContext,
-            CheckSystemUsernameWithIgUsernameContext,
+            # SendDmWithPostContext,
+            # CheckSystemUsernameWithIgUsernameContext,
             # GetLeadPkContext,
+            # SendDmContext,
 
             # BrowserDmFollowUpEvent,
             # BrowserLoomFollowUpEvent,

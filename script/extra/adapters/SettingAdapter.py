@@ -18,7 +18,7 @@ class SettingAdapter:
 
     @classmethod
     def max_follow(cls):
-        return Setting.get_value('Max Follow', 15)
+        return Setting.get_value('Max Follow', 20)
 
     @classmethod
     def max_like(cls):

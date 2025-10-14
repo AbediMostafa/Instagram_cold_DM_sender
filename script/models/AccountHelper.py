@@ -13,7 +13,8 @@ def free_account_query(tag_titles=None, specific_ids=None):
     """
     # Base query for free accounts
     query = Account.select().where(
-        (Account.is_used == 0)
+        (Account.is_used == 0) &
+        (Account.instagram_state == 'active')
     )
 
     # If specific IPs are provided, filter accounts based on IPs
@@ -82,7 +83,6 @@ def get_next_account_for_api():
     return next_account
 
 
-
 def get_next_profile():
     from .Profile import Profile
 
@@ -128,7 +128,6 @@ def get_next_proxy(mobile_only=False):
     print(f'selected Proxy {next_proxy.id}')
 
     return next_proxy
-
 
 
 def get_first_proxy_with_less_accounts(exception_proxy_ids=None):
@@ -192,4 +191,3 @@ def get_storage_state(account):
         storage_state = {}
 
     return storage_state
-

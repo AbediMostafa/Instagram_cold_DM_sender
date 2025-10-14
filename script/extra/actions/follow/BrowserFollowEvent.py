@@ -29,7 +29,7 @@ class BrowserFollowEvent:
             ['follow'],
             24)
 
-        allowed_follows = calculate_daily_dms(self.account_age)
+        allowed_follows = calculate_daily_dms(self.account_age) + 2
         allowed_chunk = get_dm_chunk(self.account_age)
         remained_follows = 0 if performed_follows >= allowed_follows else allowed_follows - performed_follows
         final_allowed_chunk = min(allowed_chunk, remained_follows)
