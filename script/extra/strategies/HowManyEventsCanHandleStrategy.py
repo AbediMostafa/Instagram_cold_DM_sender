@@ -114,13 +114,13 @@ class HowManyEventsCanHandleStrategy:
         required_actions = [
 
             # MakeAccountPublicContext,
-            DeleteInitialPostsContext,
-            ChangeNameContext,
+            # DeleteInitialPostsContext,
+            # ChangeNameContext,
             # BrowserChangeUsernameEvent,
-            BrowserChangeAvatarEvent,
-            # RegisterEmailContext,
+            # BrowserChangeAvatarEvent,
+            RegisterEmailContext,
 
-            BrowserChangeBioEvent,
+            # BrowserChangeBioEvent,
             # Activate2faCodeContext
 
             # GetContactInformationContext,

@@ -372,7 +372,7 @@ class Account(BaseWithTimeZoneModel):
         .where(
             (Template.type == 'video-post') &
             (Template.sub_type == 'video') &
-            (Template.category == self.category) &
+            # (Template.category == self.category) &
             (~(Template.id << selected_templates_subquery))
         ))
                           .order_by(fn.Random())

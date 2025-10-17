@@ -88,7 +88,7 @@ class BrowserLoginEvent:
                     self.turn_on_notif()
                     self.save_session()
                     self.find_friends_and_accounts_you_like()
-                    # self.follow_suggested()
+                    self.follow_suggested()
                     raise SuccessfulLogin("Logged in successfully")
 
                 # We're not logged in and should login

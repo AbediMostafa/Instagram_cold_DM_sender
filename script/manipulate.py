@@ -102,9 +102,9 @@ from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContex
 import requests
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
 
-lead = get_free_enriched_lead()
+lead = get_free_proxy()
 
-print(lead.id)
+print(lead)
 
 # account = Account.get_by_id(72)
 # # account = get_next_account()

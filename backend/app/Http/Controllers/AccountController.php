@@ -171,12 +171,7 @@ class AccountController extends Controller
 
             Account::query()
                 ->whereIn('id', r('ids'))
-                ->get()
-                ->each(function (Account $account) {
-                    $account->delete();
-//                    $account->profile && $account->profile->deleteRecords();
-//                    sleep(3);
-                });
+                ->delete();
         },
             'Account(s) deleted successfully'
         );
