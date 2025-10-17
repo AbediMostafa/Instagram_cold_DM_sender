@@ -13,7 +13,9 @@ def free_account_query(tag_titles=None, specific_ids=None):
     """
     # Base query for free accounts
     query = Account.select().where(
-        (Account.is_used == 0)
+        (Account.is_used == 0) &
+        (Account.instagram_state == 'active') &
+        (Account.is_verify == 0)
     )
 
     # If specific IPs are provided, filter accounts based on IPs

@@ -8,7 +8,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import csv
 import sys
-
 count = 0
 import random
 import sys
@@ -59,6 +58,7 @@ from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEng
     LeadGenerateByPostEngagementContext
 from script.extra.actions.login.LoginContext import LoginContext
 from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
+from script.models.Warning import Warning
 
 from script.extra.helper import hours_ago
 from spintax import spin
@@ -89,23 +89,31 @@ from script.models.DmPost import get_dm_post_for_lead
 from script.models.Proxy import get_free_proxy
 from script.extra.exceptions import UploadedPostRecently
 from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
-from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import \
+    CheckSystemUsernameWithIgUsernameContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
+from script.extra.actions.activated_2fa_code.Activate2faCodeContext import Activate2faCodeContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
-# 33
-# 2417
-# account_id = sys.argv[1]
-# 450->email
-#524->unverify phone
-#27->phone and email
-#64 ->verify phone
-account = Account.get_by_id(3499)
+from peewee import *
+from script.models.Proxy import get_free_proxy
+from script.models.Proxy import Proxy
+from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContext import LeadGenerateByLinkedinContext
+import requests
+from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
+from script.extra.actions.register_email.BrowserRegisterEmailEvent import BrowserRegisterEmailEvent
+from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
+
+lead = get_free_proxy()
+
+print(lead)
+
+account = Account.get_by_id(8184)
 # account = get_next_account()
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-BrowserPostVideoEvent(browser_ig).fire()
-
+RegisterEmailContext(browser_ig).fire()
+# BrowserChangeNameEvent(browser_ig).fire()
 # BrowserChangeBioEvent(browser_ig).fire()
 # GetContactInformationContext(browser_ig).fire()
 # response = requests.get(url, verify=False)
