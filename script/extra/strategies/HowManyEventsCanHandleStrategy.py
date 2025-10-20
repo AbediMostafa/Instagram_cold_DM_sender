@@ -44,6 +44,7 @@ from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEng
     LeadGenerateByPostEngagementContext
 
 from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
+from script.extra.actions.lead_generate_following_other_leads.LeadGenerateByInstagramSuggestionContext import LeadGenerateByInstagramSuggestionContext
 
 
 
@@ -63,7 +64,7 @@ class HowManyEventsCanHandleStrategy:
 
         # self.pre_action_hook()
         self.run_actions()
-        # self.post_action_hook()
+        self.post_action_hook()
 
     def pre_action_hook(self):
         BrowserSendCustomMessage(self.browser_ig).fire()
@@ -118,10 +119,11 @@ class HowManyEventsCanHandleStrategy:
             # ChangeNameContext,
             # BrowserChangeUsernameEvent,
             # BrowserChangeAvatarEvent,
-            RegisterEmailContext,
+            # RegisterEmailContext,
+            LeadGenerateByInstagramSuggestionContext,
 
             # BrowserChangeBioEvent,
-            # Activate2faCodeContext
+            Activate2faCodeContext
 
             # GetContactInformationContext,
             # GetProfileScreenShotContext,

@@ -60,26 +60,8 @@ use \App\Models\LeadSource;
 use \App\Models\Lead;
 use \App\Models\Role;
 
-//پس باید یوزرنیم اینستاگرام واقعی‌پسند بسازم که:
-//
-//فقط حروف انگلیسی و عدد باشه (به‌همراه . یا _)
-//
-//زیر ۳۰ کاراکتر
-//
-//شامل کلمات mobleman، choob، یا zendegi باشه
-// یا ترجمه انگلیسی اونها باشه
 
-// میتونی از هر مقدار ترکیب _ مانند __ یا ___ یا ._._. یا هر نوعی از ترکیبش بین یوزرنیم ها استفاده کنی
-//یونیک و بامسما باشه
-//حاصل رو توی یه آرایه پی اچ پی به من بده
-
-Route::get('/', function () {
-//    \App\Models\EnrichedLead::query()->update([
-//        'is_used' => 1
-//    ]);
-//
-//    dd('shod');
-});
+Route::get('/', function () {});
 
 Route::get('/make-username', function () {
     $keywords = ['mobleman', 'choob', 'zendegi', 'furniture', 'wood', 'life', 'style', 'new'];

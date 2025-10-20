@@ -94,6 +94,7 @@ from script.extra.actions.check_system_username_with_ig_username.CheckSystemUser
     CheckSystemUsernameWithIgUsernameContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.actions.activated_2fa_code.Activate2faCodeContext import Activate2faCodeContext
+from script.extra.actions.lead_generate_following_other_leads.LeadGenerateByInstagramSuggestionContext import LeadGenerateByInstagramSuggestionContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
 from peewee import *
 from script.models.Proxy import get_free_proxy
@@ -102,16 +103,12 @@ from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContex
 import requests
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
 
-lead = get_free_proxy()
-
-print(lead)
-
 # account = Account.get_by_id(72)
-# # account = get_next_account()
-# browser_ig = BasePlaywright(account)
-# browser_ig.init()
-# LoginContext(browser_ig).fire()
-# Activate2faCodeContext(browser_ig).fire()
+account = get_next_account()
+browser_ig = BasePlaywright(account)
+browser_ig.init()
+LoginContext(browser_ig).fire()
+LeadGenerateByInstagramSuggestionContext(browser_ig).fire()
 
 # BrowserChangeBioEvent(browser_ig).fire()
 # GetContactInformationContext(browser_ig).fire()
