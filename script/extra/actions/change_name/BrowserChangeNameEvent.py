@@ -45,7 +45,7 @@ class BrowserChangeNameEvent:
         try:
             self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
         except Exception as e:
-            self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click()
+            self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click(timeout=3000)
             self.ig.pause(2000, 2500)
             self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
 
@@ -69,15 +69,15 @@ class BrowserChangeNameEvent:
         self.fill_locator()
         self.ig.pause(3000, 4000)
 
-        self.ig.page.get_by_role("button", name="Done").click(timeout=5000)
+        self.ig.page.get_by_role("button", name="Done").click(timeout=3000)
         self.ig.pause(4000, 5000)
 
     def fill_locator(self):
 
         try:
-            self.ig.page.locator("input#_r_l_").fill(self.name.text)
+            self.ig.page.locator("input#_r_l_").fill(self.name.text, timeout=3000)
             self.ig.account.add_cli("Problem filling first locator 'input#_r_l_'")
         except:
-            self.ig.page.locator("div.x6s0dn4.x78zum5.x1qughib.xh8yej3 input[type='text']").first.fill(self.name.text)
+            self.ig.page.locator("div.x6s0dn4.x78zum5.x1qughib.xh8yej3 input[type='text']").first.fill(self.name.text, timeout=3000)
 
 

@@ -8,6 +8,7 @@ use App\Classes\ProfileMaker;
 use App\Classes\ProfileMakerV2;
 use App\Classes\ProfileRequest;
 use App\Models\Account;
+use App\Models\CharityLead;
 use App\Models\Command;
 use App\Models\DmPost;
 use App\Models\Message;
@@ -43,6 +44,7 @@ use \Illuminate\Support\Facades\Http;
 use \App\Http\Controllers\HashtagController;
 use App\Http\Controllers\LeadSourceController;
 use App\Http\Controllers\DmPostController;
+use \App\Http\Controllers\OrderController;
 use \App\Models\Tag;
 use JetBrains\PhpStorm\ArrayShape;
 use Morilog\Jalali\Jalalian;
@@ -59,12 +61,149 @@ use \App\Models\Template;
 use \App\Models\LeadSource;
 use \App\Models\Lead;
 use \App\Models\Role;
+use \App\Models\EnrichedLead;
+use \App\Models\Order;
+use \App\Models\OrderComment;
+use \App\Http\Controllers\SettingController;
 
 
-Route::get('/', function () {});
+Route::get('/', function () {
 
+
+//    $order = Order::query()->find(571)->comments()->pluck('status')->toArray();
+
+//
+//    $ids = [489];
+////    $ids = [489,490,492,493,495,499,500,501,503];
+//
+//    $order = Order::query()->whereIn('id', $ids )
+//    ->update([
+//        'status'=>'Pending'
+//    ]);
+//
+//    dd($order);
+    dd('salam');
+
+
+    dd(
+        OrderComment::query()->where('order_id', 39)->get()->pluck('status')->toArray()
+    );
+    dump(
+        OrderComment::query()->where('status', 'processing')->update([
+            'status' => 'free'
+        ])
+    );
+
+});
+
+Route::get('/add-comment', function () {
+
+});
+Route::get('/get-instagram-leads', function () {
+    $leads = \App\Models\CharityLead::query()
+
+//        ->whereNotNull('linkedin')
+        ->whereNotNull('instagram')
+        ->count();
+
+    dd($leads);
+});
+Route::get('/update-charities', function () {
+    $s = \App\Models\CharityLead::query()
+        ->where('id', '>', 280000)
+        ->update([
+            'is_used' => 0
+        ]);
+
+    dd($s);
+});
+Route::get('/import_charity_leads_test', function () {
+    $path = storage_path('app/charity leads/crunchbase_companies');
+    $files = glob($path . '/*.csv');
+
+    foreach ($files as $file) {
+        $handle = fopen($file, 'r');
+        if (!$handle) continue;
+
+        $headers = fgetcsv($handle);
+
+        $batch = [];
+        $count = 0;
+
+        while (($row = fgetcsv($handle)) !== false) {
+
+            $data = array_combine($headers, $row);
+
+            $insertingData = [
+                'data' => json_encode($data),
+                'company_name' => $data["name"],
+                'phone_number' => $data["phone_number"],
+                'website' => $data["website"],
+                'email' => $data["contact_email"],
+                'linkedin' => $data["linkedin"],
+                'lead_type' => 'crunchbase_companies_leads',
+                'is_used' => 0
+            ];
+
+            try {
+                \App\Models\CharityLead::query()->create($insertingData);
+                $count += 1;
+            } catch (Throwable $e) {
+                dump($e->getMessage());
+                dump($insertingData);
+            }
+        }
+
+        dump("✅ Imported {$count} rows from" . basename($file));
+    }
+});
+Route::get('/import_charity_leads', function () {
+    $path = storage_path('app/charity leads/crunchbase_companies');
+    $files = glob($path . '/*.csv');
+
+    foreach ($files as $file) {
+        $handle = fopen($file, 'r');
+        if (!$handle) continue;
+
+        $headers = fgetcsv($handle);
+
+        $batch = [];
+        $count = 0;
+
+        while (($row = fgetcsv($handle)) !== false) {
+
+            $data = array_combine($headers, $row);
+
+            $linkedin = $data['linkedin'];
+
+            $batch[] = [
+                'data' => json_encode($data),
+                'company_name' => $data["name"],
+                'phone_number' => $data["phone_number"],
+                'website' => $data["website"],
+                'email' => $data["contact_email"],
+                'linkedin' => $data["linkedin"],
+                'lead_type' => 'crunchbase_companies_leads'
+            ];
+
+            // Insert every 1000 rows for efficiency
+            if (count($batch) >= 1000) {
+                DB::table('charity_leads')->insert($batch);
+                $count += count($batch);
+                $batch = [];
+            }
+        }
+
+        if (!empty($batch)) {
+            DB::table('charity_leads')->insert($batch);
+            $count += count($batch);
+        }
+
+        dump("✅ Imported {$count} rows from" . basename($file));
+    }
+});
 Route::get('/make-username', function () {
-    $keywords = ['mobleman', 'choob', 'zendegi', 'furniture', 'wood', 'life', 'style', 'new'];
+    $keywords = ['it', 'software', 'tech', 'company', 'ai', 'style', 'new'];
     $decorators = ['_', '.', '__', '___', '._', '_.', '._._.', '_._', '._.'];
     $usernames = [];
     $nums = [1404, 2025, 2024, 2023, 2000, 1400, 1401, 2002,];
@@ -121,15 +260,11 @@ Route::get('/make-username', function () {
     }
     dd($usernames);
 });
-
 Route::get('/activate-accounts', function () {
     Account::all()->each(function ($account) {
         $account->makeActive();
     });
     dd('shod');
-
-
-//
 });
 
 
@@ -261,6 +396,22 @@ Route::post('colors', [ColorController::class, 'index']);
 Route::post('colors/create', [ColorController::class, 'store']);
 Route::post('colors/edit/{id}', [ColorController::class, 'update']);
 Route::post('colors/delete', [ColorController::class, 'destroy']);
+
+
+Route::post('orders', [OrderController::class, 'index']);
+Route::post('orders/create', [OrderController::class, 'create']);
+Route::post('order/delete', [OrderController::class, 'delete']);
+Route::post('order/finish', [OrderController::class, 'finish']);
+Route::post('order/fail', [OrderController::class, 'fail']);
+Route::post('order/reset', [OrderController::class, 'reset']);
+Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
+Route::post('api/v3', [OrderController::class, 'v3']);
+
+
+Route::post('settings', [SettingController::class, 'index']);
+Route::post('setting/update', [SettingController::class, 'update']);
+
+
 //});
 
 Route::post('hidemyacc/create', function () {
@@ -289,6 +440,3 @@ Route::post('hidemyacc/create', function () {
 
     return $response->json();
 });
-
-
-

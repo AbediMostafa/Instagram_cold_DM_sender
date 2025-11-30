@@ -104,3 +104,7 @@ class ThereIsNoPost(Exception):
 
 class ProxyStuck(Exception):
     pass
+
+
+class LinkIsNotCorrect(Exception):
+    pass

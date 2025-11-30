@@ -32,6 +32,7 @@ class Command extends Model
         'dm follow up',
         'like post',
         'comment post',
+        'comment and like',
         'custom message',
         'send loom',
         'loom follow up',

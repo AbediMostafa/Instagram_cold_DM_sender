@@ -220,10 +220,10 @@ class ErrorIndicators(BaseAction):
 
     def confirm_you_are_human_to_use_your_account(self):
         if self.ig.is_visible_by_text("Confirm you're human"):
-
             try:
                 self.ig.page.get_by_role("button", name="Continue").click(timeout=3000)
             except:
+
                 raise HelpUsConfirmItsYouError("Confirm you're human")
 
     def add_a_phone_number(self):
@@ -256,11 +256,71 @@ class ErrorIndicators(BaseAction):
             # raise FeedbackRequired("feedback required")
 
     def change_password_handler(self):
+        from script.extra.helper import generate_random_word
 
         if self.ig.is_visible_by_text('Change your password to secure your account') or self.ig.is_visible_by_text(
                 'Someone may have your password') or self.ig.is_visible_by_text(
             'Change Your Password to Secure Your Account'):
-            raise ChangePasswordError('Change Your Password to Secure Your Account')
+
+            self.ig.account.add_cli("Change password page appeared")
+
+            try:
+                repeat_password_input = self.ig.page.get_by_label("New password confirmation")
+                password = generate_random_word()
+
+                self.ig.page.get_by_label("New password", exact=True).press_sequentially(password, delay=100,
+                                                                                         timeout=3000)
+                self.ig.pause(1800, 3000)
+
+                try:
+                    self.ig.page.get_by_label("New password confirmation").press_sequentially(password, delay=100,
+                                                                                              timeout=3000)
+                except:
+                    self.ig.page.get_by_label("Confirm new password").press_sequentially(password, delay=100,
+                                                                                         timeout=3000)
+
+                self.ig.pause(2000, 3000)
+                self.ig.page.get_by_role("button", name="Next", exact=True).click()
+                self.ig.account.set('password', password)
+                self.ig.account.add_cli("Password changed successfully")
+                self.ig.pause(6000, 8000)
+
+            except Exception as e:
+                raise ChangePasswordError(str(e))
+
+        if self.ig.is_visible_by_text('Your account was compromised') or self.ig.is_visible_by_text(
+                'you shared your password with a service'):
+            self.ig.account.add_cli("Your account was compromised ...")
+
+            self.ig.page.get_by_role("button", name="Change Password", exact=True).click()
+            self.ig.pause(1800, 3000)
+
+            try:
+                old_password = self.ig.page.get_by_label("Old password")
+                self.ig.account.add_cli(f"Old password : {self.ig.account.password}")
+
+                password = self.ig.account.password + '1'
+
+                # password = generate_random_word()
+                old_password.press_sequentially(self.ig.account.password, delay=100, timeout=3000)
+                self.ig.pause(1800, 3000)
+
+                self.ig.page.fill('input[name="new_password1"]', password)
+                self.ig.pause(1800, 3000)
+                self.ig.page.fill('input[name="new_password2"]', password)
+
+                self.ig.pause(2000, 3000)
+                self.ig.page.get_by_role("button", name="Change Password", exact=True).click()
+                self.ig.pause(6000, 8000)
+
+                if self.ig.is_visible_by_text('Your old password was entered incorrectly') or self.ig.is_visible_by_text('Please enter it again'):
+                    raise ChangePasswordError('Your old password was entered incorrectly')
+
+                self.ig.account.set('password', password)
+                self.ig.account.add_cli("Password changed successfully")
+
+            except Exception as e:
+                raise ChangePasswordError(str(e))
 
     def check_the_security_code(self):
         if self.ig.is_visible_by_text('check the security code'):

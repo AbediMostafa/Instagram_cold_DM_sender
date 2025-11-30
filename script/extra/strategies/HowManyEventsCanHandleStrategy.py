@@ -45,8 +45,9 @@ from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEng
 
 from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
 from script.extra.actions.lead_generate_following_other_leads.LeadGenerateByInstagramSuggestionContext import LeadGenerateByInstagramSuggestionContext
-
-
+from script.extra.actions.comment.CommentContext import CommentContext
+from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
+from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
 
 class HowManyEventsCanHandleStrategy:
     events = None
@@ -64,7 +65,7 @@ class HowManyEventsCanHandleStrategy:
 
         # self.pre_action_hook()
         self.run_actions()
-        self.post_action_hook()
+        # self.post_action_hook()
 
     def pre_action_hook(self):
         BrowserSendCustomMessage(self.browser_ig).fire()
@@ -72,6 +73,11 @@ class HowManyEventsCanHandleStrategy:
 
     def post_action_hook(self):
         from script.extra.exceptions import UploadedPostRecently
+
+        self.account.add_cli(f'Passed days since creation: {self.account.passed_days_since_creation}')
+
+        if self.account.get_passed_days_since_creation() < 5:
+            self.account.add_cli('Account is not old enough to post ...')
 
         if self.account.initial_posts_deleted:
             self.account.add_cli('We can post now')
@@ -115,15 +121,18 @@ class HowManyEventsCanHandleStrategy:
         required_actions = [
 
             # MakeAccountPublicContext,
+            # CommentContext,
+            LikeAndCommentContext,
             # DeleteInitialPostsContext,
-            # ChangeNameContext,
+            BrowserChangeAvatarEvent,
             # BrowserChangeUsernameEvent,
-            # BrowserChangeAvatarEvent,
-            # RegisterEmailContext,
-            LeadGenerateByInstagramSuggestionContext,
-
+            # ChangeNameContext,
             # BrowserChangeBioEvent,
-            Activate2faCodeContext
+            PostImageFromFolderContext,
+
+            # RegisterEmailContext,
+            # LeadGenerateByInstagramSuggestionContext,
+            # Activate2faCodeContext,
 
             # GetContactInformationContext,
             # GetProfileScreenShotContext,
@@ -151,5 +160,5 @@ class HowManyEventsCanHandleStrategy:
         events = required_actions
 
         for event in events:
-            self.browser_ig.pause(1000, 3000)
+            self.browser_ig.pause(800, 1100)
             event(self.browser_ig).fire()

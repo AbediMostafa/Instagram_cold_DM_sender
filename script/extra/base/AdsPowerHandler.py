@@ -4,9 +4,11 @@ from script.extra.base.IBrowserHandler import IBrowserHandler
 from script.extra.modules.adspower.Adspower import Adspower
 from script.extra.modules.adspower.ProfileUpdator import ProfileUpdator
 from script.models.Profile import get_next
+from time import sleep
 
 
 class AdsPowerHandler(IBrowserHandler):
+    user_id_not_open_message = 'User_id is not open'
 
     def create_profile(self):
         self.account.add_cli('Creating Profile ....')
@@ -48,9 +50,27 @@ class AdsPowerHandler(IBrowserHandler):
             return self.account.add_cli('Dont have profile to Close ...')
 
         try:
-            self.account.add_cli('Closing Adspower profile ...')
-            response = Adspower().close_browser(self.account.profile.profile_id)
-            self.account.add_cli(f'Close adspower status code : {response.status_code}')
-            self.account.add_cli(f'Close adspower json : {response.json()}')
+            closing_count = 1
+            response = self.close_adspower(closing_count)
+
+            while response['code'] == -1:
+
+                if response['msg'] == self.user_id_not_open_message:
+                    break
+
+                self.account.add_cli(f'Attempt {closing_count} failed to close the profile ...')
+
+                sleep(closing_count)
+                closing_count += 1
+
+                response = self.close_adspower(closing_count)
+
         except Exception as e:
             self.account.add_cli(f'Problem Closing Profile : {str(e)}')
+
+    def close_adspower(self, closing_count):
+        self.account.add_cli(f'Closing Adspower profile for {closing_count} ...')
+        response = Adspower().close_browser(self.account.profile.profile_id)
+        json_response = response.json()
+        self.account.add_cli(f'Close adspower json : {json_response}')
+        return json_response

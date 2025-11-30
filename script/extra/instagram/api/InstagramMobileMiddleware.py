@@ -121,6 +121,11 @@ class InstagramMobileMiddleware:
         return lead.username
 
     @try_except
+    def media_seen(self, media_url):
+        media_pk = self.client.media_pk_from_url(media_url)
+        self.client.media_seen([media_pk])
+
+    @try_except
     def get_user_id(self, username):
         user = self.client.user_info_by_username_v1(username)
         return user.pk

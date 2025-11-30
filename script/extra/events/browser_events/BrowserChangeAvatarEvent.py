@@ -13,19 +13,20 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
 
     def execute(self):
 
-        if self.ig.account.get_passed_days_since_creation() < 3:
-            return self.ig.account.add_cli(f"Account is not old enough to change avatar")
+        # if self.ig.account.get_passed_days_since_creation() < 2:
+        #     return self.ig.account.add_cli(f"Account is not old enough to change avatar")
 
         if self.ig.account.avatar_changed:
             return self.ig.account.add_cli(f"{self.ig.account.username}'s avatar has been changed already")
 
-        self.template = self.ig.account.get_a_free_template('avatar')
-
-        if not self.template:
-            self.ig.account.add_cli(f"We don't have an avatar for : {self.ig.account.username}")
+        # self.template = self.ig.account.get_a_free_template('avatar')
+        #
+        # if not self.template:
+        #     self.ig.account.add_cli(f"We don't have an avatar for : {self.ig.account.username}")
 
         try:
-            self.generate_image()
+            # self.generate_image()
+            self.image_path = get_profile_picture()
             self.before_change_hook()
             self.change_hook()
             self.after_change_hook()
@@ -67,5 +68,5 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
         self.ig.account.set('avatar_changed', 1)
-        self.ig.account.attach_template(self.template)
+        # self.ig.account.attach_template(self.template)
         self.ig.account.add_cli("Avatar changed successfully")

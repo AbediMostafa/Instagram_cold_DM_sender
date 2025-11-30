@@ -3,7 +3,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 import random
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.models.Template import get_a, delete
-from script.extra.helper import go_to_page
+from script.extra.helper import go_to_page, generate_username
 
 
 class BrowserChangeUsernameEvent(InstagramMiddleware):
@@ -13,6 +13,9 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
     command = 0
 
     def execute(self):
+        # if self.ig.account.get_passed_days_since_creation() < 2:
+        #     return self.ig.account.add_cli(f"Account is not old enough to change username")
+
         if self.ig.account.username_changed:
             return self.ig.account.add_cli(f"Account's username has been changed already.")
 
@@ -63,15 +66,15 @@ class BrowserChangeUsernameEvent(InstagramMiddleware):
         self.ig.account.set('username_changed', 1)
 
     def get_username(self):
-        result = get_a('username')
+        # result = get_a('username')
+        #
+        # if result is None or not result.text:
+        #     raise ValueError("No username available in the database.")
 
-        if result is None or not result.text:
-            raise ValueError("No username available in the database.")
-
-        self.username = result.text
+        self.username = generate_username()
 
         # we delete this username from database to don't use for another account
-        delete('username', self.username)
+        # delete('username', self.username)
         self.ig.account.add_cli(f'Selected username: {self.username}')
 
     def fill_username(self):

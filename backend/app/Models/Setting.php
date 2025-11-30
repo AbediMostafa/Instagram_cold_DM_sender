@@ -25,6 +25,7 @@ class Setting extends Model
         'Command',
         'Comment',
         'Like',
+        'Post',
     ];
 
     public static function getValue($key, $default = null)
@@ -37,7 +38,7 @@ class Setting extends Model
     public static function setValue(string $key, $value, string $type = 'text', string $description = null): void
     {
         // Check if a record with the given key exists
-        $setting = self::query()->firstOrNew(['key' => $key]);
+        $setting = self::query()->where('key', $key)->first();
 
         // Set or update fields
         $setting->value = $value;

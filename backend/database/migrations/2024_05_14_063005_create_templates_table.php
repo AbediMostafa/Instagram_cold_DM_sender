@@ -32,6 +32,8 @@ return new class extends Migration {
             $table->enum('type', Template::$types);
             $table->enum('sub_type', Template::$subTypes)->nullable();
             $table->timestamp('created_at')->nullable();
+            $table->unique(['text', 'caption']);
+
         });
     }
 

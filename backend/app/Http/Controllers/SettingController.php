@@ -2,9 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Proxy;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
-    //
+    public function index()
+    {
+
+        return [
+            'proxy_types' => Proxy::select('type')?->distinct()?->pluck('type'),
+            'proxy_type' => Setting::getValue('proxy_type'),
+            'can_send_post_from_folder' => Setting::getValue('can_send_post_from_folder'),
+            'allowed_posting_age' => Setting::getValue('allowed_posting_age'),
+        ];
+    }
+
+    public function update()
+    {
+        return tryCatch(
+            function () {
+                foreach (r()->all() as $key => $value) {
+                    if (is_bool($value)) {
+                        $value = $value ? "1" : "0";
+                    }
+                    Setting::setValue($key, $value);
+                }
+            },
+            'Setting updated successfully'
+        );
+
+    }
 }

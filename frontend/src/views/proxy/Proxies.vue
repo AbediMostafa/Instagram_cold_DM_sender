@@ -34,9 +34,8 @@
           <thead>
           <tr class="fw-bold text-muted">
             <th class="min-w-50px">ID</th>
-            <th class="min-w-150px">PROXY</th>
-            <th class="min-w-150px">Profiles</th>
-            <th class="min-w-150px">Accounts</th>
+            <th class="min-w-350px">PROXY</th>
+            <th class="min-w-150px">Type</th>
             <th class="min-w-100px text-end">Actions</th>
           </tr>
           </thead>
@@ -74,33 +73,9 @@
                 </div>
               </td>
               <td>
-                <div
-                    class="py-2 px-3 fs-7 me-1"
-                    v-for="profile in proxy.profiles"
-                    :key="profile.username"
-                >
-                  <span @click="copyToClipboard(profile.title)">{{ profile.title }}</span>
-
-                  <span
-                      class="badge py-2 px-3 fs-7 ms-1"
-                      v-for="account in profile.accounts"
-                      :key="account.username"
-                      :class="account.instagram_state=='active'?'badge-light-info':'badge-light-danger'"
-                  >
-                    <span @click="copyToClipboard(account.id)">{{ account.id }}</span> .
-                    <span @click="copyToClipboard(account.username)">{{ account.username }}</span>
-                  </span>
-                </div>
-              </td>
-              <td>
-                  <span
-                      class="badge py-2 px-3 fs-7 "
-                      v-for="account in proxy.accounts"
-                      :key="account.username"
-                      :class="account.instagram_state=='active'?'badge-light-info':'badge-light-danger'"
-                  >
-                    {{ account.id }}.{{ account.username }}
-                  </span>
+                <a class="text-gray-700 fw-bold text-hover-primary fs-7">
+                  {{ proxy.type }}
+                </a>
               </td>
 
               <td class="text-end">

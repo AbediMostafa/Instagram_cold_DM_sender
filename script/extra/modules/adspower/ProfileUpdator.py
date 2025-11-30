@@ -56,9 +56,9 @@ class ProfileUpdator:
         cookies = storage_state["cookies"]
         self.payload["cookie"] = json.dumps(cookies)
 
-    def get_proxy(self, type='datacenter'):
+    def get_proxy(self):
 
-        self.proxy_obj = get_free_proxy(type=type)
+        self.proxy_obj = get_free_proxy()
 
         self.proxy = {
             "proxy_soft": "other",
@@ -103,11 +103,14 @@ class ProfileUpdator:
         import random
 
         screen_resolutions = [
-            '1280_800',
-            '1280_960',
+            # '1280_800',
+            # '1280_960',
             '1360_768',
             '1400_900',
             '1440_900',
+            '1400_1050',
+            '1440_900',
+            '1536_864',
         ]
 
         self.payload["fingerprint_config"]["screen_resolution"] = random.choice(screen_resolutions)

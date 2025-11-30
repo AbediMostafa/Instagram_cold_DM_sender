@@ -10,7 +10,7 @@ class BrowserGotoExploreEvent(InstagramMiddleware):
         self.go_to_explore()
         self.ig.suspect_automate_behavior_handler()
 
-        self.base.scroll(times=random.randint(3, 5))
+        self.base.scroll(times=random.randint(5, 8))
 
     def go_to_explore(self):
         self.ig.account.add_cli('Going to explore page ...')

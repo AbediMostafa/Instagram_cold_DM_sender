@@ -21,7 +21,7 @@ class BrowserSeeStories(InstagramMiddleware):
             self.ig.account.add_cli(f'Problem seeing stories: {str(e)}')
             return False
 
-        self.ig.pause(20000, 25000)
+        self.ig.pause(25000, 30000)
         self.close_the_stories()
 
     def click_on_first_story(self):

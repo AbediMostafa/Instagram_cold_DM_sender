@@ -39,7 +39,54 @@
               <h1 class="mb-3">Create New Template</h1>
             </div>
 
-            <div class="d-flex flex-column mb-8 fv-row">
+            <div class="fv-row my-10">
+              <!--begin::Wrapper-->
+              <div class="d-flex flex-stack">
+                <!--begin::Label-->
+                <div class="me-5">
+                  <!--begin::Label-->
+                  <label class="fs-6 fw-semibold">Bulk insertion?</label>
+                  <!--end::Label-->
+
+                  <!--begin::Input-->
+                  <div class="fs-7 fw-semibold text-muted">
+                    You can copy and paste your Templates and import many of them
+                    in the following format: phrase1,phrase2,phrase3.
+                  </div>
+                  <!--end::Input-->
+                </div>
+                <!--end::Label-->
+
+                <!--begin::Switch-->
+                <label
+                    class="form-check form-switch form-check-custom form-check-solid"
+                >
+                  <!--begin::Input-->
+                  <input
+                      class="form-check-input"
+                      name="billing"
+                      type="checkbox"
+                      value="1"
+                      id="account_bulk_insertion"
+                      v-model="targetData.bulk_insertion"
+                  />
+                  <!--end::Input-->
+
+                  <!--begin::Label-->
+                  <span
+                      class="form-check-label fw-semibold text-muted"
+                      for="account_bulk_insertion"
+                  >
+                    Yes
+                  </span>
+                  <!--end::Label-->
+                </label>
+                <!--end::Switch-->
+              </div>
+              <!--begin::Wrapper-->
+            </div>
+
+            <div class="d-flex flex-column mb-8 fv-row" v-if="targetData.bulk_insertion">
               <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
                 <span class="required">Text</span>
@@ -47,12 +94,47 @@
 
               <el-form-item prop="text">
                 <el-input
-                    :type="targetData.type =='bio' ? 'textarea' :'input'"
+                    type="textarea"
+                    :rows="8"
                     v-model="targetData.text"
                     placeholder="Enter text"
                     name="text"
                 ></el-input>
               </el-form-item>
+            </div>
+
+            <div v-else>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <!--begin::Label-->
+                <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  <span class="required">Text</span>
+                </label>
+
+                <el-form-item prop="text">
+                  <el-input
+                      :type="targetData.type =='bio' ? 'textarea' :'input'"
+                      v-model="targetData.text"
+                      placeholder="Enter text"
+                      name="text"
+                  ></el-input>
+                </el-form-item>
+              </div>
+              <div class="d-flex flex-column mb-8 fv-row" v-if="targetData.type=='name-username'">
+                <!--begin::Label-->
+                <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  <span class="required">Name</span>
+                </label>
+
+                <el-form-item prop="text">
+                  <el-input
+                      type="input"
+                      v-model="targetData.name"
+                      placeholder="Enter name"
+                      name="text"
+                  ></el-input>
+                </el-form-item>
+              </div>
+
             </div>
             <div class="d-flex flex-column mb-8 fv-row">
               <!--begin::Label-->
@@ -77,22 +159,29 @@
             </div>
 
             <div class="d-flex flex-column mb-8 fv-row">
-              <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Category</span>
+                Tags
               </label>
-              <!--end::Label-->
-              <el-select
-                  v-if="categoryStore.categories.data.length"
-                  v-model="targetData.category" placeholder="Select">
-                <el-option
-                    v-for="item in categoryStore.categories.data"
-                    :key="item.id"
-                    :label="item.title"
-                    :value="item.id"
-                />
-              </el-select>
 
+              <el-form-item prop="selectedTags">
+                <el-select
+                    v-model="targetData.tags"
+                    multiple
+                    filterable
+                    remote
+                    clearable
+                    placeholder="Search for tags"
+                    :remote-method="tagStore.fetchTags"
+                    :loading="tagStore.is.searching"
+                >
+                  <el-option
+                      v-for="tag in tagStore.searchedTags"
+                      :key="tag.id"
+                      :label="tag.title"
+                      :value="tag.id"
+                  />
+                </el-select>
+              </el-form-item>
             </div>
 
             <!--begin::Actions-->
@@ -148,7 +237,7 @@ import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
 import {useAccountStore} from "@/stores/Account";
 import {useTemplateStore} from "@/stores/Template";
-import {useCategoryStore} from "@/stores/Category";
+import {useTagStore} from "@/stores/Tag";
 
 export default defineComponent({
   name: "create_template_modal",
@@ -156,23 +245,22 @@ export default defineComponent({
     const formRef = ref<null | HTMLFormElement>(null);
     const loading = ref<boolean>(false);
     const store = useTemplateStore();
-    const categoryStore = useCategoryStore()
+    const tagStore = useTagStore()
 
     const templateTypes = ref([
       "name",
       "username",
       "bio",
-      "cold dm spintax",
-      "first loom follow up spintax",
-      "second loom follow up spintax",
-      "third loom follow up spintax",
-      "loom follow up message",
+      "name-username",
     ]);
 
     const targetData = ref({
       text: "",
+      name: "",
       type: "",
-      category: "",
+      bulk_insertion: false,
+      tags: [],
+
     });
 
     const rules = ref({
@@ -202,14 +290,14 @@ export default defineComponent({
           loading.value = true;
 
           ApiService.post("template/create", targetData.value)
-              .then(() => hideModal("create_template_modal"))
-              .then(() => store.getTemplates())
-              .finally(() => (loading.value = false));
+              .then(console.log)
+          // .then(() => hideModal("create_template_modal"))
+          // .then(() => store.getTemplates())
+          // .finally(() => (loading.value = false));
         }
       });
     };
 
-    onMounted(categoryStore.getCategories)
 
     return {
       templateTypes,
@@ -219,7 +307,8 @@ export default defineComponent({
       formRef,
       rules,
       hideModal,
-      categoryStore,
+      tagStore,
+
     };
   },
 });

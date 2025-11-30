@@ -81,12 +81,15 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
     return None
 
 
-def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, type='datacenter'):
-    query = Proxy.select().where((Proxy.is_used == 0) & (Proxy.type == type))
+def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5):
+    from .Setting import Setting
+
+    proxy_type = Setting.get_value('proxy_type')
+    query = Proxy.select().where((Proxy.is_used == 0) & (Proxy.type == proxy_type))
 
     if not query.exists():
         Proxy.update(is_used=0).execute()
-        query = Proxy.select().where((Proxy.is_used == 0) & (Proxy.type == type))
+        query = Proxy.select().where((Proxy.is_used == 0) & (Proxy.type == proxy_type))
 
     next_proxy = query.order_by(Proxy.id).first()
 

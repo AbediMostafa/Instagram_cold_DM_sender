@@ -202,9 +202,9 @@
 
 
                     <div>
-                      <span
-                          @click="copyToClipboard(account.password)"
-                          class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>
+<!--                      <span-->
+<!--                          @click="copyToClipboard(account.password)"-->
+<!--                          class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>-->
                       <account-instagram-state :state="account.instagram_state"/>
                       <account-app-state :state="account.app_state"/>
                     </div>
@@ -269,7 +269,12 @@
                 </div>
 
                 <div>
-                  <span class="text-muted fw-semibold text-muted fs-8">{{ account.email }}</span>
+                  <span
+                      @click="copyToClipboard(account.email)"
+                      class="text-muted fw-semibold text-muted fs-8">{{account.email }}</span>
+                  <div
+                      @click="copyToClipboard(account.email_password)"
+                      class="text-muted fw-semibold text-muted fs-8">{{ account.email_password }}</div>
                 </div>
               </td>
 

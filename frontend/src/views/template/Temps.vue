@@ -72,6 +72,10 @@
                   <username-card :template="template"/>
                 </template>
 
+                <template  v-if="store.templates.receivedType === 'name-username'">
+                  <name-username-card :template="template"/>
+                </template>
+
                 <template  v-if="store.templates.receivedType === 'avatar'">
                   <avatar-card :template="template"/>
                 </template>
@@ -121,7 +125,7 @@ import UploadMediaModal from "@/components/modals/account_information_template/U
 import CreateTemplateModal from "@/components/modals/account_information_template/CreateTemplateModal.vue";
 import TemplatesDropDown from "@/components/template/TemplatesDropDown.vue";
 import EditMediaModal from "@/components/modals/account_information_template/EditMediaModal.vue";
-
+import NameUsernameCard from "@/views/template/NameUsernameCard.vue";
 const store = useTemplateStore();
 const configStore = useAppConfigStore();
 

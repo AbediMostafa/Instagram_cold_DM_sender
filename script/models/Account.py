@@ -22,6 +22,7 @@ class Account(BaseWithTimeZoneModel):
     secret_key = CharField(null=True)
     username = CharField(unique=True)
     password = CharField()
+    email_password = CharField(null=True)
     name = CharField(null=True)
     phone = CharField(null=True)
     bio = TextField(null=True)
@@ -57,7 +58,7 @@ class Account(BaseWithTimeZoneModel):
     can_send_dm_today = None
     can_send_dm_follow_up_today = None
     can_send_loom_follow_up_today = None
-    number_of_custom_message_commands = None
+    number_of_custom_message_commands = 0
     custom_message_commands = None
     current_chunk_dm = None
 
@@ -214,7 +215,7 @@ class Account(BaseWithTimeZoneModel):
 
         self.passed_days_since_creation = (tehran_now() - self.created_at).days
 
-        return 1 if self.passed_days_since_creation < 1 else self.passed_days_since_creation
+        return 1 if self.passed_days_since_creation < 1 else int(self.passed_days_since_creation)
 
     def get_proxy(self):
         from .AccountHelper import get_first_proxy_with_less_accounts
@@ -487,6 +488,7 @@ class Account(BaseWithTimeZoneModel):
         """
         if self.sent_recent_post_command_within(random.randint(24, 30)):
             raise UploadedPostRecently('We have sent a post recently')  # No post can be sent if one was sent
+
 
         # Fetch the latest three post commands
         latest_commands = self.get_latest_post_commands(1)

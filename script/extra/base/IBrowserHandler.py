@@ -2,6 +2,29 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 from script.models.Setting import Setting
 from script.models.AccountHelper import get_storage_state
 import json
+import os, hashlib, requests, time
+
+CACHE_DIR = r'C:\Users\admin\Desktop\tmp\cache'
+
+
+def cache_key(url):
+    # include querystring so different tokens are separate
+    h = hashlib.sha256(url.encode()).hexdigest()
+    return os.path.join(CACHE_DIR, h)
+
+
+def fetch_and_save(url):
+    path = cache_key(url)
+
+    if os.path.exists(path):
+        return open(path, 'rb').read() 
+    r = requests.get(url, timeout=20)
+    if r.status_code == 200:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        with open(path, 'wb') as f:
+            f.write(r.content)
+        return r.content
+    return None
 
 
 class IBrowserHandler:
@@ -12,11 +35,9 @@ class IBrowserHandler:
     browser = None
     context = None
     page = None
-    server_type = 'fit'
 
     def __init__(self, account):
         self.account = account
-        self.server_type = Setting.get_value('server_type_by_account_count', 'fit')
         self.playwright = sync_playwright().start()
 
     def start_browser(self):
@@ -30,8 +51,7 @@ class IBrowserHandler:
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
 
-        self.page.route("**/*", self.handle_route)
-
+        # self.page.route("**/*", self.handle_route)
 
     def handle_route(self, route, request):
         url = request.url
@@ -48,6 +68,21 @@ class IBrowserHandler:
 
         if request.resource_type in ['image', 'media']:
             return route.abort()
+
+        request = route.request
+        url = request.url
+
+        if 'instagram' in url and url.endswith(('.js', '.css', '.png', '.jpg', '.json', '.wasm')):
+            data = fetch_and_save(url)
+            if data:
+                route.fulfill(
+                    status=200,
+                    headers={'content-type': request.headers.get('accept', 'application/octet-stream')},
+                    body=data
+                )
+                return
+
+        # Cache full HTML pages
         return route.continue_()
 
     def cleanup(self):

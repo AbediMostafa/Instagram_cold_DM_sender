@@ -35,6 +35,7 @@ class TemplateController extends Controller
 
     public function create()
     {
+
         r()->validate([
             'type' => 'required',
             'text' => [
@@ -54,11 +55,7 @@ class TemplateController extends Controller
         ]);
 
         return tryCatch(
-            fn() => Template::query()->create([
-                'text' => r('text'),
-                'type' => r('type'),
-                'category_id' => r('category'),
-            ]),
+            fn() => r('bulk_insertion') ? Template::createBulk() : Template::createOne(),
             'Template created successfully',
         );
     }

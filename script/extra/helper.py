@@ -202,8 +202,8 @@ def calculate_daily_dms(account_age):
     :return: Allowed number of daily DMs (integer).
     """
 
-    # if account_age <= 4:
-    #     return 0
+    if account_age <= 4:
+        return 0
     #
     # if account_age <= 6:
     #     return 0
@@ -216,7 +216,7 @@ def calculate_daily_dms(account_age):
     # if account_age <= 15:
     #     return random.randint(3, 5)
 
-    return random.randint(5, 7)
+    return random.randint(7, 9)
 
     if account_age <= 15:
         return random.randint(6, 10)
@@ -245,8 +245,8 @@ def get_dm_chunk(account_age):
     if account_age <= 6:
         return 0
 
-    return random.randint(3, 5)
-    # return random.randint(6, 8)
+    # return random.randint(7, 9)
+    return random.randint(6, 8)
 
     if account_age <= 10:
         return random.randint(3, 4)
@@ -288,3 +288,87 @@ def go_to_page(ig, target, name):
         ig.pause(5000, 7000)
 
     raise Exception(f"Failed to reach {name} after 5 attempts.")
+
+def get_profile_picture():
+    from uuid import uuid4
+
+    if random.random() < 0.1:
+        url = 'https://thispersondoesnotexist.com'
+    else:
+        url = 'https://picsum.photos/500/500'
+
+    headers = {'User-Agent': 'Mozilla/5.0'}
+
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+
+    filename = f'profile_pictures/image_{uuid4().hex}.jpg'
+    with open(filename, 'wb') as f:
+        f.write(resp.content)
+
+    print('saved:', filename)
+
+    return filename
+
+def generate_username():
+    first_names = [
+        "Ethan", "Mason", "Logan", "James", "Benjamin", "Elijah", "Alexander", "Henry", "Jackson", "Sebastian",
+        "Aiden", "Matthew", "Samuel", "David", "Joseph", "Carter", "Owen", "Wyatt", "John", "Jack",
+        "Luke", "Dylan", "Gabriel", "Isaac", "Nathan", "Julian", "Levi", "Ryan", "Connor", "Christian",
+        "Andrew", "Jonathan", "Adrian", "Leo", "Elias", "Anthony", "Joshua", "Daniel", "Aaron", "Evan",
+        "Sofia", "Alice", "Victoria", "Gabriela", "Isadora", "Helena", "Beatriz", "Clarissa", "Leticia", "Renata",
+        "Carolina", "Fernanda", "Tatiana", "Camilla", "Bianca", "Larissa", "Isabel", "Manuela", "Ana", "Paula",
+        "Laura", "Marina", "Valentina", "Bruna", "Yasmin", "Amanda", "Nicole", "Julia", "Carla", "Raquel",
+        "Vanessa", "Camile", "Lorena", "Aline", "Isis", "Rafaela", "Júlia", "Gabrielle", "Melissa", "Luana",
+        "Evelyn", "Stella", "Clara", "Emilly", "Mirella", "Lara", "Luna", "Victoria", "Sara", "Amanda",
+        "Thais", "Isabela", "Marina", "Júlia", "Helena", "Nicole", "Camila", "Sabrina", "Larissa", "Manuela"
+    ]
+
+    last_names = [
+        "Taylor", "Anderson", "Thomas", "Moore", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia",
+        "Martinez", "Robinson", "Clark", "Rodriguez", "Lewis", "Lee", "Walker", "Hall", "Allen", "Young",
+        "Hernandez", "King", "Wright", "Lopez", "Hill", "Scott", "Green", "Adams", "Baker", "Nelson",
+        "Carter", "Mitchell", "Perez", "Roberts", "Turner", "Phillips", "Campbell", "Parker", "Evans", "Edwards",
+        "Collins", "Stewart", "Sanchez", "Morris", "Rogers", "Reed", "Cook", "Morgan", "Bell", "Murphy",
+        "Bailey", "Rivera", "Cooper", "Richardson", "Cox", "Howard", "Ward", "Torres", "Peterson", "Gray",
+        "Ramirez", "James", "Watson", "Brooks", "Kelly", "Sanders", "Price", "Bennett", "Wood", "Barnes",
+        "Ross", "Henderson", "Coleman", "Jenkins", "Perry", "Powell", "Long", "Patterson", "Hughes", "Flores",
+        "Washington", "Butler", "Simmons", "Foster", "Gonzalez", "Bryant", "Alexander", "Russell", "Griffin", "Diaz",
+        "Mendoza", "Freitas", "Souza", "Moreira", "Nascimento", "Alves", "Lima", "Vieira", "Gomes", "Barbosa",
+        "Pinto", "Moura", "Fonseca", "Machado", "Cardoso", "Araujo", "Teixeira", "Ramos", "Campos", "Santana"
+    ]
+
+    adjectives = [
+        "lit", "dope", "epic", "savage", "vibe", "chill", "fresh", "rad", "hype", "wild",
+        "crazy", "boss", "swag", "sneaky", "slick", "icy", "flashy", "crisp", "glow", "prime",
+        "raw", "urban", "neon", "shady", "stormy", "frosty", "blaze", "fierce", "sleek", "sharp",
+        "wavy", "atomic", "cosmic", "pixel", "retro", "drip", "boost", "boosted", "legend", "mythic",
+        "hyper", "nova", "galaxy", "vortex", "chaos", "thunder", "storm", "shadow", "ghost", "phantom",
+        "viper", "rebel", "blade", "ace", "titan", "quake", "drift", "flare", "ignite", "pulse",
+        "strike", "volt", "racer", "crash", "flash", "neo", "cyber", "tech", "steel", "dark",
+        "ghostly", "glitch", "crimson", "onyx", "steel", "frost", "ember", "iron", "quantum", "blitz",
+        "fusion", "gravity", "omega", "alpha", "beta", "delta", "zen", "echo", "alpha", "drone", "pixelated",
+        "hyperdrive", "vivid", "chrome", "neptune", "mars", "apollo", "saturn", "asteroid", "lunar", "solar"
+    ]
+
+    first = random.choice(first_names)
+    last = random.choice(last_names)
+    adj = random.choice(adjectives) if random.random() < 0.5 else ""
+
+    # اضافه کردن شماره تصادفی
+    number = str(random.randint(1, 9999)) if random.random() < 0.5 else ""  # 70٪ شانس عدد
+
+    # انتخاب جداکننده تصادفی
+    separator = random.choice(["", "_", "__", "._", "_.", "_._", "_.__", "_.__"])
+
+    # ساختار یوزرنیم با طول تصادفی
+    username = first + adj+ separator + last + number
+
+    # کوتاه یا بلند کردن با اضافه کردن یک جداکننده یا عدد در صورت نیاز
+    if len(username) < 10:
+        username += str(random.randint(10, 99))
+    if len(username) > 28:
+        username = username[:28]  # محدودیت اینستاگرام
+
+    return username
+

@@ -42,6 +42,7 @@ class BrowserSendDmEvent:
     def init(self):
         self.ig.account.add_cli("Starting DM process ...")
         self.ig.account.set_state('sending DM', 'app_state')
+        self.ig.account.add_cli(f"Current chunck dm : {self.ig.account.current_chunk_dm}")
 
         leads = Lead.get_leads_for_dm(self.ig.account, self.ig.account.current_chunk_dm)
 

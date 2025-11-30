@@ -76,6 +76,16 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
+        path: "/orders",
+        name: "orders",
+        component: () => import("@/views/order/Orders.vue"),
+        meta: {
+          pageTitle: "Orders",
+          breadcrumbs: ["Orders"],
+        },
+      },
+
+      {
         path: "/leads",
         name: "leads",
         component: () => import("@/views/lead/Leads.vue"),
@@ -302,6 +312,17 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           pageTitle: "Vertical",
           breadcrumbs: ["Pages", "Wizard"],
+        },
+      },
+
+      {
+        path: "settings",
+        name: "settings",
+        component: () =>
+            import("@/views/LayoutBuilder.vue"),
+        meta: {
+          pageTitle: "Settings",
+          breadcrumbs: ["Pages", "Settings"],
         },
       },
       // {

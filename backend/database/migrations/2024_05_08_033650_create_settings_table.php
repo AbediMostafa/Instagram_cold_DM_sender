@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->string('key');
             $table->text('value');
             $table->string('description')->nullable();
+
+            $table->unique(['category', 'key']);
         });
     }
 

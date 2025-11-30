@@ -31,7 +31,7 @@ class AccountController extends Controller
         $accounts = Account::query()
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email','phone',
-                'name', 'password', 'created_at', 'category_id',
+                'name', 'password', 'email_password', 'created_at', 'category_id',
                 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
             ->withCount([
                 'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
@@ -323,14 +323,12 @@ class AccountController extends Controller
     {
         try {
 
-            Account::query()
-                ->whereIn('id', r('ids'))
-                ->get()
-                ->each(function(Account $account){
-                    $account->makeActive();
-                    runPythonProcess('new.py', $account->id);
-                });
-//                ->each(fn (Account $account)=> runPythonProcess('new.py', $account->id));
+            foreach (r('ids') as $id) {
+
+                $account = Account::find($id);
+                $account->makeActive();
+                runPythonProcess('new.py', $account->id);
+            }
 
             return jsonSuccess('Profiles started ');
 

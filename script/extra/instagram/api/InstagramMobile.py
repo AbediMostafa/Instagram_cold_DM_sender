@@ -18,7 +18,7 @@ class InstagramMobile(InstagramMobileMiddleware):
 
         try:
             # self.proxy = Proxy.get_by_id(177)
-            self.proxy = get_next_proxy(mobile_only=True)
+            self.proxy = get_next_proxy()
             # self.proxy = self.account.get_proxy()
             self.account.add_cli('Setting proxy')
 
@@ -47,7 +47,7 @@ class InstagramMobile(InstagramMobileMiddleware):
             raise Exception(str(e))
 
     def log_in(self):
-        self.set_proxy()
+        # self.set_proxy()
         session = self.account.get_mobile_session()
 
         try:

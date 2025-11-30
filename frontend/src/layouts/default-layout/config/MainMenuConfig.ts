@@ -19,6 +19,13 @@ const MainMenuConfig: Array<MenuItem> = [
         allowed_roles:['user']
       },
       {
+        heading: "orders",
+        route: "/orders",
+        keenthemesIcon: "bi-sticky",
+        bootstrapIcon: "bi-sticky",
+        allowed_roles:['user']
+      },
+      {
         heading: "leads",
         route: "/leads",
         keenthemesIcon: "element-plus",
@@ -86,10 +93,17 @@ const MainMenuConfig: Array<MenuItem> = [
         allowed_roles:['user']
       },
       {
+        heading: "settings",
+        route: "/settings",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-layers",
+        allowed_roles:['employee','user']
+      },
+      {
         heading: "2fa",
         route: "/2fa",
-        keenthemesIcon: "design",
-        bootstrapIcon: "bi-shield-check",
+        keenthemesIcon: "fingerprint-scanning",
+        bootstrapIcon: "bi-sticky",
         allowed_roles:['employee','user']
       },
       // {

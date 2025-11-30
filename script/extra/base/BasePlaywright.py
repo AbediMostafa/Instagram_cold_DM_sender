@@ -3,7 +3,6 @@ from script.extra.exceptions import *
 import json
 import random
 
-
 class BasePlaywright:
     browser = None
     context = None
@@ -71,7 +70,6 @@ class BasePlaywright:
 
     def is_visible_by_text(self, text):
         import re
-
 
         try:
             regex = re.compile(re.escape(text), re.I)

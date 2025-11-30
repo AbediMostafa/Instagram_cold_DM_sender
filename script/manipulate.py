@@ -100,15 +100,61 @@ from peewee import *
 from script.models.Proxy import get_free_proxy
 from script.models.Proxy import Proxy
 from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContext import LeadGenerateByLinkedinContext
+from script.extra.actions.comment.CommentContext import CommentContext
+# from script.extra.actions.comment.BrowserCommentEvent import get_free_comment
 import requests
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
+from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
+from script.models.Order import get_next_order_for_account
+from script.models.OrderComment import get_next_comment_for_order, OrderComment
+from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
+from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
+from urllib.parse import urlparse
 
-# account = Account.get_by_id(72)
-account = get_next_account()
-browser_ig = BasePlaywright(account)
-browser_ig.init()
-LoginContext(browser_ig).fire()
-LeadGenerateByInstagramSuggestionContext(browser_ig).fire()
+from camoufox.sync_api import Camoufox
+
+with Camoufox(
+        geoip=True,
+        proxy={
+            'server': 'usa.rotating.proxyrack.net:10000',
+            'username': 'lizunucicunyqi',
+            'password': '6NXXLKM-OW8GIPE-YQ9KPAC-RJPYVNR-SHOHQPL-IRJ7DDK-3KLXUMX'
+        }
+) as browser:
+    page = browser.new_page()
+    page.goto("https://www.instagram.com")
+    page.wait_for_timeout(1000000)
+
+# url = "https://www.zoomit.ir"
+#
+# proxies = {
+#     'http': 'http://lizunucicunyqi:6NXXLKM-OW8GIPE-YQ9KPAC-RJPYVNR-SHOHQPL-IRJ7DDK-3KLXUMX@usa.rotating.proxyrack.net:10001',
+#     'https': 'http://lizunucicunyqi:6NXXLKM-OW8GIPE-YQ9KPAC-RJPYVNR-SHOHQPL-IRJ7DDK-3KLXUMX@usa.rotating.proxyrack.net:10001'
+# }
+#
+# response = requests.get(url)
+# print(response.text)
+
+# Detect profile links => /username
+# if len(path) == 1:
+#     self.order.fail("Invalid link: This is a profile link, not a post")
+#     raise Exception("Invalid link: This is a profile link, not a post")
+#
+# # Detect wrong format like /souravpalia?igsh=...
+# valid_first_segment = ["p", "reel", "tv"]
+#
+# if path[0] not in valid_first_segment or len(path) < 2:
+#     self.order.fail("Invalid link: Not a valid Instagram post or reel")
+#     raise Exception("Invalid link: Not a valid Instagram post or reel")
+
+
+# account = Account.get_by_id(13510)
+# account = get_next_account()
+# browser_ig = BasePlaywright(account)
+# browser_ig.init()
+# LoginContext(browser_ig).fire()
+# RegisterEmailContext(browser_ig).fire()
+# BrowserChangeUsernameEvent(browser_ig).fire()
 
 # BrowserChangeBioEvent(browser_ig).fire()
 # GetContactInformationContext(browser_ig).fire()

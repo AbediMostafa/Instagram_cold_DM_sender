@@ -138,6 +138,7 @@ class Account extends Model
                 'password' => $account[1],
                 'secret_key' => array_key_exists(2, $account) ? str_replace(' ', '', $account[2]) : null,
                 'email' => array_key_exists(3, $account) ? $account[3] : null,
+                'email_password' => array_key_exists(4, $account) ? $account[4] : null,
                 'username_changed' => r('username_changed'),
                 'created_at' => Carbon::now(),
                 'category_id' => request('category'),

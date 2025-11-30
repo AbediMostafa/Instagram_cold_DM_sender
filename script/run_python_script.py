@@ -1,49 +1,66 @@
-import requests
-from requests.exceptions import RequestException, ProxyError, ConnectTimeout
-import time
-
-proxies_list = [
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10000",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10001",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10002",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10003",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10004",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10005",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10006",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10007",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10008",
-    "239c1e03149f4688d9b7__cr.de:d4c552dfbab2110c@gw.dataimpulse.com:10009",
+import random
+first_names = [
+    "Ethan","Mason","Logan","James","Benjamin","Elijah","Alexander","Henry","Jackson","Sebastian",
+    "Aiden","Matthew","Samuel","David","Joseph","Carter","Owen","Wyatt","John","Jack",
+    "Luke","Dylan","Gabriel","Isaac","Nathan","Julian","Levi","Ryan","Connor","Christian",
+    "Andrew","Jonathan","Adrian","Leo","Elias","Anthony","Joshua","Daniel","Aaron","Evan",
+    "Sofia","Alice","Victoria","Gabriela","Isadora","Helena","Beatriz","Clarissa","Leticia","Renata",
+    "Carolina","Fernanda","Tatiana","Camilla","Bianca","Larissa","Isabel","Manuela","Ana","Paula",
+    "Laura","Marina","Valentina","Bruna","Yasmin","Amanda","Nicole","Julia","Carla","Raquel",
+    "Vanessa","Camile","Lorena","Aline","Isis","Rafaela","Júlia","Gabrielle","Melissa","Luana",
+    "Evelyn","Stella","Clara","Emilly","Mirella","Lara","Luna","Victoria","Sara","Amanda",
+    "Thais","Isabela","Marina","Júlia","Helena","Nicole","Camila","Sabrina","Larissa","Manuela"
 ]
 
-test_url = "https://httpbin.org/ip"
+last_names = [
+    "Taylor","Anderson","Thomas","Moore","Jackson","White","Harris","Martin","Thompson","Garcia",
+    "Martinez","Robinson","Clark","Rodriguez","Lewis","Lee","Walker","Hall","Allen","Young",
+    "Hernandez","King","Wright","Lopez","Hill","Scott","Green","Adams","Baker","Nelson",
+    "Carter","Mitchell","Perez","Roberts","Turner","Phillips","Campbell","Parker","Evans","Edwards",
+    "Collins","Stewart","Sanchez","Morris","Rogers","Reed","Cook","Morgan","Bell","Murphy",
+    "Bailey","Rivera","Cooper","Richardson","Cox","Howard","Ward","Torres","Peterson","Gray",
+    "Ramirez","James","Watson","Brooks","Kelly","Sanders","Price","Bennett","Wood","Barnes",
+    "Ross","Henderson","Coleman","Jenkins","Perry","Powell","Long","Patterson","Hughes","Flores",
+    "Washington","Butler","Simmons","Foster","Gonzalez","Bryant","Alexander","Russell","Griffin","Diaz",
+    "Mendoza","Freitas","Souza","Moreira","Nascimento","Alves","Lima","Vieira","Gomes","Barbosa",
+    "Pinto","Moura","Fonseca","Machado","Cardoso","Araujo","Teixeira","Ramos","Campos","Santana"
+]
 
-def test_proxy(proxy_str, index):
-    try:
-        user_pass, host_port = proxy_str.split("@")
-        username, password = user_pass.split(":")
-        host, port = host_port.split(":")
+adjectives = [
+    "lit","dope","epic","savage","vibe","chill","fresh","rad","hype","wild",
+    "crazy","boss","swag","sneaky","slick","icy","flashy","crisp","glow","prime",
+    "raw","urban","neon","shady","stormy","frosty","blaze","fierce","sleek","sharp",
+    "wavy","atomic","cosmic","pixel","retro","drip","boost","boosted","legend","mythic",
+    "hyper","nova","galaxy","vortex","chaos","thunder","storm","shadow","ghost","phantom",
+    "viper","rebel","blade","ace","titan","quake","drift","flare","ignite","pulse",
+    "strike","volt","racer","crash","flash","neo","cyber","tech","steel","dark",
+    "ghostly","glitch","crimson","onyx","steel","frost","ember","iron","quantum","blitz",
+    "fusion","gravity","omega","alpha","beta","delta","zen","echo","alpha","drone","pixelated",
+    "hyperdrive","vivid","chrome","neptune","mars","apollo","saturn","asteroid","lunar","solar"
+]
 
-        proxy_url = f"socks5://{username}:{password}@{host}:{port}"
+def generate_username():
+    # انتخاب تصادفی نام و فامیلی
+    first = random.choice(first_names)
+    last = random.choice(last_names)
+    adj = random.choice(adjectives) if random.random() < 0.5 else ""
 
-        proxies = {
-            "http": proxy_url,
-            "https": proxy_url,
-        }
+    # اضافه کردن شماره تصادفی
+    number = str(random.randint(1, 9999)) if random.random() < 0.5 else ""  # 70٪ شانس عدد
 
-        response = requests.get(test_url, proxies=proxies, timeout=10)
+    # انتخاب جداکننده تصادفی
+    separator = random.choice(["", "_", "__", "._", "_.", "_._", "_.__", "_.__"])
 
-        try:
-            ip = response.json().get("origin", "Unknown")
-            print(f"[✓] #{index} Proxy {host}:{port} working. IP: {ip}")
-        except ValueError:
-            print(f"[✗] #{index} Proxy {host}:{port} returned non-JSON:\n{response.text[:200]}...")
+    # ساختار یوزرنیم با طول تصادفی
+    username = first + adj+ separator + last + number+adj+separator
 
-    except (ProxyError, ConnectTimeout):
-        print(f"[✗] #{index} Proxy {host}:{port} failed to connect (timeout or proxy error).")
-    except Exception as e:
-        print(f"[!] #{index} Unexpected error with proxy {proxy_str}: {e}")
+    # کوتاه یا بلند کردن با اضافه کردن یک جداکننده یا عدد در صورت نیاز
+    if len(username) < 10:
+        username += str(random.randint(10, 99))
+    if len(username) > 28:
+        username = username[:28]  # محدودیت اینستاگرام
 
-if __name__ == "__main__":
-    for idx, proxy in enumerate(proxies_list, 1):
-        test_proxy(proxy, idx)
-        time.sleep(0.5)  # Optional delay between tests
+    return username
+
+
+print(generate_username())

@@ -107,24 +107,29 @@ class BrowserGetThreadMessagesEvent(InstagramMiddleware):
                 self.ig.page.reload()
                 self.ig.pause(3000, 3800)
 
-            full_text = self.ig.page.locator("span:has-text('Instagram')").nth(0).inner_text()
-
-            self.ig.account.add_cli(f'Full text : {full_text}')
-
-            # Split to get just the username
-            username = full_text.split("·")[0].strip()
-
-            self.ig.account.add_cli(f'Username: {username}')
-
-            lead = Lead.select().where(Lead.username == username)
-
-            self.thread = Thread.select().where(Thread.lead == lead).first()
+            self.get_username_by_conversation_header()
 
             if not self.thread:
-                self.ig.account.add_cli(f'Thread with url_id {self.base.get_thread_id()} does not exist')
-                continue
+                self.ig.account.add_cli(f'Unable to get user from Instagram phrase trying second method ...')
+                self.thread = Thread.select().where(Thread.thread_url_id == self.base.get_thread_id()).first()
+                if not self.thread:
+                    continue
 
             self.extract_messages()
+
+    def get_username_by_conversation_header(self):
+        full_text = self.ig.page.locator("span:has-text('· Instagram')").nth(0).inner_text()
+
+        self.ig.account.add_cli(f'Full text : {full_text}')
+
+        # Split to get just the username
+        username = full_text.split("·")[0].strip()
+
+        self.ig.account.add_cli(f'Username: {username}')
+
+        lead = Lead.select().where(Lead.username == username)
+
+        self.thread = Thread.select().where(Thread.lead == lead).first()
 
     def get_number_of_scrolls(self, scroll_height):
         number_of_scrolls = self.scroll_top_value / scroll_height

@@ -9,7 +9,7 @@ return [
             'commands' => 50,
             'messages' => 10,
             'templates' => 400,
-            'proxies' => 20,
+            'proxies' => 300,
             'spintaxes' => 20,
             'daily_dm_statistics' => 15,
             'categories' => 15,

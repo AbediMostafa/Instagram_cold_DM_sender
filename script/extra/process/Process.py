@@ -28,12 +28,14 @@ class Process:
         Sometimes we face Race condition and get_next_account() returns None
         """
         # while not self.account:
-        # self.account = get_next_account(specific_ids=[3495])
+        # self.account = get_next_account(specific_ids=[11961])
+        # self.previous_account = self.account = get_next_account()
         self.previous_account = self.account = get_next_account()
+        # self.previous_account = self.account = get_next_account(tag_titles=['amirali'])
 
     def start(self):
         try:
-            self.check_if_previous_browser_is_still_open()
+            # self.check_if_previous_browser_is_still_open()
             self.get_account()
             self.should_stop = self.before_process_hooks()
 
@@ -62,8 +64,8 @@ class Process:
 
             self.account.set_state('idle', 'app_state')
 
-            if not self.should_stop:  # Only record last activity if hooks did not stop the process
-                RecordLastActivityHook(self.account)
+            # if not self.should_stop:  # Only record last activity if hooks did not stop the process
+            #     RecordLastActivityHook(self.account)
 
     def check_if_previous_browser_is_still_open(self):
         print('Checking previous account ... ')

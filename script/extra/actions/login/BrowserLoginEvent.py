@@ -24,7 +24,7 @@ class BrowserLoginEvent:
 
         self.ig.account.add_cli('Starting Login ...')
 
-        for _ in range(4):
+        for _ in range(2):
             self.check_for_login()
 
             self.ig.account.add_cli(f'Login loop for the {_} time ...')
@@ -78,6 +78,7 @@ class BrowserLoginEvent:
             try:
                 self.ig.page.goto("https://www.instagram.com", timeout=80000)
                 self.ig.pause(2000, 3000)
+                self.the_messaging_tab_has_a_new_look()
 
                 if self.ig.is_visible_by_text('Notifications') or self.ig.is_visible_by_text('Explore'):
                     self.ig.account.add_cli("User logged in before")
@@ -86,9 +87,10 @@ class BrowserLoginEvent:
                     self.ig.pause(3000, 4000)
                     self.we_need_you_to_agree_to_the_following_items()
                     self.turn_on_notif()
+                    self.the_messaging_tab_has_a_new_look()
                     self.save_session()
                     self.find_friends_and_accounts_you_like()
-                    self.follow_suggested()
+                    # self.follow_suggested()
                     raise SuccessfulLogin("Logged in successfully")
 
                 # We're not logged in and should login
@@ -250,6 +252,12 @@ class BrowserLoginEvent:
                 self.ig.account.add_cli("Turn On doesn't exists")
                 pass
 
+    #         The messaging tab has a new look
+
+    def the_messaging_tab_has_a_new_look(self):
+        if self.ig.is_visible_by_text('The messaging tab has'):
+            self.ig.page.get_by_role("button", name=re.compile(r"OK", re.IGNORECASE)).click()
+
     def find_friends_and_accounts_you_like(self):
         if self.ig.is_visible_by_text('Find friends and accounts you like'):
             self.ig.account.add_cli('Find friends and accounts you like')
@@ -267,8 +275,10 @@ class BrowserLoginEvent:
         self.ig.account.save_session(storage_state_json)
 
     def follow_suggested(self):
-
         passed_days = self.ig.account.get_passed_days_since_creation() if self.ig.account.passed_days_since_creation is None else self.ig.account.passed_days_since_creation
+
+        if passed_days < 25 :
+            return self.ig.account.add_cli('Account is under 25 ... ')
 
         allowed_follows = random.randint(15, SettingAdapter.max_follow())
         allowed_follows = min(allowed_follows, passed_days)

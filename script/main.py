@@ -122,19 +122,20 @@ logging.basicConfig(
 )
 ids =  [68,69,74, 77,83]
 
-while True :
-    try:
-# account = Account.get_by_id(5648)
-        account = get_next_account_for_api()
-        # account = get_next_account()
-        ig = InstagramMobile(account)
-        ig.log_in()
-        sleep(2)
-        bio = get_a('bio', account)
-        ig.change_bio(bio.text)
-        # DmEvent(account, ig).fire()
-    except Exception as e:
-        print(e)
+# while True :
+# try:
+account = Account.get_by_id(69)
+# account = get_next_account_for_api()
+# account = get_next_account()
+ig = InstagramMobile(account)
+ig.log_in()
+sleep(2)
+# bio = get_a('bio', account)
+ig.media_seen('https://www.instagram.com/p/C9gw8NfMJKy/?hl=en')
+    # ig.change_bio(bio.text)
+    # DmEvent(account, ig).fire()
+# except Exception as e:
+#     print(e)
 
 
 

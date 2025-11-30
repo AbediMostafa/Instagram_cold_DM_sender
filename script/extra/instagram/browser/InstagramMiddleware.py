@@ -41,7 +41,7 @@ class InstagramMiddleware:
             print(str(e))
             self.handle_exception(str(e))
 
-    def take_screenshot(self, cause):
+    def take_screenshot(self, cause='something'):
         # Get current date components
         now = tehran_now()
         year = now.strftime("%Y")
