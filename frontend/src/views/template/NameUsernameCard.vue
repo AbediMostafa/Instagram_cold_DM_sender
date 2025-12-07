@@ -21,7 +21,9 @@
         </div>
 
         <span class="text-muted fw-semibold text-muted d-block fs-8">{{ template.caption }}</span>
-        <span class="badge badge-light-success">name username pair</span>
+        <span class="badge badge-light-primary mt-1 ms-1"
+              v-for="tag in template.tags" :key="tag.id"
+        >{{ tag.title }}</span>
       </div>
 
     </div>

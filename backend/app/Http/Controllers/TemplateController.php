@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Color;
 use App\Models\Template;
 use \Carbon\Carbon;
@@ -15,6 +16,7 @@ class TemplateController extends Controller
         $templates = Template::query()
             ->where('type', r('type'))
             ->with('category:id,title')
+            ->with('tags:id,title')
             ->when(r('type') == 'carousel', function ($query) {
                 $query->where('color_id', r('color'))
                     ->orderBy('color_id')
@@ -162,6 +164,7 @@ class TemplateController extends Controller
                             Storage::exists($path) && Storage::delete($path);
                         }
 
+                        $template->tags()->detach();
                         $template->delete();
                     });
             },
@@ -193,5 +196,18 @@ class TemplateController extends Controller
             fn() => Template::query()->whereId(r('id'))->update(r()->except('id')),
             'Template updated successfully',
         );
+    }
+
+    public function getNameUsername()
+    {
+        $account = Account::query()->findOrFail(r('id'));
+        $tagIds = $account->tags()->pluck('id')->toArray();
+
+        return Template::query()
+            ->where('type', 'name-username')
+            ->whereHas('tags')//templates that have at least one tag
+            ->whereDoesntHave('tags', fn($q) => $q->whereNotIn('tags.id', $tagIds))
+            ->inRandomOrder()
+            ->first();
     }
 }

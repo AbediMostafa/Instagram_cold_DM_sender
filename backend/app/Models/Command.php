@@ -21,6 +21,7 @@ class Command extends Model
     public static array $types = [
         'set name',
         'set username',
+        'set name username',
         'set bio',
         'set avatar',
         'set phone',

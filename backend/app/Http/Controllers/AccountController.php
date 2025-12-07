@@ -30,7 +30,7 @@ class AccountController extends Controller
 
         $accounts = Account::query()
             ->select(
-                'id', 'avatar_changed', 'username', 'instagram_state', 'email','phone',
+                'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id',
                 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
             ->withCount([
@@ -95,10 +95,13 @@ class AccountController extends Controller
                     }
                 }
             )
-            ->when(
-                r('tags'),
-                fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
-            )
+            ->when(r('tags'), function ($query) {
+                $tags = r('tags');
+
+                $query->whereHas('tags', function ($q) use ($tags) {
+                    $q->whereIn('tags.id', $tags);
+                }, '=', count($tags));
+            })
 //            ->orderBy('id', 'DESC')
             ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
@@ -138,7 +141,7 @@ class AccountController extends Controller
     public function getAccount()
     {
         return Account::query()->select(
-            'username', 'password','name', 'bio',
+            'username', 'password', 'name', 'bio',
             'instagram_state', 'app_state', 'color_id', 'is_used',
             'avatar_changed', 'username_changed', 'initial_posts_deleted',
             'has_enough_posts', 'next_login'
@@ -347,7 +350,7 @@ class AccountController extends Controller
         r('ids') && $accountsQuery->whereIn('id', request('ids'));
 
         return tryCatch(
-            fn()=>$accountsQuery->get()
+            fn() => $accountsQuery->get()
                 ->each(function (Account $account) use ($fingerprint) {
                     $account->fingerprint = $fingerprint->generate();
                     $account->save();
@@ -364,10 +367,51 @@ class AccountController extends Controller
             ->select('id', 'username', 'phone')
             ->whereRaw("username ILIKE ? ESCAPE '\\'", ["%{$queryStr}%"]);
 
-            return [
-                'accounts' => $query->orderBy('username')->get(),
-                'count' => $query->count(),
-            ];
+        return [
+            'accounts' => $query->orderBy('username')->get(),
+            'count' => $query->count(),
+        ];
+    }
+
+    public function attachTag()
+    {
+
+        return tryCatch(
+
+            function () {
+
+                $accounts = Account::query()
+                    ->whereIn('id', r('accountIds'))
+                    ->get();
+
+                foreach ($accounts as $account) {
+                    $account->tags()->syncWithoutDetaching(r('tagIds'));
+                }
+            },
+            'Tags attached successfully'
+        );
+    }
+
+    public function detachTag()
+    {
+        return tryCatch(
+
+            function () {
+
+                $accounts = Account::query()
+                    ->whereIn('id', r('accountIds'))
+                    ->get();
+
+                $tagIds = r('tagIds');
+
+                if (!empty($tagIds)) {
+                    foreach ($accounts as $account) {
+                        $account->tags()->detach($tagIds);
+                    }
+                }
+            },
+            'Tags detached successfully'
+        );
     }
 }
 

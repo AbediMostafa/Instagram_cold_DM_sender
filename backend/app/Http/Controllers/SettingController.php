@@ -14,8 +14,12 @@ class SettingController extends Controller
         return [
             'proxy_types' => Proxy::select('type')?->distinct()?->pluck('type'),
             'proxy_type' => Setting::getValue('proxy_type'),
+
+//            Post from folder
             'can_send_post_from_folder' => Setting::getValue('can_send_post_from_folder'),
             'allowed_posting_age' => Setting::getValue('allowed_posting_age'),
+
+
         ];
     }
 

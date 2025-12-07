@@ -92,6 +92,31 @@ export const useAccountStore = defineStore("AccountStore", {
                     this.is.loading = false;
                 });
         },
+
+        attachTag(){
+            this.is.loading = true;
+
+            const data = {
+                accountIds: this.checkedAccountRows,
+                tagIds: this.accounts.tags,
+            }
+
+            ApiService.post("account/attach-tag", data)
+                .finally(() => this.is.loading = false);
+
+        },
+        detachTag(){
+            this.is.loading = true;
+
+            const data = {
+                accountIds: this.checkedAccountRows,
+                tagIds: this.accounts.tags,
+            }
+
+            ApiService.post("account/detach-tag", data)
+                .finally(() => this.is.loading = false);
+
+        },
         checkRows(e) {
             this.checkedAccountRows = e.target.checked
                 ? this.accounts.data.map((account) => account.id)

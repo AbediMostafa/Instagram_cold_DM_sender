@@ -38,7 +38,7 @@ class BrowserCheckSystemUsernameWithIgUsernameEvent:
         self.ig.pause(3000, 4000)
         self.get_username()
 
-        if self.username == self.ig.account.username:
+        if self.username.lower() == self.ig.account.username.lower():
             return self.ig.account.add_cli('Username match ...')
 
         self.click_on_options()
@@ -67,6 +67,8 @@ class BrowserCheckSystemUsernameWithIgUsernameEvent:
             locator = self.ig.page.locator('h2 span.x1lliihq.x193iq5w.x6ikm8r.x10wlt62.xlyipyv.xuxw1ft')
             locator.wait_for(state='visible', timeout=5000)
             self.username = locator.inner_text(timeout=3000)
+
+            self.ig.account.add_cli(f'IG username : {self.username}')
         except:
             self.ig.account.add_cli('Couldnt get username trying second way ...')
             locator = self.ig.page.locator('h1 span.x1lliihq.x193iq5w.x6ikm8r.x10wlt62.xlyipyv.xuxw1ft')

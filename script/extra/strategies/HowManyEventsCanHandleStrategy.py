@@ -16,7 +16,7 @@ from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext im
 from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 from script.extra.actions.activated_2fa_code.Activate2faCodeContext import Activate2faCodeContext
-
+from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
 from script.extra.events.browser_events.BrowserSeeStories import BrowserSeeStories
@@ -120,7 +120,7 @@ class HowManyEventsCanHandleStrategy:
     def run_actions(self):
         required_actions = [
 
-            # MakeAccountPublicContext,
+            MakeAccountPublicContext,
             # CommentContext,
             LikeAndCommentContext,
             # DeleteInitialPostsContext,
@@ -129,6 +129,7 @@ class HowManyEventsCanHandleStrategy:
             # ChangeNameContext,
             # BrowserChangeBioEvent,
             PostImageFromFolderContext,
+            ChangeNameUsernameContext,
 
             # RegisterEmailContext,
             # LeadGenerateByInstagramSuggestionContext,
@@ -140,7 +141,7 @@ class HowManyEventsCanHandleStrategy:
             # Daily actions
             # FollowContext,
             # SendDmWithPostContext,
-            # CheckSystemUsernameWithIgUsernameContext,
+            CheckSystemUsernameWithIgUsernameContext,
             # GetLeadPkContext,
             # SendDmContext,
 

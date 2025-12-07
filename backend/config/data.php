@@ -3,7 +3,7 @@
 return [
     'pagination' => [
         'each_page' => [
-            'accounts' => 50,
+            'accounts' => 200,
             'leads' => 50,
             'looms' => 50,
             'commands' => 50,

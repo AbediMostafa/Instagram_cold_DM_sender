@@ -20,8 +20,9 @@
           {{ template.text }}
         </div>
       </div>
-      <span class="badge badge-light-success">Username</span>
-      <span class="badge badge-light-info">{{ template.category?.title }}</span>
+      <span class="badge badge-light-primary mt-1 ms-1"
+            v-for="tag in template.tags" :key="tag.id"
+      >{{ tag.title }}</span>
     </div>
   </div>
 </template>

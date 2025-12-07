@@ -1,44 +1,39 @@
-import random
+from openai import OpenAI
 
-# Base words related to "mobleman", "choob", "zendegi" and their translations/related terms
-keywords = [
-    'mobleman', 'choob', 'zendegi',
-    'wood', 'timber', 'oak', 'pine', 'maple',
-    'furniture', 'sofa', 'chair', 'table', 'couch', 'desk',
-    'life', 'living', 'home', 'decor', 'style', 'interior'
-]
+# ایجاد یک نمونه از کلاینت با کلید API خود
+client = OpenAI(base_url='https://api.gapgpt.app/v1', api_key='sk-yj80RwM9eGAAbnLfYvp584qn9g2rqkbHR8ZkdAzeVL4RjK50')
 
-# Allowed characters: lowercase letters, digits, underscore, dot
-chars = 'abcdefghijklmnopqrstuvwxyz0123456789._'
+content = '''
+you are a instagram name,username maker
+the name,username pairs should be iranian and man name,usernames
+the length of usernames should vary(long, short and medium) and unique
+the format should be like this :
+farbod_ak4__r,فربد اکرم
+first instagram username and a full name seperated with,
+first name and family name should be mixed in username ( you can use first name first and sometimes family name first)
+in username you can use numbers, _ and __ signs in the middle, first and last but follow the instagram username rules
+so the format sometimes would be like this:
+mhmd.92_rez_a,محمد رضایی
+mi__lanarash_,آرش میلانی
+pouy.an_kh4_r,پویان خلیل‌پور
+sometimes first name comes first in the username and sometimes last name comes first,
+please combine first name, last name digits and _ signs to completely make different usernames
+sometimes you may want to dont include last name in the username like this:
+shahi1n__84,شاهین اکبری
+which is ok,
+sometimes you may use like this:
+sometimes you may last name come first like this:
+bhshti.rez1a_,رضا بهشتی  
+and so on, please give me 100 full name, username mix like this for me without asking anything
+dont include the line number or anything extra, just fullname and username in each row
 
-# Generate usernames
-usernames = set()
+'''
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "user", "content": content}
+    ]
+)
 
-while len(usernames) < 500:
-    base = random.choice(keywords)
-    # Add a random suffix or prefix
-    if random.random() < 0.5:
-        name = base + random.choice(['', '_', '.', str(random.randint(1, 9999))])
-    else:
-        name = random.choice(['', '_', '.', str(random.randint(1, 9999))]) + base
-
-    # Randomly insert extra word/number
-    if random.random() < 0.5:
-        extra = random.choice(keywords)
-        name = name + random.choice(['', '_', '.']) + extra
-
-    # Ensure length < 30 and only allowed characters
-    name = ''.join(c for c in name.lower() if c in chars)
-    if 1 < len(name) < 30:
-        usernames.add(name)
-
-# Convert to list
-username_list = sorted(usernames)
-
-import pandas as pd
-
-df = pd.DataFrame(username_list, columns=['username'])
-
-import caas_jupyter_tools
-
-caas_jupyter_tools.display_dataframe_to_user(name="Generated Instagram Usernames", dataframe=df)
+print(response.choices[0].message.content)
+print(response.choices)

@@ -52,7 +52,10 @@ class BrowserChangeBioEvent(InstagramMiddleware):
         self.ig.page.locator('textarea[placeholder="Bio"]').fill(self.bio)
         self.ig.pause(3000, 4000)
         self.ig.page.locator('div[role="button"]:has-text("Submit")').click()
-        self.ig.pause(6000, 7000)
+        self.ig.pause(5000, 5500)
+
+        if self.ig.is_visible_by_text('There was a problem saving'):
+            raise Exception('There was a problem saving your profile')
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')

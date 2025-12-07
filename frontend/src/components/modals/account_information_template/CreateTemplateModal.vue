@@ -290,10 +290,9 @@ export default defineComponent({
           loading.value = true;
 
           ApiService.post("template/create", targetData.value)
-              .then(console.log)
-          // .then(() => hideModal("create_template_modal"))
-          // .then(() => store.getTemplates())
-          // .finally(() => (loading.value = false));
+              .then(() => hideModal("create_template_modal"))
+              .then(() => store.getTemplates())
+              .finally(() => (loading.value = false));
         }
       });
     };

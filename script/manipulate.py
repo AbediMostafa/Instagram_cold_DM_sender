@@ -110,20 +110,38 @@ from script.models.OrderComment import get_next_comment_for_order, OrderComment
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
 from urllib.parse import urlparse
+from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
+# from camoufox.sync_api import Camoufox
+#
+# with Camoufox(
+#         geoip=True,
+#         proxy={
+#             'server': 'usa.rotating.proxyrack.net:10000',
+#             'username': 'lizunucicunyqi',
+#             'password': '6NXXLKM-OW8GIPE-YQ9KPAC-RJPYVNR-SHOHQPL-IRJ7DDK-3KLXUMX'
+#         }
+# ) as browser:
+#     page = browser.new_page()
+#     page.goto("https://www.instagram.com")
+#     page.wait_for_timeout(1000000)
 
-from camoufox.sync_api import Camoufox
 
-with Camoufox(
-        geoip=True,
-        proxy={
-            'server': 'usa.rotating.proxyrack.net:10000',
-            'username': 'lizunucicunyqi',
-            'password': '6NXXLKM-OW8GIPE-YQ9KPAC-RJPYVNR-SHOHQPL-IRJ7DDK-3KLXUMX'
-        }
-) as browser:
-    page = browser.new_page()
-    page.goto("https://www.instagram.com")
-    page.wait_for_timeout(1000000)
+from script.extra.routes import *
+# headers = {
+#     'accept': '*/*',
+#     'accept-language': 'en-AU,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+#     'referer': 'https://www.charitynavigator.org/search',
+#     'rsc': '1',
+#     'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+#     'sec-ch-ua-mobile': '?0',
+#     'sec-ch-ua-platform': '"Windows"',
+#     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
+# }
+#
+# charity_url = "https://www.charitynavigator.org/ein/263128590?donateNow=true&source=searchAutocomplete"
+# req = requests.get(charity_url, headers=headers, timeout=15)
+#
+# print(req.text)
 
 # url = "https://www.zoomit.ir"
 #
@@ -148,14 +166,23 @@ with Camoufox(
 #     raise Exception("Invalid link: Not a valid Instagram post or reel")
 
 
-# account = Account.get_by_id(13510)
 # account = get_next_account()
+# account = Account.get_by_id(13960)
 # browser_ig = BasePlaywright(account)
 # browser_ig.init()
 # LoginContext(browser_ig).fire()
-# RegisterEmailContext(browser_ig).fire()
-# BrowserChangeUsernameEvent(browser_ig).fire()
+# MakeAccountPublicContext(browser_ig).fire()
+parsed = urlparse("https://www.instagram.com/reels/DRxrJa5ESf4/")
 
+path = parsed.path.strip('/').split('/')
+
+# Detect profile links => /username
+# Detect wrong format like /souravpalia?igsh=...
+valid_first_segment = ["p", "reel", "tv"]
+
+
+print(path[0])
+# Format A: /p/{code}
 # BrowserChangeBioEvent(browser_ig).fire()
 # GetContactInformationContext(browser_ig).fire()
 # response = requests.get(url, verify=False)

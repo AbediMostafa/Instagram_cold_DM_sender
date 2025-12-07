@@ -55,7 +55,7 @@
         <el-pagination
             v-model:current-page="store.tags.current_page"
             :total="store.tags.total"
-            :page-size="5"
+            :page-size="15"
             layout="prev, pager, next"
             small
             background

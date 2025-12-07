@@ -20,7 +20,7 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
         self.pick_and_mark_comment()
         self.ig.account.add_cli('Starting to comment and like ...')
-
+        # https://www.instagram.com/reels/DRxrJa5ESf4/
         try:
             self.command = self.ig.account.create_command('comment and like', 'processing')
             self.go_to_page()
@@ -145,6 +145,17 @@ class BrowserLikeAndCommentEvent(BaseAction):
             self.order.fail("Not a valid Instagram post or reel")
             raise Exception("Not a valid Instagram post or reel")
 
+        if path[0] == 'reels':
+
+            try:
+                self.ig.page.locator("svg[aria-label='Comment']").first.click(timeout=3000)
+                self.ig.pause(2000, 3000)
+
+            except Exception as e:
+                print(str(e))
+                self.ig.page.locator("div[role='button']").filter(
+                    has=self.ig.page.locator("svg[aria-label='Comment']")).click()
+
         if self.ig.is_visible_by_text('This account is private'):
             self.order.fail('Account is private')
             raise Exception('Account is private')
@@ -168,6 +179,7 @@ class BrowserLikeAndCommentEvent(BaseAction):
         # if not locator.is_visible():
         #     self.order.fail("Comment box is not visible")
         #     raise Exception("Comment box is not visible")
+
     #
     def try_like(self):
         """

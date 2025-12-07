@@ -68,36 +68,20 @@ use \App\Http\Controllers\SettingController;
 
 
 Route::get('/', function () {
-
-
-//    $order = Order::query()->find(571)->comments()->pluck('status')->toArray();
-
 //
-//    $ids = [489];
-////    $ids = [489,490,492,493,495,499,500,501,503];
-//
-//    $order = Order::query()->whereIn('id', $ids )
-//    ->update([
-//        'status'=>'Pending'
+//    Setting::query()->create([
+//        'type' => 'switch',
+//        'category' => 'Templates',
+//        'key' => 'can_change_avatar',
+//        'value' => 1,
 //    ]);
 //
-//    dd($order);
-    dd('salam');
-
-
-    dd(
-        OrderComment::query()->where('order_id', 39)->get()->pluck('status')->toArray()
-    );
-    dump(
-        OrderComment::query()->where('status', 'processing')->update([
-            'status' => 'free'
-        ])
-    );
-
+//    $settings = Setting::query()->get()->pluck('value', 'key')->toArray();
+//
+//    dd($settings);
 });
 
 Route::get('/add-comment', function () {
-
 });
 Route::get('/get-instagram-leads', function () {
     $leads = \App\Models\CharityLead::query()
@@ -294,6 +278,8 @@ Route::post('account/clear-profile', [AccountController::class, 'clearProfile'])
 Route::post('accounts/get-2fa-code', [AccountController::class, 'get2faCode']);
 Route::post('account/assign-fingerprint', [AccountController::class, 'assignFingerprint']);
 Route::post('account/find-accounts', [AccountController::class, 'findAccounts']);
+Route::post('account/attach-tag', [AccountController::class, 'attachTag']);
+Route::post('account/detach-tag', [AccountController::class, 'detachTag']);
 
 Route::post('leads', [LeadController::class, 'index']);
 Route::post('lead/view', [LeadController::class, 'view']);
@@ -312,7 +298,8 @@ Route::post('template/create', [TemplateController::class, 'create']);
 Route::post('template/update', [TemplateController::class, 'update']);
 Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
-Route::post('template/fetch-colors', [TemplateController::class, 'fetchColors']);
+Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
+Route::post('template/get-name-username', [TemplateController::class, 'getNameUsername']);
 
 Route::post('proxies', [ProxyController::class, 'index']);
 Route::post('proxy/create', [ProxyController::class, 'create']);

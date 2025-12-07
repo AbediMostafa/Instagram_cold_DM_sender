@@ -11,7 +11,7 @@ class TagController extends Controller
 
     public function index()
     {
-        return Tag::query()->paginate(5);
+        return Tag::query()->paginate(15);
     }
 
     public function getTags()

@@ -112,7 +112,13 @@
 
         <div class="fill-flex d-flex align-items-center mt-4">
           <a class="btn btn-sm btn-light-primary" @click="store.getAccounts()">Filter</a>
+          <a class="btn btn-sm btn-light-success ms-2" @click="store.attachTag()">Attach Tag</a>
+        </div>
 
+        <div class="mt-2 fill-flex d-flex align-items-center">
+          <a
+              class="btn btn-light-danger btn-sm"
+              @click="store.detachTag()">Detach Tag</a>
         </div>
 
       </div>

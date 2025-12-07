@@ -21,7 +21,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 queryParams: {
                     tags: [],
                     category_id: '',
-                    type: 'video-post',
+                    type: 'name-username',
                     color: 1,
                 },
                 receivedType: 'username',

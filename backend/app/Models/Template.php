@@ -57,6 +57,10 @@ class Template extends Model
 
         foreach ($lines as $line) {
 
+            if ($line === '') {
+                continue;
+            }
+
             if (r('type') == "name-username") {
                 $parts = explode(',', $line);
                 $text = $parts[0];
