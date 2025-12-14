@@ -5,6 +5,21 @@
     <div class="card-body">
       <!-- Proxy Type Section -->
       <div class="form-group mb-8">
+        <label class="fs-6 fw-semibold">General Settings</label>
+
+        <label class="form-check form-switch form-check-custom form-check-solid">
+
+          <span class="text-gray-700 fw-bold text-nowrap me-6">Turn on critical mode</span>
+          <input
+              class="form-check-input"
+              type="checkbox"
+              v-model="settingsData.critical_only_mode"
+          />
+        </label>
+
+
+      </div>
+      <div class="form-group mb-8">
         <label class="fs-6 fw-semibold">Proxy Type</label>
         <div class="fs-7 fw-semibold text-muted mb-3">
           Select one of these proxy types for the entire automation
@@ -106,7 +121,9 @@ export default defineComponent({
       'proxy_type': '',
       'can_send_post_from_folder': '',
       'allowed_posting_age': '',
+      'critical_only_mode': '',
     });
+
     const is = ref({
       saving: false,
     })
@@ -116,7 +133,8 @@ export default defineComponent({
           .then((response) => {
             proxyTypes.value = response.data.proxy_types;
             settingsData.proxy_type = response.data.proxy_type;
-            settingsData.can_send_post_from_folder =  Boolean(Number(response.data.can_send_post_from_folder));;
+            settingsData.can_send_post_from_folder =  Boolean(Number(response.data.can_send_post_from_folder));
+            settingsData.critical_only_mode =  Boolean(Number(response.data.critical_only_mode));
             settingsData.allowed_posting_age = response.data.allowed_posting_age;
           })
     }

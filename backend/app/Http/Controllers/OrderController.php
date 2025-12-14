@@ -97,6 +97,7 @@ class OrderController extends Controller
             'Order failed successfully',
         );
     }
+
     public function changProcessingCommentsToFree()
     {
 
@@ -119,10 +120,6 @@ class OrderController extends Controller
 
     public function v3()
     {
-//        Log::info('Incoming request to v3 endpoint', [
-//            'input' => \request()->all(),
-//        ]);
-
         $action = request('action'); // or request()->input('action')
 
         if ($action === 'balance') {
@@ -214,5 +211,4 @@ class OrderController extends Controller
             }
         }
     }
-
 }

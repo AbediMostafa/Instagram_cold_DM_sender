@@ -26,6 +26,7 @@ class Setting extends Model
         'Comment',
         'Like',
         'Post',
+        'General'
     ];
 
     public static function getValue($key, $default = null)

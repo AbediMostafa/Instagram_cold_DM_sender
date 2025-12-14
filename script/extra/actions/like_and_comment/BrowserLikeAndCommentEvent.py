@@ -15,6 +15,9 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
     def init(self):
 
+        if self.ig.account.id > 13488:
+            return self.ig.account.add_cli(f"Account is not for this service", print_only=True)
+
         if self.ig.account.get_passed_days_since_creation() < 15:
             return self.ig.account.add_cli(f"Account is not old enough to Send comment")
 
@@ -34,13 +37,13 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
             if self.comment.content:
                 self.ig.page.get_by_placeholder("Add a comment…").fill(self.comment.content, timeout=3000)
-                self.ig.pause(4000, 5000)
+                self.ig.pause(1500, 2000)
                 self.ig.page.get_by_role("button", name="Post").click()
 
             self.take_screenshot(command_id=self.order.id)
             self.mark_comment_sent()
             self.command.update_cmd('state', 'success')
-            self.ig.pause(4000, 5000)
+            self.ig.pause(2000, 3000)
 
         except LinkIsNotCorrect as e:
             # Taking screen-shot

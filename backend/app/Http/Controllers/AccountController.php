@@ -33,34 +33,34 @@ class AccountController extends Controller
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id',
                 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
-            ->withCount([
-                'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
-                    $query->where('type', 'dm follow up')
-                        ->where('times', 0)
-                        ->where('state', 'success')
-                        ->whereBetween('created_at', [$startDate, $endDate]);
-                },
-
-                'commands as total_follow_ups' => function ($query) use ($startDate, $endDate) {
-                    $query->where('type', 'dm follow up')
-                        ->where('times', '>', 0)
-                        ->where('state', 'success')
-                        ->whereBetween('created_at', [$startDate, $endDate]);
-                },
-
-                'threads as total_replies' => function ($query) use ($startDate, $endDate) {
-                    $query->whereHas('messages', function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery->where('sender', 'lead')
-                            ->where('type', 'text')
-                            ->whereBetween('created_at', [$startDate, $endDate]);
-                    });
-                }
-            ])
+//            ->withCount([
+//                'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
+//                    $query->where('type', 'dm follow up')
+//                        ->where('times', 0)
+//                        ->where('state', 'success')
+//                        ->whereBetween('created_at', [$startDate, $endDate]);
+//                },
+//
+//                'commands as total_follow_ups' => function ($query) use ($startDate, $endDate) {
+//                    $query->where('type', 'dm follow up')
+//                        ->where('times', '>', 0)
+//                        ->where('state', 'success')
+//                        ->whereBetween('created_at', [$startDate, $endDate]);
+//                },
+//
+//                'threads as total_replies' => function ($query) use ($startDate, $endDate) {
+//                    $query->whereHas('messages', function ($subQuery) use ($startDate, $endDate) {
+//                        $subQuery->where('sender', 'lead')
+//                            ->where('type', 'text')
+//                            ->whereBetween('created_at', [$startDate, $endDate]);
+//                    });
+//                }
+//            ])
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
-                'profile:id,title',
-                'category:id,title',
-                'proxy:id,ip',
+//                'profile:id,title',
+//                'category:id,title',
+//                'proxy:id,ip',
                 'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
                     $query->select('created_at', 'account_id', 'cause')

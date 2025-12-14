@@ -3,7 +3,9 @@ import requests
 
 class Adspower:
 
-    def get_endpoint_url(self, profile_id):
+    def get_endpoint_url(self, account):
+
+        profile_id = account.profile.profile_id
         response = requests.get(
             f'http://local.adspower.net:50325/api/v1/browser/start?user_id={profile_id}&ip_tab=0')
 
@@ -14,7 +16,7 @@ class Adspower:
 
                 return ws_endpoint
 
-        print(response.text)
+        account.add_cli(response.text)
         raise Exception("Failed to start AdsPower browser.")
 
     def close_browser(self, profile_id):

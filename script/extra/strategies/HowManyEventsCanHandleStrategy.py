@@ -120,7 +120,7 @@ class HowManyEventsCanHandleStrategy:
     def run_actions(self):
         required_actions = [
 
-            MakeAccountPublicContext,
+            # MakeAccountPublicContext,
             # CommentContext,
             LikeAndCommentContext,
             # DeleteInitialPostsContext,
@@ -141,7 +141,7 @@ class HowManyEventsCanHandleStrategy:
             # Daily actions
             # FollowContext,
             # SendDmWithPostContext,
-            CheckSystemUsernameWithIgUsernameContext,
+            # CheckSystemUsernameWithIgUsernameContext,
             # GetLeadPkContext,
             # SendDmContext,
 

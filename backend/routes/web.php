@@ -68,6 +68,15 @@ use \App\Http\Controllers\SettingController;
 
 
 Route::get('/', function () {
+
+//   $templtaes = Template::query()
+//       ->where('type', 'bio')
+//       ->whereHas('tags',function($q){
+//       $q->where('title', 'woman');
+//   })->count('text');
+//
+//   dd($templtaes);
+
 //
 //    Setting::query()->create([
 //        'type' => 'switch',
@@ -299,7 +308,7 @@ Route::post('template/update', [TemplateController::class, 'update']);
 Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
-Route::post('template/get-name-username', [TemplateController::class, 'getNameUsername']);
+Route::post('template/get-template', [TemplateController::class, 'getTemplate']);
 
 Route::post('proxies', [ProxyController::class, 'index']);
 Route::post('proxy/create', [ProxyController::class, 'create']);

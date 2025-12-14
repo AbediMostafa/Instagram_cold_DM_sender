@@ -3,8 +3,8 @@ import requests
 base_url = 'http://127.0.0.1/'
 
 routes = {
-    'get-name-username': {
-        'url': f'{base_url}template/get-name-username',
+    'get-template': {
+        'url': f'{base_url}template/get-template',
         'method': 'POST',
     },
 
@@ -39,8 +39,8 @@ def request_to_laravel(route_name, data=None):
         return None
 
 
-def get_name_username(account_id):
-    return request_to_laravel('get-name-username', {'id': account_id})
+def get_template(account_id, type):
+    return request_to_laravel('get-template', {'id': account_id, 'type': type})
 
 
 def delete_template(template_ids):

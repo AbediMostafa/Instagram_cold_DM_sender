@@ -198,13 +198,14 @@ class TemplateController extends Controller
         );
     }
 
-    public function getNameUsername()
+    public function getTemplate()
     {
         $account = Account::query()->findOrFail(r('id'));
         $tagIds = $account->tags()->pluck('id')->toArray();
+        $type = r('type');
 
         return Template::query()
-            ->where('type', 'name-username')
+            ->where('type', $type)
             ->whereHas('tags')//templates that have at least one tag
             ->whereDoesntHave('tags', fn($q) => $q->whereNotIn('tags.id', $tagIds))
             ->inRandomOrder()

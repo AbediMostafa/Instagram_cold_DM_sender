@@ -4,7 +4,7 @@ from script.extra.base.BasePlaywright import BasePlaywright
 from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
 import traceback
 from script.extra.actions.login.LoginContext import LoginContext
-
+from script.models.Setting import Setting
 from script.extra.hooks.RecordLastActivityHook import RecordLastActivityHook
 from script.extra.hooks.CheckForLastLoginHook import CheckForLastLoginHook
 from script.extra.hooks.CheckForWarningsHook import CheckForWarningsHook
@@ -12,6 +12,7 @@ from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActions
 from script.extra.modules.adspower.ProfileUpdator import ProfileUpdator
 from script.extra.exceptions import ProxyStuck
 from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContext import LeadGenerateByLinkedinContext
+from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 
 from time import sleep
 
@@ -44,11 +45,11 @@ class Process:
             self.browser_ig = BasePlaywright(self.account)
             self.browser_ig.init()
 
-            LoginContext(self.browser_ig).fire()
-            self.account.set_state('processing', 'app_state')
-            self.account.set_state('active')
+            if self.is_critical_mode():
+                self.critical_mode()
 
-            self.start_process()
+            else:
+                self.normal_mode()
 
         except ProxyStuck:
             raise
@@ -65,6 +66,27 @@ class Process:
 
             # if not self.should_stop:  # Only record last activity if hooks did not stop the process
             #     RecordLastActivityHook(self.account)
+
+    def is_critical_mode(self):
+        is_critical = bool(int(Setting.get_value("critical_only_mode")))
+
+        if is_critical:
+            self.account.add_cli('Starting Critical Model ...')
+
+        else:
+            self.account.add_cli('Starting Normal Model ...')
+
+        return is_critical
+
+    def critical_mode(self):
+        LikeAndCommentContext(self.browser_ig).fire()
+
+    def normal_mode(self):
+        LoginContext(self.browser_ig).fire()
+        self.account.set_state('processing', 'app_state')
+        self.account.set_state('active')
+
+        self.start_process()
 
     def check_if_previous_browser_is_still_open(self):
         print('Checking previous account ... ')

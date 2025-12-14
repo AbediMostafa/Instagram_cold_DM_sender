@@ -38,6 +38,7 @@ from script.models.Process import Process
 from spintax import spin
 import traceback
 from script.extra.actions.login.LoginContext import LoginContext
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
 
 
 # Ensure correct usage
@@ -62,7 +63,7 @@ try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
-    FollowGoodPagesContext(browser_ig).fire()
+    CheckSystemUsernameWithIgUsernameContext(browser_ig).fire()
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())

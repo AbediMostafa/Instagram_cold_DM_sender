@@ -43,10 +43,9 @@ class BrowserChangeNameUsernameEvent(BaseAction):
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
-        self.name_username = get_name_username(self.ig.account.id)
+        self.name_username = get_template(self.ig.account.id, 'name-username')
 
         print(f'Name username : {self.name_username}')
-
 
         if not self.name_username:
             raise Exception(f"We dont have a name or username for this account")

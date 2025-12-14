@@ -40,7 +40,7 @@ class AdsPowerHandler(IBrowserHandler):
         creator.call_action('delete')
 
     def start_browser(self):
-        self.ws_endpoint = Adspower().get_endpoint_url(self.account.profile.profile_id)
+        self.ws_endpoint = Adspower().get_endpoint_url(self.account)
         super().start_browser()
 
     def cleanup(self):
