@@ -32,5 +32,5 @@ class BaseAction:
         screenshot_path = os.path.join(base_dir, screenshot_name)
 
         # Take the screenshot
-        self.ig.page.screenshot(path=screenshot_path)
+        self.ig.page.screenshot(path=screenshot_path, animations="disabled", omit_background=True)
         self.ig.account.add_cli(f"Screenshot saved")

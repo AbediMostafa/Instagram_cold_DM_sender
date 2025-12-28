@@ -63,7 +63,7 @@ try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
-    CheckSystemUsernameWithIgUsernameContext(browser_ig).fire()
+    FollowGoodPagesContext(browser_ig).fire()
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())

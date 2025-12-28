@@ -2,7 +2,7 @@ import requests
 import time
 
 proxy = "http://mostafaaabedi-country-DE:EHRMBAG-FUVSHPY-STBMCL5-FVPSB1F-FZZ1GQG-40OBXSB-KDRAQ6S@private.residential.proxyrack.net:10000"  # change to your proxy
-test_url = "https://httpbin.org/ip"  # test endpoint
+test_url = "https://httpbin.org/ip"  # t_est endpoint
 
 proxies = {
     "http": proxy,

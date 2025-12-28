@@ -22,19 +22,19 @@ class ChangeBioEvent(BaseActionState):
         """
 
         self.bio = chat_ai(prompt)
-        self.account.add_cli(f'selected bio : {self.bio}')
+        self.account.add_cli(f'selected bio : {self.bio}', print_only=True)
 
     def init_state(self):
-        self.account.add_cli(f"Changing {self.account.username}'s bio")
+        self.account.add_cli(f"Changing {self.account.username}'s bio", print_only=True)
         self.get_bio()
 
     def cant_state(self):
 
         if self.account.has('bio'):
-            return self.account.add_cli(f'{self.account.username} has a bio')
+            return self.account.add_cli(f'{self.account.username} has a bio', print_only=True)
 
         if not self.bio:
-            self.account.add_cli(f"We don't have a bio for : {self.account.username}")
+            self.account.add_cli(f"We don't have a bio for : {self.account.username}", print_only=True)
 
         return False
 
@@ -49,5 +49,5 @@ class ChangeBioEvent(BaseActionState):
     def exception_state(self, e):
         if self.command:
             self.command.update_cmd('state', 'fail')
-        self.account.add_cli(f"Problem changing bio : {str(e)}")
+        self.account.add_cli(f"Problem changing bio : {str(e)}", print_only=True)
         self.account.add_log(traceback.format_exc())

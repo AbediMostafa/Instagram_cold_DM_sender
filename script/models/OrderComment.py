@@ -62,12 +62,3 @@ def get_next_comment_for_order(order):
 
         return comment
 
-
-def update_processing_comments(order):
-    (OrderComment
-     .update(status='free')
-     .where(
-        (OrderComment.order == order) &
-        (OrderComment.status == 'processing')
-    )
-     .execute())

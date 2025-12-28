@@ -64,13 +64,17 @@
               <td>
                 <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.id }} -{{ order.customer }}</a>
                 <a class="badge ms-2 badge-light-success " v-if="order.status=='Completed'">{{ order.status }}</a>
-                <a class="badge ms-2 badge-light-primary" v-if="order.status=='In progress'">{{ order.status }}</a>
-                <a class="badge ms-2 badge-light-warning" v-if="order.status=='Pending'">{{ order.status }}</a>
-                <div v-if="order.status=='Canceled'">
+                <a class="badge ms-2 badge-light-primary" v-else-if="order.status=='In progress'">{{ order.status }}</a>
+                <a class="badge ms-2 badge-light-warning" v-else-if="order.status=='Pending'">{{ order.status }}</a>
+                <div v-else-if="order.status=='Canceled'">
                   <div class="badge ms-2 badge-light-danger" v-if="order.description">{{ order.description }}</div>
                   <a class="badge ms-2 badge-light-danger" v-else>{{ order.status }}</a>
                 </div>
-                <div class="text-gray-600 fw-bold text-hover-primary fs-8">{{ order.service_type }}</div>
+                <a class="badge ms-2 badge-light-info" v-else>{{ order.status }}</a>
+
+                <div class="text-gray-600 fw-bold text-hover-primary fs-8">
+                  {{ order.service_type ?? order.service?.service }}
+                </div>
 
               </td>
 
@@ -97,7 +101,9 @@
                       <el-dropdown-item @click="store.finish(order.id)">Finish</el-dropdown-item>
                       <el-dropdown-item @click="store.fail(order.id)">Fail</el-dropdown-item>
                       <el-dropdown-item @click="store.reset(order.id)">Reset</el-dropdown-item>
-                      <el-dropdown-item @click="store.changProcessingCommentsToFree(order.id)">Change Processing To Free</el-dropdown-item>
+                      <el-dropdown-item @click="store.changProcessingCommentsToFree(order.id)">Change Processing To
+                        Free
+                      </el-dropdown-item>
                       <el-dropdown-item @click="store.getOrders(store.orders.current_page, false)">Refresh
                       </el-dropdown-item>
                     </el-dropdown-menu>

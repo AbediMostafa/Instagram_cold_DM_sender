@@ -9,16 +9,18 @@
       <div class="card-toolbar">
         <!--begin::Menu-->
         <div class="me-2">
-          <el-date-picker
-              v-model="store.accounts.dateRange"
-              type="daterange"
-              range-separator="To"
-              start-placeholder="Start date"
-              end-placeholder="End date"
-              @change="actionClicked"
-              value-format="YYYY-MM-DD"
-              style="max-width: 250px;"
-          />
+          <a class="btn btn-sm btn-light-success ms-2" @click="store.resetIsUsed()">Reset</a>
+
+<!--          <el-date-picker-->
+<!--              v-model="store.accounts.dateRange"-->
+<!--              type="daterange"-->
+<!--              range-separator="To"-->
+<!--              start-placeholder="Start date"-->
+<!--              end-placeholder="End date"-->
+<!--              @change="actionClicked"-->
+<!--              value-format="YYYY-MM-DD"-->
+<!--              style="max-width: 250px;"-->
+<!--          />-->
         </div>
         <div class="me-2">
           <el-input
@@ -103,36 +105,7 @@
             <th class="min-w-150px">USERNAME</th>
             <th class="min-w-100px">QUICK ACTIONS</th>
 
-            <th class="min-w-300px">
-
-              <span class="cursor-pointer" @click="sortBy('total_cold_dms')">
-                 COLD DMS
-                <i v-if="store.accounts.sortBy === 'total_cold_dms' && !store.accounts.sortDesc"
-                   class="bi bi-caret-up-fill"></i>
-              <i v-if="store.accounts.sortBy === 'total_cold_dms' && store.accounts.sortDesc"
-                 class="bi bi-caret-down-fill"></i>
-              </span> /
-
-              <span class="cursor-pointer" @click="sortBy('total_follow_ups')">
-                FOLLOW UPS
-
-                <i v-if="store.accounts.sortBy === 'total_follow_ups' && !store.accounts.sortDesc"
-                   class="bi bi-caret-up-fill"></i>
-                <i v-if="store.accounts.sortBy === 'total_follow_ups' && store.accounts.sortDesc"
-                   class="bi bi-caret-down-fill"></i>
-              </span> /
-
-              <span class="cursor-pointer" @click="sortBy('total_replies')">
-                 RESPONSES
-              <i v-if="store.accounts.sortBy === 'total_replies' && !store.accounts.sortDesc"
-                 class="bi bi-caret-up-fill"></i>
-              <i v-if="store.accounts.sortBy === 'total_replies' && store.accounts.sortDesc"
-                 class="bi bi-caret-down-fill"></i>
-
-              </span>
-
-
-            </th>
+            <th class="min-w-300px">SERVICE</th>
 
 
             <th class="min-w-200px cursor-pointer" @click="sortBy('created_at')">
@@ -257,12 +230,13 @@
                 </a>
               </td>
               <td>
-                <span class="fw-semibold fs-7 ">{{ account.total_cold_dms }} </span> /
-                <span class="fw-semibold fs-7 ">{{ account.total_follow_ups }}</span> /
-                <span class="fw-semibold fs-7 ">{{ account.total_replies }}</span>
+                <span
+                    v-if="account.service"
+                    class="text-muted fs-8 border border-dashed px-3 py-1 rounded border-2 border-info-subtle"
+                    >{{ account.service?.title }}</span
+                  >
 
                 <div>
-                  <span class="badge badge-light-info mt-1">{{ account.category?.title }}</span>
                   <span class="badge badge-light-primary mt-1 ms-1"
                         v-for="tag in account.tags"
                   >{{ tag.title }}</span>

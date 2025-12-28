@@ -51,13 +51,6 @@
     <div class="menu-item ">
       <div class="px-3 fill-flex d-flex align-items-center">
         <a
-            class="btn btn-light-success btn-sm px-4"
-            @click="profileStore.assignFingerprint(store.checkedAccountRows)">Assign fingerprint</a>
-      </div>
-    </div>
-    <div class="menu-item ">
-      <div class="px-3 fill-flex d-flex align-items-center">
-        <a
             class="btn btn-light-danger btn-sm px-4"
             @click="store.deleteSelected(store.checkedAccountRows)"> Delete Selected </a>
       </div>
@@ -82,12 +75,12 @@
           />
         </el-select>
 
-        <a class="btn btn-sm btn-light-success ms-1" @click="store.setCategory"> Set Category</a>
+        <a class="btn btn-sm btn-light-success ms-1" @click="store.setCategory"> Set Service</a>
       </div>
     </div>
 
     <div class="menu-item">
-      <div class="menu-content fs-6 text-gray-900 fw-bold px-3 py-4">
+      <div class="menu-content fs-6 text-gray-900 fw-bold px-3 pt-4">
         Filter
       </div>
       <div class="menu-content px-3 ">
@@ -111,14 +104,40 @@
         </el-select>
 
         <div class="fill-flex d-flex align-items-center mt-4">
-          <a class="btn btn-sm btn-light-primary" @click="store.getAccounts()">Filter</a>
+          <a class="btn btn-sm btn-light-danger" @click="store.detachTag()">Detach Tag</a>
           <a class="btn btn-sm btn-light-success ms-2" @click="store.attachTag()">Attach Tag</a>
+        </div>
+
+      </div>
+      <div class="menu-content px-3 ">
+        <!-- Filter by Service -->
+        <el-select
+            v-model="store.accounts.services"
+            multiple
+            filterable
+            remote
+            clearable
+            placeholder="Filter by Service"
+            :remote-method="serviceStore.fetchService"
+            :loading="serviceStore.is.searching"
+        >
+          <el-option
+              v-for="service in serviceStore.services.data"
+              :key="service.id"
+              :label="service.title"
+              :value="service.id"
+          />
+        </el-select>
+
+        <div class="fill-flex d-flex align-items-center mt-4">
+          <a class="btn btn-sm btn-light-danger" @click="store.detachService()">Detach Service</a>
+          <a class="btn btn-sm btn-light-success ms-2" @click="store.attachService()">Attach Service</a>
         </div>
 
         <div class="mt-2 fill-flex d-flex align-items-center">
           <a
-              class="btn btn-light-danger btn-sm"
-              @click="store.detachTag()">Detach Tag</a>
+              class="btn btn-light-success btn-sm"
+              @click="store.getAccounts()">Filter</a>
         </div>
 
       </div>
@@ -136,14 +155,16 @@ import {useTagStore} from "@/stores/Tag";
 import {showModal} from "@/core/helpers/modal";
 import {useProfileStore} from "@/stores/Profile";
 import ApiService from "@/core/services/ApiService";
+import {useServiceStore} from "@/stores/Service";
 
 export default defineComponent({
   name: "accounts-drop-down",
   methods: {showModal},
   components: {},
   setup() {
-    const categoryStore = useCategoryStore()
-    const tagStore = useTagStore()
+    const categoryStore = useCategoryStore();
+    const tagStore = useTagStore();
+    const serviceStore = useServiceStore();
     const tagLoading = ref(false)
 
     onMounted(() => {
@@ -156,6 +177,7 @@ export default defineComponent({
       categoryStore,
       tagStore,
       tagLoading,
+      serviceStore,
     }
 
   }

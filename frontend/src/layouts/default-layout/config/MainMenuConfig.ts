@@ -48,13 +48,6 @@ const MainMenuConfig: Array<MenuItem> = [
         allowed_roles:['user', 'presenter']
       },
       {
-        heading: "loom unibox",
-        route: "/loom-unibox",
-        keenthemesIcon: "element-7",
-        bootstrapIcon: "bi-layers",
-        allowed_roles:['user']
-      },
-      {
         heading: "templates",
         route: "/templates",
         keenthemesIcon: "switch",
@@ -86,15 +79,37 @@ const MainMenuConfig: Array<MenuItem> = [
       },
 
       {
-        heading: "profiles",
-        route: "/profiles",
-        keenthemesIcon: "calendar-8",
-        bootstrapIcon: "bi-calendar3-event",
-        allowed_roles:['user']
-      },
-      {
         heading: "settings",
         route: "/settings",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-layers",
+        allowed_roles:['employee','user']
+      },
+
+      {
+        heading: "services",
+        route: "/services",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-layers",
+        allowed_roles:['employee','user']
+      },
+      {
+        heading: "workflows",
+        route: "/workflows",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-layers",
+        allowed_roles:['employee','user']
+      },
+      {
+        heading: "modules",
+        route: "/modules",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-layers",
+        allowed_roles:['employee','user'],
+      },
+      {
+        heading: "processes",
+        route: "/processes",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
         allowed_roles:['employee','user']

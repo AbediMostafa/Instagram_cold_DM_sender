@@ -2,50 +2,22 @@ import requests
 import re
 import json
 
-url = 'https://www.charitynavigator.org/search?page=2&pageSize=10&_rsc=18cr4'
+ig_user_id = '895666706968024'
+app_id = '25203446065944545'
+app_secret = '683def4ec08b09a164f952bc8902503e'
+user_access_token = 'EAFmKZApHgVZBEBQbQLUv8aPZBitKkFFmGRIq6WzbCOUpBgaKv9QZBR9L1hWP5KA20TLHtZCimW1BsofsA781kFnNryXDZCidgqapefJsyOENwdqCKXXNn9060ntpZAJhf4Adk9qvBtlsFJoZCJSJRMk2yykuRGkJMT5xZBmM2AajPWG6En7GSdmaeAvFv5sBlENMFNWWqxefQVulYUWzatZCRlBEsr0toZCJDcCedHqCtrLZAtTJ'
+# user_access_token = 'EAFmKZApHgVZBEBQZAZBIZBlvpjvJCZBB9YSG8CZAkLhdEmxN62CSoc5TdMTUBDeqSxZA5k1ZC5SxsBYnBp0l8GxG7KyVkcHRaWSIOI07EGc759Q7cwKbvEhuqtM8hfuaVX2sdOw1zhZAahs27XqQ0i4klhxXhFBWzP4HJQvRkhwbYaEJZBM4pw73Bh2o6acakoTU7Ts'
+long_access_token = 'EAFmKZApHgVZBEBQaPhUDI7SYXng0EivRdPzSqaEbxlT48s5A9ZA6ZAVAIZAXf3mDNu2zlWUj56K8HD6WjqQMjZCrJbPxvs7QISFuatCtI9RsrbbZBlRJKORBbvRZB9FmxZBVmy6SlvZCh8sqdcoyJVZAmMoa2Mj5DpivM1XMGefHXuATyiD43ZAJHbaRBmPxM4KN'
+url = 'https://graph.facebook.com/v24.0/895666706968024?fields=business_discovery.username(bluebottle){followers_count,media_count}&client_id=25203446065944545&access_token=EAFmKZApHgVZBEBQbQLUv8aPZBitKkFFmGRIq6WzbCOUpBgaKv9QZBR9L1hWP5KA20TLHtZCimW1BsofsA781kFnNryXDZCidgqapefJsyOENwdqCKXXNn9060ntpZAJhf4Adk9qvBtlsFJoZCJSJRMk2yykuRGkJMT5xZBmM2AajPWG6En7GSdmaeAvFv5sBlENMFNWWqxefQVulYUWzatZCRlBEsr0toZCJDcCedHqCtrLZAtTJ'
+# url = f'https://graph.facebook.com/v24.0/oauth/access_token?grant_type=fb_exchange_token&client_id={app_id}&client_secret={app_secret}&fb_exchange_token={user_access_token}'
 
-headers = {
-    'accept': '*/*',
-    'accept-language': 'en-AU,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
-    'next-router-state-tree': '%5B%22%22%2C%7B%22children%22%3A%5B%22(root)%22%2C%7B%22children%22%3A%5B%22search%22%2C%7B%22children%22%3A%5B%22__PAGE__%3F%7B%5C%22page%5C%22%3A%5C%223%5C%22%2C%5C%22pageSize%5C%22%3A%5C%2210%5C%22%7D%22%2C%7B%7D%2C%22%2Fsearch%3Fpage%3D3%26pageSize%3D10%22%2C%22refresh%22%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%2Ctrue%5D%7D%2Cnull%2Cnull%5D',
-    'next-url': '/search',
-    'priority': 'u=1, i',
-    'referer': 'https://www.charitynavigator.org/search?page=3&pageSize=10',
-    'rsc': '1',
-    'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
-}
+response = requests.get(url)
 
-cookies = {
-    's_fid': '361AAD5A76350334-0D4D3A8BB18B5611',
-    's_cc': 'true',
-    'affinity': '"0e9759d8908dd13c"',
-    'mbox': 'session#4b674529a9fe448d8d58c09ddd854f68#1761731253',
-    's_sq': 'crtnavcharitynavigatorprod%3D%2526c.%2526a.%2526activitymap.%2526page%253DCharity%252520Navigator%2526link%253D2%2526region%253DBODY%2526pageIDType%253D1%2526.activitymap%2526.a%2526.c%2526pid%253DCharity%252520Navigator%2526pidt%253D1%2526oid%253DfunctionsK%252528%252529%25257B%25257D%2526oidt%253D2%2526ot%253DA'
-}
+print(response.text)
 
-response = requests.get(url, headers=headers, cookies=cookies)
 
-# print(response.status_code)
-# print(response.text)
 
-match = re.search(r'"results":\s*(\[[\s\S]*?\])', response.text)
-if match:
-    json_part = match.group(1)
-    print(json_part)
-    charities = json.loads(json_part)
-    print(charities)
-    try:
-        # 2️⃣ Parse it as JSON
-        charities = json.loads(json_part)
-        for c in charities:
-            print(c['name'], '-', c['city'], c['state'], '-', c['rating'])
-    except Exception as e:
-        print('Parsing error:', e)
-else:
-    print('No results found.')
+
+
+
+

@@ -22,7 +22,7 @@
             :loading="tagLoading"
         >
           <el-option
-              v-for="tag in tagStore.tags.data"
+              v-for="tag in tagStore.searchedTags"
               :key="tag.id"
               :label="tag.title"
               :value="tag.id"
@@ -98,7 +98,6 @@ const tagLoading = ref(false);
 onMounted(() => {
   categoryStore.getCategories();
   store.fetchTypes();
-  store.fetchColors();
 });
 
 // Method to fetch tags based on the search query
@@ -106,7 +105,7 @@ const fetchTags = async (query: string) => {
   if (!query) return;
   tagLoading.value = true;
   try {
-    await tagStore.getTags({ query });
+    await tagStore.fetchTags( query);
   } catch (error) {
     console.error('Error fetching tags:', error);
   } finally {

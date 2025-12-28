@@ -108,3 +108,8 @@ class ProxyStuck(Exception):
 
 class LinkIsNotCorrect(Exception):
     pass
+
+
+class ProcessShouldStop(Exception):
+    pass
+

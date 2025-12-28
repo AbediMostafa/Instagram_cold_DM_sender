@@ -292,10 +292,7 @@ def go_to_page(ig, target, name):
 def get_profile_picture():
     from uuid import uuid4
 
-    if random.random() < 0.1:
-        url = 'https://thispersondoesnotexist.com'
-    else:
-        url = 'https://picsum.photos/500/500'
+    url = 'https://picsum.photos/500/500'
 
     headers = {'User-Agent': 'Mozilla/5.0'}
 

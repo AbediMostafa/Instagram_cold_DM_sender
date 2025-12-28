@@ -83,7 +83,7 @@ class ProfileUpdator:
             self.get_proxy()
             self.assign_cookies()
             self.assign_profile_name()
-            self.assign_screen_resolution()
+            # self.assign_screen_resolution()
 
             self.payload["group_id"] = self.folder_id
             self.payload["user_proxy_config"] = self.proxy

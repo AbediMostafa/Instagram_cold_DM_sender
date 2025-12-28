@@ -63,8 +63,8 @@ def get_next_order_for_account(account, service_type ='comment'):
         Order
         .select()
         .where(Order.completed_count < Order.total_count)
-        .where(Order.status.not_in(['Canceled', 'Completed']))
-        .where(Order.service_type == service_type)
+        .where(Order.status.in_(['Pending', 'In progress']))
+        # .where(Order.service_type == service_type)
         .where(
             # This account has NOT sent any comment for this order
             ~Order.id.in_(

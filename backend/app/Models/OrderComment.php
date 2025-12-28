@@ -9,4 +9,10 @@ class OrderComment extends Model
 {
     use HasFactory;
     protected $guarded =[];
+
+    public function setStatusTo($status)
+    {
+        $this->status = $status;
+        $this->save();
+    }
 }

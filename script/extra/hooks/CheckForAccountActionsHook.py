@@ -38,6 +38,7 @@ class CheckForAccountActionsHook:
 
         if we_have_custom_messages:
             self.account.add_cli(
-                f'We have {self.account.number_of_custom_message_commands} custom messages and we start sending now')
+                f'We have {self.account.number_of_custom_message_commands} custom messages and we start sending now',
+                print_only=True)
 
         return we_have_custom_messages

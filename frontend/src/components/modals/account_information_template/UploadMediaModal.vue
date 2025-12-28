@@ -25,7 +25,7 @@
               class="mb-5"
               ref="uploadRef"
               :auto-upload="false"
-              :multiple="mediaType === 'carousel' || mediaType === 'video-post'"
+              :multiple=true
               :on-success="handleSuccess"
               :http-request="uploadFiles"
           >
@@ -75,43 +75,30 @@
             </el-radio-group>
           </div>
 
-          <!-- Theme Selection for Carousel -->
-          <div
-              class="d-flex flex-column mb-10 fv-row"
-              v-if="mediaType === 'carousel'"
-          >
-            <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-              <span class="required">Theme</span>
-            </label>
-            <el-radio-group v-model="theme" size="default">
-              <el-radio-button
-                  v-for="theme in themes"
-                  :key="theme.value"
-                  :value="theme.value"
-                  :label="theme.label"
-              >
-                {{ theme.value }}
-              </el-radio-button>
-            </el-radio-group>
-          </div>
-
           <div class="d-flex flex-column mb-8 fv-row">
-            <!--begin::Label-->
             <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-              <span class="required">Category</span>
+              Tags
             </label>
-            <!--end::Label-->
-            <el-select
-                v-if="categoryStore.categories.data.length"
-                v-model="category" placeholder="Select">
-              <el-option
-                  v-for="item in categoryStore.categories.data"
-                  :key="item.id"
-                  :label="item.title"
-                  :value="item.id"
-              />
-            </el-select>
 
+            <el-form-item prop="selectedTags">
+              <el-select
+                  v-model="tags"
+                  multiple
+                  filterable
+                  remote
+                  clearable
+                  placeholder="Search for tags"
+                  :remote-method="tagStore.fetchTags"
+                  :loading="tagStore.is.searching"
+              >
+                <el-option
+                    v-for="tag in tagStore.searchedTags"
+                    :key="tag.id"
+                    :label="tag.title"
+                    :value="tag.id"
+                />
+              </el-select>
+            </el-form-item>
           </div>
 
 
@@ -129,27 +116,20 @@ import {hideModal} from "@/core/helpers/modal";
 import {useTemplateStore} from "@/stores/Template";
 import {ElMessageBox} from "element-plus";
 import {useCategoryStore} from "@/stores/Category";
+import {useTagStore} from "@/stores/Tag";
 
 const uploadRef = ref();
 const category = ref('');
 const caption = ref("");
+const tags = ref([]);
 const mediaType = ref("avatar");
+const tagStore = useTagStore()
+
 const mediaTypes = ref([
   {value: "profile image", label: "avatar"},
   {value: "post image", label: "image-post"},
   {value: "carousel", label: "carousel"},
   {value: "video", label: "video-post"},
-]);
-
-const theme = ref("yellow");
-const themes = ref([
-  {value: "yellow", label: "yellow"},
-  {value: "red", label: "red"},
-  {value: "purple", label: "purple"},
-  {value: "orange", label: "orange"},
-  {value: "green", label: "green"},
-  {value: "blue", label: "blue"},
-  {value: "aquamarine", label: "aquamarine"},
 ]);
 
 const carouselId = ref("");
@@ -174,10 +154,12 @@ const uploadFiles = async ({file, files}) => {
   // formData.append("caption", encodeURIComponent(caption.value));
   formData.append("carouselId", carouselId.value);
   formData.append("mediaType", mediaType.value);
-  formData.append("theme", theme.value);
   formData.append("category", category.value);
   formData.append("uid", file.uid);
   formData.append("file", file);
+  tags.value.forEach((tagId) => {
+    formData.append('tags[]', tagId);
+  });
 
   try {
     const response = await fetch(uploadServerUrl.value, {

@@ -208,16 +208,16 @@ def scrape_linkedin_companies(job_keyword, proxy):
             company_data = {
                 'linkedin_url': company_url,
                 'company_name': company_soup.select_one('h1.top-card-layout__title'),
-                'about_us': company_soup.select_one('p[data-test-id="about-us__description"]'),
-                'industry': company_soup.select_one('div[data-test-id="about-us__industry"] dd'),
-                'company_size': company_soup.select_one('div[data-test-id="about-us__size"] dd'),
-                'headquarters': company_soup.select_one('div[data-test-id="about-us__headquarters"] dd'),
-                'type': company_soup.select_one('div[data-test-id="about-us__organizationType"] dd'),
-                'founded': company_soup.select_one('div[data-test-id="about-us__foundedOn"] dd'),
-                'specialties': company_soup.select_one('div[data-test-id="about-us__specialties"] dd'),
+                'about_us': company_soup.select_one('p[data-t_est-id="about-us__description"]'),
+                'industry': company_soup.select_one('div[data-t_est-id="about-us__industry"] dd'),
+                'company_size': company_soup.select_one('div[data-t_est-id="about-us__size"] dd'),
+                'headquarters': company_soup.select_one('div[data-t_est-id="about-us__headquarters"] dd'),
+                'type': company_soup.select_one('div[data-t_est-id="about-us__organizationType"] dd'),
+                'founded': company_soup.select_one('div[data-t_est-id="about-us__foundedOn"] dd'),
+                'specialties': company_soup.select_one('div[data-t_est-id="about-us__specialties"] dd'),
             }
 
-            website_dd = company_soup.select_one('div[data-test-id="about-us__website"] dd a')
+            website_dd = company_soup.select_one('div[data-t_est-id="about-us__website"] dd a')
             company_data['website'] = website_dd.get_text(strip=True) if website_dd else None
             company_data['instagram_username'] = extract_instagram_username(company_data['website'])
 

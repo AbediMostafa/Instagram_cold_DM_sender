@@ -15,13 +15,23 @@ class TemplateController extends Controller
 
         $templates = Template::query()
             ->where('type', r('type'))
-            ->with('category:id,title')
             ->with('tags:id,title')
             ->when(r('type') == 'carousel', function ($query) {
                 $query->where('color_id', r('color'))
                     ->orderBy('color_id')
                     ->orderBy('uid');
-            })->get();
+            })
+            ->when(r('tags'), function ($query) {
+                $tags = r('tags');
+
+                $query->whereHas('tags', function ($q) use ($tags) {
+                    $q->whereIn('tags.id', $tags);
+                }, '=', count($tags));
+            })
+
+            ->orderBy('id', 'desc')
+            ->limit(400)
+            ->get();
 
 
         $data = match (r('type')) {
@@ -37,7 +47,6 @@ class TemplateController extends Controller
 
     public function create()
     {
-
         r()->validate([
             'type' => 'required',
             'text' => [
@@ -132,7 +141,7 @@ class TemplateController extends Controller
 
         $filePath = $file->store($path, 'public');
 
-        Template::query()->create([
+        $template = Template::query()->create([
             'text' => $filePath,
             'type' => $mediaType,
             'sub_type' => $subType,
@@ -142,6 +151,9 @@ class TemplateController extends Controller
             'category_id' => r('category'),
             'caption' => r('caption')
         ]);
+
+        !empty(r('tags')) && $template->tags()->attach(r('tags'));
+
     }
 
     public function delete()

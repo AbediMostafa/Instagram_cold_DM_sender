@@ -31,7 +31,7 @@ class AccountController extends Controller
         $accounts = Account::query()
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
-                'name', 'password', 'email_password', 'created_at', 'category_id',
+                'name', 'password', 'email_password', 'created_at', 'category_id', 'service_id',
                 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
 //            ->withCount([
 //                'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
@@ -58,7 +58,7 @@ class AccountController extends Controller
 //            ])
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
-//                'profile:id,title',
+                'service:id,title',
 //                'category:id,title',
 //                'proxy:id,ip',
                 'tags:id,title',
@@ -101,6 +101,13 @@ class AccountController extends Controller
                 $query->whereHas('tags', function ($q) use ($tags) {
                     $q->whereIn('tags.id', $tags);
                 }, '=', count($tags));
+            })
+            ->when(r('services'), function ($query) {
+                $services = r('services');
+
+                $query->whereHas('service', function ($q) use ($services) {
+                    $q->whereIn('id', $services);
+                }, '=', count($services));
             })
 //            ->orderBy('id', 'DESC')
             ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
@@ -286,16 +293,8 @@ class AccountController extends Controller
     public function get2faCode()
     {
         try {
-//            $secretKey = r('secretKey');
-            $totp = Auth2FA::TOTP(r('secretKey'));
 
-
-            return $totp;
-
-
-//            $resp = Http::withoutVerifying()->get("https://bulkacc.com/TwoFactorEnable/Get2FACode?secretKey=$secretKey");
-//            return $resp->json()['data']['otp'];
-
+            return r('secretKey') ? Auth2FA::TOTP(r('secretKey')) : '';
         } catch (\Exception $exception) {
 
             return "Error getting 2fa code : " . $exception->getMessage();
@@ -392,6 +391,35 @@ class AccountController extends Controller
         );
     }
 
+    public function attachService()
+    {
+        return tryCatch(function () {
+
+            $serviceIds = r('serviceIds');
+
+            abort_if(count($serviceIds) > 1, 422, 'Only one service can be assigned to an account.');
+            abort_if(empty($serviceIds), 422, 'There is no service selected');
+
+            Account::query()
+                ->whereIn('id', r('accountIds'))
+                ->get()
+                ->each(fn($account) => $account->update(['service_id' => $serviceIds[0]]));
+
+        }, 'Service attached successfully');
+    }
+
+    public function detachService()
+    {
+        return tryCatch(function () {
+
+            Account::query()
+                ->whereIn('id', r('accountIds'))
+                ->get()
+                ->each(fn($account) => $account->update(['service_id' => null]));
+
+        }, 'Service detached successfully');
+    }
+
     public function detachTag()
     {
         return tryCatch(
@@ -411,6 +439,37 @@ class AccountController extends Controller
                 }
             },
             'Tags detached successfully'
+        );
+    }
+
+    public function selectAccount()
+    {
+        return DB::transaction(function () {
+
+            $specificIds = r('specificIds');
+            $serviceId = r('serviceId');
+            $tagTitles = r('tagTitles');
+
+            $nextAccount = Account::next_account($serviceId, $specificIds, $tagTitles);
+
+            if (!$nextAccount) {
+                Account::resetIsUsed($serviceId);
+                $nextAccount = Account::next_account($serviceId, $specificIds, $tagTitles);
+            }
+
+            if ($nextAccount) {
+                $nextAccount->update(['is_used' => true]);
+            }
+
+            return $nextAccount;
+        });
+    }
+
+    public function resetIsUsed()
+    {
+        return tryCatch(
+            fn() => Account::query()->update(['is_used' => 0]),
+            'Is used reset successfully'
         );
     }
 }

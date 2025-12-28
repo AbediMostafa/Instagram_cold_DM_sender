@@ -12,3 +12,4 @@ class Cli(BaseWithTimeZoneModel):
 
     class Meta:
         table_name = 'clis'
+

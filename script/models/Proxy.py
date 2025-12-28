@@ -81,54 +81,61 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
     return None
 
 
-def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5):
+def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts=50):
     from .Setting import Setting
 
     proxy_type = Setting.get_value('proxy_type')
-    query = Proxy.select().where((Proxy.is_used == 0) & (Proxy.type == proxy_type))
+    attempts = 0
 
-    if not query.exists():
-        Proxy.update(is_used=0).execute()
-        query = Proxy.select().where((Proxy.is_used == 0) & (Proxy.type == proxy_type))
+    while attempts < max_attempts:
+        attempts += 1
 
-    next_proxy = query.order_by(Proxy.id).first()
+        query = Proxy.select().where(
+            (Proxy.is_used == 0) & (Proxy.type == proxy_type)
+        )
 
-    if not next_proxy:
-        return None
+        if not query.exists():
+            Proxy.update(is_used=0).execute()
+            continue
 
-    next_proxy.set_is_used(1)
+        next_proxy = query.order_by(Proxy.id).first()
+        if not next_proxy:
+            continue
 
-    print(f'Selected proxy : {next_proxy.ip}:{next_proxy.port}')
+        next_proxy.set_is_used(1)
+        print(f'Selected proxy : {next_proxy.ip}:{next_proxy.port}: {next_proxy.real_ip}')
 
-    observed_ip = _fetch_external_ip_via_proxy(next_proxy, timeout=max_check_timeout)
-    print(f'Observed IP : {observed_ip}')
+        observed_ip = _fetch_external_ip_via_proxy(
+            next_proxy,
+            timeout=max_check_timeout
+        )
+        print(f'Observed IP : {observed_ip}')
 
-    now = tehran_now()  # use Tehran local time
+        now = tehran_now()
 
-    if observed_ip:
+        if not observed_ip:
+            continue
+
         prev_ip = next_proxy.real_ip
         prev_checked = next_proxy.real_ip_checked_at
 
-        if prev_checked is None:
+        if not prev_checked:
             next_proxy.set_real_ip(observed_ip, now)
             return next_proxy
 
         prev_checked = prev_checked.replace(tzinfo=None)
 
         if prev_ip == observed_ip:
-            print('Observed Ip is same as previous Ip')
+            print(f'prev_ip : {prev_ip}, observed_ip : {observed_ip} are same')
 
-            elapsed = now - prev_checked
-            minutes = elapsed.total_seconds() / 60.0
-            if minutes > stuck_threshold_minutes:
-                raise ProxyStuck(f'Proxy external IP has been stuck at {observed_ip} for {minutes:.1f} minutes.')
+            minutes = (now - prev_checked).total_seconds() / 60
+            if minutes <= stuck_threshold_minutes:
+                return next_proxy
+            else:
+                print(f'Proxy stuck for {minutes:.1f} min, trying next...')
+                continue
 
-            print(f'Still {stuck_threshold_minutes} minutes not passed')
-            return next_proxy
+        next_proxy.set_real_ip(observed_ip, now)
+        return next_proxy
 
-        else:
-            next_proxy.set_real_ip(observed_ip, now)
-            print(f'Observed external IP for proxy {next_proxy.ip}:{next_proxy.port} -> {observed_ip}')
-            return next_proxy
-    else:
-        raise RuntimeError('Could not determine external IP for selected proxy.')
+    raise RuntimeError('No valid rotating proxy found after max attempts')

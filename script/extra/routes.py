@@ -11,7 +11,29 @@ routes = {
     'delete_template': {
         'url': f'{base_url}template/delete',
         'method': 'POST',
-    }
+    },
+    'process-verify': {
+        'url': f'{base_url}process/verify',
+        'method': 'POST',
+    },
+
+    'check-processes': {
+        'url': f'{base_url}processes/check',
+        'method': 'POST',
+    },
+
+    'get-initial-data': {
+        'url': f'{base_url}processes/get-initial-data',
+        'method': 'POST',
+    },
+    'select-account': {
+        'url': f'{base_url}account/select-account',
+        'method': 'POST',
+    },
+    'order-there-is-no-comment': {
+        'url': f'{base_url}order/there-is-no-comment',
+        'method': 'POST',
+    },
 }
 
 
@@ -35,9 +57,17 @@ def request_to_laravel(route_name, data=None):
         return response.json() if response.text else None
 
     except requests.exceptions.RequestException as e:
+        import traceback
+
         print(f'Error: {e}')
+        print(traceback.format_exc())
+
         return None
 
+
+# --------------------------------------------------
+# Templates Routes
+# --------------------------------------------------
 
 def get_template(account_id, type):
     return request_to_laravel('get-template', {'id': account_id, 'type': type})
@@ -45,3 +75,34 @@ def get_template(account_id, type):
 
 def delete_template(template_ids):
     return request_to_laravel('delete_template', {'ids': template_ids})
+
+
+# --------------------------------------------------
+# Process Routes
+# --------------------------------------------------
+def process_verify(pid):
+    return request_to_laravel('process-verify', {'pid': pid})
+
+
+def check_processes():
+    return request_to_laravel('check-processes')
+
+
+def get_initial_data():
+    return request_to_laravel('get-initial-data')
+
+
+# --------------------------------------------------
+# Account Routes
+# --------------------------------------------------
+def select_account(service_id=None, tag_titles=None, specific_ids=None):
+    data = {'serviceId': service_id, 'tagTitles': tag_titles, 'specificIds': specific_ids}
+    return request_to_laravel('select-account', data)
+
+
+# --------------------------------------------------
+# Order Routes
+# --------------------------------------------------
+
+def order_there_is_no_comment(id):
+    return request_to_laravel('order-there-is-no-comment', {'id': id})

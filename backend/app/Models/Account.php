@@ -9,6 +9,8 @@ use App\Classes\ProfileUpdateProxy;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
 
 class Account extends Model
 {
@@ -96,6 +98,11 @@ class Account extends Model
     public function looms()
     {
         return $this->hasMany(Loom::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public static function createOne()
@@ -246,9 +253,66 @@ class Account extends Model
         $this->save();
     }
 
-    public function startProfile()
+    /**
+     * Scope: free & active accounts
+     */
+    public function scopeFree($query)
     {
-        $this->profile &&
-        (new MultiloginService())->startProfile($this->profile->profile_id);
+        return $query->where('is_used', 0)
+            ->where('instagram_state', 'active');
+    }
+
+    /**
+     * Scope: filter by specific IDs
+     */
+    public function scopeWithSpecificIds($query, ?array $ids)
+    {
+        if ($ids) {
+            $query->whereIn('id', $ids);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Scope: filter by tag titles
+     */
+    public function scopeWithTags($query, ?array $tagTitles)
+    {
+        if ($tagTitles) {
+            $query->whereHas('tags', function ($q) use ($tagTitles) {
+                $q->whereIn('title', $tagTitles);
+            });
+        }
+
+        return $query;
+    }
+
+    public static function next_account($serviceId = null, $specificIds = [], $tagTitles = [])
+    {
+        $query = Account::query();
+
+        if ($serviceId) {
+            $query->where('service_id', $serviceId);
+        }
+
+        return $query
+            ->free()
+            ->withSpecificIds($specificIds)
+            ->withTags($tagTitles)
+            ->orderBy('id')
+            ->lock(DB::raw('FOR UPDATE SKIP LOCKED'))
+            ->first();
+    }
+
+    public static function resetIsUsed($serviceId = null)
+    {
+        $query = Account::query();
+
+        if ($serviceId) {
+            $query->where('service_id', $serviceId);
+        }
+
+        $query->update(['is_used' => false]);
     }
 }

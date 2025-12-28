@@ -12,4 +12,4 @@ class RecordLastActivityHook:
 
         # Calculate the time difference in hours
         hours = round((new_time - tehran_now()).total_seconds() / 3600, 2)
-        self.account.add_cli(f"Account will start {hours} hours later")
+        self.account.add_cli(f"Account will start {hours} hours later", print_only=True)

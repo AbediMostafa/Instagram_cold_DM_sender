@@ -1,11 +1,32 @@
 {
-    "message": "feedback_required",
-    "spam": true,
-    "feedback_title": "Try Again Later",
-    "feedback_message": "We restrict certain activity to protect our community. Let us know if you think we made a mistake.",
-    "feedback_url": "",
-    "feedback_action": "report_problem",
-    "feedback_appeal_label": "Let us know",
-    "restriction_enrollment_data": "",
-    "status": "fail"
+  "id": 72,
+  "pid": 67508,
+  "status": "running",
+  "created_at": "2025-12-17 10:02",
+  "last_checked_at": "2025-12-17 13:33",
+  "workflow_id": 3,
+  "shouldRun": "True",
+  "workflow": {
+    "id": 3,
+    "title": "Like and Comment",
+    "service_id": 1,
+    "service": {
+      "id": 1,
+      "title": "Like And Commnet",
+      "service": "like_and_comment"
+    },
+    "modules": [
+      {
+        "id": 6,
+        "title": "Like And Comment",
+        "module_path": "script.extra.actions.like_and_comment.LikeAndCommentContext",
+        "class_name": "LikeAndCommentContext",
+        "created_at": "2025-12-15 14:41",
+        "pivot": {
+          "workflow_id": 3,
+          "module_id": 6
+        }
+      }
+    ]
+  }
 }

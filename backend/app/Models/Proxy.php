@@ -35,7 +35,7 @@ class Proxy extends Model
 
         foreach ($lines as $line) {
             $proxy = explode(':', $line);
-            if (count($proxy) === 4) {
+            if (count($proxy) === 5) {
 
                 $proxyExists = Proxy::query()
                     ->whereIp($proxy[0])
@@ -52,6 +52,7 @@ class Proxy extends Model
                     'port' => $proxy[1],
                     'username' => $proxy[2],
                     'password' => $proxy[3],
+                    'type' => $proxy[4],
                 ];
             }
         }

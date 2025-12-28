@@ -325,6 +325,46 @@ const routes: Array<RouteRecordRaw> = [
           breadcrumbs: ["Pages", "Settings"],
         },
       },
+      {
+        path: "services",
+        name: "services",
+        component: () =>
+            import("@/views/service/Services.vue"),
+        meta: {
+          pageTitle: "Services",
+          breadcrumbs: ["Pages", "Services"],
+        },
+      },
+      {
+        path: "workflows",
+        name: "workflows",
+        component: () =>
+            import("@/views/workflow/Workflows.vue"),
+        meta: {
+          pageTitle: "Workflows",
+          breadcrumbs: ["Pages", "Workflows"],
+        },
+      },
+      {
+        path: "modules",
+        name: "modules",
+        component: () =>
+            import("@/views/module/Modules.vue"),
+        meta: {
+          pageTitle: "Modules",
+          breadcrumbs: ["Pages", "Modules"],
+        },
+      },
+      {
+        path: "processes",
+        name: "processes",
+        component: () =>
+            import("@/views/process/Processes.vue"),
+        meta: {
+          pageTitle: "Processes",
+          breadcrumbs: ["Pages", "Processes"],
+        },
+      },
       // {
       //   path: "/crafted/account",
       //   name: "account",

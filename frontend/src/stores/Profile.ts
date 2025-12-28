@@ -110,12 +110,5 @@ export const useProfileStore = defineStore('ProfileStore', {
                     this.is.assigning = false;
                 });
         },
-        assignFingerprint(ids = []) {
-            this.is.assigning = true
-            ApiService.post("account/assign-fingerprint", {ids})
-                .finally(() => {
-                    this.is.assigning = false;
-                });
-        }
     }
 });

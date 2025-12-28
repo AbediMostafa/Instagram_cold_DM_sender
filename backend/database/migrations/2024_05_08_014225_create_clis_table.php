@@ -15,10 +15,12 @@ return new class extends Migration {
             $table->id();
 
             $table->foreignId('account_id')
+                ->nullable()
                 ->constrained('accounts')
                 ->cascadeOnDelete();
 
             $table->foreignId('process_id')
+                ->nullable()
                 ->constrained('processes')
                 ->nullOnDelete();
 

@@ -14,7 +14,15 @@ return new class extends Migration
         Schema::create('processes', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('pid')->unsigned()->unique();
-            $table->enum('status', ['running', 'stopped', 'terminated'])->default('running');
+            $table->enum('status', ['running', 'stopped', 'terminated', 'idle'])->default('idle');
+            $table->string('proxy_type')->nullable();
+
+            $table->foreignId('workflow_id')
+                ->nullable()
+                ->constrained('workflows')
+                ->nullOnDelete();
+
+            $table->timestamp('last_checked_at')->nullable()->useCurrent();
             $table->timestamp('created_at')->useCurrent();
         });
     }

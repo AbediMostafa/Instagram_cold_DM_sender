@@ -100,17 +100,12 @@ class Account(BaseWithTimeZoneModel):
 
         print(log)
 
-        if print_only:
-            return False
+        # if print_only:
+        return False
 
         truncated_log = (log[:254]) if log else ''
 
-        self.log = truncated_log
-        process = Process.select().where(Process.pid == os.getpid()).first()
-
-        self.save()
-
-        Cli.create(account=self, log=truncated_log, process=process)
+        Cli.create(account=self, log=truncated_log)
 
     def add_screen_shot(self, cause, path):
         from .ScreenShot import ScreenShot

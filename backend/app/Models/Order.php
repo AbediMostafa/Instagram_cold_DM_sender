@@ -11,14 +11,38 @@ class Order extends Model
 
     protected $guarded = [];
 
+    static $statuses = ['Pending', 'In progress', 'Completed', 'Canceled', 'Unknown'];
+    static $activeStatuses = ['Pending', 'In progress'];
+
     public function comments()
     {
         return $this->hasMany(OrderComment::class, 'order_id', 'id');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function getRemains()
     {
         $remains = $this->total_count - $this->completed_count;
         return 0 ? $remains < 0 : $remains;
+    }
+
+    public function setStatusTo($status)
+    {
+        $this->status = $status;
+        return $this->save();
+    }
+
+    public function changeProcessingToFree()
+    {
+        $this->setStatusTo('In progress');
+
+        $this->comments()->where('status', 'processing')->update([
+            'status' => 'free',
+            'account_id' => null
+        ]);
     }
 }

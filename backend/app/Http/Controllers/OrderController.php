@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Order;
 use App\Models\OrderComment;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -13,17 +14,22 @@ class OrderController extends Controller
 {
     public function index()
     {
-        return Order::query()->orderBy('id', 'desc')->paginate(75);
+        return Order::query()
+            ->with('service:id,service')
+            ->orderBy('id', 'desc')->paginate(75);
 
     }
 
     public function placeOrder()
     {
         $comments = explode("\n", request('comments'));
+        $service = Service::query()
+            ->where('service', "like_and_comment")
+            ->first();
 
         $order = Order::query()->create([
             "customer" => r("site_url") || r('customer'),
-            "service_type" => "like_and_comment",
+            "service_id" => $service->id,
             "target_link" => r("link"),
             "total_count" => count($comments),
         ]);
@@ -100,19 +106,10 @@ class OrderController extends Controller
 
     public function changProcessingCommentsToFree()
     {
-
         return tryCatch(
-            function () {
-                $order = Order::query()->find(request('id'));
-                $order->status = 'In progress';
-                $order->save();
-
-                $order->comments()->where('status', 'processing')->update([
-                    'status' => 'free',
-                    'account_id' => null
-                ]);
-
-            },
+            fn() => Order::query()
+                ->find(r('id'))
+                ->changeProcessingToFree(),
             'Order reseted successfully',
         );
     }
@@ -120,6 +117,10 @@ class OrderController extends Controller
 
     public function v3()
     {
+        Log::info('V3 Incoming Request', [
+            'body'    => r()->all(),
+        ]);
+
         $action = request('action'); // or request()->input('action')
 
         if ($action === 'balance') {
@@ -210,5 +211,24 @@ class OrderController extends Controller
                 ]);
             }
         }
+    }
+
+    public function thereIsNoComment()
+    {
+        $orderId = r('id');
+        $order = Order::query()->find($orderId);
+
+        $hasNonSentComment = OrderComment::query()
+            ->where('order_id', $orderId)
+            ->where('status', '!=', 'sent')
+            ->exists();
+
+        $order->setStatusTo($hasNonSentComment ? 'Unknown' : 'Completed');
+
+        Order::query()
+            ->where('id', '<', $orderId)
+            ->where('status', 'Unknown')
+            ->get()
+            ->each(fn($order) => $order->changeProcessingToFree());
     }
 }

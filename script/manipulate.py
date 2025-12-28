@@ -113,15 +113,16 @@ from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
 from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
-
-
+from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import LeadProfileExtractor
+from script.extra.routes import process_verify,get_initial_data
+from script.ProcessManager import ProcessManager
 
 # account = get_next_account()
-account = Account.get_by_id(13488)
+account = Account.get_by_id(69)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-LikeAndCommentContext(browser_ig).fire()
+LeadProfileExtractor(browser_ig).fire()
 # MakeAccountPublicContext(browser_ig).fire()
 # Format A: /p/{code}
 # BrowserChangeBioEvent(browser_ig).fire()

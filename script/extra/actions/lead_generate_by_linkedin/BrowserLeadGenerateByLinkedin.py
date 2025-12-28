@@ -26,7 +26,7 @@ class BrowserLeadGenerateByLinkedin:
     location_input = 'input#job-search-bar-location'
     jobs_selector = 'ul.jobs-search__results-list li a.base-card__full-link '
     company_link = 'div.topcard__flavor-row span.topcard__flavor a.topcard__org-name-link'
-    company_about_us_locator = 'p[data-test-id="about-us__description"]'
+    company_about_us_locator = 'p[data-t_est-id="about-us__description"]'
     company_name_locator = 'div.top-card-layout__entity-info  h1.top-card-layout__title'
 
     def __init__(self, ig):

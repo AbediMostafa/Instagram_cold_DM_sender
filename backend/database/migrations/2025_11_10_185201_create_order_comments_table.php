@@ -26,7 +26,7 @@ return new class extends Migration
                 ->constrained('accounts')
                 ->nullOnDelete();
 
-            $table->enum('status', ['free','pending', 'sent', 'failed'])->default('free');
+            $table->enum('status', ['free','processing', 'sent', 'failed'])->default('free');
 
             $table->timestamps();
         });

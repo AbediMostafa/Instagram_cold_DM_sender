@@ -65,29 +65,17 @@ use \App\Models\EnrichedLead;
 use \App\Models\Order;
 use \App\Models\OrderComment;
 use \App\Http\Controllers\SettingController;
-
+use \App\Http\Controllers\ProcessController;
+use App\Http\Controllers\ServiceController;
+use \App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\ModuleController;
+use \Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 Route::get('/', function () {
+    $users = User::query()->get();
 
-//   $templtaes = Template::query()
-//       ->where('type', 'bio')
-//       ->whereHas('tags',function($q){
-//       $q->where('title', 'woman');
-//   })->count('text');
-//
-//   dd($templtaes);
-
-//
-//    Setting::query()->create([
-//        'type' => 'switch',
-//        'category' => 'Templates',
-//        'key' => 'can_change_avatar',
-//        'value' => 1,
-//    ]);
-//
-//    $settings = Setting::query()->get()->pluck('value', 'key')->toArray();
-//
-//    dd($settings);
+    dd($users);
 });
 
 Route::get('/add-comment', function () {
@@ -289,6 +277,10 @@ Route::post('account/assign-fingerprint', [AccountController::class, 'assignFing
 Route::post('account/find-accounts', [AccountController::class, 'findAccounts']);
 Route::post('account/attach-tag', [AccountController::class, 'attachTag']);
 Route::post('account/detach-tag', [AccountController::class, 'detachTag']);
+Route::post('account/attach-service', [AccountController::class, 'attachService']);
+Route::post('account/detach-service', [AccountController::class, 'detachService']);
+Route::post('account/select-account', [AccountController::class, 'selectAccount']);
+Route::post('account/reset-is-used', [AccountController::class, 'resetIsUsed']);
 
 Route::post('leads', [LeadController::class, 'index']);
 Route::post('lead/view', [LeadController::class, 'view']);
@@ -306,7 +298,6 @@ Route::post('template/view', [TemplateController::class, 'view']);
 Route::post('template/create', [TemplateController::class, 'create']);
 Route::post('template/update', [TemplateController::class, 'update']);
 Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
-Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 Route::post('template/get-template', [TemplateController::class, 'getTemplate']);
 
@@ -401,6 +392,7 @@ Route::post('order/finish', [OrderController::class, 'finish']);
 Route::post('order/fail', [OrderController::class, 'fail']);
 Route::post('order/reset', [OrderController::class, 'reset']);
 Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
+Route::post('order/there-is-no-comment', [OrderController::class, 'thereIsNoComment']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 
 
@@ -408,31 +400,32 @@ Route::post('settings', [SettingController::class, 'index']);
 Route::post('setting/update', [SettingController::class, 'update']);
 
 
+Route::post('processes', [ProcessController::class, 'index']);
+Route::post('processes/check', [ProcessController::class, 'check']);
+Route::post('processes/update', [ProcessController::class, 'update']);
+Route::post('process/verify', [ProcessController::class, 'verify']);
+Route::post('processes/delete', [ProcessController::class, 'delete']);
+Route::post('processes/toggle-process', [ProcessController::class, 'toggleProcess']);
+Route::post('processes/get-initial-data', [ProcessController::class, 'getInitialData']);
+Route::post('processes/set-workflow', [ProcessController::class, 'setWorkflow']);
+Route::post('processes/set-status', [ProcessController::class, 'setStatus']);
+
+Route::post('services', [ServiceController::class, 'index']);
+Route::post('services/create', [ServiceController::class, 'create']);
+Route::post('services/search', [ServiceController::class, 'search']);
+Route::post('services/update', [ServiceController::class, 'update']);
+Route::post('service/delete', [ServiceController::class, 'delete']);
+
+
+Route::post('workflows', [WorkflowController::class, 'index']);
+Route::post('workflows/create', [WorkflowController::class, 'create']);
+Route::post('workflows/update', [WorkflowController::class, 'update']);
+Route::post('workflow/delete', [WorkflowController::class, 'delete']);
+
+Route::post('modules', [ModuleController::class, 'index']);
+Route::post('modules/search', [ModuleController::class, 'search']);
+Route::post('modules/create', [ModuleController::class, 'create']);
+Route::post('modules/update', [ModuleController::class, 'update']);
+Route::post('module/delete', [ModuleController::class, 'delete']);
+
 //});
-
-Route::post('hidemyacc/create', function () {
-
-
-    abort_if(r('user') !== 'info@teamair.life', 401);
-    $proxy = json_encode([
-        'host' => 'x473.fxdx.in',
-        'port' => 14006,
-        'mode' => 'socks5',
-        'username' => 'usproxy273917',
-        'password' => 'npCLeFIDxu5c',
-    ]);
-
-    $data = [
-        'os' => r('os', 'win'),
-        'name' => r('profile_name'),
-        'folder' => r('folder', '67f7e6441a84c4c56660b546'),
-        'notes' => r('notes', ''),
-        'browser' => r('browser', 'chrome'),
-        'proxy' => $proxy
-    ];
-
-    $response = Http::asForm()->post('http://127.0.0.1:2268/profiles', $data);
-
-
-    return $response->json();
-});

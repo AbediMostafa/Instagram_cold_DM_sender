@@ -11,7 +11,7 @@ export const useAccountStore = defineStore("AccountStore", {
     state() {
         return {
             checkedAccountRows: [],
-            currentStartingAccount:'',
+            currentStartingAccount: '',
             accounts: {
                 data: [],
                 current_page: 1,
@@ -24,6 +24,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 category_id: '',
                 type: '',
                 tags: [],
+                services: [],
             },
             accountsData: [],
             accountStates: [
@@ -45,7 +46,7 @@ export const useAccountStore = defineStore("AccountStore", {
             warningPromise("Are you sure you want to delete selected account(s)?")
                 .then(() => ApiService.post("account/delete", {ids}).then(this.getAccounts))
         },
-        startSingleProfile(id){
+        startSingleProfile(id) {
             this.currentStartingAccount = id;
             this.startProfile([id]);
         },
@@ -81,6 +82,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 sortBy: this.accounts.sortBy,
                 sortDesc: this.accounts.sortDesc,
                 tags: this.accounts.tags,
+                services: this.accounts.services,
             }
 
             ApiService.post("accounts", data)
@@ -93,7 +95,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 });
         },
 
-        attachTag(){
+        attachTag() {
             this.is.loading = true;
 
             const data = {
@@ -105,7 +107,45 @@ export const useAccountStore = defineStore("AccountStore", {
                 .finally(() => this.is.loading = false);
 
         },
-        detachTag(){
+        attachService() {
+            this.is.loading = true;
+
+            const data = {
+                accountIds: this.checkedAccountRows,
+                serviceIds: this.accounts.services,
+            }
+
+            ApiService.post("account/attach-service", data)
+                .finally(() => this.is.loading = false);
+
+        },
+        resetIsUsed(){
+            warningPromise("Are you sure you want to reset is used?")
+                .then(() => {
+                    this.is.loading = true;
+                    ApiService.post("account/reset-is-used", {})
+                        .finally(() => this.is.loading = false);
+
+                })
+        },
+        detachService() {
+            this.warnIfdosntSelected(this.checkedAccountRows) &&
+            warningPromise("Are you sure you want to detach service from selected account(s)?")
+                .then(() => {
+                    this.is.loading = true;
+
+                    const data = {
+                        accountIds: this.checkedAccountRows,
+                    }
+
+                    ApiService.post("account/detach-service", data)
+                        .then(this.getAccounts)
+                        .finally(() => this.is.loading = false);
+
+                })
+
+        },
+        detachTag() {
             this.is.loading = true;
 
             const data = {
