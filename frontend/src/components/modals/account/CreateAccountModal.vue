@@ -111,17 +111,23 @@
               <div class="d-flex flex-column mb-8 fv-row">
                 <!--begin::Label-->
                 <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                  <span class="required">Category</span>
+                  <span>Service</span>
                 </label>
                 <!--end::Label-->
                 <el-select
-                    v-if="categoryStore.categories.data.length"
-                    v-model="targetData.category" placeholder="Select">
+                    v-model="targetData.service_id"
+                    filterable
+                    remote
+                    clearable
+                    placeholder="Filter by Service"
+                    :remote-method="serviceStore.fetchService"
+                    :loading="serviceStore.is.searching"
+                >
                   <el-option
-                      v-for="item in categoryStore.categories.data"
-                      :key="item.id"
-                      :label="item.title"
-                      :value="item.id"
+                      v-for="service in serviceStore.services.data"
+                      :key="service.id"
+                      :label="service.title"
+                      :value="service.id"
                   />
                 </el-select>
 
@@ -226,18 +232,25 @@
               <div class="d-flex flex-column mb-8 fv-row">
                 <!--begin::Label-->
                 <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                  <span class="required">Category</span>
+                  <span >Service</span>
                 </label>
                 <!--end::Label-->
-                <el-select v-model="targetData.category" placeholder="Select">
+                <el-select
+                    v-model="targetData.service_id"
+                    filterable
+                    remote
+                    clearable
+                    placeholder="Filter by Service"
+                    :remote-method="serviceStore.fetchService"
+                    :loading="serviceStore.is.searching"
+                >
                   <el-option
-                      v-for="item in categoryStore.categories.data"
-                      :key="item.id"
-                      :label="item.title"
-                      :value="item.id"
+                      v-for="service in serviceStore.services.data"
+                      :key="service.id"
+                      :label="service.title"
+                      :value="service.id"
                   />
                 </el-select>
-
               </div>
 
               <div class="d-flex flex-column mb-8 fv-row">
@@ -322,6 +335,8 @@ import ApiService from "@/core/services/ApiService";
 import {useAccountStore} from "@/stores/Account";
 import {useCategoryStore} from "@/stores/Category";
 import {useTagStore} from "@/stores/Tag";
+import {useServiceStore} from "@/stores/Service";
+
 
 export default defineComponent({
   name: "create_account_modal",
@@ -332,6 +347,7 @@ export default defineComponent({
     const categoryStore = useCategoryStore();
     const store = useAccountStore();
     const tagStore = useTagStore()
+    const serviceStore = useServiceStore();
 
     const targetData = ref({
       username: "",
@@ -343,6 +359,7 @@ export default defineComponent({
       start_profile: 0,
       bulk_insertion: false,
       tags: [],
+      service_id:""
     });
 
     const rules = ref({
@@ -387,7 +404,8 @@ export default defineComponent({
       rules,
       newAccountModalRef,
       hideModal,
-      bulkInsertionChanged
+      bulkInsertionChanged,
+      serviceStore,
     };
   },
 });

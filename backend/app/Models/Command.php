@@ -52,6 +52,7 @@ class Command extends Model
         'register email',
         'activate 2fa code',
         'generate lead by linkedin',
+        'post image and comment',
     ];
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s', // Change the format as needed

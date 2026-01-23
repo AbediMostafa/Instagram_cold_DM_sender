@@ -184,7 +184,8 @@ class BrowserPostImageFromFolderEvent:
             self.ig.pause(3000, 4000)
 
     def generate_image(self):
-        folder_path = r'C:\Users\admin\Desktop\project\script\posts\images'
+        project_path = Setting.get_value('project_path')
+        folder_path = fr"{project_path}\script\posts\images"
         files = os.listdir(folder_path)
 
         random_image = random.choice(files)
@@ -251,15 +252,29 @@ class BrowserPostImageFromFolderEvent:
         self.ig.pause(3000, 4500)
 
         self.ig.page.get_by_role("button", name="Share").click()
-        self.ig.pause(19000, 20000)
 
-        try:
-            self.ig.page.get_by_role("button", name="Close").press("Escape")
-        except:
+        if self.wait_for_reel_shared():
+            self.ig.account.add_cli("Reel shared confirmation received")
+        else:
+            self.ig.account.add_cli("Reel share confirmation NOT detected")
+
+    def wait_for_reel_shared(self, timeout_sec=70):
+        import time
+
+        start = time.time()
+
+        while time.time() - start < timeout_sec:
             try:
-                self.ig.page.get_by_role("button", name="Close").click()
-            except:
+                if self.ig.is_visible_by_text('Your reel has been shared') or self.ig.is_visible_by_text(
+                        'Your post has been shared'):
+                    return True
+            except TimeoutError:
                 pass
+
+            self.ig.account.add_cli("Post hasn't been posted yet ...")
+            time.sleep(5)
+
+        return False
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')

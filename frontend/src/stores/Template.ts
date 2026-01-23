@@ -31,7 +31,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
             is: {
                 loading: false,
                 deleting: false,
-                gettingTemplate:false
+                gettingTemplate: false
             },
 
         }
@@ -73,6 +73,8 @@ export const useTemplateStore = defineStore('TemplateStore', {
             ApiService.post('templates', {page, ...this.templates.queryParams})
                 .then(response => {
                     this.templates.data = response.data.data
+                    this.templates.total = response.data.meta.total;
+                    this.templates.current_page = response.data.meta.current_page;
                     this.templates.receivedType = response.data.type
                 })
                 .finally(() => {
@@ -88,7 +90,7 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 .then(response => {
                     this.selectedTemplate = {...response.data};
                 })
-                .finally(()=>this.is.gettingTemplate = false)
+                .finally(() => this.is.gettingTemplate = false)
         },
 
         checkRows(e) {
@@ -105,11 +107,21 @@ export const useTemplateStore = defineStore('TemplateStore', {
                 .then(response => this.colors = response.data)
         },
 
-        updateTemplate(){
-            ApiService.post('template/update',  this.selectedTemplate)
+        updateTemplate() {
+            ApiService.post('template/update', this.selectedTemplate)
                 .then(this.getTemplates)
-                .then(()=>hideModal("edit_media_modal"))
+                .then(() => hideModal("edit_media_modal"))
 
+        },
+
+        attachTag() {
+
+            const data = {
+                templateIds: this.checkedTemplateRows,
+                tagIds: this.templates.queryParams.tags
+            }
+
+            return ApiService.post('template/attach-tag', data)
         }
     }
 })

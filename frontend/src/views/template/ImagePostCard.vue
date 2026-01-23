@@ -1,10 +1,11 @@
 <template>
-  <div class="card">
+  <div class="card cursor-pointer" @click="toggleCheck">
     <!--begin::Card body-->
     <div class="card-body pt-3 px-6">
       <div class="my-0 d-flex justify-content-between">
         <div
             class="form-check form-check-sm form-check-custom form-check-solid my-3"
+            @click.stop
         >
           <input
               class="form-check-input widget-13-check"
@@ -14,7 +15,7 @@
           />
         </div>
 
-        <el-dropdown class="p-5 pe-0">
+        <el-dropdown class="p-5 pe-0" @click.stop>
           <a class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm">
             <KTIcon icon-name="category" icon-class="fs-3"/>
           </a>
@@ -39,8 +40,9 @@
       </div>
       <div class="text-gray-700 fs-8 caption-text" v-html="formattedCaption"></div>
       <span class="badge badge-light-success">{{ template.type }}</span>
-      <span class="badge badge-light-info">{{ template.category?.title }}</span>
-
+      <span class="badge badge-light-primary mt-1 ms-1"
+            v-for="tag in template.tags" :key="tag.id"
+      >{{ tag.title }}</span>
     </div>
   </div>
 </template>
@@ -61,8 +63,19 @@ const editClicked = () => {
 }
 
 const formattedCaption = computed(() =>
-    props.template?.caption.replace(/\n/g, "<br>")
+    props.template?.caption?.replace(/\n/g, "<br>")
 );
+
+const toggleCheck = () => {
+  const id = props.template.id
+  const index = store.checkedTemplateRows.indexOf(id)
+
+  if (index === -1) {
+    store.checkedTemplateRows.push(id)
+  } else {
+    store.checkedTemplateRows.splice(index, 1)
+  }
+}
 
 </script>
 

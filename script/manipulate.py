@@ -94,7 +94,8 @@ from script.extra.actions.check_system_username_with_ig_username.CheckSystemUser
     CheckSystemUsernameWithIgUsernameContext
 from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
 from script.extra.actions.activated_2fa_code.Activate2faCodeContext import Activate2faCodeContext
-from script.extra.actions.lead_generate_following_other_leads.LeadGenerateByInstagramSuggestionContext import LeadGenerateByInstagramSuggestionContext
+from script.extra.actions.lead_generate_following_other_leads.LeadGenerateByInstagramSuggestionContext import \
+    LeadGenerateByInstagramSuggestionContext
 from script.extra.instagram.api.InstagramMobile import InstagramMobile
 from peewee import *
 from script.models.Proxy import get_free_proxy
@@ -109,20 +110,23 @@ from script.models.Order import get_next_order_for_account
 from script.models.OrderComment import get_next_comment_for_order, OrderComment
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
+from script.extra.actions.post_from_folder_and_comment.PostFromFolderAndCommentContext import PostFromFolderAndCommentContext
 from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
 from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import LeadProfileExtractor
-from script.extra.routes import process_verify,get_initial_data
+from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import ReelsAverageExtractor
 from script.ProcessManager import ProcessManager
 
 # account = get_next_account()
-account = Account.get_by_id(69)
+account = Account.get_by_id(32)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-LeadProfileExtractor(browser_ig).fire()
+ReelsAverageExtractor(browser_ig).fire()
+# PostImageFromFolderContext(browser_ig).fire()
+# LikeAndCommentContext(browser_ig).fire()
 # MakeAccountPublicContext(browser_ig).fire()
 # Format A: /p/{code}
 # BrowserChangeBioEvent(browser_ig).fire()

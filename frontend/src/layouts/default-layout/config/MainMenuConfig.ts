@@ -19,11 +19,18 @@ const MainMenuConfig: Array<MenuItem> = [
         allowed_roles:['user']
       },
       {
+        heading: "account specs",
+        route: "/account-specs",
+        keenthemesIcon: "profile-circle",
+        bootstrapIcon: "bi-person",
+        allowed_roles:['user']
+      },
+      {
         heading: "orders",
         route: "/orders",
         keenthemesIcon: "bi-sticky",
         bootstrapIcon: "bi-sticky",
-        allowed_roles:['user']
+        allowed_roles:['user'] 
       },
       {
         heading: "leads",

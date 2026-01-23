@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="card cursor-pointer" @click="toggleCheck">
     <!--begin::Card body-->
     <div class="card-body px-6">
       <div class="d-flex">
@@ -34,6 +34,18 @@ import {getImageSrc} from "@/core/helpers/helper";
 
 const props = defineProps(["template", "card_style"]);
 const store = useTemplateStore();
+
+const toggleCheck = () => {
+  const id = props.template.id
+  const index = store.checkedTemplateRows.indexOf(id)
+
+  if (index === -1) {
+    store.checkedTemplateRows.push(id)
+  } else {
+    store.checkedTemplateRows.splice(index, 1)
+  }
+}
+
 </script>
 
 <style scoped>

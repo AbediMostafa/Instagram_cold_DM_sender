@@ -1,5 +1,5 @@
 <template>
-  <el-card shadow="always" class="template-card">
+  <el-card shadow="always" class="template-card" @click="toggleCheck">
     <!-- Image or Thumbnail -->
     <div class="my-0 d-flex justify-content-between">
       <div
@@ -45,7 +45,9 @@
     <div class="text-gray-700 fs-8 caption-text"  v-html="formattedCaption"></div>
 
     <span class="badge badge-light-success">Video Post</span>
-    <span class="badge badge-light-info">{{ videoTemplate?.category?.title }}</span>
+    <span class="badge badge-light-primary mt-1 ms-1"
+          v-for="tag in videoTemplate?.tags" :key="tag.id"
+    >{{ tag.title }}</span>
   </el-card>
 </template>
 
@@ -78,8 +80,20 @@ const editClicked = () => {
 
 const formattedCaption = computed(() => {
   const caption = videoTemplate.value?.caption || imageTemplate.value?.caption || "";
-  return caption.replace(/\n/g, "<br>");
+  return caption?.replace(/\n/g, "<br>");
 });
+
+const toggleCheck = () => {
+  const carouselId = videoTemplate.value.carousel_id
+  const index = store.checkedTemplateRows.indexOf(carouselId)
+
+  if (index === -1) {
+    store.checkedTemplateRows.push(carouselId)
+  } else {
+    store.checkedTemplateRows.splice(index, 1)
+  }
+}
+
 
 // cutMorThanNCharacters(videoTemplate?.caption || imageTemplate?.caption, 200)
 </script>

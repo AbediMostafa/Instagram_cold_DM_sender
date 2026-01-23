@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Order;
 use App\Models\OrderComment;
+use App\Models\SadeghiTelegramOrder;
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -117,9 +119,9 @@ class OrderController extends Controller
 
     public function v3()
     {
-        Log::info('V3 Incoming Request', [
-            'body'    => r()->all(),
-        ]);
+//        Log::info('V3 Incoming Request', [
+//            'body'    => r()->all(),
+//        ]);
 
         $action = request('action'); // or request()->input('action')
 
@@ -211,6 +213,141 @@ class OrderController extends Controller
                 ]);
             }
         }
+    }
+
+    public function telegramGroupSender()
+    {
+
+        Log::info('telegramGroupSender', [
+            'body' => r()->all(),
+        ]);
+        $action = request('action'); // or request()->input('action')
+        if ($action === 'balance') {
+            return response()->json([
+                'status' => 'success',
+                'balance' => 20,
+                'currency' => 'IRT'
+            ]);
+        }
+
+        if ($action === 'services') {
+            return response()->json([
+                [
+                    "service" => 741,
+                    "name" => "Link and quantity",
+                    "category" => "SSM-fire",
+                    "rate" => "1$",
+                    "min" => 50,
+                    "max" => "10M",
+                    "type" => "like",
+                    "desc" => "Best and Fast Comment",
+                    "dripfeed" => false,
+                    "refill" => false,
+                    "cancel" => false,
+                    "brand" => "",
+                ]
+            ]);
+        }
+
+        if ($action === 'add') {
+
+            $commentsCount = r('quantity');
+            $postLink = r('link');
+
+            $order = SadeghiTelegramOrder::query()->create([
+                "service_type" => 'like',
+                "target_link" => $postLink,
+                "total_count" => $commentsCount,
+            ]);
+
+            $botToken = "7217235633:AAH4TukyhmR2mb0HvPfG7BBSsXC4H0O2QcI";
+            $chatId = "-1003317059009";
+            $orderId = $order->id;
+            $link = $postLink;
+            $quantity = $commentsCount;
+
+            // Format the message exactly as you want
+            $message = "#{$orderId}\n\n{$link}\n\n{$quantity}";
+
+            $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+
+            try {
+                $response = Http::withoutVerifying()->post($url, [
+                    'chat_id' => $chatId,
+                    'text' => $message,
+                    'disable_web_page_preview' => true,
+                ]);
+
+                $order->setStatusTo('Completed');
+
+            } catch (\Exception $e) {
+                // Handle any exception
+                Log::error('Something went wrong: ' . $e->getMessage());
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'order' => $order->id
+            ]);
+        }
+
+        if ($action === 'status') {
+
+            if ($orders = request('orders')) {
+
+                $orderIds = explode(',', $orders);
+                $response = [];
+
+                foreach ($orderIds as $id) {
+                    $id = trim($id);
+                    $order = SadeghiTelegramOrder::query()->find($id);
+
+                    if (!$order) {
+                        $response[$id] = "Incorrect order ID";
+                        continue;
+                    }
+
+                    $response[$id] = [
+                        'order' => (string)$order->id,
+                        'status' => $order->status,
+                        'charge' => "0.0000",
+                        'start_count' => $order->start_count,
+                        'remains' => (string)$order->getRemains(),
+                        'currency' => "USD"
+                    ];
+                }
+
+                return response()->json($response);
+            }
+            if ($ordersInput = request('order')) {
+
+                $order = Order::query()->find($ordersInput);
+
+                if (!$order) {
+                    return response()->json([
+                        $ordersInput => "Incorrect order ID",
+                        'status' => 'error',
+                    ]);
+                }
+
+                return response()->json([
+                    (string)$order->id => [
+                        'order' => (string)$order->id,
+                        'status' => $order->status ?? "Completed",
+                        'charge' => "0.0000",
+                        'start_count' => $order->start_count,
+                        'remains' => (string)1,
+                        'currency' => "USD"
+                    ]
+                ]);
+            }
+        }
+
     }
 
     public function thereIsNoComment()

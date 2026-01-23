@@ -8,7 +8,7 @@
         <!--begin::Title-->
         <div class="d-flex flex-wrap align-items-center my-1">
           <span class="text-gray-800 fs-4">
-            {{ store.templates.data.length }}
+            {{ store.templates.total }}
             <span class="text-gray-400 fs-5">{{ store.templates.receivedType }}s</span>
           </span>
         </div>
@@ -59,6 +59,26 @@
       </div>
 
       <div class="tab-content">
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-light rounded">
+          <label class="form-check form-check-sm form-check-custom form-check-solid m-0">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                @change="store.checkRows($event)"
+            />
+          </label>
+
+          <span class="fw-semibold text-gray-700">
+            Select all
+          </span>
+
+          <span
+              v-if="store.checkedTemplateRows.length"
+              class="badge badge-light-primary"
+          >
+            {{ store.checkedTemplateRows.length }} selected
+          </span>
+        </div>
         <div>
           <!--begin::Row-->
           <div v-loading="store.is.loading" class="container-fluid">
@@ -68,43 +88,50 @@
                   v-for="(template, index) in store.templates.data"
                   :key="index"
               >
-                <template  v-if="['username', 'bio'].includes(store.templates.receivedType)">
+                <template v-if="['username', 'bio'].includes(store.templates.receivedType)">
                   <username-card :template="template"/>
                 </template>
 
-                <template  v-if="store.templates.receivedType === 'name-username'">
+                <template v-if="store.templates.receivedType === 'name-username'">
                   <name-username-card :template="template"/>
                 </template>
 
-                <template  v-if="store.templates.receivedType === 'avatar'">
+                <template v-if="store.templates.receivedType === 'avatar'">
                   <avatar-card :template="template"/>
                 </template>
 
-                <template  v-if="store.templates.receivedType === 'image-post'">
+                <template v-if="store.templates.receivedType === 'image-post'">
                   <image-post-card :template="template"/>
                 </template>
 
-                <template  v-if="store.templates.receivedType === 'carousel'">
+                <template v-if="store.templates.receivedType === 'carousel'">
                   <carousel-card :carousel="template"/>
                 </template>
 
-                <template  v-if="store.templates.receivedType === 'video-post'">
+                <template v-if="store.templates.receivedType === 'video-post'">
                   <video-post-card :templates="template"/>
                 </template>
 
-                <template  v-if="store.templates.receivedType === 'name'">
+                <template v-if="store.templates.receivedType === 'name'">
                   <name-card :template="template"/>
                 </template>
               </div>
               <!--end::Col-->
             </div>
+            <el-pagination
+                :current-page="store.templates.current_page"
+                :page-size="configStore.pagination?.each_page?.templates"
+                layout="prev, pager, next"
+                :total="store.templates.total"
+                @current-change="(page) => store.getTemplates(page)"
+            />
           </div>
         </div>
       </div>
     </div>
     <create-template-modal/>
     <upload-media-modal/>
-    <edit-media-modal />
+    <edit-media-modal/>
 
   </div>
 </template>
@@ -126,6 +153,7 @@ import CreateTemplateModal from "@/components/modals/account_information_templat
 import TemplatesDropDown from "@/components/template/TemplatesDropDown.vue";
 import EditMediaModal from "@/components/modals/account_information_template/EditMediaModal.vue";
 import NameUsernameCard from "@/views/template/NameUsernameCard.vue";
+
 const store = useTemplateStore();
 const configStore = useAppConfigStore();
 

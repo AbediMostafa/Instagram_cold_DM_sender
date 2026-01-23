@@ -1,6 +1,7 @@
 import requests
+from script.models.Setting import Setting
 
-base_url = 'http://127.0.0.1/'
+base_url = f"http://{Setting.get_value('server_url')}/"
 
 routes = {
     'get-template': {
@@ -60,7 +61,7 @@ def request_to_laravel(route_name, data=None):
         import traceback
 
         print(f'Error: {e}')
-        print(traceback.format_exc())
+        # print(traceback.format_exc())
 
         return None
 

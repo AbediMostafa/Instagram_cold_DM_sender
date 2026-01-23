@@ -58,7 +58,9 @@
               </div>
             </div>
             <div class="menu-item ">
-              <div class="px-3 d-flex align-items-center justify-content-center">
+              <div
+                  @click.stop
+                  class="px-3 d-flex align-items-center justify-content-center">
                 <el-select
                     v-model="formData.workflow_id"
                     placeholder="Select a workflow"

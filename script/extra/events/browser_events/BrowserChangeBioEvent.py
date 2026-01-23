@@ -1,6 +1,7 @@
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.models.Template import get_a, delete
 from script.extra.helper import go_to_page
+from script.extra.routes import get_template
 
 
 class BrowserChangeBioEvent(InstagramMiddleware):
@@ -10,20 +11,14 @@ class BrowserChangeBioEvent(InstagramMiddleware):
 
     def execute(self):
 
-        if self.ig.account.get_passed_days_since_creation() < 5:
-            return self.ig.account.add_cli(f"Account is not old enough to change the bio")
+        # if self.ig.account.get_passed_days_since_creation() < 5:
+        #     return self.ig.account.add_cli(f"Account is not old enough to change the bio")
 
         if self.ig.account.has('bio'):
             return self.ig.account.add_cli(f'{self.ig.account.username} has a bio')
 
-        self.bio = get_a('bio', self.ig.account)
-
-        if not self.bio:
-            return self.ig.account.add_cli(f"We don't have a bio for : {self.ig.account.username}")
-
-        self.bio = self.bio.text
-
         try:
+            self.get_bio()
             self.before_change_hook()
             self.change_hook()
             self.after_change_hook()
@@ -39,6 +34,15 @@ class BrowserChangeBioEvent(InstagramMiddleware):
         finally:
             go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.ig.pause(3000, 4000)
+
+    def get_bio(self):
+        self.bio = get_template(self.ig.account.id, 'bio')
+
+        if not self.bio:
+            raise Exception(f'No bio ...')
+
+        self.bio = self.bio['text']
+
 
     def before_change_hook(self):
 
@@ -61,4 +65,3 @@ class BrowserChangeBioEvent(InstagramMiddleware):
         self.command.update_cmd('state', 'success')
         self.ig.account.set('bio', self.bio)
         self.ig.account.add_cli("Bio changed successfully")
-

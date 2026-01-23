@@ -16,7 +16,7 @@ class Service extends Model
         'created_at' => 'datetime:Y-m-d H:i',
     ];
 
-    static $staticServices = ['account_profiler'];
+    static $staticServices = ['account_profiler', 'reels_spammer'];
 
 
     public function workflows()

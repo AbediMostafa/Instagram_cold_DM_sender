@@ -152,6 +152,11 @@ class ErrorIndicators(BaseAction):
         if self.ig.is_visible_by_text('login information you entered is incorrect'):
             raise ProblemLogingYouError('login information you entered is incorrect')
 
+    def choose_a_way_to_recover(self):
+        # The login information you entered is incorrect
+        if self.ig.is_visible_by_text('Choose a way to recover'):
+            raise ProblemLogingYouError('Choose a way to recover')
+
     def page_could_not_be_loaded_handler(self):
         if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):
             self.ig.account.add_cli("There's an issue and the page could not be loaded")
@@ -161,7 +166,8 @@ class ErrorIndicators(BaseAction):
             self.ig.pause(2000, 3000)
 
     def fill_code_sent_to_email(self):
-        if self.ig.is_visible_by_text('Enter the code we sent to') or self.ig.is_visible_by_text('Check your email'):
+        if self.ig.is_visible_by_text('Enter the code we sent to') or self.ig.is_visible_by_text(
+                'Check your email') or self.ig.is_visible_by_text("Enter the 6-digit code we sent to the email"):
             raise FillCodeSentToError('Enter the code we sent to your email')
 
     def enter_your_mobile_number(self):
@@ -178,8 +184,12 @@ class ErrorIndicators(BaseAction):
 
     def suspended_account_handler(self):
         if self.ig.is_visible_by_text('We suspended your account'):
-            self.ig.page.get_by_role("button", name="Appeal", exact=True).click(timeout=3000)
-            self.ig.pause(5000, 6000)
+
+            try:
+                self.ig.page.get_by_role("button", name="Appeal", exact=True).click(timeout=3000)
+                self.ig.pause(5000, 6000)
+            except:
+                pass
 
             raise AccountSuspendedError('We suspended your account')
 
@@ -313,7 +323,9 @@ class ErrorIndicators(BaseAction):
                 self.ig.page.get_by_role("button", name="Change Password", exact=True).click()
                 self.ig.pause(6000, 8000)
 
-                if self.ig.is_visible_by_text('Your old password was entered incorrectly') or self.ig.is_visible_by_text('Please enter it again'):
+                if self.ig.is_visible_by_text(
+                        'Your old password was entered incorrectly') or self.ig.is_visible_by_text(
+                    'Please enter it again'):
                     raise ChangePasswordError('Your old password was entered incorrectly')
 
                 self.ig.account.set('password', password)

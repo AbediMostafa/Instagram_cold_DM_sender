@@ -16,8 +16,8 @@ class BrowserChangeNameUsernameEvent(BaseAction):
         if self.ig.account.username_changed:
             return self.ig.account.add_cli(f"Account's username has been changed already.")
 
-        # if self.ig.account.get_passed_days_since_creation() < 2:
-        #     return self.ig.account.add_cli(f"Account is not old enough to change name username")
+        if self.ig.account.get_passed_days_since_creation() < 2:
+            return self.ig.account.add_cli(f"Account is not old enough to change name username")
 
         self.ig.account.add_cli('Changing name and username ...')
 
@@ -55,7 +55,7 @@ class BrowserChangeNameUsernameEvent(BaseAction):
         self.username = self.name_username['text']
         self.name = self.name_username['caption']
 
-        self.ig.account.set_state('set name and username', 'app_state')
+        # self.ig.account.set_state('set name and username', 'app_state')
         self.command = self.ig.account.create_command('set name username', 'processing')
 
     def change_hook(self):

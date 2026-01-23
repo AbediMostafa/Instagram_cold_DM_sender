@@ -51,6 +51,10 @@ class BrowserLikeAndCommentEvent(BaseAction):
                 self.ig.page.get_by_placeholder("Add a comment…").fill(self.comment.content, timeout=3000)
                 self.ig.pause(1500, 2000)
                 self.ig.page.get_by_role("button", name="Post", exact=True).click()
+                self.ig.pause(1000, 1200)
+
+                if self.ig.is_visible_by_text("Couldn't post comment"):
+                    raise LinkIsNotCorrect("Couldn't post comment")
 
             self.take_screenshot(command_id=self.order.id)
             self.mark_comment_sent()

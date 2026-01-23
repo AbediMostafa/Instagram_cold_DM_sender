@@ -8,8 +8,45 @@
       </h3>
       <div class="card-toolbar">
         <!--begin::Menu-->
+        <div class="me-2 d-flex align-items-center">
+          <el-input
+              v-model="range.from"
+              placeholder="From ID"
+              size="small"
+              style="width: 60px"
+              class="me-1"
+              clearable
+          />
+          <el-input
+              v-model="range.to"
+              placeholder="To ID"
+              size="small"
+              style="width: 60px"
+              class="me-1"
+
+              clearable
+          />
+
+          <el-button
+              type="primary"
+              size="small"
+              @click="selectRange"
+          >
+            Select Range
+          </el-button>
+
+          <el-button
+              size="small"
+              type="danger"
+              plain
+              @click="clearSelection"
+          >
+            Clear
+          </el-button>
+        </div>
+
         <div class="me-2">
-          <a class="btn btn-sm btn-light-success ms-2" @click="store.resetIsUsed()">Reset</a>
+<!--          <a class="btn btn-sm btn-light-success ms-2" @click="store.resetIsUsed()">Reset</a>-->
 
 <!--          <el-date-picker-->
 <!--              v-model="store.accounts.dateRange"-->
@@ -62,7 +99,7 @@
                 :label="action.label"
                 @click="actionClicked"
             >
-              {{ action.value }}
+              {{ action.label }}
             </el-checkbox-button>
           </el-checkbox-group>
         </div>
@@ -175,9 +212,9 @@
 
 
                     <div>
-<!--                      <span-->
-<!--                          @click="copyToClipboard(account.password)"-->
-<!--                          class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>-->
+                      <span
+                          @click="copyToClipboard(account.password)"
+                          class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>
                       <account-instagram-state :state="account.instagram_state"/>
                       <account-app-state :state="account.app_state"/>
                     </div>
@@ -330,5 +367,33 @@ const sortBy = (field) => {
 };
 
 onMounted(store.getAccounts);
+
+
+const range = ref({
+  from: null,
+  to: null,
+})
+
+const selectRange = () => {
+  if (!range.value.from || !range.value.to) return
+
+  const from = Number(range.value.from)
+  const to = Number(range.value.to)
+
+  const min = Math.min(from, to)
+  const max = Math.max(from, to)
+
+  const selectedIds = store.accounts.data
+      .filter(acc => acc.id >= min && acc.id <= max)
+      .map(acc => acc.id)
+
+  store.checkedAccountRows = [
+    ...new Set([...store.checkedAccountRows, ...selectedIds]),
+  ]
+}
+
+const clearSelection = () => {
+  store.checkedAccountRows = []
+}
 
 </script>

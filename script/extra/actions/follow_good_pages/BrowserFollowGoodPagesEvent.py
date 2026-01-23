@@ -67,7 +67,7 @@ class BrowserFollowGoodPagesEvent:
         follow_buttons = self.ig.page.query_selector_all('div[role="button"]:has-text("Follow")')
         self.ig.account.add_cli(f'{len(follow_buttons)} Follow buttons')
 
-        first_five_buttons = follow_buttons if len(follow_buttons) < 4 else follow_buttons[:4]
+        first_five_buttons = follow_buttons if len(follow_buttons) < 3 else follow_buttons[:3]
 
         count = 0
 

@@ -3,6 +3,7 @@ from script.extra.exceptions import *
 import json
 import random
 
+
 class BasePlaywright:
     browser = None
     context = None
@@ -68,7 +69,8 @@ class BasePlaywright:
             except Exception as e:
                 pass
 
-    def is_visible_by_text(self, text):
+    # def is_visible_by_text(self, text: str, exact: bool = False, timeout: int = 5000) -> bool:
+    def is_visible_by_text(self, text, timeout: int = 5000):
         import re
 
         try:
@@ -77,6 +79,7 @@ class BasePlaywright:
             count = locator.count()
 
             for i in range(count):
+                print(f"Checking if Element {i} for '{text}' is visible")
                 if locator.nth(i).is_visible():
                     print(f"Element {i} for '{text}' is visible")
                     return True

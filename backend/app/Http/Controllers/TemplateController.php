@@ -13,35 +13,44 @@ class TemplateController extends Controller
     public function index()
     {
 
-        $templates = Template::query()
+        $query = Template::query()
             ->where('type', r('type'))
             ->with('tags:id,title')
-            ->when(r('type') == 'carousel', function ($query) {
+            ->when(r('type') === 'carousel', function ($query) {
                 $query->where('color_id', r('color'))
                     ->orderBy('color_id')
                     ->orderBy('uid');
             })
             ->when(r('tags'), function ($query) {
                 $tags = r('tags');
-
                 $query->whereHas('tags', function ($q) use ($tags) {
                     $q->whereIn('tags.id', $tags);
                 }, '=', count($tags));
             })
+            ->orderBy('id', 'desc');
 
-            ->orderBy('id', 'desc')
-            ->limit(400)
-            ->get();
-
+        $paginator = $query->paginate(
+            config('data.pagination.each_page.templates')
+        );
 
         $data = match (r('type')) {
-            'carousel', 'video-post' => $templates->groupBy('carousel_id'),
-            default => $templates,
+            'carousel', 'video-post' => $paginator
+                ->getCollection()
+                ->groupBy('carousel_id')
+                ->values(),
+
+            default => $paginator->getCollection(),
         };
 
         return [
             'data' => $data,
-            'type' => r('type')
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+            'type' => r('type'),
         ];
     }
 
@@ -222,5 +231,24 @@ class TemplateController extends Controller
             ->whereDoesntHave('tags', fn($q) => $q->whereNotIn('tags.id', $tagIds))
             ->inRandomOrder()
             ->first();
+    }
+
+    public function attachTag()
+    {
+
+        return tryCatch(
+
+            function () {
+
+                $accounts = Template::query()
+                    ->whereIn('id', r('templateIds'))
+                    ->get();
+
+                foreach ($accounts as $account) {
+                    $account->tags()->syncWithoutDetaching(r('tagIds'));
+                }
+            },
+            'Tags attached successfully'
+        );
     }
 }

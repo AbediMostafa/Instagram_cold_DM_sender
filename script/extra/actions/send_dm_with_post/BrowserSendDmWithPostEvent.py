@@ -21,7 +21,7 @@ class BrowserSendDmWithPostEvent:
     dm_text = None
     error_indicators = None
     delivery_counter = 0
-    message = spin(Spintax.get_value(times=0))
+    message = spin(Spintax.get_value(times=0, default=''))
 
     zero_share_button_selector = "div[role='button']:has(svg[aria-label='Share'])"
     # zero_share_button_selector = 'span.x1rg5ohu button._abl-'

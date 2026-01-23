@@ -71,11 +71,13 @@ use \App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\ModuleController;
 use \Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Http\Controllers\AccountSpecController;
+
 
 Route::get('/', function () {
-    $users = User::query()->get();
 
-    dd($users);
+
 });
 
 Route::get('/add-comment', function () {
@@ -300,6 +302,7 @@ Route::post('template/update', [TemplateController::class, 'update']);
 Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 Route::post('template/get-template', [TemplateController::class, 'getTemplate']);
+Route::post('template/attach-tag', [TemplateController::class, 'attachTag']);
 
 Route::post('proxies', [ProxyController::class, 'index']);
 Route::post('proxy/create', [ProxyController::class, 'create']);
@@ -394,6 +397,7 @@ Route::post('order/reset', [OrderController::class, 'reset']);
 Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
 Route::post('order/there-is-no-comment', [OrderController::class, 'thereIsNoComment']);
 Route::post('api/v3', [OrderController::class, 'v3']);
+Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
 
 
 Route::post('settings', [SettingController::class, 'index']);
@@ -427,5 +431,7 @@ Route::post('modules/search', [ModuleController::class, 'search']);
 Route::post('modules/create', [ModuleController::class, 'create']);
 Route::post('modules/update', [ModuleController::class, 'update']);
 Route::post('module/delete', [ModuleController::class, 'delete']);
+
+Route::post('account-specs', [AccountSpecController::class, 'index']);
 
 //});

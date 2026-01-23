@@ -3,6 +3,7 @@ from script.extra.playwright.ErrorIndicators import ErrorIndicators
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.models.Command import performed_command_count
 from script.extra.exceptions import SuccessfulLogin
+from script.extra.exceptions import *
 from script.extra.helper import go_to_page
 import random
 import json
@@ -46,13 +47,14 @@ class BrowserLoginEvent:
             self.errors.password_is_incorrect_handler()
             self.errors.problem_logging_in_handler()
             self.errors.login_info_is_incorrect()
+            self.errors.choose_a_way_to_recover()
             self.errors.page_could_not_be_loaded_handler()
             self.errors.fill_code_sent_to_email()
             self.unusual_login_detected()
             self.we_removed_some_content_or_messages_handler()
             self.your_post_goes_against_our_community_handler()
-            self.errors.suspended_account_handler()
             self.errors.disabled_account_handler()
+            self.errors.suspended_account_handler()
             self.errors.appeal_submitted_handler()
             self.errors.check_your_text_messages()
             self.errors.choose_a_way_to_confirm()
@@ -192,6 +194,10 @@ class BrowserLoginEvent:
         if self.ig.is_visible_by_text('We Detected An Unusual Login') or self.ig.is_visible_by_text(
                 "We've detected an unusual login attempt"):
             self.ig.account.add_cli('Unusual Login Detected')
+
+            if self.ig.is_visible_by_text("we'll send you a security code to verify your identity"):
+                raise HelpUsConfirmItsYouError("we'll send you a security code")
+
             try:
                 self.ig.page.get_by_role("button", name="This Was Me").click(timeout=3000)
             except:

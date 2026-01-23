@@ -17,7 +17,7 @@
             filterable
             remote
             clearable
-            placeholder="Filter by Tags"
+            placeholder="Tags"
             :remote-method="fetchTags"
             :loading="tagLoading"
         >
@@ -76,6 +76,7 @@
         </el-select>
         <div class="fill-flex d-flex align-items-center mt-4">
           <a class="btn btn-sm btn-light-primary" @click="store.getTemplates()">Filter</a>
+          <a class="btn btn-sm btn-light-success ms-1" @click="store.attachTag()">Attach Tag</a>
         </div>
       </div>
     </div>

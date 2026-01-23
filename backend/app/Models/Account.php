@@ -105,6 +105,11 @@ class Account extends Model
         return $this->belongsTo(Service::class);
     }
 
+    public function specs()
+    {
+        return $this->hasOne(AccountSpec::class);
+    }
+
     public static function createOne()
     {
         $secretKey = str_replace(' ', '', r('secret_key'));
@@ -113,7 +118,7 @@ class Account extends Model
             'username' => r('username'),
             'password' => r('password'),
             'secret_key' => $secretKey,
-            'category_id' => request('category'),
+            'service_id' => r('service_id'),
         ]);
 
         !empty(r('tags')) && $account->tags()->attach(r('tags'));
@@ -148,7 +153,8 @@ class Account extends Model
                 'email_password' => array_key_exists(4, $account) ? $account[4] : null,
                 'username_changed' => r('username_changed'),
                 'created_at' => Carbon::now(),
-                'category_id' => request('category'),
+                'category_id' => r('category'),
+                'service_id' => r('service_id'),
             ]);
 
             !empty(r('tags')) && $accountObj->tags()->attach(r('tags'));

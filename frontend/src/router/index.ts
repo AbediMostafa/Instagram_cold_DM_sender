@@ -35,6 +35,15 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: "/account-specs",
+        name: "account-specs",
+        component: () => import("@/views/account_spec/AccountSpecs.vue"),
+        meta: {
+          pageTitle: "Account Specs",
+          breadcrumbs: ["Account Specs"],
+        },
+      },
+      {
         path: "/account/:id",
         name: "account",
         component: () => import("@/views/account/Account.vue"),
