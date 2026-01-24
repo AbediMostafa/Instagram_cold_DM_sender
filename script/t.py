@@ -16,5 +16,3 @@ process = ProcessManager()
 while True:
     process.run()
     time.sleep(2)
-
-# Your reel has been shared.
