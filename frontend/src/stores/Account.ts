@@ -28,9 +28,9 @@ export const useAccountStore = defineStore("AccountStore", {
             },
             accountsData: [],
             accountStates: [
-                {value: "active", label: "Active"},
-                {value: "suspended", label: "Suspended"},
-                {value: "challenging", label: "Challenging"},
+                {value: "active", label: "active"},
+                {value: "suspended", label: "suspended"},
+                {value: "challenging", label: "challenging"},
             ],
             is: {
                 loading: false,

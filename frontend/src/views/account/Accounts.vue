@@ -88,10 +88,12 @@
           </el-input>
         </div>
         <div class="me-2">
+
           <el-checkbox-group
               v-model="store.accounts.filters"
               size="default"
           >
+
             <el-checkbox-button
                 v-for="action in store.accountStates"
                 :key="action.value"

@@ -60,7 +60,7 @@ class BrowserMakeAccountPublicEvent:
 
         self.ig.account.add_cli(f'Account is private : {is_checked}')
 
-        if is_checked == 'true':
+        if is_checked == 'false':
             return self.ig.account.add_cli(f'Account is private')
 
         try:
@@ -69,6 +69,6 @@ class BrowserMakeAccountPublicEvent:
             self.ig.page.get_by_label("Private account").uncheck()
 
         self.ig.pause(4000, 5000)
-        self.ig.page.get_by_role("button", name="Switch to private").click()
+        self.ig.page.get_by_role("button", name="Switch to public").click()
 
         self.ig.pause(8000, 9000)
