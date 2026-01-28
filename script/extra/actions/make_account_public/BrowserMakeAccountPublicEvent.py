@@ -17,7 +17,9 @@ class BrowserMakeAccountPublicEvent:
                 category=self.category_model)
 
             self.change_hook()
+            self.ig.account.add_cli(f'Setting account public ....')
             self.ig.account.set('is_public', 1)
+            self.ig.account.add_cli(f'Account public set')
             self.command.update_cmd('state', 'success')
 
         except Exception as e:
@@ -61,7 +63,7 @@ class BrowserMakeAccountPublicEvent:
         self.ig.account.add_cli(f'Account is private : {is_checked}')
 
         if is_checked == 'false':
-            return self.ig.account.add_cli(f'Account is private')
+            return self.ig.account.add_cli(f'Account is public')
 
         try:
             checkbox_locator.click(timeout=3000)

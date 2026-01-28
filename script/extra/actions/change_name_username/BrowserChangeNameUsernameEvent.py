@@ -69,18 +69,25 @@ class BrowserChangeNameUsernameEvent(BaseAction):
             self.ig.pause(2000, 2500)
             self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
 
-        self.ig.pause(3000, 4000)
-
-        try:
-            self.ig.page.get_by_label("Name", exact=True).click(timeout=3000)
-        except Exception as e:
-            self.ig.account.add_cli(str(e))
-            self.ig.page.locator('a[aria-label="Name"]').click(timeout=3000)
+        self.ig.pause(3000, 3500)
+        self.ig.account.add_cli(f"Name appeared")
+        self.ig.page.evaluate("""
+        () => {
+          const el = document.querySelector('a[aria-label="Name"]');
+          if (el) el.click();
+        }
+        """)
+        self.ig.account.add_cli(f"Name Clicked")
 
         self.ig.pause(3000, 4000)
         self.fill_name()
         self.ig.pause(4000, 5000)
-        self.ig.page.locator(f"text=Username").click()
+        self.ig.page.evaluate("""
+        () => {
+          const el = document.querySelector('a[aria-label="Username"]');
+          if (el) el.click();
+        }
+        """)
         self.ig.pause(3000, 4000)
         self.fill_username()
 
@@ -90,7 +97,6 @@ class BrowserChangeNameUsernameEvent(BaseAction):
         self.ig.account.set('username', self.username)
         self.ig.account.set('username_changed', 1)
         res = delete_template([self.name_username['id']])
-
         print(res)
 
     def fill_name(self):
