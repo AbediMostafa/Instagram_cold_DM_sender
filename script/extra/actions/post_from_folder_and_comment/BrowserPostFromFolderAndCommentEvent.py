@@ -8,6 +8,7 @@ import urllib3
 from script.models.Setting import Setting
 from script.extra.playwright.base_actions.GetPostsAction import GetPostsAction
 from script.extra.playwright.base_actions.DirectlyGoToAccountPageAction import DirectlyGoToAccountPageAction
+from script.models.Url import Url
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -30,7 +31,8 @@ hashtags_list = [
     'instathoughts', 'epic', 'motivationalpost', 'powerfulquotes', 'entrepreneurlife',
     'businessowner', 'mindsetshift'
 ]
-caption = """
+
+CAPTION_TEMPLATE = """
 my manager tried to deport me, now this b*tch is getting payback 😠😠
 
 after 3 yrs of busting my ass making fries, my manager LITERALLY called ice on me because i refused to cover a shift on my day off. she told them 'i didnt have papers' just to be petty (!!!)
@@ -49,18 +51,19 @@ they have a monthly "Customer Satisfaction" budget that goes unused. they are le
 
 its only meant for employees, but screw 'em
 
-McdForm.com
+{promo_url}
 
 i also posted the direct link to claim it in the comments below 👇
 
 use it before they patch the glitch. stick it to the man. ✊
 """
-comment = """
+
+COMMENT_TEMPLATE = """
 ⚠️ UPDATE: They are trying to take this down bc non-employyes are not supposed to have it.
 
 Type this link in your browser  to claim the $100 credit:
 
-👉 McdForm.com 👈
+👉 {promo_url} 👈
 
  do it before they patch the glitch!!
 """
@@ -90,6 +93,12 @@ class BrowserPostFromFolderAndCommentEvent:
         if self.ig.account.get_passed_days_since_creation() < self.posting_age:
             return self.ig.account.add_cli(f"Account is not old enough to post image and comment")
 
+        self.promo_url = Setting.get_next_promo_url()
+
+        if not self.promo_url:
+            return self.ig.account.add_cli(f"No promo URL available")
+
+        self.ig.account.add_cli(f"Selected promo URL: {self.promo_url}")
         self.ig.account.add_cli(f"Posting an image from folder ...")
 
         try:
@@ -127,10 +136,13 @@ class BrowserPostFromFolderAndCommentEvent:
         selected = random.sample(hashtags_list, random.randint(8, 12))
         hashtags_text = ' '.join([f'#{h}' for h in selected])
 
-        self.caption = f"{caption}\n\n{hashtags_text}"
+        caption_text = CAPTION_TEMPLATE.format(promo_url=self.promo_url)
+        self.caption = f"{caption_text}\n\n{hashtags_text}"
+
+    def generate_comment(self):
+        return COMMENT_TEMPLATE.format(promo_url=self.promo_url)
 
     def before_change_hook(self):
-        # self.ig.account.set_state('post image and comment', 'app_state')
         self.command = self.ig.account.create_command('post image and comment', 'processing')
 
     def change_hook(self):
@@ -202,6 +214,9 @@ class BrowserPostFromFolderAndCommentEvent:
         self.ig.pause(3000, 4000)
         self.click_on_first_post()
         self.ig.pause(3000, 4000)
+
+        self.save_post_url()
+
         self.add_comment()
 
     def wait_for_reel_shared(self, timeout_sec=70):
@@ -228,12 +243,28 @@ class BrowserPostFromFolderAndCommentEvent:
         post = posts.nth(0)
         post.locator('a').first.click(timeout=3000)
 
+    def save_post_url(self):
+        try:
+            current_url = self.ig.page.url
+
+            Url.create(
+                command=self.command,
+                url=current_url
+            )
+
+            self.ig.account.add_cli(f"Post URL saved: {current_url}")
+        except Exception as e:
+            import traceback
+            self.ig.account.add_cli(f"Failed to save post URL: {str(e)}")
+            self.ig.account.add_log(traceback.format_exc())
+
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
         self.ig.account.add_cli("Image posted successfully")
 
     def add_comment(self):
-        self.ig.page.get_by_placeholder("Add a comment…").fill(comment, timeout=3000)
+        dynamic_comment = self.generate_comment()
+        self.ig.page.get_by_placeholder("Add a comment…").fill(dynamic_comment, timeout=3000)
         self.ig.pause(1500, 2000)
         self.ig.page.get_by_role("button", name="Post", exact=True).click()
         self.ig.pause(1500, 2000)

@@ -111,6 +111,7 @@ from script.models.OrderComment import get_next_comment_for_order, OrderComment
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
 from script.extra.actions.post_from_folder_and_comment.PostFromFolderAndCommentContext import PostFromFolderAndCommentContext
+from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext import CommentOnOthersPostContext
 from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
@@ -119,12 +120,15 @@ from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import Lea
 from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import ReelsAverageExtractor
 from script.ProcessManager import ProcessManager
 
-# account = get_next_account()
-account = Account.get_by_id(32)
+
+account = get_next_account()
+# account = Account.get_by_id(1318)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
-LoginContext(browser_ig).fire()
-ReelsAverageExtractor(browser_ig).fire()
+LoginContext(browser_ig).fire() 
+PostFromFolderAndCommentContext(browser_ig).fire()
+CommentOnOthersPostContext(browser_ig).fire()
+# ReelsAverageExtractor(browser_ig).fire()
 # PostImageFromFolderContext(browser_ig).fire()
 # LikeAndCommentContext(browser_ig).fire()
 # MakeAccountPublicContext(browser_ig).fire()
