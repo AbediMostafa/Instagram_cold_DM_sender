@@ -3,11 +3,11 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
-from script.extra.routes import process_verify, get_initial_data, select_account
 from script.models.Process import Process
 from script.models.Account import Account
 from script.extra.exceptions import ProcessShouldStop
 import traceback
+from script.models.AccountHelper import get_next_account
 
 
 class ProcessManager:
@@ -24,13 +24,10 @@ class ProcessManager:
     account = None
     browser_ig = None
 
-    def __init__(self):
-        self.initial_data = get_initial_data()
-
     def run(self):
+        self.init()
 
         try:
-            self.initialize()
             self.check_stop_statuses()
             self.get_modules()
             self.select_account()
@@ -45,55 +42,52 @@ class ProcessManager:
             self.process.add_cli(traceback.format_exc()) if self.process else print(traceback.format_exc())
             time.sleep(ProcessManager.sleep_time)
 
-    def initialize(self):
+    def init(self):
         self.pid = os.getpid()
-        self.remote_process = process_verify(self.pid)
-        self.process = Process.get_by_id(self.remote_process['id'])
+        self.process = Process.update_or_create_process(self.pid)
+        self.workflow = self.process.workflow
+
+        if self.workflow:
+            self.service = self.process.workflow.service
+
+        if self.workflow:
+            self.modules = self.workflow.modules()
 
     def check_stop_statuses(self):
-        if self.remote_process['status'] in self.initial_data['stopped_statuses']:
-            err = f'Process status : {self.remote_process['status']}, going to sleep {self.sleep_time} seconds ...'
+
+        if self.process.status in Process.stopped_process:
+            err = f'Process status : {self.process.status}, going to sleep {self.sleep_time} seconds ...'
             raise ProcessShouldStop(err)
 
-        if self.remote_process['workflow'] is None:
+        if self.workflow is None:
             err = f"There's no workflow assigned to the process, going to sleep {self.sleep_time} seconds ..."
             raise ProcessShouldStop(err)
 
-        if self.remote_process['workflow']['service'] is None:
+        if self.service is None:
             err = f"There's no service assigned to this workflow, going to sleep {self.sleep_time} seconds ..."
             raise ProcessShouldStop(err)
 
-        if self.remote_process['workflow']['service'] is None:
-            err = f"There's no service assigned to this workflow, going to sleep {self.sleep_time} seconds ..."
-            raise ProcessShouldStop(err)
-
-        if not self.remote_process['workflow']["modules"]:
+        if not self.modules:
             err = f"There's no modules assigned to this workflow, going to sleep {self.sleep_time} seconds ..."
             raise ProcessShouldStop(err)
 
-        if self.remote_process['should_run'] is False:
+        if self.service.should_run() is False:
             err = f"We shouldn't run the process, going to sleep {self.sleep_time} seconds ..."
             raise ProcessShouldStop(err)
 
     def get_modules(self):
 
-        self.workflow = self.remote_process["workflow"]
-        self.service = self.workflow["service"]
-        self.modules = self.workflow["modules"]
-        module_titles = [module['title'] for module in self.modules]
+        module_titles = [module.title for module in self.modules]
         self.process.add_cli(
-            f"workflow : {self.workflow['title']}, service: {self.service['service']} modules: {module_titles}")
+            f"workflow : {self.workflow.title}, service: {self.service.service} modules: {module_titles}")
 
     def select_account(self):
-        account = select_account(service_id=self.service['id'])
 
-        if account is None:
+        self.account = get_next_account(service_id=self.service.id)
+
+        if self.account is None:
             err = "There's no account for this service"
             raise ProcessShouldStop(err)
-
-        self.process.add_cli(f"Current account: {account['id']} -- {account['username']}")
-
-        self.account = Account.get_by_id(account['id'])
 
     def start(self):
         from script.extra.base.BasePlaywright import BasePlaywright

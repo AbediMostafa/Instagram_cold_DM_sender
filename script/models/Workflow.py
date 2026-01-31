@@ -14,5 +14,22 @@ class Workflow(BaseWithTimeZoneModel):
         on_delete='SET NULL'
     )
 
+    # modules = ManyToManyField(
+    #     Module,
+    #     backref='workflows',
+    #     through_model=WorkflowModule
+    # )
+
+    def modules(self):
+        from .Module import Module
+        from .WorkflowModule import WorkflowModule
+
+        return (
+            Module
+            .select()
+            .join(WorkflowModule, on=(WorkflowModule.module_id == Module.id))
+            .where(WorkflowModule.workflow_id == self.id)
+        )
+
     class Meta:
         table_name = 'workflows'

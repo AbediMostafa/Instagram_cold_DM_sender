@@ -96,8 +96,8 @@ class BrowserChangeNameUsernameEvent(BaseAction):
         self.ig.account.set('name', self.name)
         self.ig.account.set('username', self.username)
         self.ig.account.set('username_changed', 1)
-        res = delete_template([self.name_username['id']])
-        print(res)
+        # res = delete_template([self.name_username['id']])
+        # print(res)
 
     def fill_name(self):
         try:
@@ -144,7 +144,11 @@ class BrowserChangeNameUsernameEvent(BaseAction):
 
     def modify_username(self):
         import random
+        import string
 
-        insert_char = random.choice(['_', '.', str(random.randint(0, 9))])
+        char = random.choice(string.ascii_lowercase)
+        digit = str(random.randint(0, 9))
+
+        # insert_char = random.choice(['_', '.', char, digit])
         pos = random.randint(1, len(self.username) - 1)  # not first, not last
-        self.username = self.username[:pos] + insert_char + self.username[pos:]
+        self.username = self.username[:pos] + char + self.username[pos:]

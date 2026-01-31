@@ -7,10 +7,12 @@ from script.extra.helper import tehran_now
 
 class Process(BaseWithTimeZoneModel):
     pid = BigIntegerField()
-    status = CharField(default='running')
+    status = CharField(default='idle')
     proxy_type = CharField()
     workflow = ForeignKeyField(Workflow, backref='processes', null=True)
     last_checked_at = DateTimeField(null=True, default=tehran_now)
+
+    stopped_process = ['stopped', 'idle', 'terminated']
 
     class Meta:
         table_name = 'processes'
@@ -31,3 +33,21 @@ class Process(BaseWithTimeZoneModel):
         truncated_log = (log[:254]) if log else ''
 
         Cli.create(account=account, log=truncated_log, process=self)
+
+    @staticmethod
+    def update_or_create_process(pid):
+        now = tehran_now()
+
+        process, created = Process.get_or_create(
+            pid=pid,
+            defaults={'last_checked_at': now}
+        )
+
+        if not created:
+            process.last_checked_at = now
+            process.save()
+
+        return process
+
+    def verify(self):
+        pass

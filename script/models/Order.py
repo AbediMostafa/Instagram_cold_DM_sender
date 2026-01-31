@@ -1,6 +1,7 @@
 import datetime
 from peewee import *
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
+from .Service import Service
 from script.extra.helper import tehran_now
 
 
@@ -13,6 +14,13 @@ class Order(BaseWithTimeZoneModel):
     status = CharField(default='pending')
     description = TextField(null=True)
     updated_at = DateTimeField(null=True, default=tehran_now)
+
+    service = ForeignKeyField(
+        Service,
+        backref='orders',
+        null=True,
+        on_delete='SET NULL'
+    )
 
     def add_completed_count(self):
         (

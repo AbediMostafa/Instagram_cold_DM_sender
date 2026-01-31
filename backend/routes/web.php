@@ -78,6 +78,17 @@ use App\Http\Controllers\AccountSpecController;
 Route::get('/', function () {
 
 
+//    $account = Account::query()->find(19024);
+//
+//    dd($account->username_changed);
+
+//   $accounts =  Account::query()
+//       ->where('instagram_state', '!=', 'active')
+//       ->get()
+//        ->each(function(Account $account){
+//            $account->makeActive();
+//            runPythonProcess('new.py', $account->id);
+//        });
 });
 
 Route::get('/add-comment', function () {
@@ -281,7 +292,6 @@ Route::post('account/attach-tag', [AccountController::class, 'attachTag']);
 Route::post('account/detach-tag', [AccountController::class, 'detachTag']);
 Route::post('account/attach-service', [AccountController::class, 'attachService']);
 Route::post('account/detach-service', [AccountController::class, 'detachService']);
-Route::post('account/select-account', [AccountController::class, 'selectAccount']);
 Route::post('account/reset-is-used', [AccountController::class, 'resetIsUsed']);
 
 Route::post('leads', [LeadController::class, 'index']);
@@ -407,7 +417,6 @@ Route::post('setting/update', [SettingController::class, 'update']);
 Route::post('processes', [ProcessController::class, 'index']);
 Route::post('processes/check', [ProcessController::class, 'check']);
 Route::post('processes/update', [ProcessController::class, 'update']);
-Route::post('process/verify', [ProcessController::class, 'verify']);
 Route::post('processes/delete', [ProcessController::class, 'delete']);
 Route::post('processes/toggle-process', [ProcessController::class, 'toggleProcess']);
 Route::post('processes/get-initial-data', [ProcessController::class, 'getInitialData']);

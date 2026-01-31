@@ -442,29 +442,6 @@ class AccountController extends Controller
         );
     }
 
-    public function selectAccount()
-    {
-        return DB::transaction(function () {
-
-            $specificIds = r('specificIds');
-            $serviceId = r('serviceId');
-            $tagTitles = r('tagTitles');
-
-            $nextAccount = Account::next_account($serviceId, $specificIds, $tagTitles);
-
-            if (!$nextAccount) {
-                Account::resetIsUsed($serviceId);
-                $nextAccount = Account::next_account($serviceId, $specificIds, $tagTitles);
-            }
-
-            if ($nextAccount) {
-                $nextAccount->update(['is_used' => true]);
-            }
-
-            return $nextAccount;
-        });
-    }
-
     public function resetIsUsed()
     {
         return tryCatch(

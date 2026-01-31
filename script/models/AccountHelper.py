@@ -2,7 +2,7 @@ from .Account import Account
 from peewee import fn, JOIN
 
 
-def free_account_query(tag_titles=None, specific_ids=None):
+def free_account_query(tag_titles=None, specific_ids=None, service_id=None):
     from .Tag import Tag
     from .Taggable import Taggable
     from script.models.Profile import Profile
@@ -32,16 +32,19 @@ def free_account_query(tag_titles=None, specific_ids=None):
                                      (Taggable.taggable_type == account_class)))
                  .where(Taggable.tag.in_(tags_to_include)))
 
+    if service_id:
+        query = query.where(Account.service_id == service_id)
+
     return query
 
 
-def get_next_account(tag_titles=None, specific_ids=None):
+def get_next_account(tag_titles=None, specific_ids=None, service_id=None):
     """
     Select the next free account, optionally filtered by tags.
     """
     print('Selecting account ...')
 
-    query = free_account_query(tag_titles, specific_ids)
+    query = free_account_query(tag_titles, specific_ids, service_id)
 
     # Refresh accounts if no free accounts exist
     if not query.exists():

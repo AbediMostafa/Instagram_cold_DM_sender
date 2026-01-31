@@ -16,8 +16,6 @@ class Service extends Model
         'created_at' => 'datetime:Y-m-d H:i',
     ];
 
-    static $staticServices = ['account_profiler', 'reels_spammer'];
-
 
     public function workflows()
     {
@@ -29,23 +27,4 @@ class Service extends Model
         return $this->hasMany(Order::class);
     }
 
-    /**
-     * Check if service has any active orders
-     * (pending or in_progress)
-     */
-    public function hasActiveOrders(): bool
-    {
-        return $this->orders()
-            ?->whereIn('status', Order::$activeStatuses)
-            ->exists();
-    }
-
-    /**
-     * Business rule:
-     * account_profiler should always run
-     */
-    public function shouldRun(): bool
-    {
-        return in_array($this->service, self::$staticServices) || $this->hasActiveOrders();
-    }
 }

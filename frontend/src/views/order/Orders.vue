@@ -62,7 +62,7 @@
               </td>
 
               <td>
-                <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.id }} -{{ order.customer }}</a>
+                <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.id }}</a>
                 <a class="badge ms-2 badge-light-success " v-if="order.status=='Completed'">{{ order.status }}</a>
                 <a class="badge ms-2 badge-light-primary" v-else-if="order.status=='In progress'">{{ order.status }}</a>
                 <a class="badge ms-2 badge-light-warning" v-else-if="order.status=='Pending'">{{ order.status }}</a>

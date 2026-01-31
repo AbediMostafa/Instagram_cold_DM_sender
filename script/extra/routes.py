@@ -27,10 +27,6 @@ routes = {
         'url': f'{base_url}processes/get-initial-data',
         'method': 'POST',
     },
-    'select-account': {
-        'url': f'{base_url}account/select-account',
-        'method': 'POST',
-    },
     'order-there-is-no-comment': {
         'url': f'{base_url}order/there-is-no-comment',
         'method': 'POST',
@@ -91,14 +87,6 @@ def check_processes():
 
 def get_initial_data():
     return request_to_laravel('get-initial-data')
-
-
-# --------------------------------------------------
-# Account Routes
-# --------------------------------------------------
-def select_account(service_id=None, tag_titles=None, specific_ids=None):
-    data = {'serviceId': service_id, 'tagTitles': tag_titles, 'specificIds': specific_ids}
-    return request_to_laravel('select-account', data)
 
 
 # --------------------------------------------------

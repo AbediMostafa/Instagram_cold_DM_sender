@@ -1,5 +1,6 @@
 import sys
 import os
+
 sys.path.append(r"C:\Users\admin\AppData\Roaming\Python\Python312\site-packages")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -38,8 +39,8 @@ from script.models.Process import Process
 from spintax import spin
 import traceback
 from script.extra.actions.login.LoginContext import LoginContext
-from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
-
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import \
+    CheckSystemUsernameWithIgUsernameContext
 
 # Ensure correct usage
 if len(sys.argv) < 2:
@@ -67,7 +68,9 @@ try:
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
-
+finally:
+    if browser_ig:
+        browser_ig.cleanup()
 
 # CheckForAccountActionsHook(account)
 #

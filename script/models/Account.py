@@ -4,6 +4,7 @@ from datetime import timedelta
 from .Proxy import Proxy
 from .Profile import Profile
 from .Category import Category
+from .Service import Service
 from .Color import Color, get_next_color
 import random
 from dotenv import load_dotenv
@@ -18,6 +19,7 @@ class Account(BaseWithTimeZoneModel):
     color = ForeignKeyField(Color, backref='accounts', null=True)
     profile = ForeignKeyField(Profile, backref='accounts', null=True)
     category = ForeignKeyField(Category, backref='accounts', null=True)
+    service = ForeignKeyField(Service, backref='accounts', null=True)
 
     secret_key = CharField(null=True)
     username = CharField(unique=True)

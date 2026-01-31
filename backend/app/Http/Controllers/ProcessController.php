@@ -27,30 +27,6 @@ class ProcessController extends Controller
     }
 
 
-    public function verify()
-    {
-        $process = Process::updateOrCreate(
-            ['pid' => (int)r('pid')],
-            ['last_checked_at' => Carbon::now('Asia/Tehran')]
-        )->refresh()->load([
-            'workflow:id,title,service_id',
-            'workflow.service:id,title,service',
-            'workflow.modules'
-        ]);
-
-        $service = $process->workflow?->service;
-        $shouldRun = false;
-
-        if ($service) {
-            $shouldRun = $service->shouldRun();
-        }
-
-        $process->should_run = $shouldRun;
-
-        return $process;
-
-    }
-
     public function update()
     {
         return tryCatch(
