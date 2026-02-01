@@ -10,6 +10,7 @@ class BrowserCommentOnOthersPostEvent:
     command = None
     target_command = None
     target_url = None
+    comment_posted = False
 
     def __init__(self, ig):
         self.ig = ig
@@ -31,6 +32,8 @@ class BrowserCommentOnOthersPostEvent:
             self.handle_failure(e)
 
         finally:
+
+            self.update_target_command_times()
             self.ig.pause(3000, 4000)
 
     def handle_failure(self, error):
@@ -75,23 +78,29 @@ class BrowserCommentOnOthersPostEvent:
         self.ig.pause(4000, 5000)
 
         self.ig.account.add_cli("Comment posted")
-
-        # Update times right after comment is posted
-        self.update_target_command_times()
+        self.comment_posted = True
 
         self.save_post()
         self.maybe_like_post()
         self.maybe_repost()
 
     def update_target_command_times(self):
-        self.target_command.times += 1
+        if not self.target_command:
+            return
 
-        if self.target_command.times == 1:
-            self.target_command.commandable_id = self.ig.account.id
-            self.target_command.commandable_type = 'App\\Models\\Account'
+        if self.comment_posted:
+            self.target_command.times += 1
+            if self.target_command.times == 1:
+                self.target_command.commandable_id = self.ig.account.id
+                self.target_command.commandable_type = 'App\\Models\\Account'
+        else:
+            # skip this post if failed
+            self.target_command.times = 3
 
         self.target_command.save()
-        self.ig.account.add_cli(f"Target times updated: {self.target_command.times}")
+
+        status = "success" if self.comment_posted else "skipped"
+        self.ig.account.add_cli(f"Target times updated: {self.target_command.times} ({status})")
 
     def maybe_repost(self):
         if random.randint(1, 10) <= 10:
