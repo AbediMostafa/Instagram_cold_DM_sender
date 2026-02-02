@@ -88,21 +88,39 @@ def sent_recent_command_within(account, _types, hours=24):
             .exists())
 
 
-def find_posts_to_comment(account_id):
+def find_posts_to_comment(account_id, limit=1):
     from .Url import Url
 
-    return (Command
-            .select()
-            .join(Url, on=(Url.command == Command.id))
-            .where(
-                (Command.type == 'post image and comment') &
-                (Command.state == 'success') &
-                (Command.times.in_([0, 1, 2])) &
-                (Command.account != account_id) &
-                (
-                    (Command.commandable_id.is_null()) |
-                    (Command.commandable_id != account_id)
-                )
-            )
-            .order_by(Command.created_at.asc())
-            .first())
+    with Command._meta.database.atomic():
+        # raw SQL for FOR UPDATE SKIP LOCKED
+        sql = """
+            SELECT c.* FROM commands c
+            INNER JOIN urls u ON u.command_id = c.id
+            WHERE c.type = 'post image and comment'
+            AND c.state = 'success'
+            AND c.times IN (0, 1, 2)
+            AND c.account_id != %s
+            AND (c.commandable_id IS NULL OR c.commandable_id != %s)
+            ORDER BY c.created_at ASC
+            LIMIT %s
+            FOR UPDATE OF c SKIP LOCKED
+        """
+
+        cursor = Command._meta.database.execute_sql(sql, (account_id, account_id, limit))
+        rows = cursor.fetchall()
+
+        if not rows:
+            return []
+
+        command_ids = [row[0] for row in rows]  # first column is id
+
+        # mark as taken
+        (Command
+            .update(times=Command.times + 10)
+            .where(Command.id.in_(command_ids))
+            .execute())
+
+        # return Command objects
+        result = list(Command.select().where(Command.id.in_(command_ids)))
+
+    return result

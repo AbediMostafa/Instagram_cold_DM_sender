@@ -15,14 +15,45 @@ class BrowserCommentOnOthersPostEvent:
     def __init__(self, ig):
         self.ig = ig
         self.commenting_age = int(Setting.get_value("allowed_liking_and_commenting_age"))
+        self.post_limit = int(Setting.get_value("engagement_post_limit", 1))
+        self.command = None
+        self.target_command = None
+        self.target_url = None
+        self.comment_posted = False
+        self.original_times = 0
 
     def init(self):
         if self.ig.account.get_passed_days_since_creation() < self.commenting_age:
             return self.ig.account.add_cli("Account is not old enough to engage")
 
+        target_commands = self.find_target_posts()
+
+        if not target_commands:
+            self.ig.account.add_cli("No posts found to engage")
+            return
+
+        for target_command in target_commands:
+            self.process_single_post(target_command)
+
+    def find_target_posts(self):
+        commands = find_posts_to_comment(self.ig.account.id, limit=self.post_limit)
+        return list(commands) if commands else []
+
+    def process_single_post(self, target_command):
+        self.command = None
+        self.target_command = target_command
+        self.target_url = None
+        self.comment_posted = False
+        self.original_times = self.target_command.times - 10
+
         try:
-            if not self.find_target_post():
+            self.target_url = self.target_command.get_url()
+
+            if not self.target_url:
+                self.ig.account.add_cli("Target post has no URL")
                 return
+
+            self.ig.account.add_cli(f"Target: {self.target_url.url}")
 
             self.before_change_hook()
             self.change_hook()
@@ -32,7 +63,6 @@ class BrowserCommentOnOthersPostEvent:
             self.handle_failure(e)
 
         finally:
-
             self.update_target_command_times()
             self.ig.pause(3000, 4000)
 
@@ -42,22 +72,6 @@ class BrowserCommentOnOthersPostEvent:
 
         self.ig.account.add_cli(f"Engage failed: {str(error)}")
         self.ig.account.add_log(traceback.format_exc())
-
-    def find_target_post(self):
-        self.target_command = find_posts_to_comment(self.ig.account.id)
-
-        if not self.target_command:
-            self.ig.account.add_cli("No posts found to engage")
-            return False
-
-        self.target_url = self.target_command.get_url()
-
-        if not self.target_url:
-            self.ig.account.add_cli("Target post has no URL")
-            return False
-
-        self.ig.account.add_cli(f"Target: {self.target_url.url}")
-        return True
 
     def before_change_hook(self):
         self.command = self.ig.account.create_command('post_engagement', 'processing')
@@ -89,12 +103,12 @@ class BrowserCommentOnOthersPostEvent:
             return
 
         if self.comment_posted:
-            self.target_command.times += 1
-            if self.target_command.times == 1:
+            self.target_command.times = self.original_times + 1
+
+            if self.original_times == 0:
                 self.target_command.commandable_id = self.ig.account.id
                 self.target_command.commandable_type = 'App\\Models\\Account'
         else:
-            # skip this post if failed
             self.target_command.times = 3
 
         self.target_command.save()
@@ -214,7 +228,7 @@ class BrowserCommentOnOthersPostEvent:
             0: "Wait I actually just got the code in my email?? I thought this was fake wtf",
             1: "For anyone asking, you have to type the link exactly how they wrote it. Worked for me.",
         }
-        return comments.get(self.target_command.times, "Delete this lol before too many people see it and they patch it.")
+        return comments.get(self.original_times, "Delete this lol before too many people see it and they patch it.")
 
     def save_post(self):
         try:
