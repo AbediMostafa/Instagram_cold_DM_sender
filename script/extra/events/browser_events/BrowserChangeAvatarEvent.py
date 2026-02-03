@@ -1,6 +1,9 @@
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.extra.helper import *
+from script.extra.routes import get_template
+from script.models.Template import Template
+
 import shutil
 
 
@@ -19,14 +22,15 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
         if self.ig.account.avatar_changed:
             return self.ig.account.add_cli(f"{self.ig.account.username}'s avatar has been changed already")
 
-        # self.template = self.ig.account.get_a_free_template('avatar')
-        #
-        # if not self.template:
-        #     self.ig.account.add_cli(f"We don't have an avatar for : {self.ig.account.username}")
+        self.template = get_template(self.ig.account.id, 'avatar')
+        self.template = Template.get_by_id(self.template['id'])
+
+        if not self.template:
+            self.ig.account.add_cli(f"We don't have an avatar for : {self.ig.account.username}")
 
         try:
-            # self.generate_image()
-            self.image_path = get_profile_picture()
+            self.generate_image()
+            # self.image_path = get_profile_picture()
             self.before_change_hook()
             self.change_hook()
             self.after_change_hook()

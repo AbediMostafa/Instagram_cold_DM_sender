@@ -47,7 +47,8 @@
 
             <th class="min-w-200px">TITLE</th>
             <th class="min-w-200px">CLASS NAME</th>
-            <th class="min-w-300px">WORKFLOWS</th>
+            <th class="min-w-200px">WORKFLOWS</th>
+            <th class="min-w-100px">PRIORITY</th>
             <th class="min-w-100px text-end">Actions</th>
           </tr>
           </thead>
@@ -84,6 +85,10 @@
                 {{ workflow.title }}
               </span>
               <span v-else class="text-muted">—</span>
+            </td>
+
+            <td class="text-gray-600 fs-7">
+              {{ module.priority }}
             </td>
 
             <td class="text-end">

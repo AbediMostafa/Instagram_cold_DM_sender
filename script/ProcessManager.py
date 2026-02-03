@@ -110,7 +110,7 @@ class ProcessManager:
                 process=self.process
             )
 
-            module_manager.run(shuffle=True)
+            module_manager.run()
 
         except ProxyStuck:
             raise

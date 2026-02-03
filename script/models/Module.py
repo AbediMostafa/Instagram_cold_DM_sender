@@ -7,6 +7,7 @@ class Module(BaseWithTimeZoneModel):
     title = CharField()
     module_path = CharField()
     class_name = CharField()
+    priority = CharField()
 
     # workflow = ForeignKeyField(
     #     Workflow,

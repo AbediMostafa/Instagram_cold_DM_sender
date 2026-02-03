@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Order extends Model
 {
@@ -13,6 +14,11 @@ class Order extends Model
 
     static $statuses = ['Pending', 'In progress', 'Completed', 'Canceled', 'Unknown'];
     static $activeStatuses = ['Pending', 'In progress'];
+
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return Carbon::instance($date)->format('Y-m-d H:i');
+    }
 
     public function comments()
     {

@@ -59,11 +59,20 @@ class Order(BaseWithTimeZoneModel):
             self.status = 'Completed'
             self.save()
 
+            from script.models.Balance import Balance
+            from decimal import Decimal
+
+            balance = Balance.select().where(Balance.customer == 'sadeghi').first()
+            completed_fee = Decimal(self.completed_count) * Decimal('0.00035')
+
+            balance.balance -= completed_fee
+            balance.save()
+
     class Meta:
         table_name = 'orders'
 
 
-def get_next_order_for_account(account, service_type ='comment'):
+def get_next_order_for_account(account, service_type='comment'):
     from .OrderComment import OrderComment
 
     # Orders not completed

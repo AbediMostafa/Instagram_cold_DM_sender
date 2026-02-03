@@ -14,12 +14,13 @@ class ModuleManager:
         self.modules = modules
         self.process = process
         self.loaded_modules = []
+        self.ordered_actions = []
 
     def load_modules(self):
         """
         Dynamically import module classes from DB definition
         """
-        for module in self.modules:
+        for module in self.ordered_actions:
             try:
                 module_path = module.module_path
                 class_name = module.class_name
@@ -41,19 +42,14 @@ class ModuleManager:
         if not self.loaded_modules:
             raise ProcessShouldStop("No valid modules loaded")
 
-    def run(self, shuffle=True):
+    def run(self):
         """
         Execute loaded modules
         """
-        if not self.loaded_modules:
-            self.load_modules()
+        self.shuffle_modules()
+        self.load_modules()
 
-        actions = self.loaded_modules[:]
-
-        if shuffle:
-            random.shuffle(actions)
-
-        for action_class in actions:
+        for action_class in self.loaded_modules:
             try:
                 self.browser_ig.pause(800, 1100)
 
@@ -72,3 +68,32 @@ class ModuleManager:
                 self.process.add_cli(
                     f"Module {action_class.__name__} failed → {str(e)}"
                 )
+
+    def shuffle_modules(self):
+
+        # prioritized modules (priority IS NOT NULL)
+        prioritized = [
+            m for m in self.modules if m.priority is not None
+        ]
+
+        # non-priority modules
+        normal = [
+            m for m in self.modules if m.priority is None
+        ]
+
+        # sort priorities (lower number = higher priority)
+        prioritized.sort(key=lambda x: x.priority)
+
+        # shuffle modules with SAME priority
+        grouped = {}
+        for m in prioritized:
+            grouped.setdefault(m.priority, []).append(m)
+
+        for priority in sorted(grouped.keys()):
+            same_priority = grouped[priority]
+            random.shuffle(same_priority)
+            self.ordered_actions.extend(same_priority)
+
+        # shuffle non-priority modules
+        random.shuffle(normal)
+        self.ordered_actions.extend(normal)

@@ -30,13 +30,13 @@ class BackupDatabase extends Command
         $dbhost = 'localhost';
         $dbport = 1363;
         $backupDir = 'C:\\Users\\bc';
-        $dbpass = 'q9xud8U2vi8nQdr1HYbu';
+        $dbpass = 'JML93BP5EoyzpVvsAaOG';
 
         // Get current date
         $date = now()->format('Y-m-d');
         $backupFile = "{$backupDir}\\{$dbname}_{$date}.backup";
         $backupFileSql = "{$backupDir}\\{$dbname}_{$date}.sql";
-        $pgDumpPath = '"C:\\Program Files\\PostgreSQL\\17\\bin\\pg_dump.exe"';
+        $pgDumpPath = '"C:\\Program Files\\PostgreSQL\\18\\bin\\pg_dump.exe"';
         putenv("PGPASSWORD={$dbpass}");
 
         // Execute backup command for binary format

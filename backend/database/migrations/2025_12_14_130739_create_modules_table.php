@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('module_path');
             $table->string('class_name');
 
+            $table->integer('priority')
+                ->nullable()
+                ->index();
+
             $table->timestamp('created_at')->useCurrent();
         });
     }

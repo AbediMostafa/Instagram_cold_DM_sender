@@ -1,5 +1,6 @@
 import re
 from script.extra.helper import go_to_page
+from script.extra.exceptions import ProcessShouldStop
 
 
 class BrowserCheckSystemUsernameWithIgUsernameEvent:
@@ -16,6 +17,9 @@ class BrowserCheckSystemUsernameWithIgUsernameEvent:
             self.before_change_hook()
             self.change_hook()
             self.after_change_hook()
+
+        except ProcessShouldStop:
+            raise ProcessShouldStop
 
         except Exception as e:
             import traceback
@@ -45,6 +49,9 @@ class BrowserCheckSystemUsernameWithIgUsernameEvent:
         self.ig.pause(3500, 4500)
 
         self.ig.page.get_by_role("button", name=re.compile(r"log out", re.I)).click(timeout=4000)
+        self.ig.pause(5000, 6000)
+
+        raise ProcessShouldStop("Account Logged out and process should stop")
 
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')

@@ -8,11 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class OrderComment extends Model
 {
     use HasFactory;
-    protected $guarded =[];
+
+    protected $guarded = [];
 
     public function setStatusTo($status)
     {
         $this->status = $status;
         $this->save();
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 }

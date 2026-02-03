@@ -32,7 +32,7 @@ class AccountController extends Controller
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id', 'service_id',
-                'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts')
+                'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name')
 //            ->withCount([
 //                'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
 //                    $query->where('type', 'dm follow up')

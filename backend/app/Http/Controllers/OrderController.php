@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Balance;
 use App\Models\Order;
 use App\Models\OrderComment;
 use App\Models\SadeghiTelegramOrder;
@@ -126,9 +127,10 @@ class OrderController extends Controller
         $action = request('action'); // or request()->input('action')
 
         if ($action === 'balance') {
+            $balance = Balance::query()->where('customer', 'sadeghi')->first();
             return response()->json([
                 'status' => 'success',
-                'balance' => 20,
+                'balance' => $balance->balance,
                 'currency' => 'IRT'
             ]);
         }
@@ -139,7 +141,7 @@ class OrderController extends Controller
                     "service" => 740,
                     "name" => "Comment",
                     "category" => "SSM-fire",
-                    "rate" => "1$",
+                    "rate" => "0.35$",
                     "min" => 5,
                     "max" => 2000,
                     "type" => "custom_comments",

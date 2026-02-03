@@ -41,6 +41,7 @@ class ModuleController extends Controller
                     'title' => r('title'),
                     'module_path' => r('module_path'),
                     'class_name' => r('class_name'),
+                    'priority' => r('priority'),
                 ]),
             'Module updated successfully'
         );

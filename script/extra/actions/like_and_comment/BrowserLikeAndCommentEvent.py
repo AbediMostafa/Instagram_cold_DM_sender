@@ -16,12 +16,11 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
     def init(self):
 
-        if self.ig.account.get_passed_days_since_creation() < 15:
+        if self.ig.account.get_passed_days_since_creation() < 2:
             return self.ig.account.add_cli(f"Account is not old enough to Send comment")
 
         self.pick_and_mark_comment()
         self.ig.account.add_cli('Starting to comment and like ...')
-        # https://www.instagram.com/reels/DRxrJa5ESf4/
         try:
             self.command = self.ig.account.create_command('comment and like', 'processing')
             self.post_url_validation()
@@ -56,7 +55,7 @@ class BrowserLikeAndCommentEvent(BaseAction):
                 if self.ig.is_visible_by_text("Couldn't post comment"):
                     raise LinkIsNotCorrect("Couldn't post comment")
 
-            self.take_screenshot(command_id=self.order.id)
+            # self.take_screenshot(command_id=self.order.id)
             self.mark_comment_sent()
             self.command.update_cmd('state', 'success')
             self.ig.pause(3500, 4500)

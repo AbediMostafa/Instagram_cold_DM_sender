@@ -122,22 +122,21 @@ from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import R
 from script.ProcessManager import ProcessManager
 from script.models.Workflow import Workflow
 from script.models.Order import Order
+from script.models.Module import Module
 from script.models.Service import Service
+from script.models.Balance import Balance
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
+from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
+from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
 
-# for order in service.orders:
-#     print(order.target_link)
-# print(process.workflow.service)
-# print(process.workflow.service.service)
-# print(process.workflow.service.title)
-
-# account = get_next_account()
-account = Account.get_by_id(19533)
+# account = Account.get_by_id(16544)
+account = get_next_account()
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-ChangeNameUsernameContext(browser_ig).fire()
+LikeAndCommentContext(browser_ig).fire()
+# ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()
 # PostImageFromFolderContext(browser_ig).fire()

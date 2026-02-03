@@ -45,6 +45,7 @@
             <th class="min-w-150px">CUSTOMER</th>
             <th class="min-w-120px">LINK</th>
             <th class="min-w-120px">COUNT/SENT</th>
+            <th class="min-w-150px">CREATED AT</th>
             <th class="min-w-100px text-end">Actions</th>
           </tr>
           </thead>
@@ -89,6 +90,9 @@
                   <span class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.completed_count }}</span>
                 </div>
 
+              </td>
+              <td>
+                  <span class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.created_at}}</span>
               </td>
               <td class="text-end">
                 <el-dropdown class="p-5">

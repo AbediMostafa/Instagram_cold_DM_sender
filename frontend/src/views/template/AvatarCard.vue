@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="card cursor-pointer" @click="toggleCheck">
     <!--begin::Card body-->
     <div class="card-body pt-3 px-6">
       <div class="my-0 d-flex">
@@ -41,6 +41,18 @@ import {cutMorThanNCharacters} from "@/core/helpers/helper";
 
 const props = defineProps(["template", "card_style"]);
 const store = useTemplateStore();
+
+const toggleCheck = () => {
+  const id = props.template.id
+  const index = store.checkedTemplateRows.indexOf(id)
+
+  if (index === -1) {
+    store.checkedTemplateRows.push(id)
+  } else {
+    store.checkedTemplateRows.splice(index, 1)
+  }
+}
+
 </script>
 
 <style scoped>

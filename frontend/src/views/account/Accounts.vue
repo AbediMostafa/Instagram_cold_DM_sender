@@ -46,18 +46,18 @@
         </div>
 
         <div class="me-2">
-<!--          <a class="btn btn-sm btn-light-success ms-2" @click="store.resetIsUsed()">Reset</a>-->
+          <!--          <a class="btn btn-sm btn-light-success ms-2" @click="store.resetIsUsed()">Reset</a>-->
 
-<!--          <el-date-picker-->
-<!--              v-model="store.accounts.dateRange"-->
-<!--              type="daterange"-->
-<!--              range-separator="To"-->
-<!--              start-placeholder="Start date"-->
-<!--              end-placeholder="End date"-->
-<!--              @change="actionClicked"-->
-<!--              value-format="YYYY-MM-DD"-->
-<!--              style="max-width: 250px;"-->
-<!--          />-->
+          <!--          <el-date-picker-->
+          <!--              v-model="store.accounts.dateRange"-->
+          <!--              type="daterange"-->
+          <!--              range-separator="To"-->
+          <!--              start-placeholder="Start date"-->
+          <!--              end-placeholder="End date"-->
+          <!--              @change="actionClicked"-->
+          <!--              value-format="YYYY-MM-DD"-->
+          <!--              style="max-width: 250px;"-->
+          <!--          />-->
         </div>
         <div class="me-2">
           <el-input
@@ -214,17 +214,18 @@
 
 
                     <div>
+
+                        <span
+                            @click="copyToClipboard(account.phone)"
+                            class="text-muted fw-semibold text-muted d-block fs-8">
+                    {{ account.name }}
+                  </span>
                       <span
                           @click="copyToClipboard(account.password)"
                           class="text-muted fw-semibold text-muted fs-8">{{ account.password }}</span>
                       <account-instagram-state :state="account.instagram_state"/>
                       <account-app-state :state="account.app_state"/>
                     </div>
-                    <span
-                        @click="copyToClipboard(account.phone)"
-                        class="text-muted fw-semibold text-muted d-block fs-8">
-                    {{ account.phone }}
-                  </span>
                     <span
                         @click="store.fetchOtpAndCopy(account.secret_key)"
                         class="text-muted fw-semibold text-muted d-block fs-8">
@@ -272,8 +273,8 @@
                 <span
                     v-if="account.service"
                     class="text-muted fs-8 border border-dashed px-3 py-1 rounded border-2 border-info-subtle"
-                    >{{ account.service?.title }}</span
-                  >
+                >{{ account.service?.title }}</span
+                >
 
                 <div>
                   <span class="badge badge-light-primary mt-1 ms-1"
@@ -284,10 +285,11 @@
                 <div>
                   <span
                       @click="copyToClipboard(account.email)"
-                      class="text-muted fw-semibold text-muted fs-8">{{account.email }}</span>
+                      class="text-muted fw-semibold text-muted fs-8">{{ account.email }}</span>
                   <div
                       @click="copyToClipboard(account.email_password)"
-                      class="text-muted fw-semibold text-muted fs-8">{{ account.email_password }}</div>
+                      class="text-muted fw-semibold text-muted fs-8">{{ account.email_password }}
+                  </div>
                 </div>
               </td>
 

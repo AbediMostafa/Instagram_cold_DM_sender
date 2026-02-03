@@ -17,7 +17,7 @@
               class="btn btn-sm btn-icon btn-active-color-primary"
               data-bs-dismiss="modal"
           >
-            <KTIcon icon-name="cross" icon-class="fs-1" />
+            <KTIcon icon-name="cross" icon-class="fs-1"/>
           </div>
         </div>
 
@@ -74,6 +74,18 @@
               </el-form-item>
             </div>
 
+            <div class="d-flex flex-column mb-8 fv-row">
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span class="required">Priority</span>
+              </label>
+              <el-form-item prop="priority">
+                <el-input
+                    v-model="formData.priority"
+                    placeholder="Priority"
+                />
+              </el-form-item>
+            </div>
+
             <!-- Workflow -->
             <div class="d-flex flex-column mb-8 fv-row">
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
@@ -112,11 +124,11 @@
               >
                 <span v-if="!loading" class="indicator-label">
                   Submit
-                  <KTIcon icon-name="arrow-right" icon-class="fs-3 ms-2 me-0" />
+                  <KTIcon icon-name="arrow-right" icon-class="fs-3 ms-2 me-0"/>
                 </span>
                 <span v-else class="indicator-progress">
                   Please wait...
-                  <span class="spinner-border spinner-border-sm align-middle ms-2" />
+                  <span class="spinner-border spinner-border-sm align-middle ms-2"/>
                 </span>
               </button>
             </div>
@@ -128,11 +140,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from "vue";
-import { hideModal } from "@/core/helpers/modal";
+import {defineComponent, ref, onMounted} from "vue";
+import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
-import { useModuleStore } from "@/stores/Module";
-import { useWorkflowStore } from "@/stores/Workflow";
+import {useModuleStore} from "@/stores/Module";
+import {useWorkflowStore} from "@/stores/Workflow";
 
 export default defineComponent({
   name: "AddModuleModal",
@@ -149,12 +161,13 @@ export default defineComponent({
       module_path: "",
       class_name: "",
       workflow_id: null as number | null,
+      priority: null as number | null,
     });
 
     const rules = {
-      title: [{ required: true, message: "Title is required", trigger: "blur" }],
-      module_path: [{ required: true, message: "Module path is required", trigger: "blur" }],
-      class_name: [{ required: true, message: "Class name is required", trigger: "blur" }],
+      title: [{required: true, message: "Title is required", trigger: "blur"}],
+      module_path: [{required: true, message: "Module path is required", trigger: "blur"}],
+      class_name: [{required: true, message: "Class name is required", trigger: "blur"}],
     };
 
     onMounted(() => {
