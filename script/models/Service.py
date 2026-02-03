@@ -7,7 +7,7 @@ class Service(BaseWithTimeZoneModel):
     title = CharField()
     description = TextField()
 
-    static_services = ['account_profiler', 'reels_spammer']
+    static_services = ['account_profiler', 'reels_spammer','engagement']
     active_statuses = ['Pending', 'In progress']
     class Meta:
         table_name = 'services'
