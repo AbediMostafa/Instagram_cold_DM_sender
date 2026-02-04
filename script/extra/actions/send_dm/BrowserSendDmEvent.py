@@ -36,15 +36,17 @@ class BrowserSendDmEvent:
         self.error_indicators = ErrorIndicators(self.ig)
 
         # Get the account's category to send spintax with that category to the lead with the same category
-        self.category_model = self.ig.account.category
-        self.category = self.category_model.title if self.category_model else None
+        # self.category_model = self.ig.account.category
+        # self.category = self.category_model.title if self.category_model else None
 
     def init(self):
         self.ig.account.add_cli("Starting DM process ...")
         self.ig.account.set_state('sending DM', 'app_state')
-        self.ig.account.add_cli(f"Current chunck dm : {self.ig.account.current_chunk_dm}")
+        self.ig.account.add_cli(f"Current chunck dm : {2}")
+        # self.ig.account.add_cli(f"Current chunck dm : {self.ig.account.current_chunk_dm}")
 
-        leads = Lead.get_leads_for_dm(self.ig.account, self.ig.account.current_chunk_dm)
+        leads = Lead.get_leads_for_dm(self.ig.account, 2)
+        # leads = Lead.get_leads_for_dm(self.ig.account, self.ig.account.current_chunk_dm)
 
         for self.lead in leads:
             self.lead.dm_text = spin(Spintax.get_value(times=0))
@@ -55,8 +57,7 @@ class BrowserSendDmEvent:
 
         try:
             self.ig.account.add_cli(f"Sending Dm to : {self.lead.username}")
-            self.command = self.ig.account.create_command('dm follow up', 'processing', self.lead,
-                                                          category=self.category_model)
+            self.command = self.ig.account.create_command('dm follow up', 'processing', self.lead)
             self.before_message_fill_part()
             self.after_message_fill_part()
             self.check_message_delivery()
@@ -93,14 +94,15 @@ class BrowserSendDmEvent:
         self.error_indicators.not_every_one_can_message_this_account_handler(self.lead)
         self.error_indicators.send_more_messages_after_invite_accepted()
 
-        # Fill the text box with DM text
-        self.ig.page.get_by_label("Message", exact=True).fill(self.lead.dm_text)
-        self.ig.pause(2000, 3500)
-
         try:
             self.ig.page.get_by_role("button", name="Turn On", exact=True).click(timeout=2000)
         except:
             pass
+        # Fill the text box with DM text
+        self.ig.page.get_by_label("Message", exact=True).fill(self.lead.dm_text)
+        self.ig.pause(2000, 3500)
+
+
 
         try:
             self.ig.page.get_by_role("button", name="Send", exact=True).click()

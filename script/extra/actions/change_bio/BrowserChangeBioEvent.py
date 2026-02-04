@@ -14,6 +14,9 @@ class BrowserChangeBioEvent:
         if self.ig.account.has('bio'):
             raise Exception(f'{self.ig.account.username} has a bio')
 
+        if self.ig.account.get_passed_days_since_creation() < 3:
+            raise Exception(f"Account is not old enough to set bio")
+
     def init(self):
         self.ig.account.add_cli('Changing bio ...')
 
