@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class Account extends Model
 {
@@ -110,6 +111,11 @@ class Account extends Model
         return $this->hasOne(AccountSpec::class);
     }
 
+    public function automationQueues()
+    {
+        return $this->hasMany(AutomationQueue::class);
+    }
+
     public static function createOne()
     {
         $secretKey = str_replace(' ', '', r('secret_key'));
@@ -181,24 +187,6 @@ class Account extends Model
         return $this->belongsTo(Profile::class);
     }
 
-    public function updateProfileProxyFromResidentialToCustom()
-    {
-        if ($this->profile) {
-            sleep(5);
-
-            try {
-                $updateProxy = new ProfileUpdateProxy($this->profile->profile_id);
-                $updateProxy->getProfile();
-                return $updateProxy->updateProxyFromResidentialToCustom();
-
-            } catch (\Exception $exception) {
-                dump($exception->getMessage() . $exception->getTraceAsString());
-            }
-        } else {
-            return "{$this->username} dont have profile";
-        }
-    }
-
 
     public function updateProfileProxyToCustom()
     {
@@ -268,57 +256,130 @@ class Account extends Model
             ->where('instagram_state', 'active');
     }
 
-    /**
-     * Scope: filter by specific IDs
-     */
-    public function scopeWithSpecificIds($query, ?array $ids)
+    public static function getNext($limit)
     {
-        if ($ids) {
-            $query->whereIn('id', $ids);
+        $query = Account::query()->free();
+
+        if ($query->doesntExist()) {
+            Account::query()->update(['is_used' => 0]);
         }
 
-        return $query;
-    }
-
-    /**
-     * Scope: filter by tag titles
-     */
-    public function scopeWithTags($query, ?array $tagTitles)
-    {
-        if ($tagTitles) {
-            $query->whereHas('tags', function ($q) use ($tagTitles) {
-                $q->whereIn('title', $tagTitles);
-            });
-        }
-
-        return $query;
-    }
-
-    public static function next_account($serviceId = null, $specificIds = [], $tagTitles = [])
-    {
-        $query = Account::query();
-
-        if ($serviceId) {
-            $query->where('service_id', $serviceId);
-        }
-
-        return $query
-            ->free()
-            ->withSpecificIds($specificIds)
-            ->withTags($tagTitles)
+        $accounts = Account::query()
             ->orderBy('id')
-            ->lock(DB::raw('FOR UPDATE SKIP LOCKED'))
-            ->first();
+            ->limit($limit)
+            ->free()
+            ->get();
+
+        Account::query()->whereIn('id', $accounts->pluck('id'))->update(['is_used' => 1]);
+
+        return $accounts;
     }
 
-    public static function resetIsUsed($serviceId = null)
+    public function updateProfile($profile, $proxy)
     {
-        $query = Account::query();
+        $payload = [];
 
-        if ($serviceId) {
-            $query->where('service_id', $serviceId);
+        $storageState = $this->getStorageState();
+
+        if (
+            empty($storageState) ||
+            !isset($storageState['cookies']) ||
+            !is_array($storageState['cookies'])
+        ) {
+            $this->addCli("Account storage state invalid");
+            $storageState = "";
         }
 
-        $query->update(['is_used' => false]);
+//        $payload['profile_id'] = 'sldfj';
+        $payload['profile_id'] = $profile->profile_id;
+
+        if ($storageState) {
+            $payload['cookie'] = json_encode($storageState['cookies']);
+        }
+
+        $payload["user_proxy_config"] = [
+            "proxy_soft" => "other",
+            "proxy_type" => "socks5",
+            "proxy_host" => $proxy->ip,
+            "proxy_port" => $proxy->port,
+            "proxy_user" => $proxy->username,
+            "proxy_password" => $proxy->password,
+        ];
+
+        $url = "http://local.adspower.net:50325/api/v2/browser-profile/update";
+
+        $maxRetries = 5;
+        $retryDelay = 2;
+
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+
+            $response = Http::withoutVerifying()->post($url, $payload);
+
+            $json = $response->json();
+
+            if ($json['code'] == -1) {
+                $this->addCli("Error in profile update : {$json['msg']}");
+                throw new \Exception("Error in profile update : {$json['msg']}");
+            }
+
+            $this->addCli("Account profile update response (Attempt {$attempt})");
+            $this->addCli($json, asJson: true);
+
+            $code = $json['code'] ?? null;
+            $msg = $json['msg'] ?? '';
+
+            if (
+                $code === -1 &&
+                str_contains($msg, 'Too many request')
+            ) {
+                if ($attempt < $maxRetries) {
+                    sleep($retryDelay);
+                    continue;
+                }
+
+                throw new \Exception(
+                    'Maximum retry attempts reached: Too many requests per second'
+                );
+            }
+
+            break;
+        }
+
+        return $json;
+    }
+
+    function getStorageState(): array
+    {
+        $storageState = $this->web_session; // JSON string from DB
+
+        try {
+            $decoded = json_decode($storageState, true);
+
+            // Handle double-encoded JSON
+            if (is_string($decoded)) {
+                $decoded = json_decode($decoded, true);
+            }
+
+            return is_array($decoded) ? $decoded : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    public function addCli($log, bool $asJson = false)
+    {
+        if ($asJson) {
+            $log = json_encode(
+                $log,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
+        }
+
+        $log = "[{$this->username} -- {$this->id}] \${$log}";
+
+        $truncatedLog = $log ? substr($log, 0, 254) : '';
+
+
+        return $this->clis()->create(['log' => $truncatedLog]);
     }
 }

@@ -51,4 +51,23 @@ class Order extends Model
             'account_id' => null
         ]);
     }
+
+    public static function getOrdersToExecute($account, $count)
+    {
+        return Order::query()
+            ->whereColumn('completed_count', '<', 'total_count')
+            ->whereIn('status', Order::$activeStatuses)
+            ->whereNotIn(
+                'id',
+                fn($_) => $_->select('order_id')
+                    ->from((new OrderComment())->getTable())
+                    ->where('account_id', $account->id)
+            )
+            ->orderBy('id')
+            ->whereHas('comments', function ($q) {
+                $q->where('status', 'free');
+            })
+            ->limit($count)
+            ->get();
+    }
 }

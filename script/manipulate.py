@@ -125,17 +125,64 @@ from script.models.Order import Order
 from script.models.Module import Module
 from script.models.Service import Service
 from script.models.Balance import Balance
+from script.models.Profile import Profile
+from script.models.AutomationQueue import AutomationQueue
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
+import uuid
+import json
+from script.extra.helper import *
+
+
+
+a = AutomationQueue.select().first()
+print(a.id)
+
+# payload = a.payload
+print(a.payload_obj.profile)
+
+add_cli('salam farmande', a.payload_obj.account)
+
+# profiles = Profile.select()
+#
+# for profile in profiles:
+#     print(profile.profile_id)
+#
+#     payload = {
+#         "profile_id": f"{profile.profile_id}",
+#         "fingerprint_config": {
+#             "language_switch": 0,
+#         },
+#     }
+#     url = "http://local.adspower.net:50325/api/v2/browser-profile/update"
+#     response = requests.post(url, json=payload, verify=False)
+#
+#     print(response.status_code)
+#     print(response.text)
+#     sleep(2)
+#
+# proxy = {
+#     "proxy_soft": "other",
+#     "proxy_type": "socks5",
+#     "proxy_host": "1.1.1.1",
+#     "proxy_port": "1",
+#     "proxy_user": "",
+#     "proxy_password": "",
+# }
+# payload["user_proxy_config"] = proxy
+#
+
+
+# izz
 
 # account = Account.get_by_id(16544)
-account = get_next_account()
-browser_ig = BasePlaywright(account)
-browser_ig.init()
-LoginContext(browser_ig).fire()
-LikeAndCommentContext(browser_ig).fire()
+# account = get_next_account()
+# browser_ig = BasePlaywright(account)
+# browser_ig.init()
+# LoginContext(browser_ig).fire()
+# SendDmContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

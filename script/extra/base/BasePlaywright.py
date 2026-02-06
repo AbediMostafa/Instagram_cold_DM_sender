@@ -2,6 +2,7 @@ from script.extra.base.BrowserHandlerFactory import BrowserHandlerFactory
 from script.extra.exceptions import *
 import json
 import random
+from script.extra.base.AdsPowerHandler import AdsPowerHandler
 
 
 class BasePlaywright:
@@ -9,14 +10,12 @@ class BasePlaywright:
     context = None
     page = None
 
-    def __init__(self, account):
+    def __init__(self, account, profile_id):
         self.account = account
-        self.handler = BrowserHandlerFactory.create_handler(account)
+        self.handler = AdsPowerHandler(self.account, profile_id)
 
     def init(self):
-        self.handler.create_profile()
         self.handler.start_browser()
-
         self.browser = self.handler.get_browser()
         self.context = self.handler.get_context()
         self.page = self.handler.get_page()
@@ -45,7 +44,6 @@ class BasePlaywright:
 
     def cleanup(self):
         self.handler.cleanup()
-        self.handler.delete_profile()
 
     def pause(self, min_ms, max_ms):
         self.page.wait_for_timeout(random.randint(min_ms, max_ms))

@@ -2,52 +2,29 @@ import requests
 from playwright.sync_api import sync_playwright
 from script.extra.base.IBrowserHandler import IBrowserHandler
 from script.extra.modules.adspower.Adspower import Adspower
-from script.extra.modules.adspower.ProfileUpdator import ProfileUpdator
-from script.models.Profile import get_next
 from time import sleep
+from script.extra.helper import add_cli
 
 
 class AdsPowerHandler(IBrowserHandler):
     user_id_not_open_message = 'User_id is not open'
 
-    def create_profile(self):
-        self.account.add_cli('Creating Profile ....')
-
-        creator = ProfileUpdator(self.account)
-        creator.call_action('create')
-
-    def change_proxy(self):
-        self.account.add_cli('Change profile proxy ....')
-
-        creator = ProfileUpdator(self.account)
-        creator.call_action('change_proxy')
-
-    def update_profile(self):
-        self.account.add_cli('Updating Profile ....')
-
-        # Get next free profile to update
-        profile = get_next()
-
-        updator = ProfileUpdator(self.account, profile)
-        updator.call_action('update')
-
-    def delete_profile(self):
-        if self.account.profile is None:
-            return self.account.add_cli('Account dont have profile to delete ...')
-
-        self.account.add_cli('Deleting Profile ....')
-        creator = ProfileUpdator(self.account)
-        creator.call_action('delete')
-
     def start_browser(self):
-        self.ws_endpoint = Adspower().get_endpoint_url(self.account)
-        super().start_browser()
+
+        response = requests.get(
+            f'http://local.adspower.net:50325/api/v1/browser/start?user_id={self.profile_id}&ip_tab=0')
+
+        if response.status_code == 200:
+            res_data = response.json()
+            if res_data.get('code') == 0 and res_data.get('data', {}).get('ws', {}).get('puppeteer'):
+                self.ws_endpoint = res_data['data']['ws']['puppeteer']
+                return super().start_browser()
+
+        add_cli(response.text, self.account)
+        raise Exception("Failed to start AdsPower browser.")
 
     def cleanup(self):
         super().cleanup()
-
-        if self.account.profile is None:
-            return self.account.add_cli('Dont have profile to Close ...')
 
         try:
             closing_count = 1
@@ -58,7 +35,7 @@ class AdsPowerHandler(IBrowserHandler):
                 if response['msg'] == self.user_id_not_open_message:
                     break
 
-                self.account.add_cli(f'Attempt {closing_count} failed to close the profile ...')
+                add_cli(f'Attempt {closing_count} failed to close the profile ...', self.account)
 
                 sleep(closing_count)
                 closing_count += 1
@@ -66,11 +43,11 @@ class AdsPowerHandler(IBrowserHandler):
                 response = self.close_adspower(closing_count)
 
         except Exception as e:
-            self.account.add_cli(f'Problem Closing Profile : {str(e)}')
+            add_cli(f'Problem Closing Profile : {str(e)}', self.account)
 
     def close_adspower(self, closing_count):
-        self.account.add_cli(f'Closing Adspower profile for {closing_count} ...')
-        response = Adspower().close_browser(self.account.profile.profile_id)
+        add_cli(f'Closing Adspower profile for {closing_count} ...', self.account)
+        response = Adspower().close_browser(self.profile_id)
         json_response = response.json()
-        self.account.add_cli(f'Close adspower json : {json_response}')
+        add_cli(f'Close adspower json : {json_response}', self.account)
         return json_response

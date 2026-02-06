@@ -3,6 +3,7 @@
 use App\Classes\AdspowerProfileMaker;
 use App\Classes\AdsPowerProfileUpdateProxy;
 use App\Classes\Fingerprint;
+use App\Classes\Modules\LikeAndCommentContext;
 use App\Classes\ProfileDelete;
 use App\Classes\ProfileMaker;
 use App\Classes\ProfileMakerV2;
@@ -73,192 +74,138 @@ use \Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Http\Controllers\AccountSpecController;
+use \App\Console\Commands\PushAutomationJobs;
+use \App\Models\AutomationQueue;
 
 
 Route::get('/', function () {
 
+    dd(
+        AutomationQueue::query()->find(746)
+    );
 
-//    $account = Account::query()->find(19024);
+    DB::statement('TRUNCATE TABLE clis');
+
+    $automation = new PushAutomationJobs();
+    $automation->handle();
+
+    dd(
+        \App\Models\Cli::query()->orderBy('id')->get()->pluck('log')->toArray()
+    );
+
+
+//    $comment = OrderComment::query()->find(197287);
+//    $comment->setStatusTo('pending');
 //
-//    dd($account->username_changed);
+//    dd($comment);
+//    $account = Account::query()->find(19920);
+//
+//    $order = Order::getOrdersToExecute($account,3);
+//
+//    dd($order->isEmpty());
+//
+//
+//    $comment->status ='sent';
+//    $comment->account_id =19920;
+//    $comment->save();
+//    $account = Account::query()->find(19920);
+//
+//
+//    $account = Account::query()->find(19920);
+//    $modules = $account->service
+//        ?->workflows()
+//        ?->first()
+//        ?->modules
+//        ?->pluck('class_name')
+//        ?->toArray();
+//
+//    dd($modules);
 
-//   $accounts =  Account::query()
-//       ->where('instagram_state', '!=', 'active')
-//       ->get()
-//        ->each(function(Account $account){
-//            $account->makeActive();
-//            runPythonProcess('new.py', $account->id);
-//        });
-});
+//    DB::statement('TRUNCATE TABLE clis');
+//
+//    $automation = new PushAutomationJobs();
+//    $automation->handle();
+//
+//    dd(
+//        \App\Models\Cli::query()->orderBy('id')->get()->pluck('log')->toArray()
+//    );
+//    $account = Account::query()->find(33);
+//    dd($account->getStorageState());
+//    $type = Setting::getValue('proxy_type');
+//
+//    $proxy = Proxy::getFreeProxy();
+//
+//    dump("{$proxy->ip} : {$proxy->port}");
+//    dump("Id : {$proxy->id}");
+//    dump("Is used : {$proxy->is_used}");
+//
+//    $proxies = Proxy::query()
+//        ->orderBy('id')
+//        ->where('type', $type)
+//        ->pluck('is_used', 'id')
+//        ->toArray();
+//
+//    dd($proxies);
 
-Route::get('/add-comment', function () {
-});
-Route::get('/get-instagram-leads', function () {
-    $leads = \App\Models\CharityLead::query()
 
-//        ->whereNotNull('linkedin')
-        ->whereNotNull('instagram')
-        ->count();
+//    dd(Account::query()->where('id', '>', 19816)->update(['is_used'=>0]));
 
-    dd($leads);
-});
-Route::get('/update-charities', function () {
-    $s = \App\Models\CharityLead::query()
-        ->where('id', '>', 280000)
-        ->update([
-            'is_used' => 0
-        ]);
+//    $accountIsUsed = Account::query()
+//        ->orderBy('id')
+//        ->get()
+//        ->pluck('is_used')
+//        ->toArray();
+//
+//    dd($accountIsUsed);
+//    $accounts = Account::getNext(100);
+//    dump($accounts->pluck('id')->toArray());
 
-    dd($s);
-});
-Route::get('/import_charity_leads_test', function () {
-    $path = storage_path('app/charity leads/crunchbase_companies');
-    $files = glob($path . '/*.csv');
 
-    foreach ($files as $file) {
-        $handle = fopen($file, 'r');
-        if (!$handle) continue;
+//    $account = Account::query()
+//        ->whereIn('id', [19839,19840,19841])
+//        ->update(['is_used'=>0]);
+//
+//    dd($account);
 
-        $headers = fgetcsv($handle);
+//    $accounts = Account::query()
+//        ->orderBy('id')
+//        ->get()
+//        ->pluck('is_used', 'id')
+//        ->toArray();
+//
+//    dd($accounts);
 
-        $batch = [];
-        $count = 0;
+//    $profile = Profile::getNext();
+//    dump($profile->id);
+//
+//    dd(
+//        Profile::query()
+//            ->orderBy('id')
+//            ->pluck('is_used')->toArray()
+//    );
+//    dd(Profile::query()
+//        ->get()
+//        ->pluck('id')
+//        ->toArray());
+//    dd(Profile::get()->pluck('is_used'));
+//    dd(
+//        Profile::query()->get()->pluck('is_used')->toArray()
+//    );
+//    $profiles = Profile::query()->latest()->update(['is_used'=>0]);
+//
+//    dd($profiles);
+//    $profiles = Profile::query()->get();
+//
+//    dd($profiles);
+//    $accountsQuery = Account::query()
+//        ->where('is_used', 0)
+//        ->where('instagram_state', 'active')
+//        ->limit(100)
+//        ->get();
+//
+//    dd($accountsQuery);
 
-        while (($row = fgetcsv($handle)) !== false) {
 
-            $data = array_combine($headers, $row);
-
-            $insertingData = [
-                'data' => json_encode($data),
-                'company_name' => $data["name"],
-                'phone_number' => $data["phone_number"],
-                'website' => $data["website"],
-                'email' => $data["contact_email"],
-                'linkedin' => $data["linkedin"],
-                'lead_type' => 'crunchbase_companies_leads',
-                'is_used' => 0
-            ];
-
-            try {
-                \App\Models\CharityLead::query()->create($insertingData);
-                $count += 1;
-            } catch (Throwable $e) {
-                dump($e->getMessage());
-                dump($insertingData);
-            }
-        }
-
-        dump("✅ Imported {$count} rows from" . basename($file));
-    }
-});
-Route::get('/import_charity_leads', function () {
-    $path = storage_path('app/charity leads/crunchbase_companies');
-    $files = glob($path . '/*.csv');
-
-    foreach ($files as $file) {
-        $handle = fopen($file, 'r');
-        if (!$handle) continue;
-
-        $headers = fgetcsv($handle);
-
-        $batch = [];
-        $count = 0;
-
-        while (($row = fgetcsv($handle)) !== false) {
-
-            $data = array_combine($headers, $row);
-
-            $linkedin = $data['linkedin'];
-
-            $batch[] = [
-                'data' => json_encode($data),
-                'company_name' => $data["name"],
-                'phone_number' => $data["phone_number"],
-                'website' => $data["website"],
-                'email' => $data["contact_email"],
-                'linkedin' => $data["linkedin"],
-                'lead_type' => 'crunchbase_companies_leads'
-            ];
-
-            // Insert every 1000 rows for efficiency
-            if (count($batch) >= 1000) {
-                DB::table('charity_leads')->insert($batch);
-                $count += count($batch);
-                $batch = [];
-            }
-        }
-
-        if (!empty($batch)) {
-            DB::table('charity_leads')->insert($batch);
-            $count += count($batch);
-        }
-
-        dump("✅ Imported {$count} rows from" . basename($file));
-    }
-});
-Route::get('/make-username', function () {
-    $keywords = ['it', 'software', 'tech', 'company', 'ai', 'style', 'new'];
-    $decorators = ['_', '.', '__', '___', '._', '_.', '._._.', '_._', '._.'];
-    $usernames = [];
-    $nums = [1404, 2025, 2024, 2023, 2000, 1400, 1401, 2002,];
-    while (count($usernames) < 500) {
-        // تصمیم: یک کلمه یا دوتا
-        $count = rand(1, 2);
-        $chosen = [];
-
-        // انتخاب تصادفی از آرایه
-        $keys = array_rand($keywords, $count);
-        if ($count === 1) {
-            $chosen[] = $keywords[$keys];
-        } else {
-            foreach ($keys as $k) {
-                $chosen[] = $keywords[$k];
-            }
-        }
-
-        $wordPart = implode('', $chosen); // ترکیب کلمات
-        $dec = $decorators[array_rand($decorators)];
-        $num = $nums[array_rand($nums)];
-
-        // اجزای ممکن
-        $parts = [$wordPart, (string)$num, $dec];
-
-        // جابجایی رندوم
-        shuffle($parts);
-
-        $username = implode('', $parts);
-
-        // 🔎 فیلتر قوانین اینستاگرام:
-        // 1. طول < 30
-        // 2. شروع نشدن با . یا _
-        // 3. تمام نشدن با . یا _
-        if (
-            strlen($username) < 30 &&
-            !in_array($username, $usernames) &&
-            !preg_match('/^[_\.]/', $username) &&   // شروع نشه با . یا _
-            !preg_match('/[_\.]$/', $username)      // تموم نشه با . یا _
-        ) {
-            $usernames[] = $username;
-        }
-
-        Template::query()
-            ->where('type', 'username')
-            ->where('text', $username)
-            ->doesntExist()
-        &&
-        Template::query()
-            ->create([
-                'text' => $username,
-                'type' => 'username'
-            ]);
-    }
-    dd($usernames);
-});
-Route::get('/activate-accounts', function () {
-    Account::all()->each(function ($account) {
-        $account->makeActive();
-    });
-    dd('shod');
 });
 
 
@@ -439,7 +386,7 @@ Route::post('modules', [ModuleController::class, 'index']);
 Route::post('modules/search', [ModuleController::class, 'search']);
 Route::post('modules/create', [ModuleController::class, 'create']);
 Route::post('modules/update', [ModuleController::class, 'update']);
-Route::post('module/delete', [ModuleController::class, 'delete']);
+Route::post('modules/delete', [ModuleController::class, 'delete']);
 
 Route::post('account-specs', [AccountSpecController::class, 'index']);
 

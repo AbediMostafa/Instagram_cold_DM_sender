@@ -21,4 +21,13 @@ class OrderComment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public static function getCommentToExecute($orderId)
+    {
+        return self::query()
+            ->where('order_id', $orderId)
+            ->where('status', 'free')
+            ->orderBy('id')
+            ->first();
+    }
 }

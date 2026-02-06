@@ -35,7 +35,6 @@ class Process:
 
     def start(self):
         try:
-            # self.check_if_previous_browser_is_still_open()
             self.get_account()
             self.should_stop = self.before_process_hooks()
 
@@ -87,12 +86,6 @@ class Process:
         self.account.set_state('active')
 
         self.start_process()
-
-    def check_if_previous_browser_is_still_open(self):
-        print('Checking previous account ... ')
-        if self.previous_account:
-            creator = ProfileUpdator(self.previous_account)
-            creator.call_action('check_account')
 
     def start_process(self):
         HowManyEventsCanHandleStrategy(self.account, self.browser_ig, self.api_ig).run()

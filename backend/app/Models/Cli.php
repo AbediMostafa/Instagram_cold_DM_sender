@@ -17,6 +17,11 @@ class Cli extends Model
         'created_at' => 'datetime:Y-m-d H:i:s', // Change the format as needed
     ];
 
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
+
     public function toArray()
     {
         $array = parent::toArray();

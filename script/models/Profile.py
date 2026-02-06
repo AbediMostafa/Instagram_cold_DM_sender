@@ -4,9 +4,9 @@ from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 
 
 class Profile(BaseWithTimeZoneModel):
-    title = CharField()
+    title = CharField(null=True)
     profile_id = CharField()
-    folder = CharField()
+    folder = CharField(null=True)
     is_used = SmallIntegerField(default=0)
     proxy = ForeignKeyField(Proxy, backref='profiles', null=True)
 

@@ -4,33 +4,32 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 from script.models.Process import Process
+from script.models.AutomationQueue import AutomationQueue
 from script.models.Account import Account
 from script.extra.exceptions import ProcessShouldStop
 import traceback
 from script.models.AccountHelper import get_next_account
+from script.models.AutomationQueue import AutomationQueue
 
 
 class ProcessManager:
     pid = None
 
-    # python peewee model
     process = None
-    remote_process = None
-    initial_data = None
     sleep_time = 7
-    workflow = None
-    service = None
     modules = None
     account = None
     browser_ig = None
+
+    automation_queue = None
+    data = None
 
     def run(self):
         self.init()
 
         try:
             self.check_stop_statuses()
-            self.get_modules()
-            self.select_account()
+            self.process.add_cli(f" modules: {self.data.modules.classes}")
             self.start()
 
         except ProcessShouldStop as e:
@@ -45,13 +44,11 @@ class ProcessManager:
     def init(self):
         self.pid = os.getpid()
         self.process = Process.update_or_create_process(self.pid)
-        self.workflow = self.process.workflow
+        self.automation_queue = AutomationQueue.pop_first()
 
-        if self.workflow:
-            self.service = self.process.workflow.service
-
-        if self.workflow:
-            self.modules = self.workflow.modules()
+        if self.automation_queue:
+            self.data = self.automation_queue.payload_obj
+            self.account = Account.get_by_id(self.data.account.id)
 
     def check_stop_statuses(self):
 
@@ -59,34 +56,8 @@ class ProcessManager:
             err = f'Process status : {self.process.status}, going to sleep {self.sleep_time} seconds ...'
             raise ProcessShouldStop(err)
 
-        if self.workflow is None:
-            err = f"There's no workflow assigned to the process, going to sleep {self.sleep_time} seconds ..."
-            raise ProcessShouldStop(err)
-
-        if self.service is None:
-            err = f"There's no service assigned to this workflow, going to sleep {self.sleep_time} seconds ..."
-            raise ProcessShouldStop(err)
-
-        if not self.modules:
-            err = f"There's no modules assigned to this workflow, going to sleep {self.sleep_time} seconds ..."
-            raise ProcessShouldStop(err)
-
-        if self.service.should_run() is False:
-            err = f"We shouldn't run the process, going to sleep {self.sleep_time} seconds ..."
-            raise ProcessShouldStop(err)
-
-    def get_modules(self):
-
-        module_titles = [module.title for module in self.modules]
-        self.process.add_cli(
-            f"workflow : {self.workflow.title}, service: {self.service.service} modules: {module_titles}")
-
-    def select_account(self):
-
-        self.account = get_next_account(service_id=self.service.id)
-
-        if self.account is None:
-            err = "There's no account for this service"
+        if self.automation_queue is None:
+            err = f"There's no automation queue, going to sleep {self.sleep_time} seconds ..."
             raise ProcessShouldStop(err)
 
     def start(self):
@@ -97,7 +68,7 @@ class ProcessManager:
         import traceback
 
         try:
-            self.browser_ig = BasePlaywright(self.account)
+            self.browser_ig = BasePlaywright(self.account, self.data.profile.profile_id)
             self.browser_ig.init()
             LoginContext(self.browser_ig).fire()
 

@@ -25,6 +25,22 @@ class Profile extends Model
         return $this->belongsTo(Proxy::class);
     }
 
+
+    public static function getNext()
+    {
+        $query = Profile::query()->where('is_used', 0);
+
+        if ($query->doesntExist()) {
+            Profile::query()->update(['is_used' => 0]);
+        }
+
+        $profile = $query->orderBy('id')->first();
+        $profile->is_used = 1;
+        $profile->save();
+
+        return $profile;
+    }
+
     public static function getWithFewestAccounts()
     {
         return Profile::query()
@@ -64,26 +80,6 @@ class Profile extends Model
             DB::rollBack();
             throw $exception;
         }
-    }
-
-    public static function getWithoutAccountProfiles()
-    {
-
-        $request = new ProfileRequest();
-
-        $resp = $request->request('get', 'https://launcher.mlx.yt:45001/api/v1/profile/statuses');
-
-        $data = collect($resp->json()["data"]["states"])->keys();
-
-        $resp = $request->request('post', 'https://api.multilogin.com/profile/metas', ['ids' => $data]);
-        $profiles = $resp->json()["data"]["profiles"];
-
-        $profiles = collect($profiles)->pluck("name")->each(function ($title) {
-
-            $profileDb = Profile::query()->where("title", $title)->doesntExist();
-
-            $profileDb && dump($title);
-        });
     }
 
     public static function is_($profileType)

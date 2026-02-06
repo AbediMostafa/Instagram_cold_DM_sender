@@ -11,22 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_comments', function (Blueprint $table) {
+        Schema::create('automation_queues', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('order_id')
-                ->nullable()
-                ->constrained('orders')
-                ->nullOnDelete();
-
-            $table->text('content');
-
             $table->foreignId('account_id')
-                ->nullable()
                 ->constrained('accounts')
-                ->nullOnDelete();
+                ->cascadeOnDelete();
 
-            $table->enum('status', ['free','processing', 'sent', 'failed', 'pending'])->default('free');
+            $table->json('payload');
+
+            $table->enum('status', ['pending', 'processing', 'done', 'failed'])->default('pending');
 
             $table->timestamps();
         });
@@ -37,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('order_comments');
+        Schema::dropIfExists('automation_queues');
     }
 };

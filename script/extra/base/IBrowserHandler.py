@@ -36,8 +36,9 @@ class IBrowserHandler:
     context = None
     page = None
 
-    def __init__(self, account):
+    def __init__(self, account, profile_id):
         self.account = account
+        self.profile_id = profile_id
         self.playwright = sync_playwright().start()
 
     def start_browser(self):
