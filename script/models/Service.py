@@ -7,7 +7,7 @@ class Service(BaseWithTimeZoneModel):
     title = CharField()
     description = TextField()
 
-    static_services = ['account_profiler', 'reels_spammer','engagement']
+    static_services = ['reels_spammer','engagement', 'comment']
     active_statuses = ['Pending', 'In progress']
     class Meta:
         table_name = 'services'
@@ -19,7 +19,7 @@ class Service(BaseWithTimeZoneModel):
             Order
             .select()
             .where(
-                (Order.service == self) &
+                # (Order.service == self) &
                 (Order.status.in_(self.active_statuses))
             )
             .exists()

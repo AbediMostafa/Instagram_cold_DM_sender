@@ -92,7 +92,7 @@
 
               </td>
               <td>
-                  <span class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.created_at}}</span>
+                <span class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.created_at }}</span>
               </td>
               <td class="text-end">
                 <el-dropdown class="p-5">
@@ -110,6 +110,11 @@
                       </el-dropdown-item>
                       <el-dropdown-item @click="store.getOrders(store.orders.current_page, false)">Refresh
                       </el-dropdown-item>
+
+                      <el-dropdown-item @click="openComments(order.id)">
+                        Comments
+                      </el-dropdown-item>
+
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -136,22 +141,17 @@
     <!--begin::Body-->
   </div>
   <add-order-modals/>
+  <OrderCommentsModal ref="commentsModal"/>
+
 
 </template>
 
 <script lang="ts" setup>
 import {onMounted, ref} from 'vue';
 import AddOrderModals from "@/components/modals/order/AddOrderModal.vue";
-import CreateLeadModal from '@/components/modals/lead/CreateLeadModal.vue';
-import ExportLeadModal from "@/components/modals/lead/ExportLeadModal.vue";
+import OrderCommentsModal from "@/components/modals/order/OrderCommentsModal.vue";
 import {showModal} from '@/core/helpers/modal';
 import {useAppConfigStore} from '@/stores/AppConfig';
-import EditLeadModal from '@/components/modals/lead/EditLeadModal.vue';
-import LeadLastState from '@/components/lead/LeadLastState.vue';
-import LeadDropDown from '@/components/lead/LeadDropDown.vue';
-import LeadsDropDown from '@/components/lead/LeadsDropDown.vue';
-import {useLeadStore} from '@/stores/Lead';
-import {useTagStore} from '@/stores/Tag';
 import {useCategoryStore} from '@/stores/Category';
 import {useOrderStore} from "@/stores/Order";
 
@@ -160,11 +160,12 @@ const store = useOrderStore();
 const configStore = useAppConfigStore();
 const categoryStore = useCategoryStore();
 
-// Function to handle editing a lead
-const editClicked = id => {
-  selectedId.value = id;
-  showModal('edit_lead_modal');
-};
+
+const commentsModal = ref(null)
+
+const openComments = (orderId: number) => {
+  commentsModal.value.open(orderId)
+}
 
 // Fetch leads, tags, and categories on mount
 onMounted(() => {

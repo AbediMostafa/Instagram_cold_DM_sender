@@ -63,7 +63,7 @@ class Order(BaseWithTimeZoneModel):
             from decimal import Decimal
 
             balance = Balance.select().where(Balance.customer == 'sadeghi').first()
-            completed_fee = Decimal(self.completed_count) * Decimal('0.00035')
+            completed_fee = Decimal(self.completed_count) * Decimal('0.00025')
 
             balance.balance -= completed_fee
             balance.save()

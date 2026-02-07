@@ -30,10 +30,6 @@ class ModuleManager:
 
                 self.loaded_modules.append(module_class)
 
-                self.process.add_cli(
-                    f"Loaded module: {module.title} ({class_name})"
-                )
-
             except Exception as e:
                 self.process.add_cli(
                     f"Failed to load module {module.title} → {str(e)}"
@@ -51,8 +47,6 @@ class ModuleManager:
 
         for action_class in self.loaded_modules:
             try:
-                self.browser_ig.pause(800, 1100)
-
                 self.process.add_cli(
                     f"Running module: {action_class.__name__}"
                 )

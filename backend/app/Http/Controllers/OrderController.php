@@ -141,7 +141,7 @@ class OrderController extends Controller
                     "service" => 740,
                     "name" => "Comment",
                     "category" => "SSM-fire",
-                    "rate" => "0.35$",
+                    "rate" => "0.25$",
                     "min" => 5,
                     "max" => 2000,
                     "type" => "custom_comments",
@@ -352,6 +352,7 @@ class OrderController extends Controller
 
     }
 
+
     public function thereIsNoComment()
     {
         $orderId = r('id');
@@ -369,5 +370,14 @@ class OrderController extends Controller
             ->where('status', 'Unknown')
             ->get()
             ->each(fn($order) => $order->changeProcessingToFree());
+    }
+
+    public function getComment()
+    {
+        return Order::query()->find(r('orderId'))
+            ->comments()
+            ->orderBy('id')
+            ->get();
+
     }
 }

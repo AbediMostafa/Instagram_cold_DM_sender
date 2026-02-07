@@ -27,6 +27,6 @@ def get_next():
     if next_profile:
         next_profile.is_used = True
         next_profile.save()
-        print(f'Selected profile : {next_profile.id}')
+        print(f'Selected profile : {next_profile.profile_id}')
 
     return next_profile

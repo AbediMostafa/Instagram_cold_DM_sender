@@ -15,4 +15,3 @@ process = ProcessManager()
 
 while True:
     process.run()
-    time.sleep(2)

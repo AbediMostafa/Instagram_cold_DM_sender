@@ -54,13 +54,13 @@ class ProfileUpdator:
             return False
 
         cookies = storage_state["cookies"]
-        self.payload["cookie"] = json.dumps(cookies)
+        return json.dumps(cookies)
 
     def get_proxy(self):
 
         self.proxy_obj = get_free_proxy()
 
-        self.proxy = {
+        return {
             "proxy_soft": "other",
             "proxy_type": "socks5",
             "proxy_host": self.proxy_obj.ip,
@@ -68,7 +68,6 @@ class ProfileUpdator:
             "proxy_user": self.proxy_obj.username,
             "proxy_password": self.proxy_obj.password,
         }
-        return self
 
     def assign_profile_name(self):
         uid = self.account.id if self.account else str(uuid.uuid4())
@@ -119,20 +118,20 @@ class ProfileUpdator:
         self.account.add_cli('Updating account ....')
 
         try:
-            sleep(3)
-            self.assign_cookies()
-            self.payload = self.account.fingerprint
-            self.payload["profile_id"] = self.profile.profile_id
+            self.payload = {
+                'profile_id': self.profile.profile_id,
+                'cookie': self.assign_cookies(),
+                "user_proxy_config": self.get_proxy()
+            }
 
-            self.send_request() \
-                .update_account()
+            self.send_request().update_account()
 
         except Exception as e:
             self.account.add_cli(f"Error: {e} | {self.response_message}")
             raise Exception(f"{str(e)} | {self.response_message}")
 
     def send_request(self):
-        url = "http://local.adspower.net:50325/api/v1/user/create"
+        url = "http://local.adspower.net:50325/api/v2/browser-profile/update"
         max_retries = 5
         retry_delay = 2
 
@@ -141,7 +140,7 @@ class ProfileUpdator:
 
             try:
                 json_response = self.response.json()
-                self.account.add_cli(f"Create response (Attempt {attempt})")
+                self.account.add_cli(f"Update response (Attempt {attempt})")
                 self.account.add_cli(json_response)
             except Exception:
                 raise Exception(f"Invalid response: {self.response.text}")

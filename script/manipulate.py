@@ -125,17 +125,22 @@ from script.models.Order import Order
 from script.models.Module import Module
 from script.models.Service import Service
 from script.models.Balance import Balance
+from script.models.Profile import Profile
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
 
+profiles = Profile.select()
+
+for profile in profiles:
+    print(profile.profile_id)
 # account = Account.get_by_id(16544)
-account = get_next_account()
-browser_ig = BasePlaywright(account)
-browser_ig.init()
-LoginContext(browser_ig).fire()
-LikeAndCommentContext(browser_ig).fire()
+# account = get_next_account()
+# browser_ig = BasePlaywright(account)
+# browser_ig.init()
+# LoginContext(browser_ig).fire()
+# LikeAndCommentContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

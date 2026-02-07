@@ -101,6 +101,16 @@ class IBrowserHandler:
             except Exception as e:
                 self.account.add_cli(f'Problem stopping playwright : {str(e)}')
 
+    def clear_storage(self):
+        # self.context.clear_cookies()
+        self.page.evaluate("""() => {
+            localStorage.clear();
+            sessionStorage.clear();
+            indexedDB.databases().then(dbs => {
+                dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+            });
+        }""")
+
     def get_browser(self):
         return self.browser
 

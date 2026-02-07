@@ -26,6 +26,7 @@ class Process(BaseWithTimeZoneModel):
             log = f'[{self.pid}] ${log}'
 
         print(log)
+        return False
 
         if print_only:
             return False

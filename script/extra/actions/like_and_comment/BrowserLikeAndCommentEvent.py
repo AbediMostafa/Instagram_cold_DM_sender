@@ -30,8 +30,8 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
             self.ig.pause(1000, 1200)
             self.check_fail_situations()
-            self.try_like()
-            self.ig.pause(1000, 1200)
+            # self.try_like()
+            # self.ig.pause(1000, 1200)
 
             if 'reels' in self.ig.page.url:
                 self.ig.account.add_cli('THIS IS A REELS PAGE')

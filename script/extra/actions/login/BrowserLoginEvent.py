@@ -25,7 +25,7 @@ class BrowserLoginEvent:
 
         self.ig.account.add_cli('Starting Login ...')
 
-        for _ in range(2):
+        for _ in range(1):
             self.check_for_login()
 
             self.ig.account.add_cli(f'Login loop for the {_} time ...')

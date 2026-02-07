@@ -77,8 +77,6 @@ use App\Http\Controllers\AccountSpecController;
 
 Route::get('/', function () {
 
-
-//    $account = Account::query()->find(19024);
 //
 //    dd($account->username_changed);
 
@@ -406,6 +404,7 @@ Route::post('order/fail', [OrderController::class, 'fail']);
 Route::post('order/reset', [OrderController::class, 'reset']);
 Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
 Route::post('order/there-is-no-comment', [OrderController::class, 'thereIsNoComment']);
+Route::post('order/get-comment', [OrderController::class, 'getComment']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
 

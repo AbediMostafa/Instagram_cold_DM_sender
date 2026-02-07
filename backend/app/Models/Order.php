@@ -17,7 +17,7 @@ class Order extends Model
 
     protected function serializeDate(\DateTimeInterface $date)
     {
-        return Carbon::instance($date)->format('Y-m-d H:i');
+        return Carbon::instance($date)->format('m-d H:i');
     }
 
     public function comments()

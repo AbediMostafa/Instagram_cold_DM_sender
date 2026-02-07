@@ -29,7 +29,7 @@ class AdsPowerHandler(IBrowserHandler):
         profile = get_next()
 
         updator = ProfileUpdator(self.account, profile)
-        updator.call_action('update')
+        updator.update()
 
     def delete_profile(self):
         if self.account.profile is None:
@@ -74,3 +74,31 @@ class AdsPowerHandler(IBrowserHandler):
         json_response = response.json()
         self.account.add_cli(f'Close adspower json : {json_response}')
         return json_response
+
+    def delete_adspower_cache(self):
+        import shutil
+        import os
+
+        cache_base = r'C:\.ADSPOWER_GLOBAL\cache'
+        profile_id = self.account.profile.profile_id
+
+        if not os.path.isdir(cache_base):
+            print('[CACHE] Cache base folder not found')
+            return
+
+        deleted = False
+
+        for folder in os.listdir(cache_base):
+            # match: profile_id_*
+            if folder.startswith(f'{profile_id}_'):
+                full_path = os.path.join(cache_base, folder)
+
+                try:
+                    shutil.rmtree(full_path)
+                    print(f'[CACHE] Deleted cache folder: {folder}')
+                    deleted = True
+                except Exception as e:
+                    print(f'[CACHE] Failed to delete {folder}: {e}')
+
+        if not deleted:
+            print(f'[CACHE] No cache folder found for profile {profile_id}')
