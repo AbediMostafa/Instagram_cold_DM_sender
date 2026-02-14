@@ -221,6 +221,15 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: "/tik-tok-posts",
+        name: "tik-tok-posts",
+        component: () => import("@/views/tik_tok_links/TikTokLinks.vue"),
+        meta: {
+          pageTitle: "Tik Tok Posts",
+          breadcrumbs: ["Tik Tok Posts"],
+        },
+      },
+      {
         path: "/builder",
         name: "builder",
         component: () => import("@/views/LayoutBuilder.vue"),

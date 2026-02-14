@@ -70,7 +70,6 @@ from script.extra.exceptions import CantPerformAction
 from script.models.Hashtag import get_hashtag
 from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import \
     LeadGenerateThroughApiContext
-from script.extra.strategies.HowManyEventsCanHandleStrategy import HowManyEventsCanHandleStrategy
 import requests
 from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
 # from script.models.AdsPowerLock import AdsPowerLock
@@ -101,7 +100,6 @@ from peewee import *
 from script.models.Proxy import get_free_proxy
 from script.models.Proxy import Proxy
 from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContext import LeadGenerateByLinkedinContext
-from script.extra.actions.comment.CommentContext import CommentContext
 # from script.extra.actions.comment.BrowserCommentEvent import get_free_comment
 import requests
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
@@ -131,16 +129,26 @@ from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
 
-profiles = Profile.select()
+from datetime import timedelta
+from script.extra.helper import tehran_now
 
-for profile in profiles:
-    print(profile.profile_id)
-# account = Account.get_by_id(16544)
-# account = get_next_account()
+from script.models.Order import get_next_order_for_account
+import json
+
+# oc = OrderComment.get_by_id(210874)
+# oc.updated_at = tehran_now()
+# oc.save()
+from script.models.OrderComment import release_stuck_comments
+
+# print(updated_counts.count())
+
+account = Account.get_by_id(33)
+order = get_next_order_for_account(account)
+print(order)
 # browser_ig = BasePlaywright(account)
 # browser_ig.init()
 # LoginContext(browser_ig).fire()
-# LikeAndCommentContext(browser_ig).fire()
+# LeadGenerateByPostEngagementContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

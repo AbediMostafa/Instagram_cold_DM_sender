@@ -285,7 +285,7 @@ def go_to_page(ig, target, name):
         except Exception as e:
             ig.account.add_cli(f"Attempt {attempt + 1} failed for loading the page : {name}")
 
-        ig.pause(5000, 7000)
+        ig.pause(2000, 2500)
 
     raise Exception(f"Failed to reach {name} after 5 attempts.")
 

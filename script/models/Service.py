@@ -7,8 +7,9 @@ class Service(BaseWithTimeZoneModel):
     title = CharField()
     description = TextField()
 
-    static_services = ['reels_spammer','engagement', 'comment']
+    static_services = ['reels_spammer', 'engagement', 'comment']
     active_statuses = ['Pending', 'In progress']
+
     class Meta:
         table_name = 'services'
 
@@ -26,6 +27,7 @@ class Service(BaseWithTimeZoneModel):
         )
 
     def should_run(self) -> bool:
+        # return True
         return (
                 self.service in self.static_services
                 or self.has_active_orders()

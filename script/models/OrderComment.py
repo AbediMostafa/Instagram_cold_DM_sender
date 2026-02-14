@@ -11,16 +11,11 @@ class OrderComment(BaseWithTimeZoneModel):
     content = TextField()
     account = ForeignKeyField(Account, backref='order_comments')
     status = CharField(default='free')
-    updated_at = DateTimeField(null=True, default=tehran_now)
-
-    def set_pending(self, account):
-        self.account = account
-        self.status = 'pending'
-        self.updated_at = tehran_now()
-        self.save()
+    updated_at = DateTimeField(null=True)
 
     def set_status_to(self, status):
         self.status = status
+        self.updated_at = tehran_now()
         self.save()
 
     class Meta:
@@ -48,7 +43,11 @@ def get_next_comment_for_order(order):
 
         updated = (
             OrderComment
-            .update(status='processing')
+            .update(
+                status='processing',
+                updated_at=tehran_now()
+            )
+
             .where(
                 (OrderComment.id == comment.id) &
                 (OrderComment.status == 'free')
@@ -62,3 +61,26 @@ def get_next_comment_for_order(order):
 
         return comment
 
+
+def release_stuck_comments():
+    from datetime import timedelta
+
+    """
+    If a comment is in 'processing' state for more than 6 minutes,
+    set it back to 'free'
+    """
+    five_minutes_ago = tehran_now() - timedelta(minutes=6)
+
+    updated_count = (
+        OrderComment.update(
+            status='free'
+        )
+        .where(
+            (OrderComment.status == 'processing') &
+            (OrderComment.updated_at.is_null(False)) &
+            (OrderComment.updated_at < five_minutes_ago)
+        )
+        .execute()
+    )
+
+    return updated_count

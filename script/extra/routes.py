@@ -27,10 +27,6 @@ routes = {
         'url': f'{base_url}processes/get-initial-data',
         'method': 'POST',
     },
-    'order-there-is-no-comment': {
-        'url': f'{base_url}order/there-is-no-comment',
-        'method': 'POST',
-    },
 }
 
 
@@ -87,11 +83,3 @@ def check_processes():
 
 def get_initial_data():
     return request_to_laravel('get-initial-data')
-
-
-# --------------------------------------------------
-# Order Routes
-# --------------------------------------------------
-
-def order_there_is_no_comment(id):
-    return request_to_laravel('order-there-is-no-comment', {'id': id})

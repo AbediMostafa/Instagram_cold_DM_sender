@@ -1,11 +1,10 @@
 from script.extra.helper import go_to_page
 from script.models.Order import get_next_order_for_account
-from script.models.OrderComment import get_next_comment_for_order
+from script.models.OrderComment import get_next_comment_for_order, release_stuck_comments
 from script.extra.helper import tehran_now
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from urllib.parse import urlparse
-from script.extra.routes import order_there_is_no_comment
 
 
 class BrowserLikeAndCommentEvent(BaseAction):
@@ -76,8 +75,6 @@ class BrowserLikeAndCommentEvent(BaseAction):
         if self.ig.is_visible_by_text("shared this with you") or self.ig.is_visible_by_text(
                 "Stay up to date with"):
 
-            # varinder_grewal13 shared this with you
-            # Stay up to date with varinder_grewal13 by following them
             print('Not now is visible')
             try:
                 self.ig.page.get_by_role("button", name="Not now").first.click(timeout=3000)
@@ -101,11 +98,10 @@ class BrowserLikeAndCommentEvent(BaseAction):
         # Step 2: pick a free comment
         self.comment = get_next_comment_for_order(self.order)
 
-        if not self.comment:
+        if not self.comment: 
             # If we have a pending or In progress order but there's no free comment it means there's some invalid
             # processing comments in it
             self.ig.account.add_cli("There is no comment for this account", print_only=True)
-            order_there_is_no_comment(self.order.id)
             return self.pick_and_mark_comment()
 
         return self.comment
@@ -251,3 +247,4 @@ class BrowserLikeAndCommentEvent(BaseAction):
         self.comment.set_status_to('sent')
         self.order.add_completed_count()
         self.order.make_order_completed()
+        release_stuck_comments()

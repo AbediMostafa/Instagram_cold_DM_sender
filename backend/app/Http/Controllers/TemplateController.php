@@ -27,7 +27,7 @@ class TemplateController extends Controller
                     $q->whereIn('tags.id', $tags);
                 }, '=', count($tags));
             })
-            ->orderBy('id', 'desc');
+            ->orderBy('id', 'asc');
 
         $paginator = $query->paginate(
             config('data.pagination.each_page.templates')

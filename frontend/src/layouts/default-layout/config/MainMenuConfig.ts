@@ -128,6 +128,13 @@ const MainMenuConfig: Array<MenuItem> = [
         bootstrapIcon: "bi-sticky",
         allowed_roles:['employee','user']
       },
+      {
+        heading: "Tik Tok Posts",
+        route: "/tik-tok-posts",
+        keenthemesIcon: "fingerprint-scanning",
+        bootstrapIcon: "bi-sticky",
+        allowed_roles:['tik-tok-viewer','user']
+      },
       // {
       //   heading: "settings",
       //   route: "/settings",

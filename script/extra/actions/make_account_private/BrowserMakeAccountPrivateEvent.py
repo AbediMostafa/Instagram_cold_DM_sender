@@ -10,6 +10,9 @@ class BrowserMakeAccountPrivateEvent:
     def init(self):
         self.ig.account.add_cli('Making account private...')
 
+        if self.ig.account.get_passed_days_since_creation() < 2:
+            return self.ig.account.add_cli(f"Account is not old enough to become private")
+
         try:
             self.command = self.ig.account.create_command(
                 'make public',

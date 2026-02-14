@@ -73,190 +73,10 @@ use \Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Http\Controllers\AccountSpecController;
+use \App\Http\Controllers\TikTokLinkController;
 
 
 Route::get('/', function () {
-
-//
-//    dd($account->username_changed);
-
-//   $accounts =  Account::query()
-//       ->where('instagram_state', '!=', 'active')
-//       ->get()
-//        ->each(function(Account $account){
-//            $account->makeActive();
-//            runPythonProcess('new.py', $account->id);
-//        });
-});
-
-Route::get('/add-comment', function () {
-});
-Route::get('/get-instagram-leads', function () {
-    $leads = \App\Models\CharityLead::query()
-
-//        ->whereNotNull('linkedin')
-        ->whereNotNull('instagram')
-        ->count();
-
-    dd($leads);
-});
-Route::get('/update-charities', function () {
-    $s = \App\Models\CharityLead::query()
-        ->where('id', '>', 280000)
-        ->update([
-            'is_used' => 0
-        ]);
-
-    dd($s);
-});
-Route::get('/import_charity_leads_test', function () {
-    $path = storage_path('app/charity leads/crunchbase_companies');
-    $files = glob($path . '/*.csv');
-
-    foreach ($files as $file) {
-        $handle = fopen($file, 'r');
-        if (!$handle) continue;
-
-        $headers = fgetcsv($handle);
-
-        $batch = [];
-        $count = 0;
-
-        while (($row = fgetcsv($handle)) !== false) {
-
-            $data = array_combine($headers, $row);
-
-            $insertingData = [
-                'data' => json_encode($data),
-                'company_name' => $data["name"],
-                'phone_number' => $data["phone_number"],
-                'website' => $data["website"],
-                'email' => $data["contact_email"],
-                'linkedin' => $data["linkedin"],
-                'lead_type' => 'crunchbase_companies_leads',
-                'is_used' => 0
-            ];
-
-            try {
-                \App\Models\CharityLead::query()->create($insertingData);
-                $count += 1;
-            } catch (Throwable $e) {
-                dump($e->getMessage());
-                dump($insertingData);
-            }
-        }
-
-        dump("✅ Imported {$count} rows from" . basename($file));
-    }
-});
-Route::get('/import_charity_leads', function () {
-    $path = storage_path('app/charity leads/crunchbase_companies');
-    $files = glob($path . '/*.csv');
-
-    foreach ($files as $file) {
-        $handle = fopen($file, 'r');
-        if (!$handle) continue;
-
-        $headers = fgetcsv($handle);
-
-        $batch = [];
-        $count = 0;
-
-        while (($row = fgetcsv($handle)) !== false) {
-
-            $data = array_combine($headers, $row);
-
-            $linkedin = $data['linkedin'];
-
-            $batch[] = [
-                'data' => json_encode($data),
-                'company_name' => $data["name"],
-                'phone_number' => $data["phone_number"],
-                'website' => $data["website"],
-                'email' => $data["contact_email"],
-                'linkedin' => $data["linkedin"],
-                'lead_type' => 'crunchbase_companies_leads'
-            ];
-
-            // Insert every 1000 rows for efficiency
-            if (count($batch) >= 1000) {
-                DB::table('charity_leads')->insert($batch);
-                $count += count($batch);
-                $batch = [];
-            }
-        }
-
-        if (!empty($batch)) {
-            DB::table('charity_leads')->insert($batch);
-            $count += count($batch);
-        }
-
-        dump("✅ Imported {$count} rows from" . basename($file));
-    }
-});
-Route::get('/make-username', function () {
-    $keywords = ['it', 'software', 'tech', 'company', 'ai', 'style', 'new'];
-    $decorators = ['_', '.', '__', '___', '._', '_.', '._._.', '_._', '._.'];
-    $usernames = [];
-    $nums = [1404, 2025, 2024, 2023, 2000, 1400, 1401, 2002,];
-    while (count($usernames) < 500) {
-        // تصمیم: یک کلمه یا دوتا
-        $count = rand(1, 2);
-        $chosen = [];
-
-        // انتخاب تصادفی از آرایه
-        $keys = array_rand($keywords, $count);
-        if ($count === 1) {
-            $chosen[] = $keywords[$keys];
-        } else {
-            foreach ($keys as $k) {
-                $chosen[] = $keywords[$k];
-            }
-        }
-
-        $wordPart = implode('', $chosen); // ترکیب کلمات
-        $dec = $decorators[array_rand($decorators)];
-        $num = $nums[array_rand($nums)];
-
-        // اجزای ممکن
-        $parts = [$wordPart, (string)$num, $dec];
-
-        // جابجایی رندوم
-        shuffle($parts);
-
-        $username = implode('', $parts);
-
-        // 🔎 فیلتر قوانین اینستاگرام:
-        // 1. طول < 30
-        // 2. شروع نشدن با . یا _
-        // 3. تمام نشدن با . یا _
-        if (
-            strlen($username) < 30 &&
-            !in_array($username, $usernames) &&
-            !preg_match('/^[_\.]/', $username) &&   // شروع نشه با . یا _
-            !preg_match('/[_\.]$/', $username)      // تموم نشه با . یا _
-        ) {
-            $usernames[] = $username;
-        }
-
-        Template::query()
-            ->where('type', 'username')
-            ->where('text', $username)
-            ->doesntExist()
-        &&
-        Template::query()
-            ->create([
-                'text' => $username,
-                'type' => 'username'
-            ]);
-    }
-    dd($usernames);
-});
-Route::get('/activate-accounts', function () {
-    Account::all()->each(function ($account) {
-        $account->makeActive();
-    });
-    dd('shod');
 });
 
 
@@ -403,7 +223,6 @@ Route::post('order/finish', [OrderController::class, 'finish']);
 Route::post('order/fail', [OrderController::class, 'fail']);
 Route::post('order/reset', [OrderController::class, 'reset']);
 Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
-Route::post('order/there-is-no-comment', [OrderController::class, 'thereIsNoComment']);
 Route::post('order/get-comment', [OrderController::class, 'getComment']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
@@ -441,5 +260,12 @@ Route::post('modules/update', [ModuleController::class, 'update']);
 Route::post('module/delete', [ModuleController::class, 'delete']);
 
 Route::post('account-specs', [AccountSpecController::class, 'index']);
+
+Route::prefix('tiktok-links')->group(function () {
+    Route::post('/', [TikTokLinkController::class, 'index']);
+    Route::post('/create', [TikTokLinkController::class, 'store']);
+    Route::delete('/{id}', [TikTokLinkController::class, 'destroy']);
+    Route::put('/{id}', [TikTokLinkController::class, 'update']);
+});
 
 //});

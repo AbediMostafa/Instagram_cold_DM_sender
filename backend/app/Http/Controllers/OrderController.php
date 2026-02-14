@@ -353,25 +353,6 @@ class OrderController extends Controller
     }
 
 
-    public function thereIsNoComment()
-    {
-        $orderId = r('id');
-        $order = Order::query()->find($orderId);
-
-        $hasNonSentComment = OrderComment::query()
-            ->where('order_id', $orderId)
-            ->where('status', '!=', 'sent')
-            ->exists();
-
-        $order->setStatusTo($hasNonSentComment ? 'Unknown' : 'Completed');
-
-        Order::query()
-            ->where('id', '<', $orderId)
-            ->where('status', 'Unknown')
-            ->get()
-            ->each(fn($order) => $order->changeProcessingToFree());
-    }
-
     public function getComment()
     {
         return Order::query()->find(r('orderId'))

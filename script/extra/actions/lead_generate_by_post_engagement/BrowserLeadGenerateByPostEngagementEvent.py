@@ -77,7 +77,8 @@ class BrowserLeadGenerateByPostEngagementEvent:
             SearchForAction(self.ig).start(f'#{hashtag.title}')
             self.ig.pause(4000, 6000)
 
-            go_to_page(self.ig, f'https://www.instagram.com/explore/search/keyword/?q=%23{hashtag.title.lower()}', "Hashtag")
+            go_to_page(self.ig, f'https://www.instagram.com/explore/search/keyword/?q=%23{hashtag.title.lower()}',
+                       "Hashtag")
 
             self.ig.pause(6000, 7000)
             self.get_leads()
@@ -98,12 +99,13 @@ class BrowserLeadGenerateByPostEngagementEvent:
                 self.ig.pause(3000, 3500)
             except Exception as e:
                 self.ig.account.add_cli(str(e))
+                ClickOnNextPostAction(self.ig).start()
 
         self.ig.page.keyboard.press('Escape')
         self.ig.pause(4000, 5000)
 
     def scroll(self):
-        scroll_times = random.randint(5, 25)
+        scroll_times = random.randint(5, 18)
         self.ig.account.add_cli(f'Scrolling {scroll_times} times')
         for _ in range(scroll_times):
             ScrollAction(self.ig).start(None, 500, 700, 3000, 4000)

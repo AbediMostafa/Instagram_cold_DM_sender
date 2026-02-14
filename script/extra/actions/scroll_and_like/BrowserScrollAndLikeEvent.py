@@ -29,7 +29,7 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
 
     def scroll_and_like(self):
 
-        for i in range(random.randint(9, 14)):
+        for i in range(random.randint(2, 3)):
             self.ig.page.mouse.wheel(0, random.randint(450, 650))
             self.ig.pause(2000, 4000)
             self.try_like()
@@ -37,10 +37,6 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
     def try_like(self):
 
         import random
-
-        # 60% chance to like
-        if random.random() > 0.5:
-            return False
 
         selectors = [
             # 'div:not([aria-label*="comment"]) div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',

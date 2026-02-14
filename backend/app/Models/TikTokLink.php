@@ -6,25 +6,13 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrderComment extends Model
+class TikTokLink extends Model
 {
     use HasFactory;
-
-    protected $guarded = [];
+    protected $guarded =[];
 
     protected function serializeDate(\DateTimeInterface $date)
     {
         return Carbon::instance($date)->format('m-d H:i');
-    }
-
-    public function setStatusTo($status)
-    {
-        $this->status = $status;
-        $this->save();
-    }
-
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
     }
 }

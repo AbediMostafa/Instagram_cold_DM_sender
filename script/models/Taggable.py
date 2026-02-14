@@ -11,8 +11,8 @@ class Taggable(BaseModel):
     @classmethod
     def get_taggable_class(self, model):
         type_mapping = {
-            'Lead': 'App\Models\Lead',
-            'Account': 'App\Models\Account',
+            'Lead': r'App\Models\Lead',
+            'Account': r'App\Models\Account',
         }
 
         return type_mapping[model]
