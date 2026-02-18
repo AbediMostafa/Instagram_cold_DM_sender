@@ -17,6 +17,7 @@ use App\Models\Proxy;
 use App\Models\Setting;
 use App\Models\Spintax;
 use App\Models\Thread;
+use App\Models\TikTokLink;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -77,6 +78,31 @@ use \App\Http\Controllers\TikTokLinkController;
 
 
 Route::get('/', function () {
+//    $tt = TikTokLink::query()->first();
+//    dd($tt->tags);
+//    $tag = \App\Models\TikTokTag::query()->first();
+//
+//    $tt->tags()->syncWithoutDetaching([$tag->id]);
+//    dd($tt);
+
+//    $ttts = Tag::whereIn('id', function ($query) {
+//        $query->select('tag_id')
+//            ->from('taggables')
+//            ->where('taggable_type', TikTokLink::class);
+//    })
+//        ->select('id','title')
+//        ->orderBy('title')
+//        ->get();
+//
+//    dd($ttts);
+////    $tt = TikTokLink::query()->first();
+////    $tag = Tag::query()->first();
+////
+////    dd($tt->tags);
+////    dd($tag);
+////    dd($tt);
+////    foreach ($accounts as $account) {
+////        $account->tags()->syncWithoutDetaching(r('tagIds'));
 });
 
 
@@ -175,6 +201,7 @@ Route::post('categories/edit/{id}', [CategoryController::class, 'edit']);
 Route::post('categories/delete', [CategoryController::class, 'delete']);
 
 Route::post('tags', [TagController::class, 'index']);
+Route::post('tik-tok-tags', [TagController::class, 'tikTokTags']);
 Route::post('tags/create', [TagController::class, 'create']);
 Route::post('tags/edit/{id}', [TagController::class, 'edit']);
 Route::post('tags/delete', [TagController::class, 'delete']);
@@ -226,6 +253,7 @@ Route::post('order/change-processing-to-free', [OrderController::class, 'changPr
 Route::post('order/get-comment', [OrderController::class, 'getComment']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
+Route::post('api/v4', [OrderController::class, 'v4']);
 
 
 Route::post('settings', [SettingController::class, 'index']);
@@ -266,6 +294,9 @@ Route::prefix('tiktok-links')->group(function () {
     Route::post('/create', [TikTokLinkController::class, 'store']);
     Route::delete('/{id}', [TikTokLinkController::class, 'destroy']);
     Route::put('/{id}', [TikTokLinkController::class, 'update']);
+    Route::post('/generate-images', [TikTokLinkController::class, 'generateImages']);
+    Route::post('/download-images', [TikTokLinkController::class, 'downloadImages']);
+    Route::post('/force-run', [TikTokLinkController::class, 'forceRun']);
 });
 
 //});

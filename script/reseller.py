@@ -3,7 +3,7 @@ import requests
 url = f'https://radicalsmm.shop/api/v1'
 params = {
     'key':'JKl7fTVuVc6ONgrkwH3YruOkzsrlBgqE',
-    'action':'status',
+    'action':'services',
     'orders':"334864",
 }
 res = requests.post(url, data=params)

@@ -91,13 +91,7 @@ def get_next_order_for_account(account, service_type='comment'):
             )
         )
 
-        .where(
-            Order.id.in_(
-                OrderComment
-                .select(OrderComment.order)
-                .where(OrderComment.status == 'free')
-            )
-        )
+
 
         .order_by(Order.id)
     )

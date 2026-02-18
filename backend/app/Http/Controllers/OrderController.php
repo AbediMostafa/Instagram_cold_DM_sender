@@ -120,9 +120,9 @@ class OrderController extends Controller
 
     public function v3()
     {
-//        Log::info('V3 Incoming Request', [
-//            'body'    => r()->all(),
-//        ]);
+        Log::channel('v3_requests')->info('V3 Incoming Request', [
+            'body' => r()->all(),
+        ]);
 
         $action = request('action'); // or request()->input('action')
 
@@ -146,6 +146,48 @@ class OrderController extends Controller
                     "max" => 2000,
                     "type" => "custom_comments",
                     "desc" => "Best and Fast Comment",
+                    "dripfeed" => false,
+                    "refill" => false,
+                    "cancel" => false,
+                    "brand" => "",
+                ],
+                [
+                    "service" => 741,
+                    "name" => "View Story",
+                    "category" => "SSM-fire",
+                    "rate" => "0.025$",
+                    "min" => 5,
+                    "max" => 10000,
+                    "type" => "default",
+                    "desc" => "View Story | Start Time : 0-30min",
+                    "dripfeed" => false,
+                    "refill" => false,
+                    "cancel" => false,
+                    "brand" => "",
+                ],
+                [
+                    "service" => 742,
+                    "name" => "View All Stories",
+                    "category" => "SSM-fire",
+                    "rate" => "0.05$",
+                    "min" => 5,
+                    "max" => 10000,
+                    "type" => "default",
+                    "desc" => "View All Stories | Start Time : 0-30min",
+                    "dripfeed" => false,
+                    "refill" => false,
+                    "cancel" => false,
+                    "brand" => "",
+                ],
+                [
+                    "service" => 743,
+                    "name" => "Save Post",
+                    "category" => "SSM-fire",
+                    "rate" => "0.035$",
+                    "min" => 5,
+                    "max" => 10000,
+                    "type" => "default",
+                    "desc" => "Save post | Start Time : 0-30min",
                     "dripfeed" => false,
                     "refill" => false,
                     "cancel" => false,
@@ -220,9 +262,9 @@ class OrderController extends Controller
     public function telegramGroupSender()
     {
 
-        Log::info('telegramGroupSender', [
-            'body' => r()->all(),
-        ]);
+//        Log::info('telegramGroupSender', [
+//            'body' => r()->all(),
+//        ]);
         $action = request('action'); // or request()->input('action')
         if ($action === 'balance') {
             return response()->json([

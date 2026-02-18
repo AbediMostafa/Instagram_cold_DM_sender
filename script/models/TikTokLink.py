@@ -14,6 +14,7 @@ class TikTokLink(BaseWithTimeZoneModel):
     shares = IntegerField(default=0)
     saves = IntegerField(default=0)
     play_counts = IntegerField(default=0)
+    updated_at = DateTimeField(null=True)
 
     def add_error(self, error):
         self.error = error
