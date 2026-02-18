@@ -17,6 +17,7 @@ use App\Models\Proxy;
 use App\Models\Setting;
 use App\Models\Spintax;
 use App\Models\Thread;
+use App\Models\TikTokLink;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -77,8 +78,6 @@ use \App\Http\Controllers\TikTokLinkController;
 
 
 Route::get('/', function () {
-
-    dd(base_path('..'));
 });
 
 
@@ -177,6 +176,7 @@ Route::post('categories/edit/{id}', [CategoryController::class, 'edit']);
 Route::post('categories/delete', [CategoryController::class, 'delete']);
 
 Route::post('tags', [TagController::class, 'index']);
+Route::post('tik-tok-tags', [TagController::class, 'tikTokTags']);
 Route::post('tags/create', [TagController::class, 'create']);
 Route::post('tags/edit/{id}', [TagController::class, 'edit']);
 Route::post('tags/delete', [TagController::class, 'delete']);
@@ -270,6 +270,8 @@ Route::prefix('tiktok-links')->group(function () {
     Route::delete('/{id}', [TikTokLinkController::class, 'destroy']);
     Route::put('/{id}', [TikTokLinkController::class, 'update']);
     Route::post('/generate-images', [TikTokLinkController::class, 'generateImages']);
+    Route::post('/download-images', [TikTokLinkController::class, 'downloadImages']);
+    Route::post('/force-run', [TikTokLinkController::class, 'forceRun']);
 });
 
 //});

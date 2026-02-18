@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Tag;
+use App\Models\TikTokLink;
+use App\Models\TikTokTag;
 use Illuminate\Http\Request;
 
 class TagController extends Controller
@@ -14,9 +16,9 @@ class TagController extends Controller
         return Tag::query()->paginate(15);
     }
 
-    public function getTags()
+    public function tikTokTags()
     {
-        return Tag::query()->get();
+        return TikTokTag::query()->get();
     }
 
     public function create(Request $request)

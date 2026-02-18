@@ -11,7 +11,7 @@ class Tag extends Model
 
     const UPDATED_AT = null;
 
-    protected $guarded =[];
+    protected $guarded = [];
 
     public function leads()
     {
@@ -26,5 +26,10 @@ class Tag extends Model
     public function templates()
     {
         return $this->morphedByMany(Template::class, 'taggable');
+    }
+
+    public function tikTokLinks()
+    {
+        return $this->morphedByMany(TikTokLink::class, 'taggable');
     }
 }

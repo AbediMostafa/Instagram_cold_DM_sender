@@ -1,11 +1,12 @@
 import type {App} from "vue";
-import type {AxiosResponse} from "axios";
+import type { AxiosResponse, AxiosRequestConfig } from "axios";
 import axios from "axios";
 import VueAxios from "vue-axios";
 import JwtService from "@/core/services/JwtService";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useUserStore} from "@/stores/User";
 import router from "@/router";
+
 
 
 /**
@@ -133,8 +134,12 @@ class ApiService {
      * @param params: AxiosRequestConfig
      * @returns Promise<AxiosResponse>
      */
-    public static post(resource: string, params: any): Promise<AxiosResponse> {
-        return ApiService.vueInstance.axios.post(`${resource}`, params);
+    public static post<T = any, D = any>(
+        resource: string,
+        data?: D,
+        config?: AxiosRequestConfig<D>
+    ): Promise<AxiosResponse<T>> {
+        return ApiService.vueInstance.axios.post<T>(resource, data, config);
     }
 
     /**

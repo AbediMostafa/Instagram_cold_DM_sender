@@ -58,6 +58,13 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'v3_requests' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/v3_requests.log'),
+            'level' => 'info',
+        ],
+
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
