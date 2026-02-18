@@ -77,6 +77,8 @@ use \App\Http\Controllers\TikTokLinkController;
 
 
 Route::get('/', function () {
+
+    dd(base_path('..'));
 });
 
 
@@ -226,6 +228,7 @@ Route::post('order/change-processing-to-free', [OrderController::class, 'changPr
 Route::post('order/get-comment', [OrderController::class, 'getComment']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
+Route::post('api/v4', [OrderController::class, 'v4']);
 
 
 Route::post('settings', [SettingController::class, 'index']);
@@ -266,6 +269,7 @@ Route::prefix('tiktok-links')->group(function () {
     Route::post('/create', [TikTokLinkController::class, 'store']);
     Route::delete('/{id}', [TikTokLinkController::class, 'destroy']);
     Route::put('/{id}', [TikTokLinkController::class, 'update']);
+    Route::post('/generate-images', [TikTokLinkController::class, 'generateImages']);
 });
 
 //});

@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Order;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use \App\Models\Order;
 
 return new class extends Migration {
     /**
@@ -20,7 +20,9 @@ return new class extends Migration {
                 ->constrained('services')
                 ->nullOnDelete();
 
-            $table->enum('service_type', ['comment', 'like', 'like_and_comment', 'follow', 'view']);
+            $table->enum('service_type', ['comment', 'like', 'like_and_comment', 'follow', 'view', 'view_story',
+                'view_all_stories',
+                'save_post']);
             $table->text('target_link');
             $table->integer('start_count')->default(0);
             $table->integer('total_count')->default(0);

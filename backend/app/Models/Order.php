@@ -20,9 +20,9 @@ class Order extends Model
         return Carbon::instance($date)->format('m-d H:i');
     }
 
-    public function comments()
+    public function actions()
     {
-        return $this->hasMany(OrderComment::class, 'order_id', 'id');
+        return $this->hasMany(OrderAction::class, 'order_id', 'id');
     }
 
     public function service()

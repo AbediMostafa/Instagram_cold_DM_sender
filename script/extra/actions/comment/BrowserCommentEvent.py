@@ -1,13 +1,12 @@
 from script.extra.helper import go_to_page
-from script.models.Order import get_next_order_for_account
-from script.models.OrderComment import get_next_comment_for_order
+from script.models.OrderAction import get_next_action_for_account, mark_action_completed, mark_action_failed, release_stuck_actions, deduct_balance
 from script.extra.helper import tehran_now
 from script.extra.exceptions import LinkIsNotCorrect
 
 
 class BrowserCommentEvent:
     command = None
-    comment = None
+    action = None
     account_age = None
     order = None
 
@@ -16,30 +15,26 @@ class BrowserCommentEvent:
         self.ig = ig
         self.account_age = self.ig.account.get_passed_days_since_creation()
 
-    def pick_and_mark_comment(self):
-        # Step 1: find available order
-        self.order = get_next_order_for_account(self.ig.account)
-        if not self.order:
+    def pick_and_mark_action(self):
+        # Step 1: find available action
+        self.action = get_next_action_for_account(self.ig.account, ['comment'])
+        if not self.action:
             raise Exception('There is no order')
+
+        self.order = self.action.order
 
         self.ig.account.add_cli(f'selected order: {self.order.id}', print_only=True)
         self.ig.account.add_cli(f'selected order: {self.order.target_link}', print_only=True)
 
-        if self.order.status_is("Pending"):
+        if self.order.status == "Pending":
             self.order.set_status_to("In progress")
-
-        # Step 2: pick a free comment
-        self.comment = get_next_comment_for_order(self.order)
-
-        if not self.comment:
-            raise Exception('There is no comment for this account')
 
     def init(self):
 
         if self.ig.account.get_passed_days_since_creation() < 15:
             return self.ig.account.add_cli(f"Account is not old enough to Send comment")
 
-        self.pick_and_mark_comment()
+        self.pick_and_mark_action()
         self.ig.account.add_cli('Starting to comment ...')
 
         try:
@@ -56,25 +51,27 @@ class BrowserCommentEvent:
 
             self.ig.pause(1000, 1200)
 
-            self.ig.page.get_by_placeholder("Add a comment…").fill(self.comment.content)
+            self.ig.page.get_by_placeholder("Add a comment…").fill(self.action.content)
             self.ig.pause(4000, 5000)
             self.ig.page.get_by_role("button", name="Post").click()
 
-            self.mark_comment_sent()
+            self.mark_action_sent()
             self.command.update_cmd('state', 'success')
             self.ig.pause(4000, 5000)
 
         except LinkIsNotCorrect as e:
+            # Client error - CHARGE but mark as FAILED
             self.ig.account.add_cli(str(e), print_only=True)
-            self.order.set_status_to("Cancel")
+            self.mark_action_failed_with_charge()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
         except Exception as e:
+            # Server error - DON'T CHARGE
             self.ig.account.add_cli(str(e), print_only=True)
 
-            self.comment.set_status_to('free')
+            self.action.reset_to_free()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
@@ -88,19 +85,21 @@ class BrowserCommentEvent:
 
     def check_fail_situations(self):
         if self.ig.is_visible_by_text('This account is private'):
-            self.order.fail('Account is private')
-            raise Exception('Account is private')
+            raise LinkIsNotCorrect('Account is private')
 
         if self.ig.is_visible_by_text('Comments on this post have been limited'):
-            self.order.fail('Comments on this post have been limited')
-            raise Exception('Comments on this post have been limited')
+            raise LinkIsNotCorrect('Comments on this post have been limited')
 
         if self.ig.is_visible_by_text("Post isn't available") or self.ig.is_visible_by_text(
                 "The link may be broken") or self.ig.is_visible_by_text("the profile may have been removed"):
-            self.order.fail("Post isn't available")
-            raise Exception("Post isn't available")
+            raise LinkIsNotCorrect("Post isn't available")
 
-    def mark_comment_sent(self):
-        self.comment.set_status_to('sent')
-        self.order.add_completed_count()
-        self.order.make_order_completed()
+    def mark_action_sent(self):
+        mark_action_completed(self.action)
+        deduct_balance('comment')
+        release_stuck_actions()
+
+    def mark_action_failed_with_charge(self):
+        mark_action_failed(self.action)
+        deduct_balance('comment')
+        release_stuck_actions()

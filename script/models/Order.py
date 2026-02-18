@@ -52,54 +52,24 @@ class Order(BaseWithTimeZoneModel):
     def make_order_completed(self):
         print(f'Completed {self.completed_count}')
         print(f'total_count {self.total_count}')
-
         print(f'Aya completed ?{self.completed_count == self.total_count}')
 
         if self.completed_count == self.total_count:
             self.status = 'Completed'
             self.save()
 
-            from script.models.Balance import Balance
-            from decimal import Decimal
+        # Balance deduction moved to deduct_balance() in OrderAction.py
+        # Called per action in mark_action_sent()
 
-            balance = Balance.select().where(Balance.customer == 'sadeghi').first()
-            completed_fee = Decimal(self.completed_count) * Decimal('0.00025')
+    def actions(self):
+        """Get all actions for this order"""
+        from .OrderAction import OrderAction
+        return OrderAction.select().where(OrderAction.order == self.id)
 
-            balance.balance -= completed_fee
-            balance.save()
+    def comments(self):
+        """Get all comments for this order (legacy support)"""
+        from .OrderComment import OrderComment
+        return OrderComment.select().where(OrderComment.order == self.id)
 
     class Meta:
         table_name = 'orders'
-
-
-def get_next_order_for_account(account, service_type='comment'):
-    from .OrderComment import OrderComment
-
-    # Orders not completed
-    query = (
-        Order
-        .select()
-        .where(Order.completed_count < Order.total_count)
-        .where(Order.status.in_(['Pending', 'In progress']))
-        # .where(Order.service_type == service_type)
-        .where(
-            # This account has NOT sent any comment for this order
-            ~Order.id.in_(
-                OrderComment
-                .select(OrderComment.order)
-                .where(OrderComment.account == account)
-            )
-        )
-
-        .where(
-            Order.id.in_(
-                OrderComment
-                .select(OrderComment.order)
-                .where(OrderComment.status == 'free')
-            )
-        )
-
-        .order_by(Order.id)
-    )
-
-    return query.first()

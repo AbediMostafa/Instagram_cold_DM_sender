@@ -1,6 +1,5 @@
 from script.extra.helper import go_to_page
-from script.models.Order import get_next_order_for_account
-from script.models.OrderComment import get_next_comment_for_order, release_stuck_comments
+from script.models.OrderAction import get_next_action_for_account, release_stuck_actions, deduct_balance
 from script.extra.helper import tehran_now
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
@@ -9,7 +8,7 @@ from urllib.parse import urlparse
 
 class BrowserLikeAndCommentEvent(BaseAction):
     command = None
-    comment = None
+    action = None
     account_age = None
     order = None
 
@@ -18,7 +17,7 @@ class BrowserLikeAndCommentEvent(BaseAction):
         if self.ig.account.get_passed_days_since_creation() < 2:
             return self.ig.account.add_cli(f"Account is not old enough to Send comment")
 
-        self.pick_and_mark_comment()
+        self.pick_and_mark_action()
         self.ig.account.add_cli('Starting to comment and like ...')
         try:
             self.command = self.ig.account.create_command('comment and like', 'processing')
@@ -44,9 +43,9 @@ class BrowserLikeAndCommentEvent(BaseAction):
                     self.ig.page.locator("div[role='button']").filter(
                         has=self.ig.page.locator("svg[aria-label='Comment']")).click()
 
-            if self.comment.content:
-                # self.ig.page.locator("textarea.x1i0vuye.xgcd1z6.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x5n08af.x78zum5.x1iyjqo2.x1qlqyl8.x1d6elog.xlk1fp6.x1a2a7pz.xexx8yu.xyri2b.x18d9i69.x1c1uobl.xtt52l0.xnalus7.xs3hnx8.x1bq4at4.xaqnwrm").fill(self.comment.content, timeout=3000)
-                self.ig.page.get_by_placeholder("Add a comment…").fill(self.comment.content, timeout=3000)
+            if self.action.content:
+                # self.ig.page.locator("textarea.x1i0vuye.xgcd1z6.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x5n08af.x78zum5.x1iyjqo2.x1qlqyl8.x1d6elog.xlk1fp6.x1a2a7pz.xexx8yu.xyri2b.x18d9i69.x1c1uobl.xtt52l0.xnalus7.xs3hnx8.x1bq4at4.xaqnwrm").fill(self.action.content, timeout=3000)
+                self.ig.page.get_by_placeholder("Add a comment…").fill(self.action.content, timeout=3000)
                 self.ig.pause(1500, 2000)
                 self.ig.page.get_by_role("button", name="Post", exact=True).click()
                 self.ig.pause(1000, 1200)
@@ -55,7 +54,7 @@ class BrowserLikeAndCommentEvent(BaseAction):
                     raise LinkIsNotCorrect("Couldn't post comment")
 
             # self.take_screenshot(command_id=self.order.id)
-            self.mark_comment_sent()
+            self.mark_action_sent()
             self.command.update_cmd('state', 'success')
             self.ig.pause(3500, 4500)
 
@@ -64,7 +63,7 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
             self.ig.account.add_cli(str(e), print_only=True)
 
-            self.comment.set_status_to('free')
+            self.action.reset_to_free()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
@@ -83,28 +82,28 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
         print('after Not now')
 
-    def pick_and_mark_comment(self):
-        self.order = get_next_order_for_account(self.ig.account, 'like_and_comment')
+    def pick_and_mark_action(self):
+        self.action = get_next_action_for_account(self.ig.account, ['comment'])
 
-        if not self.order:
+        if not self.action:
             raise Exception('There is no order')
+
+        self.order = self.action.order
 
         self.ig.account.add_cli(f'selected order: {self.order.id}', print_only=True)
         self.ig.account.add_cli(f'selected order: {self.order.target_link}', print_only=True)
 
-        if self.order.status_is("Pending"):
+        if self.order.status == "Pending":
             self.order.set_status_to("In progress")
 
-        # Step 2: pick a free comment
-        self.comment = get_next_comment_for_order(self.order)
+        if not self.action.content:
+            # If we have a pending or In progress order but there's no content it means there's some invalid
+            # processing actions in it
+            self.ig.account.add_cli("There is no content for this action", print_only=True)
+            self.action.reset_to_free()
+            return self.pick_and_mark_action()
 
-        if not self.comment: 
-            # If we have a pending or In progress order but there's no free comment it means there's some invalid
-            # processing comments in it
-            self.ig.account.add_cli("There is no comment for this account", print_only=True)
-            return self.pick_and_mark_comment()
-
-        return self.comment
+        return self.action
 
     def post_url_validation(self):
         parsed = urlparse(self.order.target_link)
@@ -243,8 +242,9 @@ class BrowserLikeAndCommentEvent(BaseAction):
         except:
             return False
 
-    def mark_comment_sent(self):
-        self.comment.set_status_to('sent')
+    def mark_action_sent(self):
+        self.action.mark_as_sent()
         self.order.add_completed_count()
         self.order.make_order_completed()
-        release_stuck_comments()
+        deduct_balance('comment')
+        release_stuck_actions()
