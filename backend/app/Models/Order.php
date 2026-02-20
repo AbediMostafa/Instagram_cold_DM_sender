@@ -46,7 +46,7 @@ class Order extends Model
     {
         $this->setStatusTo('In progress');
 
-        $this->comments()->where('status', 'processing')->update([
+        $this->actions()->where('status', 'processing')->update([
             'status' => 'free',
             'account_id' => null
         ]);

@@ -1,6 +1,6 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_next_action_for_account, release_stuck_actions, deduct_balance
-from script.extra.helper import tehran_now
+from script.models.OrderAction import get_batch_actions_for_account, release_stuck_actions, deduct_balance
+from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from urllib.parse import urlparse
@@ -9,238 +9,130 @@ from urllib.parse import urlparse
 class BrowserLikeAndCommentEvent(BaseAction):
     command = None
     action = None
-    account_age = None
     order = None
+    actions = []
 
     def init(self):
-
         if self.ig.account.get_passed_days_since_creation() < 2:
-            return self.ig.account.add_cli(f"Account is not old enough to Send comment")
+            return self.ig.account.add_cli(f"Account is not old enough to send comment")
 
-        self.pick_and_mark_action()
-        self.ig.account.add_cli('Starting to comment and like ...')
+        self.pick_batch_actions()
+
+        if not self.actions:
+            raise Exception('There is no comment order')
+
+        for action in self.actions:
+            self.action = action
+            self.order = action.order
+            self.process_single_action()
+
+    def pick_batch_actions(self):
+        batch_size = int(Setting.get_value('comment_batch_size', 1))
+        self.actions = get_batch_actions_for_account(self.ig.account, ['comment'], batch_size)
+
+        if self.actions:
+            self.ig.account.add_cli(f'Picked {len(self.actions)} comment actions', print_only=True)
+
+    def process_single_action(self):
+        if not self.action.content:
+            self.ig.account.add_cli("No content for this action - skipping", print_only=True)
+            self.action.reset_to_free()
+            return
+
+        self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
+
         try:
             self.command = self.ig.account.create_command('comment and like', 'processing')
             self.post_url_validation()
             go_to_page(self.ig, self.order.target_link, 'Post Page')
             self.ig.pause(5000, 6000)
-            self.click_on_not_now()
-
+            self.dismiss_popup()
             self.ig.pause(1000, 1200)
             self.check_fail_situations()
-            # self.try_like()
-            # self.ig.pause(1000, 1200)
 
             if 'reels' in self.ig.page.url:
-                self.ig.account.add_cli('THIS IS A REELS PAGE')
-
                 try:
                     self.ig.page.locator("svg[aria-label='Comment']").first.click(timeout=3000)
                     self.ig.pause(3000, 3500)
-
                 except Exception as e:
-                    print(str(e))
                     self.ig.page.locator("div[role='button']").filter(
                         has=self.ig.page.locator("svg[aria-label='Comment']")).click()
 
-            if self.action.content:
-                # self.ig.page.locator("textarea.x1i0vuye.xgcd1z6.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x5n08af.x78zum5.x1iyjqo2.x1qlqyl8.x1d6elog.xlk1fp6.x1a2a7pz.xexx8yu.xyri2b.x18d9i69.x1c1uobl.xtt52l0.xnalus7.xs3hnx8.x1bq4at4.xaqnwrm").fill(self.action.content, timeout=3000)
-                self.ig.page.get_by_placeholder("Add a comment…").fill(self.action.content, timeout=3000)
-                self.ig.pause(1500, 2000)
-                self.ig.page.get_by_role("button", name="Post", exact=True).click()
-                self.ig.pause(1000, 1200)
+            self.ig.page.get_by_placeholder("Add a comment…").fill(self.action.content, timeout=3000)
+            self.ig.pause(1500, 2000)
+            self.ig.page.get_by_role("button", name="Post", exact=True).click()
+            self.ig.pause(1000, 1200)
 
-                if self.ig.is_visible_by_text("Couldn't post comment"):
-                    raise LinkIsNotCorrect("Couldn't post comment")
+            if self.ig.is_visible_by_text("Couldn't post comment"):
+                raise LinkIsNotCorrect("Couldn't post comment")
 
-            # self.take_screenshot(command_id=self.order.id)
             self.mark_action_sent()
             self.command.update_cmd('state', 'success')
+            self.ig.account.add_cli('SUCCESS - Comment posted', print_only=True)
             self.ig.pause(3500, 4500)
 
+        except LinkIsNotCorrect as e:
+            self.ig.account.add_cli(f'FAILED - {str(e)}', print_only=True)
+            self.order.fail(str(e))
+
+            if self.command:
+                self.command.update_cmd('state', 'fail')
+
         except Exception as e:
-            self.take_screenshot(command_id=self.order.id, fail_or_success='fail')
-
-            self.ig.account.add_cli(str(e), print_only=True)
-
+            self.ig.account.add_cli(f'ERROR - {str(e)}', print_only=True)
             self.action.reset_to_free()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
-    def click_on_not_now(self):
-        print('before Now now')
-
-        if self.ig.is_visible_by_text("shared this with you") or self.ig.is_visible_by_text(
-                "Stay up to date with"):
-
-            print('Not now is visible')
-            try:
-                self.ig.page.get_by_role("button", name="Not now").first.click(timeout=3000)
-            except Exception as e:
-                self.ig.account.add_cli(str(e))
-
-        print('after Not now')
-
-    def pick_and_mark_action(self):
-        self.action = get_next_action_for_account(self.ig.account, ['comment'])
-
-        if not self.action:
-            raise Exception('There is no order')
-
-        self.order = self.action.order
-
-        self.ig.account.add_cli(f'selected order: {self.order.id}', print_only=True)
-        self.ig.account.add_cli(f'selected order: {self.order.target_link}', print_only=True)
-
-        if self.order.status == "Pending":
-            self.order.set_status_to("In progress")
-
-        if not self.action.content:
-            # If we have a pending or In progress order but there's no content it means there's some invalid
-            # processing actions in it
-            self.ig.account.add_cli("There is no content for this action", print_only=True)
-            self.action.reset_to_free()
-            return self.pick_and_mark_action()
-
-        return self.action
-
     def post_url_validation(self):
         parsed = urlparse(self.order.target_link)
 
-        self.ig.account.add_cli("Checking if is instagram page", print_only=True)
-
         if parsed.netloc not in ["instagram.com", "www.instagram.com"]:
-            self.order.fail("Invalid link, not an Instagram URL")
-            raise Exception("Invalid link, not an Instagram URL")
+            raise LinkIsNotCorrect("Invalid link, not an Instagram URL")
 
-            # Valid post paths: /p/{code}/ or /reel/{code}/
         path = parsed.path.strip('/').split('/')
 
-        self.ig.account.add_cli("Checking if is a valid url", print_only=True)
-        # Detect profile links => /username
         if len(path) == 1:
-            self.order.fail("Not a valid Instagram post or reel")
-            raise Exception("Not a valid Instagram post or reel")
+            raise LinkIsNotCorrect("Not a valid Instagram post or reel")
 
-        # Detect wrong format like /souravpalia?igsh=...
         valid_first_segment = ["p", "reel", "tv"]
 
-        self.ig.account.add_cli("Checking if is a valid post", print_only=True)
-        # Format A: /p/{code}
         if len(path) == 2 and path[0] in valid_first_segment:
-            pass  # valid
-
-        # Format B: /username/reel/{code}
+            pass
         elif len(path) == 3 and path[1] in valid_first_segment:
-            pass  # valid
-
+            pass
         else:
-            self.order.fail("Not a valid Instagram post or reel")
-            raise Exception("Not a valid Instagram post or reel")
+            raise LinkIsNotCorrect("Not a valid Instagram post or reel")
+
+    def dismiss_popup(self):
+        if self.ig.is_visible_by_text("shared this with you") or \
+           self.ig.is_visible_by_text("Stay up to date with"):
+            try:
+                self.ig.page.get_by_role("button", name="Not now").first.click(timeout=3000)
+            except:
+                pass
 
     def check_fail_situations(self):
-        # --- NEW: Check domain ---
-        self.ig.account.add_cli("Checking if account is private", print_only=True)
         if self.ig.is_visible_by_text('This account is private'):
-            self.order.fail('Account is private')
-            raise Exception('Account is private')
+            raise LinkIsNotCorrect('Account is private')
 
-        self.ig.account.add_cli("Checking if comment is limited", print_only=True)
         if self.ig.is_visible_by_text('Comments on this post have been limited'):
-            self.order.fail('Comments on this post have been limited')
-            raise Exception('Comments on this post have been limited')
+            raise LinkIsNotCorrect('Comments on this post have been limited')
 
-        if self.ig.is_visible_by_text("Post isn't available") or self.ig.is_visible_by_text(
-                "The link may be broken") or self.ig.is_visible_by_text("the profile may have been removed"):
-            self.order.fail("Post isn't available")
-            raise Exception("Post isn't available")
+        if self.ig.is_visible_by_text("Post isn't available") or \
+           self.ig.is_visible_by_text("The link may be broken") or \
+           self.ig.is_visible_by_text("the profile may have been removed"):
+            raise LinkIsNotCorrect("Post isn't available")
 
-        self.ig.account.add_cli("Checking if There's an issue", print_only=True)
         if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):
-            self.order.fail("Something went wrong")
-            raise Exception("Something went wrong")
+            raise Exception("Page load issue - temporary error")
 
         comment_locator = self.ig.page.locator('svg[aria-label="Comment"]').first
         like_locator = self.ig.page.locator('svg[aria-label="Like"]').first
 
-        self.ig.account.add_cli("we have a comment box", print_only=True)
         if like_locator.is_visible() and not comment_locator.is_visible():
-            self.order.fail("Comment box is not visible")
-            raise Exception("Comment box is not visible")
-
-        self.ig.account.add_cli("There's no issue with the post", print_only=True)
-
-        # try:
-        #     comment_locator = self.ig.page.locator('svg[aria-label="Comment"]')
-        #     like_locator = self.ig.page.locator('svg[aria-label="Like"]')
-        #
-        #     comment_visible = False
-        #     like_visible = False
-        #
-        #     if comment_locator.count() > 0:
-        #         comment_visible = comment_locator.first.is_visible(timeout=1000)
-        #
-        #     if like_locator.count() > 0:
-        #         like_visible = like_locator.first.is_visible(timeout=1000)
-        #
-        #     if like_visible and not comment_visible:
-        #         self.order.fail("Comment box is not visible")
-        #         raise Exception("Comment box is not visible")
-        #
-        # except Exception as e:
-        #     raise e
-
-    #
-    def try_like(self):
-        """
-        Try to like post with multiple selectors
-        """
-        if self.is_liked():
-            return False
-
-        selectors = [
-            # 'div:not([aria-label*="comment"]) div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
-            'div[style*="max-width"] section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
-            'div.x1ypdohk[data-visualcompletion="ignore-dynamic"] div.x1i10hfl.x972fbf.x10w94by[role="button"]',
-            'section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
-            'article div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
-        ]
-
-        for selector in selectors:
-            try:
-                element = self.ig.page.locator(selector).first
-                if element.count() > 0 and element.is_visible():
-                    element.click(timeout=3000)
-                    self.ig.pause(1000, 2000)
-                    if self.is_liked():
-                        return True
-            except:
-                continue
-
-        return False
-
-    def is_liked(self):
-        """
-        Check if post is already liked
-        """
-        try:
-            selectors = [
-                'svg[aria-label="Unlike"]',
-                'div[role="button"]:has(svg[aria-label="Unlike"])',
-                'svg[fill="#ed4956"]',
-            ]
-
-            for selector in selectors:
-                try:
-                    if self.ig.page.locator(selector).first.count() > 0:
-                        if self.ig.page.locator(selector).first.is_visible():
-                            return True
-                except:
-                    continue
-            return False
-        except:
-            return False
+            raise LinkIsNotCorrect("Comment box is not visible")
 
     def mark_action_sent(self):
         self.action.mark_as_sent()

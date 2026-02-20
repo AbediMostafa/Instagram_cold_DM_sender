@@ -1,5 +1,6 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_next_action_for_account, mark_action_completed, mark_action_failed, release_stuck_actions, deduct_balance
+from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, mark_action_failed, release_stuck_actions, deduct_balance
+from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from .LinkParser import LinkParser
@@ -14,6 +15,7 @@ class BrowserViewStoryEvent(BaseAction):
     target_username = None
     story_seen_count = 0
     response_listener_active = False
+    actions = []
 
     def setup_response_listener(self):
         """Setup listener for story seen responses"""
@@ -61,7 +63,25 @@ class BrowserViewStoryEvent(BaseAction):
         return False
 
     def init(self):
-        self.pick_and_mark_action()
+        self.pick_batch_actions()
+
+        if not self.actions:
+            raise Exception('There is no view_story order')
+
+        for action in self.actions:
+            self.action = action
+            self.order = action.order
+            self.process_single_action()
+
+    def pick_batch_actions(self):
+        batch_size = int(Setting.get_value('view_story_batch_size', 1))
+        self.actions = get_batch_actions_for_account(self.ig.account, ['view_story'], batch_size)
+
+        if self.actions:
+            self.ig.account.add_cli(f'Picked {len(self.actions)} view_story actions', print_only=True)
+
+    def process_single_action(self):
+        self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
 
         try:
             self.command = self.ig.account.create_command('view story', 'processing')
@@ -96,19 +116,6 @@ class BrowserViewStoryEvent(BaseAction):
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
-
-    def pick_and_mark_action(self):
-        self.action = get_next_action_for_account(self.ig.account, ['view_story'])
-
-        if not self.action:
-            raise Exception('There is no view_story order')
-
-        self.order = self.action.order
-
-        self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
-
-        if self.order.status == 'Pending':
-            self.order.set_status_to('In progress')
 
     def parse_and_validate_link(self):
         self.parsed_link = LinkParser.parse(self.order.target_link)

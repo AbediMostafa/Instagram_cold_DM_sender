@@ -1,5 +1,6 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_next_action_for_account, mark_action_completed, release_stuck_actions, deduct_balance
+from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, release_stuck_actions, deduct_balance
+from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from urllib.parse import urlparse
@@ -9,10 +10,28 @@ class BrowserSavePostEvent(BaseAction):
     command = None
     action = None
     order = None
+    actions = []
 
     def init(self):
-        self.pick_and_mark_action()
-        self.ig.account.add_cli('Starting to save post ...')
+        self.pick_batch_actions()
+
+        if not self.actions:
+            raise Exception('There is no save_post order')
+
+        for action in self.actions:
+            self.action = action
+            self.order = action.order
+            self.process_single_action()
+
+    def pick_batch_actions(self):
+        batch_size = int(Setting.get_value('save_post_batch_size', 1))
+        self.actions = get_batch_actions_for_account(self.ig.account, ['save_post'], batch_size)
+
+        if self.actions:
+            self.ig.account.add_cli(f'Picked {len(self.actions)} save_post actions', print_only=True)
+
+    def process_single_action(self):
+        self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
 
         try:
             self.command = self.ig.account.create_command('save post', 'processing')
@@ -27,36 +46,22 @@ class BrowserSavePostEvent(BaseAction):
 
             self.mark_action_sent()
             self.command.update_cmd('state', 'success')
+            self.ig.account.add_cli('SUCCESS - Post saved', print_only=True)
             self.ig.pause(3500, 4500)
 
         except LinkIsNotCorrect as e:
-            self.ig.account.add_cli(str(e), print_only=True)
+            self.ig.account.add_cli(f'FAILED - {str(e)}', print_only=True)
             self.order.fail(str(e))
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
         except Exception as e:
-            self.ig.account.add_cli(str(e), print_only=True)
-
+            self.ig.account.add_cli(f'ERROR - {str(e)}', print_only=True)
             self.action.reset_to_free()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
-
-    def pick_and_mark_action(self):
-        self.action = get_next_action_for_account(self.ig.account, ['save_post'])
-
-        if not self.action:
-            raise Exception('There is no save_post order')
-
-        self.order = self.action.order
-
-        self.ig.account.add_cli(f'Selected order: {self.order.id}', print_only=True)
-        self.ig.account.add_cli(f'Target link: {self.order.target_link}', print_only=True)
-
-        if self.order.status == 'Pending':
-            self.order.set_status_to('In progress')
 
     def post_url_validation(self):
         parsed = urlparse(self.order.target_link)

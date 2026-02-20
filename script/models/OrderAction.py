@@ -139,6 +139,77 @@ def get_next_action_for_account(account, action_types):
         return OrderAction.get_by_id(action.id)
 
 
+def get_batch_actions_for_account(account, action_types, batch_size=1):
+    """
+    Get multiple actions from DIFFERENT orders for the given account.
+    Each action will be from a unique order (no two actions from same order).
+
+    Args:
+        account: Account model instance
+        action_types: list of action type strings
+        batch_size: number of actions to get (from different orders)
+
+    Returns:
+        list of OrderAction instances
+    """
+    db = OrderAction._meta.database
+    actions = []
+    locked_order_ids = []
+
+    with db.atomic():
+        for _ in range(batch_size):
+            # Build exclusion list: orders this account already worked on + orders we just locked
+            excluded_orders = (
+                OrderAction
+                .select(OrderAction.order)
+                .where(OrderAction.account == account)
+            )
+
+            action = (
+                OrderAction
+                .select()
+                .join(Order)
+                .where(
+                    (OrderAction.type.in_(action_types)) &
+                    (Order.status.in_(['Pending', 'In progress'])) &
+                    (OrderAction.status == 'free') &
+                    ~OrderAction.order.in_(excluded_orders) &
+                    ~OrderAction.order.in_(locked_order_ids)  # Exclude orders we already picked
+                )
+                .order_by(OrderAction.id)
+                .for_update()
+                .first()
+            )
+
+            if not action:
+                break
+
+            updated = (
+                OrderAction
+                .update(
+                    status='processing',
+                    account=account,
+                    updated_at=tehran_now()
+                )
+                .where(
+                    (OrderAction.id == action.id) &
+                    (OrderAction.status == 'free')
+                )
+                .execute()
+            )
+
+            if updated == 0:
+                continue
+
+            if action.order.status == 'Pending':
+                action.order.set_status_to('In progress')
+
+            locked_order_ids.append(action.order_id)
+            actions.append(OrderAction.get_by_id(action.id))
+
+    return actions
+
+
 def release_stuck_actions(minutes=6):
     """
     Reset actions that have been in 'processing' state for too long.
