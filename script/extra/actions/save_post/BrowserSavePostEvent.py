@@ -37,7 +37,6 @@ class BrowserSavePostEvent(BaseAction):
                 self.command.update_cmd('state', 'fail')
 
         except Exception as e:
-            self.take_screenshot(command_id=self.order.id, fail_or_success='fail')
             self.ig.account.add_cli(str(e), print_only=True)
 
             self.action.reset_to_free()
@@ -105,7 +104,7 @@ class BrowserSavePostEvent(BaseAction):
 
         self.ig.account.add_cli("Checking if There's an issue", print_only=True)
         if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):
-            raise LinkIsNotCorrect("Something went wrong")
+            raise Exception("Page load issue - temporary error")
 
     def save_post(self):
         self.ig.account.add_cli("Attempting to save post...", print_only=True)
