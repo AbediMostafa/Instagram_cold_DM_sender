@@ -46,6 +46,7 @@ use \App\Http\Controllers\HashtagController;
 use App\Http\Controllers\LeadSourceController;
 use App\Http\Controllers\DmPostController;
 use \App\Http\Controllers\OrderController;
+use \App\Http\Controllers\TikTokTagController;
 use \App\Models\Tag;
 use JetBrains\PhpStorm\ArrayShape;
 use Morilog\Jalali\Jalalian;
@@ -71,13 +72,60 @@ use App\Http\Controllers\ServiceController;
 use \App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\ModuleController;
 use \Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Http\Controllers\AccountSpecController;
 use \App\Http\Controllers\TikTokLinkController;
-
+use \Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
+
+
+});
+
+Route::get('/export', function () {
+    ini_set('memory_limit', '1024000M');
+    $templates = Template::query()
+        ->get()
+        ->toJson(JSON_PRETTY_PRINT);
+    Storage::put('templates.json', $templates);
+});
+
+Route::get('/import', function () {
+    $table = Storage::get('templates.json');
+    $table = json_decode($table, true);
+    $table = array_map(function ($item) {
+        unset($item['id']);
+        return $item;
+    }, $table);
+
+    foreach ($table as $item) {
+        Template::query()->create($item);
+    }
+
+    dd('shod');
+//////////    // Remove 'id' and filter out promo_url category
+//    $accounts = array_map(function($item) {
+//        $item['bio']='';
+//        $item['log']='';
+//        $item['service_id']=1;
+//        unset($item['id']);
+//        unset($item['fingerprint']);
+//        unset($item['category_id']);
+//        unset($item['profile_id']);
+//        return $item;
+//    }, $accounts);
+//
+//    foreach ($accounts as $account) {
+//        Account::query()->where('username', $account['username'])->doesntExist() &&
+//        Account::query()->create($account);
+//
+//    }
+//
+//    dd('done');
+
+//////
+//////    dd($modules);
+
 });
 
 
@@ -273,5 +321,9 @@ Route::prefix('tiktok-links')->group(function () {
     Route::post('/download-images', [TikTokLinkController::class, 'downloadImages']);
     Route::post('/force-run', [TikTokLinkController::class, 'forceRun']);
 });
+
+Route::post('tik-tok-tags/store', [TikTokTagController::class, 'index']);
+Route::delete('tik-tok-tags/{id}', [TikTokTagController::class, 'destroy']);
+
 
 //});

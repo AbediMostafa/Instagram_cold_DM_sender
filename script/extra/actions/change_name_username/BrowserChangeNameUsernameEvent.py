@@ -1,4 +1,4 @@
-from script.models.Template import get_a
+from script.models.Template import get_next
 from script.extra.playwright.base_actions.GoToProfilePageAction import GoToProfilePageAction
 from script.extra.helper import go_to_page
 from script.extra.routes import *
@@ -43,17 +43,15 @@ class BrowserChangeNameUsernameEvent(BaseAction):
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
-        self.name_username = get_template(self.ig.account.id, 'name-username')
-
-        print(f'Name username : {self.name_username}')
+        self.name_username = get_next('name-username')
 
         if not self.name_username:
             raise Exception(f"We dont have a name or username for this account")
 
-        print(f'Name username id: {self.name_username['id']}')
+        print(f'Name username id: {self.name_username.id}')
 
-        self.username = self.name_username['text']
-        self.name = self.name_username['caption']
+        self.username = self.name_username.text
+        self.name = self.name_username.caption
 
         # self.ig.account.set_state('set name and username', 'app_state')
         self.command = self.ig.account.create_command('set name username', 'processing')

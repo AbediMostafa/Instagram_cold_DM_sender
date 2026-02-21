@@ -25,7 +25,7 @@ class BrowserLoginEvent:
 
         self.ig.account.add_cli('Starting Login ...')
 
-        for _ in range(1):
+        for _ in range(2):
             self.check_for_login()
 
             self.ig.account.add_cli(f'Login loop for the {_} time ...')
@@ -78,7 +78,7 @@ class BrowserLoginEvent:
 
         for attempt in range(max_retries):
             try:
-                self.ig.page.goto("https://www.instagram.com", timeout=80000)
+                self.ig.page.goto("https://www.instagram.com", timeout=100000)
                 self.ig.pause(2000, 3000)
                 self.the_messaging_tab_has_a_new_look()
 
@@ -147,7 +147,7 @@ class BrowserLoginEvent:
 
             self.ig.page.get_by_role("button", name="Confirm").click()
             self.ig.account.add_cli('2FA confirm clicked')
-            self.ig.pause(9000, 11000)
+            self.ig.pause(19000, 21000)
 
     def login_handler(self):
         is_visible = self.ig.is_visible_by_text('Phone number, username, or email') or self.ig.is_visible_by_text(
@@ -188,7 +188,7 @@ class BrowserLoginEvent:
         self.ig.page.get_by_label("Password").press_sequentially(self.ig.account.password, delay=100, timeout=6000)
         self.ig.pause(2000, 3000)
         self.ig.page.get_by_role("button", name="Log in", exact=True).click()
-        self.ig.pause(5000, 6000)
+        self.ig.pause(15000, 16000)
 
     def unusual_login_detected(self):
         if self.ig.is_visible_by_text('We Detected An Unusual Login') or self.ig.is_visible_by_text(

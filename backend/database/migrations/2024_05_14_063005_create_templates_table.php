@@ -28,7 +28,7 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained('categories')
                 ->nullOnDelete();
-
+            $table->unsignedTinyInteger('is_used')->default(0);
             $table->enum('type', Template::$types);
             $table->enum('sub_type', Template::$subTypes)->nullable();
             $table->timestamp('created_at')->nullable();

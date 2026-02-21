@@ -104,7 +104,6 @@ from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContex
 import requests
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
-from script.models.Order import get_next_order_for_account
 from script.models.OrderComment import get_next_comment_for_order, OrderComment
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
@@ -128,11 +127,11 @@ from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndL
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
+from script.models.AccountHelper import get_storage_state
 
 from datetime import timedelta
 from script.extra.helper import tehran_now
 
-from script.models.Order import get_next_order_for_account
 import json
 
 # oc = OrderComment.get_by_id(210874)
@@ -140,11 +139,13 @@ import json
 # oc.save()
 from script.models.OrderComment import release_stuck_comments
 
-# print(updated_counts.count())
 
-account = Account.get_by_id(33)
-order = get_next_order_for_account(account)
-print(order)
+account = get_next_account()
+storage_state = get_storage_state(account)
+if not storage_state or "cookies" not in storage_state:
+    print('nadarimg')
+
+print(storage_state)
 # browser_ig = BasePlaywright(account)
 # browser_ig.init()
 # LoginContext(browser_ig).fire()

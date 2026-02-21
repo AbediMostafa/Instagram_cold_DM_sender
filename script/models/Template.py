@@ -37,6 +37,7 @@ class Template(BaseWithTimeZoneModel):
     type = CharField()
     sub_type = CharField()
     carousel_id = CharField(null=True)
+    is_used = SmallIntegerField(default=0)
     uid = CharField(null=True)
     color = ForeignKeyField(Color, backref='templates', null=True)
     category = ForeignKeyField(Category, backref='templates', null=True)
@@ -60,3 +61,33 @@ class Template(BaseWithTimeZoneModel):
 
     class Meta:
         table_name = 'templates'
+
+
+def get_a_free_template(_type):
+    return (Template
+            .select()
+            .where(
+        (Template.is_used == False) &
+        (Template.type == _type)
+    ).order_by(Template.id))
+
+
+def get_next(_type):
+    free_template = get_a_free_template(_type)
+
+    if not free_template:
+
+        (Template
+         .update(is_used=False)
+         .where(Template.type == _type)
+         .execute())
+
+        free_template = get_a_free_template(_type)
+
+    free_template = free_template.first()
+
+    if free_template:
+        free_template.is_used = True
+        free_template.save()
+
+    return free_template

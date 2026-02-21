@@ -2,147 +2,182 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from script.models.Base import database
+# from script.models.Account import Account
+# from script.models.Lead import Lead
 
-from script.models.CharityLead import CharityLead
+import pandas as pd
+import csv
+import sys
 
+count = 0
+import random
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import subprocess
+import sys
+from script.models.Process import Process
+from script.models.Account import Account
+from script.models.Lead import Lead
+from script.models.Command import Command
+from script.models.Spintax import Spintax
+from script.models.Category import Category
+from script.models.Template import Template, get_a
+from script.models.Setting import Setting
+from script.models.AccountHelper import get_next_account
+from script.models.AccountHelper import get_next_account_for_api
+from script.models.LeadSource import LeadSource, get_lead_source
+from script.models.DmPost import DmPost
+from script.models.DmPostLead import DmPostLead
+from dotenv import load_dotenv
+from script.extra.base.BasePlaywright import BasePlaywright
+from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEvent
+from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
+from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
+from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
+from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
+from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
+from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
+from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
+from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
+from script.extra.actions.send_dm.SendDmContext import SendDmContext
+from script.extra.actions.unfollow.UnfollowContext import UnfollowContext
+from script.extra.actions.make_account_public.MakeAccountPublicContext import MakeAccountPublicContext
+from script.extra.actions.delete_initial_posts.DeleteInitialPostsContext import DeleteInitialPostsContext
+from script.extra.actions.get_lead_pk.GetLeadPkContext import GetLeadPkContext
+from script.extra.actions.change_name.ChangeNameContext import ChangeNameContext
+from script.extra.actions.lead_generate_by_followers.LeadGenerateByFollowersContext import \
+    LeadGenerateByFollowersContext
+from script.extra.actions.follow.FollowContext import FollowContext
+from script.extra.helper import tehran_now
+from script.extra.actions.DmFollowUp import DmFollowUp
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
+from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEngagementContext import \
+    LeadGenerateByPageEngagementContext
+from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext import \
+    LeadGenerateByPostEngagementContext
+from script.extra.actions.login.LoginContext import LoginContext
+from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
+from script.models.Warning import Warning
+
+from script.extra.helper import hours_ago
+from spintax import spin
+from script.models.Command import performed_command_count
+from script.models.Profile import get_next
+from peewee import fn
+from script.extra.exceptions import CantPerformAction
+from script.models.Hashtag import get_hashtag
+from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import \
+    LeadGenerateThroughApiContext
 import requests
-import json
-import re
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
+from script.extra.events.browser_events.BrowserGetThreadMessagesEvent import BrowserGetThreadMessagesEvent
+# from script.models.AdsPowerLock import AdsPowerLock
+# from script.extra.modules.adspower.ProfileCreator import ProfileCreator
+from datetime import timedelta, datetime
+from time import sleep
+from peewee import OperationalError
+import pytz
+# from script.extra.modules.adspower.ProfileCreator import ProfileCreator
+
+from datetime import datetime, timedelta
+from time import sleep
+import pytz
+from peewee import OperationalError
+from script.extra.actions.DmFollowUp import DmFollowUp
+from script.models.DmPost import get_dm_post_for_lead
+from script.models.Proxy import get_free_proxy
+from script.extra.exceptions import UploadedPostRecently
+from script.extra.actions.send_dm_with_post.SendDmWithPostContext import SendDmWithPostContext
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import \
+    CheckSystemUsernameWithIgUsernameContext
+from script.extra.actions.get_profile_screen_shot.GetProfileScreenShotContext import GetProfileScreenShotContext
+from script.extra.actions.activated_2fa_code.Activate2faCodeContext import Activate2faCodeContext
+from script.extra.actions.lead_generate_following_other_leads.LeadGenerateByInstagramSuggestionContext import \
+    LeadGenerateByInstagramSuggestionContext
+from script.extra.instagram.api.InstagramMobile import InstagramMobile
 from peewee import *
-from playhouse.postgres_ext import JSONField
-from datetime import datetime
+from script.models.Proxy import get_free_proxy
+from script.models.Proxy import Proxy
+from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContext import LeadGenerateByLinkedinContext
+# from script.extra.actions.comment.BrowserCommentEvent import get_free_comment
+import requests
+from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
+from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
+from script.models.OrderComment import get_next_comment_for_order, OrderComment
+from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
+from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
+from script.extra.actions.post_from_folder_and_comment.PostFromFolderAndCommentContext import \
+    PostFromFolderAndCommentContext
+from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext import CommentOnOthersPostContext
+from urllib.parse import urlparse
+from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
+from script.extra.routes import *
+from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
+from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import LeadProfileExtractor
+from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import ReelsAverageExtractor
+from script.ProcessManager import ProcessManager
+from script.models.Workflow import Workflow
+from script.models.Order import Order
+from script.models.Module import Module
+from script.models.Service import Service
+from script.models.Balance import Balance
+from script.models.Profile import Profile
+from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
+from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
+from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
+from script.extra.routes import *
+from script.models.AccountHelper import get_storage_state
+from script.models.Template import get_next
 
-BASE_URL = 'https://www.charitynavigator.org'
-CAUSE = 'Arts+and+culture'
-STATES = 'AL'
-PAGE_SIZE = 10
-TOTAL_ITEMS = 39000
-TOTAL_PAGES = TOTAL_ITEMS // PAGE_SIZE + 1
-
-headers = {
-    'accept': '*/*',
-    'accept-language': 'en-AU,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
-    'referer': 'https://www.charitynavigator.org/search',
-    'rsc': '1',
-    'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
-}
-
-lock = Lock()
-
-
-# =========================
-# 🔍 Core scraping functions
-# =========================
-def extract_website(name, charity_url):
-    """Fetch the charity page and extract its website URL."""
-
-    try:
-        req = requests.get(charity_url, headers=headers, timeout=15)
-        html = req.text
-
-        start = html.find('10:')
-        if start == -1:
-            return {'name': name, 'charity_page': charity_url, 'website': ''}
-
-        open_brackets, end = 0, None
-        for i, ch in enumerate(html[start:], start):
-            if ch == '[':
-                open_brackets += 1
-            elif ch == ']':
-                open_brackets -= 1
-                if open_brackets == 0:
-                    end = i + 1
-                    break
-        if not end:
-            print('Not end')
-            return {'name': name, 'charity_page': charity_url, 'website': ''}
-
-        block = html[start + 2:end]
-        match = re.search(r'"url":"(http[^"]+)"', block)
-        website = match.group(1) if match else ''
-        return {'name': name, 'charity_page': charity_url, 'website': website}
-
-    except Exception as e:
-        return {'name': name, 'charity_page': charity_url, 'website': f'ERROR: {e}'}
+template = get_next('name-username')
+print(template)
 
 
-def save_charity_to_db(name, website, data):
-    """Save each charity as a CharityLead record."""
-    try:
-        with lock:
-            CharityLead.create(
-                company_name=name,
-                website=website,
-                lead_type='charity_navigator',
-                data=data,
-            )
-            print(f'💾 Saved to DB: {name} → {website}')
-    except Exception as e:
-        print(f'⚠️ DB insert failed for {name}: {e}')
+from datetime import timedelta
+from script.extra.helper import tehran_now
 
+import json
+account = Account.get_by_id(5146)
+# account = get_next_account()
+browser_ig = BasePlaywright(account)
+browser_ig.init()
+LoginContext(browser_ig).fire()
+ChangeNameUsernameContext(browser_ig).fire()
+# LeadGenerateByPostEngagementContext(browser_ig).fire()
+# CommentOnOthersPostContext(browser_ig).fire()
+# ReelsAverageExtractor(browser_ig).fire()
+# PostImageFromFolderContext(browser_ig).fire()
+# LikeAndCommentContext(browser_ig).fire()
+# MakeAccountPublicContext(browser_ig).fire()
+# Format A: /p/{code}
+# BrowserChangeBioEvent(browser_ig).fire()
+# GetContactInformationContext(browser_ig).fire()
+# response = requests.get(url, verify=False)
+# print(response.json().get('data').get('status'))
+# DeleteInitialPostsContext(browser_ig).fire()
+# UnfollowContext(browser_ig).fire()
+# lead = Lead.get_by_id(2950649)
+# dm_post = get_or_reset_dm_post_for_lead(lead)
 
-def process_page(page):
-    """Process one search page."""
-    url = f'{BASE_URL}/search?page={page}&pageSize={PAGE_SIZE}&causes={CAUSE}&states={STATES}'
-    print(f'\n🔹 Fetching page {page}/{TOTAL_PAGES}')
-    try:
-        response = requests.get(url, headers=headers, timeout=15)
-        text = response.text
+# print(dm_post)
+# dm = DmPostLead.select().first()
+# print(dm.lead_id)
+# print(dm.dm_post_id)
+# print(type(account.fingerprint))
+# print(account.fingerprint['fingerprint_config'])
 
-        print(text)
-        return
+# account = Account.get_by_id(914)
+# account = get_next_account()
+# creator = ProfileCreator(account)
+# creator.create()
+# creator.delete()
+# browser_ig = BasePlaywright(account)
+# browser_ig.start_browser().go_to_instagram()
+# BrowserDmFollowUpEvent(browser_ig).fire()
+# SendDmContext(browser_ig).fire()
+# BrowserGetThreadMessagesEvent(browser_ig).fire()
 
-        start = text.find('2:[')
-        if start == -1:
-            print('❌ No JSON start found.')
-            return []
+# UnfollowContext(browser_ig).fire()
 
-        open_brackets, end = 0, None
-        for i, ch in enumerate(text[start:], start):
-            if ch == '[':
-                open_brackets += 1
-            elif ch == ']':
-                open_brackets -= 1
-                if open_brackets == 0:
-                    end = i + 1
-                    break
-        if not end:
-            print('❌ Bracket parsing failed.')
-            return []
-
-        block = text[start + 2:end]
-        data = json.loads(block)
-        charities = data[3]['children'][1][3]['children'][3]['children'][3]['results']
-
-        with ThreadPoolExecutor(max_workers=10) as executor:
-
-            futures = [
-                executor.submit(extract_website, c['name'], f"{BASE_URL}{c['url']}")
-                for c in charities
-            ]
-            for future in as_completed(futures):
-                result = future.result()
-                print(result)
-                save_charity_to_db(result['name'], result['website'], result)
-
-    except Exception as e:
-        print(f'❌ Failed page {page}: {e}')
-
-
-process_page(1)
-# =========================
-# 🚀 Main Execution
-# =========================
-# if __name__ == '__main__':
-#     for page in range(1, TOTAL_PAGES + 1):
-#         process_page(page)
-#         time.sleep(1.5)
-#
-#     print('\n✅ Done! All charities saved in charity_leads table.')
+# HowManyEventsCanHandleStrategy(account, browser_ig, None).post_action_hook()

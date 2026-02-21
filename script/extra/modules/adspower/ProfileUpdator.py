@@ -51,7 +51,7 @@ class ProfileUpdator:
 
         storage_state = get_storage_state(self.account)
         if not storage_state or "cookies" not in storage_state:
-            return False
+            return []
 
         cookies = storage_state["cookies"]
         return json.dumps(cookies)
@@ -120,8 +120,8 @@ class ProfileUpdator:
         try:
             self.payload = {
                 'profile_id': self.profile.profile_id,
-                'cookie': self.assign_cookies(),
-                "user_proxy_config": self.get_proxy()
+                "user_proxy_config": self.get_proxy(),
+                'cookie': self.assign_cookies()
             }
 
             self.send_request().update_account()

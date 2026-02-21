@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('profiles', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('folder');
+            $table->string('folder')->nullable();
             $table->string('profile_id');
             $table->unsignedTinyInteger('is_used')->default(0);
 

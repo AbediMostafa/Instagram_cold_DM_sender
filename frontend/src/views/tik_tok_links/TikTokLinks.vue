@@ -31,6 +31,9 @@
             </template>
           </el-input>
         </div>
+        <a @click="showModal('global_tag_manager_modal')" class="btn btn-sm btn-light-primary me-1">
+          Manage Tags
+        </a>
         <a @click="forceRun" class="btn btn-sm btn-primary">
             <span class="d-flex align-items-center justify-content-center" v-if="forceRunning">
               <span class="spinner-border spinner-border-sm me-2"></span>
@@ -40,12 +43,9 @@
           <span v-else>Force Run</span>
 
         </a>
-
         <a @click="showModal('add_tik_tok_links_modal')" class="btn btn-sm btn-success ms-1">
           Add Link
         </a>
-
-
         <a @click="fetch" class="btn btn-sm btn-success ms-1">
           Refresh
         </a>
@@ -307,6 +307,8 @@
         :item="selected"
         @updated="fetch"
     />
+
+    <global-tag-manager-modal />
   </div>
 </template>
 
@@ -319,8 +321,7 @@ import {showModal} from "@/core/helpers/modal";
 import {copyToClipboard} from "@/core/helpers/helper";
 import {Search} from "@element-plus/icons-vue";
 import TagManagerModal from "@/components/modals/TagManagerModal.vue";
-import search from "@/layouts/default-layout/components/search/Search.vue";
-
+import GlobalTagManagerModal from "@/components/modals/GlobalTagManagerModal.vue";
 
 const links = ref({data: []})
 const loading = ref(false);
