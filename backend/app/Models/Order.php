@@ -30,10 +30,14 @@ class Order extends Model
         return $this->belongsTo(Service::class);
     }
 
+    public function getCompletedCount()
+    {
+        return $this->actions()->whereIn('status', ['sent', 'failed'])->count();
+    }
+
     public function getRemains()
     {
-        $remains = $this->total_count - $this->completed_count;
-        return 0 ? $remains < 0 : $remains;
+        return $this->actions()->whereIn('status', ['free', 'processing'])->count();
     }
 
     public function setStatusTo($status)

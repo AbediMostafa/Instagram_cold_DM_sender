@@ -58,13 +58,13 @@ class BrowserLikeAndCommentEvent(BaseAction):
                     self.ig.page.locator("div[role='button']").filter(
                         has=self.ig.page.locator("svg[aria-label='Comment']")).click()
 
-            self.ig.page.get_by_placeholder("Add a comment…").fill(self.action.content, timeout=3000)
+            self.ig.page.get_by_placeholder("Add a comment…").fill(self.action.content, timeout=5000)
             self.ig.pause(1500, 2000)
             self.ig.page.get_by_role("button", name="Post", exact=True).click()
             self.ig.pause(1000, 1200)
 
             if self.ig.is_visible_by_text("Couldn't post comment"):
-                raise LinkIsNotCorrect("Couldn't post comment")
+                raise Exception("Couldn't post comment")
 
             self.mark_action_sent()
             self.command.update_cmd('state', 'success')
@@ -136,7 +136,6 @@ class BrowserLikeAndCommentEvent(BaseAction):
 
     def mark_action_sent(self):
         self.action.mark_as_sent()
-        self.order.add_completed_count()
         self.order.make_order_completed()
         deduct_balance('comment')
         release_stuck_actions()

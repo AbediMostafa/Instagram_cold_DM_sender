@@ -111,8 +111,8 @@
                       <el-dropdown-item @click="store.getOrders(store.orders.current_page, false)">Refresh
                       </el-dropdown-item>
 
-                      <el-dropdown-item @click="openComments(order.id)">
-                        Comments
+                      <el-dropdown-item @click="openActions(order.id)">
+                        Actions
                       </el-dropdown-item>
 
                     </el-dropdown-menu>
@@ -141,7 +141,7 @@
     <!--begin::Body-->
   </div>
   <add-order-modals/>
-  <OrderCommentsModal ref="commentsModal"/>
+  <OrderActionsModal ref="actionsModal"/>
 
 
 </template>
@@ -149,7 +149,7 @@
 <script lang="ts" setup>
 import {onMounted, ref} from 'vue';
 import AddOrderModals from "@/components/modals/order/AddOrderModal.vue";
-import OrderCommentsModal from "@/components/modals/order/OrderCommentsModal.vue";
+import OrderActionsModal from "@/components/modals/order/OrderActionsModal.vue";
 import {showModal} from '@/core/helpers/modal';
 import {useAppConfigStore} from '@/stores/AppConfig';
 import {useCategoryStore} from '@/stores/Category';
@@ -161,10 +161,10 @@ const configStore = useAppConfigStore();
 const categoryStore = useCategoryStore();
 
 
-const commentsModal = ref(null)
+const actionsModal = ref(null)
 
-const openComments = (orderId: number) => {
-  commentsModal.value.open(orderId)
+const openActions = (orderId: number) => {
+  actionsModal.value.open(orderId)
 }
 
 // Fetch leads, tags, and categories on mount

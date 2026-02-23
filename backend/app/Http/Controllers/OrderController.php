@@ -18,10 +18,16 @@ class OrderController extends Controller
 {
     public function index()
     {
-        return Order::query()
+        $orders = Order::query()
             ->with('service:id,service')
+            ->withCount([
+                'actions as completed_count' => function ($query) {
+                    $query->whereIn('status', ['sent', 'failed']);
+                }
+            ])
             ->orderBy('id', 'desc')->paginate(75);
 
+        return $orders;
     }
 
 
@@ -67,9 +73,13 @@ class OrderController extends Controller
         return tryCatch(
             function () {
                 $order = Order::query()->find(request('id'));
-                $order->completed_count = $order->total_count;
                 $order->status = 'Completed';
                 $order->save();
+
+                // Mark all remaining actions as sent
+                $order->actions()->whereNotIn('status', ['sent', 'failed'])->update([
+                    'status' => 'sent'
+                ]);
             },
             'Order finished successfully',
         );
@@ -95,7 +105,6 @@ class OrderController extends Controller
             function () {
                 $order = Order::query()->find(request('id'));
                 $order->status = 'Pending';
-                $order->completed_count = 0;
                 $order->save();
 
                 $order->actions()->update([
@@ -247,7 +256,6 @@ class OrderController extends Controller
                 "service_type" => $serviceType,
                 "target_link" => $cleanLink,
                 "total_count" => $quantity,
-                "completed_count" => 0,
                 "status" => "Pending",
             ]);
 
@@ -500,10 +508,11 @@ class OrderController extends Controller
     }
 
 
-    public function getComment()
+    public function getActions()
     {
         return Order::query()->find(r('orderId'))
             ->actions()
+            ->with('account:id,username')
             ->orderBy('id')
             ->get();
 
@@ -637,7 +646,6 @@ class OrderController extends Controller
                 "service_type" => $serviceType,
                 "target_link" => $cleanLink,
                 "total_count" => $quantity,
-                "completed_count" => 0,
                 "status" => "Pending",
             ]);
 
@@ -699,7 +707,6 @@ class OrderController extends Controller
             "service_type" => 'comment',
             "target_link" => $cleanLink,
             "total_count" => count($commentList),
-            "completed_count" => 0,
             "status" => "Pending",
         ]);
 
@@ -779,7 +786,7 @@ class OrderController extends Controller
 
     private function calculateCharge($order, $rate)
     {
-        return number_format($order->completed_count * $rate, 6);
+        return number_format($order->getCompletedCount() * $rate, 6);
     }
 
     private function v4PlaceCommentOrder($link, $quantity)
@@ -815,7 +822,6 @@ class OrderController extends Controller
             "service_type" => 'comment',
             "target_link" => $cleanLink,
             "total_count" => count($commentList),
-            "completed_count" => 0,
             "status" => "Pending",
         ]);
 
@@ -895,7 +901,7 @@ class OrderController extends Controller
 
     private function calculateChargeV4($order, $rate)
     {
-        return number_format($order->completed_count * $rate, 6);
+        return number_format($order->getCompletedCount() * $rate, 6);
     }
 
     private function cleanInstagramLink($link)

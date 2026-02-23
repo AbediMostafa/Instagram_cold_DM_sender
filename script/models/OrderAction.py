@@ -267,14 +267,13 @@ def deduct_balance(action_type):
 
 def mark_action_completed(action):
     """
-    Mark an action as sent and update the order's completed count.
+    Mark an action as sent and check if order is completed.
     Note: deduct_balance() is called separately in each module's mark_action_sent()
 
     Args:
         action: OrderAction model instance
     """
     action.mark_as_sent()
-    action.order.add_completed_count()
     action.order.make_order_completed()
 
 
@@ -290,7 +289,6 @@ def mark_action_failed(action):
     action.updated_at = tehran_now()
     action.save()
 
-    action.order.add_completed_count()
     action.order.make_order_completed()
 
 

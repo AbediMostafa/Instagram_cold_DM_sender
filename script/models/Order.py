@@ -11,7 +11,7 @@ class Order(BaseWithTimeZoneModel):
     target_link = TextField()
     total_count = IntegerField()
     completed_count = IntegerField(default=0)
-    status = CharField(default='pending')
+    status = CharField(default='Pending')
     description = TextField(null=True)
     updated_at = DateTimeField(null=True, default=tehran_now)
 
@@ -21,16 +21,6 @@ class Order(BaseWithTimeZoneModel):
         null=True,
         on_delete='SET NULL'
     )
-
-    def add_completed_count(self):
-        (
-            Order
-            .update(completed_count=Order.completed_count + 1)
-            .where(Order.id == self.id)
-        ).execute()
-
-        # Refresh object from DB
-        self.refresh()
 
     def set_status_to(self, status):
         self.status = status
@@ -44,22 +34,32 @@ class Order(BaseWithTimeZoneModel):
         self.description = message
         self.save()
 
-    def refresh(self):
-        fresh = Order.get(Order.id == self.id)
-        self.completed_count = fresh.completed_count
-        self.status = fresh.status
-
     def make_order_completed(self):
-        print(f'Completed {self.completed_count}')
-        print(f'total_count {self.total_count}')
-        print(f'Aya completed ?{self.completed_count == self.total_count}')
+        """Check if all actions are done (sent/failed) and mark order as Completed"""
+        from .OrderAction import OrderAction
 
-        if self.completed_count == self.total_count:
-            self.status = 'Completed'
-            self.save()
+        done_count = (
+            OrderAction
+            .select()
+            .where(
+                (OrderAction.order == self.id) &
+                (OrderAction.status.in_(['sent', 'failed']))
+            )
+            .count()
+        )
 
-        # Balance deduction moved to deduct_balance() in OrderAction.py
-        # Called per action in mark_action_sent()
+        print(f'Done: {done_count} / Total: {self.total_count}')
+
+        if done_count >= self.total_count:
+            (
+                Order
+                .update(status='Completed')
+                .where(
+                    (Order.id == self.id) &
+                    (Order.status != 'Completed')
+                )
+                .execute()
+            )
 
     def actions(self):
         """Get all actions for this order"""
