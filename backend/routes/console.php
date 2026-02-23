@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command('leads:update');
-Schedule::command('db:backup');
+Schedule::command('db:backup')->dailyAt('03:00');
 Schedule::command('orders:release-stuck')->everyTwoMinutes();
 
 
