@@ -210,36 +210,6 @@ def get_batch_actions_for_account(account, action_types, batch_size=1):
     return actions
 
 
-def release_stuck_actions(minutes=6):
-    """
-    Reset actions that have been in 'processing' state for too long.
-    This handles cases where a worker crashed mid-execution.
-
-    Args:
-        minutes: Number of minutes after which to consider an action stuck
-
-    Returns:
-        Number of actions reset
-    """
-    threshold = tehran_now() - timedelta(minutes=minutes)
-
-    updated_count = (
-        OrderAction
-        .update(
-            status='free',
-            account=None
-        )
-        .where(
-            (OrderAction.status == 'processing') &
-            (OrderAction.updated_at.is_null(False)) &
-            (OrderAction.updated_at < threshold)
-        )
-        .execute()
-    )
-
-    return updated_count
-
-
 def deduct_balance(action_type):
     """
     Deduct balance for the customer based on action type.

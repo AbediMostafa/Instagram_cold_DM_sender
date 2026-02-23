@@ -1,5 +1,5 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_next_action_for_account, mark_action_completed, mark_action_failed, release_stuck_actions, deduct_balance
+from script.models.OrderAction import get_next_action_for_account, mark_action_completed, mark_action_failed, deduct_balance
 from script.extra.helper import tehran_now
 from script.extra.exceptions import LinkIsNotCorrect
 
@@ -97,9 +97,8 @@ class BrowserCommentEvent:
     def mark_action_sent(self):
         mark_action_completed(self.action)
         deduct_balance('comment')
-        release_stuck_actions()
+
 
     def mark_action_failed_with_charge(self):
         mark_action_failed(self.action)
         deduct_balance('comment')
-        release_stuck_actions()

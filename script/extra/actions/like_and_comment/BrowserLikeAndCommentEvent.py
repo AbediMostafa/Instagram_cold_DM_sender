@@ -1,5 +1,5 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_batch_actions_for_account, release_stuck_actions, deduct_balance
+from script.models.OrderAction import get_batch_actions_for_account, deduct_balance
 from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
@@ -138,4 +138,3 @@ class BrowserLikeAndCommentEvent(BaseAction):
         self.action.mark_as_sent()
         self.order.make_order_completed()
         deduct_balance('comment')
-        release_stuck_actions()

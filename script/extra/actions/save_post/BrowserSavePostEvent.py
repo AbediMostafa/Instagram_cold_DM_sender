@@ -1,5 +1,5 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, release_stuck_actions, deduct_balance
+from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, deduct_balance
 from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
@@ -166,4 +166,3 @@ class BrowserSavePostEvent(BaseAction):
     def mark_action_sent(self):
         mark_action_completed(self.action)
         deduct_balance('save_post')
-        release_stuck_actions()

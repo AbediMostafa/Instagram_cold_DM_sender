@@ -10,4 +10,6 @@ Artisan::command('inspire', function () {
 
 Schedule::command('leads:update');
 Schedule::command('db:backup');
+Schedule::command('orders:release-stuck')->everyTwoMinutes();
+
 

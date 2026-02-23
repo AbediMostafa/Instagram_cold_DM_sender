@@ -1,5 +1,5 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, mark_action_failed, release_stuck_actions, deduct_balance
+from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, mark_action_failed,  deduct_balance
 from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
@@ -416,9 +416,8 @@ class BrowserViewStoryEvent(BaseAction):
     def mark_action_sent(self):
         mark_action_completed(self.action)
         deduct_balance('view_story')
-        release_stuck_actions()
+
 
     def mark_action_failed_with_charge(self):
         mark_action_failed(self.action)
         deduct_balance('view_story')
-        release_stuck_actions()
