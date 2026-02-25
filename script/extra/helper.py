@@ -34,6 +34,7 @@ def get_post_url(template_path):
 
 
 def download_image(image_url, download_path):
+    # http://84.200.77.247/storage/uploads/image-post/2/23\96b36ac1-17a8-43ed-bf3d-8eeb0119c210.jpg
     response = requests.get(image_url)
     if response.status_code == 200:
         os.makedirs(os.path.dirname(download_path), exist_ok=True)

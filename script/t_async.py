@@ -1,23 +1,16 @@
 import requests
-import re
-import json
+proxy_host = 'global.rotating.proxyrack.net'
+proxy_port = '10227'
+proxy_user = 'sajilepubugupa'
+proxy_pass = 'WHVSVK9-F1THMWM-HDXU1WL-7WDLSBZ-KZFAMVN-SPXL653-MUCTOXX'
+proxies = {
+    'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+    'https': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+}
 
-ig_user_id = '895666706968024'
-app_id = '25203446065944545'
-app_secret = '683def4ec08b09a164f952bc8902503e'
-user_access_token = 'EAFmKZApHgVZBEBQbQLUv8aPZBitKkFFmGRIq6WzbCOUpBgaKv9QZBR9L1hWP5KA20TLHtZCimW1BsofsA781kFnNryXDZCidgqapefJsyOENwdqCKXXNn9060ntpZAJhf4Adk9qvBtlsFJoZCJSJRMk2yykuRGkJMT5xZBmM2AajPWG6En7GSdmaeAvFv5sBlENMFNWWqxefQVulYUWzatZCRlBEsr0toZCJDcCedHqCtrLZAtTJ'
-# user_access_token = 'EAFmKZApHgVZBEBQZAZBIZBlvpjvJCZBB9YSG8CZAkLhdEmxN62CSoc5TdMTUBDeqSxZA5k1ZC5SxsBYnBp0l8GxG7KyVkcHRaWSIOI07EGc759Q7cwKbvEhuqtM8hfuaVX2sdOw1zhZAahs27XqQ0i4klhxXhFBWzP4HJQvRkhwbYaEJZBM4pw73Bh2o6acakoTU7Ts'
-long_access_token = 'EAFmKZApHgVZBEBQaPhUDI7SYXng0EivRdPzSqaEbxlT48s5A9ZA6ZAVAIZAXf3mDNu2zlWUj56K8HD6WjqQMjZCrJbPxvs7QISFuatCtI9RsrbbZBlRJKORBbvRZB9FmxZBVmy6SlvZCh8sqdcoyJVZAmMoa2Mj5DpivM1XMGefHXuATyiD43ZAJHbaRBmPxM4KN'
-url = 'https://graph.facebook.com/v24.0/895666706968024?fields=business_discovery.username(bluebottle){followers_count,media_count}&client_id=25203446065944545&access_token=EAFmKZApHgVZBEBQbQLUv8aPZBitKkFFmGRIq6WzbCOUpBgaKv9QZBR9L1hWP5KA20TLHtZCimW1BsofsA781kFnNryXDZCidgqapefJsyOENwdqCKXXNn9060ntpZAJhf4Adk9qvBtlsFJoZCJSJRMk2yykuRGkJMT5xZBmM2AajPWG6En7GSdmaeAvFv5sBlENMFNWWqxefQVulYUWzatZCRlBEsr0toZCJDcCedHqCtrLZAtTJ'
-# url = f'https://graph.facebook.com/v24.0/oauth/access_token?grant_type=fb_exchange_token&client_id={app_id}&client_secret={app_secret}&fb_exchange_token={user_access_token}'
-
-response = requests.get(url)
-
-print(response.text)
-
-
-
-
-
-
-
+try:
+    response = requests.get('https://httpbin.org/ip', proxies=proxies, timeout=15)
+    print('Status Code:', response.status_code)
+    print('Response:', response.text)
+except Exception as e:
+    print('Error:', str(e))

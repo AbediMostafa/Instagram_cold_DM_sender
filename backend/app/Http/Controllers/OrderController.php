@@ -25,7 +25,7 @@ class OrderController extends Controller
                     $query->whereIn('status', ['sent', 'failed']);
                 }
             ])
-            ->orderBy('id', 'desc')->paginate(75);
+            ->orderBy('id', 'desc')->paginate(200);
 
         return $orders;
     }

@@ -20,7 +20,7 @@ class SaveTikTokLink:
         self.ig = BasePlaywright(account)
         self.ig.init()
 
-        self.tik_tok_links = TikTokLink.select()
+        self.tik_tok_links = TikTokLink.select().order_by(TikTokLink.created_at.desc())
         self.ig.page.on('response', self.handle_response)
 
     def handle_response(self, response):

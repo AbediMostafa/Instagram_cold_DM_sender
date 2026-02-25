@@ -38,14 +38,13 @@ class Setting extends Model
 
     public static function setValue(string $key, $value, string $type = 'text', string $description = null): void
     {
-        // Check if a record with the given key exists
-        $setting = self::query()->where('key', $key)->first();
-
-        // Set or update fields
-        $setting->value = $value;
-        $setting->type = $type;
-        $setting->description = $description;
-
-        $setting->save();
+        self::query()->updateOrCreate(
+            ['key' => $key], // condition
+            [
+                'value' => $value,
+                'type' => $type,
+                'description' => $description,
+            ]
+        );
     }
 }

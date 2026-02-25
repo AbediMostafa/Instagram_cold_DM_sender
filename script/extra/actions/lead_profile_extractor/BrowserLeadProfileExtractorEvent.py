@@ -50,13 +50,18 @@ class BrowserLeadProfileExtractorEvent:
         username = user.get('username')
         full_name = user.get('full_name')
         bio = user.get('biography')
-        profile_pic_url = user.get('profile_pic_url')
+        profile_pic_url = user.get('hd_profile_pic_url_info').get('url')
         id = user.get('id')
 
+        self.ig.account.add_cli(f'Profile picture url : {profile_pic_url}')
         self.ig.account.add_cli(f'Profile loaded: {username}, name:{full_name}')
 
-        self.save_name_username(username, full_name)
-        self.save_bio(bio)
+        if full_name:
+            self.save_name_username(username, full_name)
+
+        if bio:
+            self.save_bio(bio)
+
         self.save_avatar(profile_pic_url)
         self.save_instagram_id(id)
         self.save_posts()

@@ -28,7 +28,6 @@ class TikTokLinkController extends Controller
         $sortBy = request('sort_by', 'updated_at');
         $sortDirection = request('sort_direction', 'desc');
 
-        // جلوگیری از SQL Injection
         if (!in_array($sortBy, $allowedSorts)) {
             $sortBy = 'updated_at';
         }
@@ -145,7 +144,7 @@ class TikTokLinkController extends Controller
             $folderPath
         ]);
 
-        $process->setTimeout(400);
+        $process->setTimeout(4000);
         $process->run();
 
         $folderPath = storage_path("app\\public\\tiktok\\{$tikTokLink->id}\\output.zip");
@@ -167,7 +166,7 @@ class TikTokLinkController extends Controller
                 $path,
             ]);
 
-            $process->setTimeout(400);
+            $process->setTimeout(4000);
             $process->run();
         },
             'Script ran successfully'

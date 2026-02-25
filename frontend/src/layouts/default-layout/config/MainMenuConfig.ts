@@ -90,7 +90,7 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/settings",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['employee','user']
+        allowed_roles:['user']
       },
 
       {
@@ -98,28 +98,28 @@ const MainMenuConfig: Array<MenuItem> = [
         route: "/services",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['employee','user']
+        allowed_roles:['user']
       },
       {
         heading: "workflows",
         route: "/workflows",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['employee','user']
+        allowed_roles:['user']
       },
       {
         heading: "modules",
         route: "/modules",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['employee','user'],
+        allowed_roles:['user'],
       },
       {
         heading: "processes",
         route: "/processes",
         keenthemesIcon: "element-7",
         bootstrapIcon: "bi-layers",
-        allowed_roles:['employee','user']
+        allowed_roles:['user']
       },
       {
         heading: "2fa",

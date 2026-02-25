@@ -3,6 +3,7 @@ from script.extra.events.browser_events.BrowserBaseEvent import BrowserBaseEvent
 from script.extra.helper import *
 from script.extra.routes import get_template
 from script.models.Template import Template
+from script.models.Template import get_next
 
 import shutil
 
@@ -16,14 +17,14 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
 
     def execute(self):
 
-        # if self.ig.account.get_passed_days_since_creation() < 2:
-        #     return self.ig.account.add_cli(f"Account is not old enough to change avatar")
-
+        if self.ig.account.get_passed_days_since_creation() < 2:
+            return self.ig.account.add_cli(f"Account is not old enough to change avatar")
+        #
         if self.ig.account.avatar_changed:
             return self.ig.account.add_cli(f"{self.ig.account.username}'s avatar has been changed already")
 
-        self.template = get_template(self.ig.account.id, 'avatar')
-        self.template = Template.get_by_id(self.template['id'])
+        self.template = get_next('avatar')
+        # self.template = get_template(self.ig.account.id, 'avatar')
 
         if not self.template:
             self.ig.account.add_cli(f"We don't have an avatar for : {self.ig.account.username}")

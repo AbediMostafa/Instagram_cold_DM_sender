@@ -5,7 +5,7 @@ return [
         'each_page' => [
             'accounts' => 1000,
             'account_specs' => 1000,
-            'leads' => 50,
+            'leads' => 200,
             'looms' => 50,
             'commands' => 50,
             'messages' => 10,

@@ -4,7 +4,7 @@ from script.models.AccountHelper import get_storage_state
 import json
 import os, hashlib, requests, time
 
-CACHE_DIR = r'C:\Users\admin\Desktop\tmp\cache'
+CACHE_DIR = r'C:\Users\admin\Desktop\project\script\cache'
 
 
 def cache_key(url):

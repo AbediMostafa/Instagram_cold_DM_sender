@@ -126,6 +126,7 @@ from script.models.Profile import Profile
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
+from script.extra.actions.account_status_checker.AccountStatusCheckerContext import AccountStatusCheckerContext
 from script.extra.routes import *
 from script.models.AccountHelper import get_storage_state
 
@@ -139,17 +140,12 @@ import json
 # oc.save()
 from script.models.OrderComment import release_stuck_comments
 
-
 account = get_next_account()
-storage_state = get_storage_state(account)
-if not storage_state or "cookies" not in storage_state:
-    print('nadarimg')
-
-print(storage_state)
-# browser_ig = BasePlaywright(account)
-# browser_ig.init()
-# LoginContext(browser_ig).fire()
-# LeadGenerateByPostEngagementContext(browser_ig).fire()
+browser_ig = BasePlaywright(account)
+browser_ig.init()
+LoginContext(browser_ig).fire()
+BrowserPostImageEvent(browser_ig).fire()
+# LeadGenerateByFollowersContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

@@ -78,7 +78,61 @@ use \App\Http\Controllers\TikTokLinkController;
 use \Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
+//   $s = DB::select("
+//   SELECT * FROM pg_locks;
+//   ");
+//
+//   dd($s);
 
+
+//    $ports = [10000, 10001,10002,10003,10004];
+//
+//    foreach ($ports as $port) {
+//        Proxy::query()->create([
+//            'ip'=>'private.residential.proxyrack.net',
+//            'port'=>$port,
+//            'username'=>'sajilepubugupa',
+//            'password'=>'WHVSVK9-F1THMWM-HDXU1WL-7WDLSBZ-KZFAMVN-SPXL653-MUCTOXX',
+//            'type'=>'residential',
+//        ]);
+//    }
+//
+//    dd('shd');
+
+//    $s = DB::statement("
+//    ALTER TABLE processes
+//ALTER COLUMN pid TYPE varchar(255)
+//USING pid::varchar;
+//    ");
+//
+//    dd($s);
+
+    //
+//    $accounts = Account::query()->where('instagram_state',  'active')
+//    ->update([
+//    'is_used'=>0
+//    ]);
+//
+//    dd($accounts);
+
+//    $s = DB::select("
+//    ALTER TABLE commands
+//DROP CONSTRAINT commands_type_check;
+//
+//    ");
+//
+//    dd($s);
+//
+//    for ($i = 0; $i < 100; $i++)
+//        $proxy = Proxy::query()->create([
+//            'ip' => 'gw.dataimpulse.com',
+//            'port' => '824',
+//            'username' => '239c1e03149f4688d9b7__cr.gb,us',
+//            'password' => 'd4c552dfbab2110c',
+//            'type' => 'data-impulse-residential',
+//        ]);
+////
+////dd($proxies);
 
 });
 

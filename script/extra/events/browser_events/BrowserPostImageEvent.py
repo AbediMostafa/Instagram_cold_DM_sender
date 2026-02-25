@@ -20,8 +20,8 @@ class BrowserPostImageEvent(InstagramMiddleware):
         self.template = self.ig.account.get_a_free_template('image-post')
 
         if not self.template:
-            self.ig.account.add_cli(f"We don't have a image template for account trying to post Carousel ...")
-            return BrowserPostCarouselEvent(self.ig).fire()
+            return self.ig.account.add_cli(f"We don't have a image template for account trying to post Carousel ...")
+            # return BrowserPostCarouselEvent(self.ig).fire()
 
         try:
             self.generate_image()
@@ -94,8 +94,9 @@ class BrowserPostImageEvent(InstagramMiddleware):
         self.ig.page.get_by_role("button", name="Next").click()
         self.ig.pause(2000, 3500)
 
-        self.ig.page.get_by_label("Write a caption...").fill(self.caption)
-        self.ig.pause(3000, 4500)
+        if self.caption:
+            self.ig.page.get_by_label("Write a caption...").fill(self.caption)
+            self.ig.pause(3000, 4500)
 
         self.ig.page.get_by_role("button", name="Share").click()
         self.ig.pause(15000, 17000)

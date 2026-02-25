@@ -90,15 +90,26 @@ def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts
     while attempts < max_attempts:
         attempts += 1
 
-        query = Proxy.select().where(
-            (Proxy.is_used == 0) & (Proxy.type == proxy_type)
-        )
+        if proxy_type == 'complex':
+            proxy_types = ["global_datacenter", "datacenter", "unmetered_resedential", "residential"]
+
+            query = Proxy.select().where(
+                (Proxy.is_used == 0) &
+                (Proxy.type.in_(proxy_types))
+            )
+
+        else:
+            query = Proxy.select().where(
+                (Proxy.is_used == 0) &
+                (Proxy.type == proxy_type)
+            )
 
         if not query.exists():
             Proxy.update(is_used=0).execute()
             continue
 
-        next_proxy = query.order_by(Proxy.id).first()
+        next_proxy = query.order_by(fn.Random()).first()
+        # next_proxy = query.order_by(Proxy.id).first()
         if not next_proxy:
             continue
 

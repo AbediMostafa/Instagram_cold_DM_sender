@@ -157,7 +157,7 @@ class BrowserLoginEvent:
         if is_visible:
             self.ig.account.add_cli('User is not logged in before trying to login ...')
             self.fill_username_password()
-            self.ig.pause(5000, 6000)
+            self.ig.pause(6000, 6500)
 
     def fill_username_password(self):
 
@@ -166,8 +166,8 @@ class BrowserLoginEvent:
         input3 = self.ig.page.get_by_label("Mobile number, username or email")
 
         try:
-            input1.fill('')
-            input1.press_sequentially(self.ig.account.username, delay=100, timeout=4000)
+            input3.fill('')
+            input3.press_sequentially(self.ig.account.username, delay=100, timeout=4000)
             self.ig.account.add_cli('First locator didnt found')
         except:
             try:
@@ -176,10 +176,10 @@ class BrowserLoginEvent:
                 self.ig.account.add_cli('Second locator didnt found')
 
             except:
-                input3.fill('')
+                input1.fill('')
 
                 try:
-                    input3.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
+                    input1.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
                 except:
                     self.ig.account.add_cli('Third locator didnt found')
 
@@ -187,8 +187,14 @@ class BrowserLoginEvent:
         self.ig.page.get_by_label("Password").fill('')
         self.ig.page.get_by_label("Password").press_sequentially(self.ig.account.password, delay=100, timeout=6000)
         self.ig.pause(2000, 3000)
-        self.ig.page.get_by_role("button", name="Log in", exact=True).click()
-        self.ig.pause(15000, 16000)
+
+        try:
+            self.ig.page.get_by_role("button", name="Log in").click(timeout=3000)
+        except:
+            self.ig.account.add_cli('First login locator failed')
+            self.ig.page.locator('[aria-label="Log In"]').click(timeout=3000)
+
+        self.ig.pause(5000, 6000)
 
     def unusual_login_detected(self):
         if self.ig.is_visible_by_text('We Detected An Unusual Login') or self.ig.is_visible_by_text(

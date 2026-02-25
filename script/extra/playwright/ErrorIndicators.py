@@ -232,6 +232,8 @@ class ErrorIndicators(BaseAction):
         if self.ig.is_visible_by_text("Confirm you're human"):
             try:
                 self.ig.page.get_by_role("button", name="Continue").click(timeout=3000)
+                self.ig.pause(1800, 3000)
+                raise HelpUsConfirmItsYouError("Confirm you're human")
             except:
 
                 raise HelpUsConfirmItsYouError("Confirm you're human")

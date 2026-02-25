@@ -255,7 +255,7 @@
         <!-- Pagination -->
         <el-pagination
             :current-page="store.processes.current_page"
-            :page-size="75"
+            :page-size="400"
             layout="prev, pager, next"
             :total="store.processes.total"
             @current-change="page => store.getProcesses(page, getFilters())"
