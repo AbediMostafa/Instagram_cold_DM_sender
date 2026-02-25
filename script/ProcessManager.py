@@ -46,9 +46,7 @@ class ProcessManager:
             time.sleep(ProcessManager.sleep_time)
 
     def init(self):
-        server_ip = os.getenv('SERVER_IP')
-
-        self.pid = f'{server_ip} : {os.getpid()}'
+        self.pid = os.getpid()
         self.process = Process.update_or_create_process(self.pid)
         self.workflow = self.process.workflow
 
