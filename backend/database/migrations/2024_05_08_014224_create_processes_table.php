@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('processes', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('pid')->unsigned()->unique();
+            $table->bigInteger('pid')->unsigned();
+            $table->string('server_ip', 45);
             $table->enum('status', ['running', 'stopped', 'terminated', 'idle'])->default('idle');
             $table->string('proxy_type')->nullable();
 
@@ -24,6 +25,8 @@ return new class extends Migration
 
             $table->timestamp('last_checked_at')->nullable()->useCurrent();
             $table->timestamp('created_at')->useCurrent();
+
+            $table->unique(['pid', 'server_ip']);
         });
     }
 

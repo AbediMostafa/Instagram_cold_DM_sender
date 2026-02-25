@@ -283,14 +283,20 @@ Route::post('settings', [SettingController::class, 'index']);
 Route::post('setting/update', [SettingController::class, 'update']);
 
 
-Route::post('processes', [ProcessController::class, 'index']);
-Route::post('processes/check', [ProcessController::class, 'check']);
-Route::post('processes/update', [ProcessController::class, 'update']);
-Route::post('processes/delete', [ProcessController::class, 'delete']);
-Route::post('processes/toggle-process', [ProcessController::class, 'toggleProcess']);
-Route::post('processes/get-initial-data', [ProcessController::class, 'getInitialData']);
-Route::post('processes/set-workflow', [ProcessController::class, 'setWorkflow']);
-Route::post('processes/set-status', [ProcessController::class, 'setStatus']);
+Route::prefix('processes')->group(function () {
+    Route::get('/', [ProcessController::class, 'index']);
+    Route::get('/servers/', [ProcessController::class, 'getServers']);
+    Route::get('/initial-data', [ProcessController::class, 'getInitialData']);
+    Route::post('/update', [ProcessController::class, 'update']);
+    Route::post('/delete', [ProcessController::class, 'delete']);
+    Route::post('/toggle-process', [ProcessController::class, 'toggleProcess']);
+    Route::post('/set-workflow', [ProcessController::class, 'setWorkflow']);
+    Route::post('/set-status', [ProcessController::class, 'setStatus']);
+    Route::post('/check', [ProcessController::class, 'check']);
+    Route::post('/set-status-by-servers', [ProcessController::class, 'setStatusByServers']);
+    Route::post('/set-workflow-by-servers', [ProcessController::class, 'setWorkflowByServers']);
+    Route::post('/delete-by-servers', [ProcessController::class, 'deleteByServers']);
+});
 
 Route::post('services', [ServiceController::class, 'index']);
 Route::post('services/create', [ServiceController::class, 'create']);

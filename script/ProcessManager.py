@@ -1,5 +1,6 @@
 import os
 import sys
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
@@ -8,6 +9,8 @@ from script.models.Account import Account
 from script.extra.exceptions import ProcessShouldStop
 import traceback
 from script.models.AccountHelper import get_next_account
+
+load_dotenv()
 
 
 class ProcessManager:

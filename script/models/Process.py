@@ -1,12 +1,17 @@
 import datetime
+import os
 from peewee import *
 from .Workflow import Workflow
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from script.extra.helper import tehran_now
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Process(BaseWithTimeZoneModel):
     pid = BigIntegerField()
+    server_ip = CharField(max_length=45)
     status = CharField(default='idle')
     proxy_type = CharField()
     workflow = ForeignKeyField(Workflow, backref='processes', null=True)
@@ -16,6 +21,9 @@ class Process(BaseWithTimeZoneModel):
 
     class Meta:
         table_name = 'processes'
+        indexes = (
+            (('pid', 'server_ip'), True),
+        )
 
     def add_cli(self, log, account=None, print_only=False):
         from .Cli import Cli
@@ -36,11 +44,17 @@ class Process(BaseWithTimeZoneModel):
         Cli.create(account=account, log=truncated_log, process=self)
 
     @staticmethod
+    def get_server_ip():
+        return os.getenv('SERVER_IP', '0.0.0.0')
+
+    @staticmethod
     def update_or_create_process(pid):
         now = tehran_now()
+        server_ip = Process.get_server_ip()
 
         process, created = Process.get_or_create(
             pid=pid,
+            server_ip=server_ip,
             defaults={'last_checked_at': now}
         )
 

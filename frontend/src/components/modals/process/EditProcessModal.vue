@@ -41,6 +41,12 @@
               <el-input v-model="formData.pid" disabled />
             </div>
 
+            <!-- Server IP (readonly) -->
+            <div class="d-flex flex-column mb-8 fv-row">
+              <label class="fs-6 fw-semibold mb-2">Server IP</label>
+              <el-input v-model="formData.server_ip" disabled />
+            </div>
+
             <!-- Status -->
             <div class="d-flex flex-column mb-8 fv-row">
               <label class="fs-6 fw-semibold mb-2">Status</label>
@@ -131,6 +137,7 @@ export default defineComponent({
     const formData = ref({
       id: null as number | null,
       pid: null as number | null,
+      server_ip: "" as string,
       status: "",
       workflow_id: null as number | null,
     });
@@ -150,6 +157,7 @@ export default defineComponent({
 
           formData.value.id = newVal.id;
           formData.value.pid = newVal.pid;
+          formData.value.server_ip = newVal.server_ip;
           formData.value.status = newVal.status;
           formData.value.workflow_id = newVal.workflow_id;
         },

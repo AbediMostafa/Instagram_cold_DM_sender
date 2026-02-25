@@ -12,9 +12,15 @@ class ProcessController extends Controller
 
     public function index()
     {
-        return Process::query()
+        $query = Process::query()
             ->with('workflow:id,title')
-            ->orderBy('id', 'desc')->paginate(75);
+            ->orderBy('id', 'desc');
+
+        if (request('server_ip')) {
+            $query->byServer(request('server_ip'));
+        }
+
+        return $query->paginate(75);
     }
 
     public function check()
@@ -40,10 +46,16 @@ class ProcessController extends Controller
 
     public function getInitialData(): array
     {
+        $serverIps = Process::query()
+            ->select('server_ip')
+            ->distinct()
+            ->pluck('server_ip')
+            ->toArray();
+
         return [
             'stopped_statuses' => Process::$stoppedStatuses,
+            'server_ips' => $serverIps,
         ];
-
     }
 
     public function delete()
@@ -80,7 +92,75 @@ class ProcessController extends Controller
     {
         return tryCatch(
             fn() => Process::query()->whereIn('id', r('ids'))->update(['status' => r('status')]),
-            'Workflow changed successfully'
+            'Status changed successfully'
         );
+    }
+
+    public function getServers()
+    {
+        return Process::query()
+            ->select('server_ip')
+            ->distinct()
+            ->pluck('server_ip');
+    }
+
+    // Server-based actions
+
+    public function setStatusByServers()
+    {
+        $serverIps = r('server_ips', []);
+        $status = r('status');
+
+        abort_if(empty($serverIps), 422, 'Please select at least one server');
+        abort_if(!in_array($status, ['running', 'stopped']), 422, 'Invalid status');
+
+        return tryCatch(
+            fn() => Process::query()
+                ->whereIn('server_ip', $serverIps)
+                ->where('status', '!=', 'terminated')
+                ->update(['status' => $status]),
+            'Status changed for all processes on selected servers'
+        );
+    }
+
+    public function setWorkflowByServers()
+    {
+        $serverIps = r('server_ips', []);
+        $workflowId = r('workflow_id');
+
+        abort_if(empty($serverIps), 422, 'Please select at least one server');
+
+        return tryCatch(
+            fn() => Process::query()
+                ->whereIn('server_ip', $serverIps)
+                ->update(['workflow_id' => $workflowId]),
+            'Workflow changed for all processes on selected servers'
+        );
+    }
+
+    public function deleteByServers()
+    {
+        $serverIps = r('server_ips', []);
+
+        abort_if(empty($serverIps), 422, 'Please select at least one server');
+
+        return tryCatch(
+            fn() => Process::query()
+                ->whereIn('server_ip', $serverIps)
+                ->delete(),
+            'All processes deleted on selected servers'
+        );
+    }
+
+    public function getServerStats()
+    {
+        return Process::query()
+            ->selectRaw('server_ip, status, COUNT(*) as count')
+            ->groupBy('server_ip', 'status')
+            ->get()
+            ->groupBy('server_ip')
+            ->map(function ($items) {
+                return $items->pluck('count', 'status');
+            });
     }
 }

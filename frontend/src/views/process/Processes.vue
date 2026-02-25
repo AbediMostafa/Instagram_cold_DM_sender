@@ -10,7 +10,27 @@
       </h3>
 
       <div class="card-toolbar">
-        <a class="btn btn-sm btn-light-primary me-2" @click="store.getProcesses()">
+        <!-- Server Multi-Select -->
+        <el-select
+            v-model="selectedServers"
+            placeholder="Select Servers"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            class="me-3"
+            style="width: 220px"
+            @change="onServerFilterChange"
+        >
+          <el-option
+              v-for="ip in serverIps"
+              :key="ip"
+              :label="ip"
+              :value="ip"
+          />
+        </el-select>
+
+        <a class="btn btn-sm btn-light-primary me-2" @click="refreshProcesses">
           Refresh
         </a>
 
@@ -29,6 +49,12 @@
             <div class="menu-item px-3">
               <div class="menu-content fs-6 text-gray-900 fw-bold px-3 py-4">
                 Quick Actions
+                <span v-if="selectedServers.length > 0 && store.checkedProcessRows.length === 0" class="text-muted fs-8 d-block">
+                  (Will apply to all processes on selected servers)
+                </span>
+                <span v-else-if="store.checkedProcessRows.length > 0" class="text-muted fs-8 d-block">
+                  (Will apply to {{ store.checkedProcessRows.length }} selected rows)
+                </span>
               </div>
             </div>
             <!--end::Menu item-->
@@ -42,19 +68,19 @@
                 <a
                     class="btn btn-light-danger btn-sm px-4 w-100"
                     @click="store.deleteSelected(store.checkedProcessRows)"
-                >Delete Selected</a>
+                >Delete {{ actionTarget }}</a>
               </div>
             </div>
             <div class="menu-item ">
               <div class="px-3 d-flex align-items-center justify-content-center">
                 <a
                     class="btn btn-light-success btn-sm px-4 w-100"
-                    @click="store.setStatusTo('running',store.checkedProcessRows)"
-                >Start Selected</a>
+                    @click="store.setStatusTo('running', store.checkedProcessRows)"
+                >Start {{ actionTarget }}</a>
                 <a
                     class="btn btn-light-danger btn-sm px-4 w-100 ms-1"
-                    @click="store.setStatusTo('stopped',store.checkedProcessRows)"
-                >Stop Selected</a>
+                    @click="store.setStatusTo('stopped', store.checkedProcessRows)"
+                >Stop {{ actionTarget }}</a>
               </div>
             </div>
             <div class="menu-item ">
@@ -100,13 +126,15 @@
             <th class="w-25px">
               <div class="form-check form-check-sm form-check-custom form-check-solid">
                 <input
+                    ref="checkAllRef"
                     class="form-check-input"
                     type="checkbox"
-                    @change="store.checkRows($event)"
+                    @change="onCheckAll($event)"
                 />
               </div>
             </th>
             <th class="min-w-120px">PID</th>
+            <th class="min-w-120px">SERVER</th>
             <th class="min-w-120px">STATUS</th>
             <th class="min-w-150px">WORKFLOW</th>
             <th class="min-w-150px">LAST CHECKED</th>
@@ -135,6 +163,12 @@
             <td>
                 <span class="fw-bold fs-7 text-gray-800">
                   {{ process.pid }}
+                </span>
+            </td>
+
+            <td>
+                <span class="badge badge-light-primary">
+                  {{ process.server_ip }}
                 </span>
             </td>
 
@@ -224,7 +258,7 @@
             :page-size="75"
             layout="prev, pager, next"
             :total="store.processes.total"
-            @current-change="page => store.getProcesses(page)"
+            @current-change="page => store.getProcesses(page, getFilters())"
         />
       </div>
     </div>
@@ -233,7 +267,7 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import {useProcessStore} from "@/stores/Process";
 import EditProcessModal from "@/components/modals/process/EditProcessModal.vue";
 import {showModal} from "@/core/helpers/modal";
@@ -242,30 +276,87 @@ import {useWorkflowStore} from "@/stores/workflow";
 
 const store = useProcessStore();
 const formData = reactive({
-  workflow_id:'',
+  workflow_id: '',
 })
+const selectedServers = ref<string[]>([]);
+const serverIps = ref<string[]>([]);
 const processData = ref(null);
+const checkAllRef = ref<HTMLInputElement | null>(null);
+
 const is = reactive({
-  toggling: false
+  toggling: false,
 });
 const workflowStore = useWorkflowStore();
 workflowStore.getWorkflows(1, false);
 
-
 const currentProcessId = ref('')
 
+// Computed property for button text
+const actionTarget = computed(() => {
+  if (store.checkedProcessRows.length > 0) {
+    return 'Selected';
+  } else if (selectedServers.value.length > 0) {
+    return 'All on Servers';
+  }
+  return 'Selected';
+});
+
+// Watch for changes and sync selectedServers to store
+watch(selectedServers, (newVal) => {
+  store.setSelectedServers(newVal);
+});
+
+// Watch checkedProcessRows to uncheck the "all" checkbox when cleared
+watch(() => store.checkedProcessRows, (newVal) => {
+  if (checkAllRef.value && newVal.length === 0) {
+    checkAllRef.value.checked = false;
+  }
+}, { deep: true });
+
+const loadServerIps = () => {
+  ApiService.query("processes/servers", {})
+      .then(({data}) => {
+        serverIps.value = data;
+      });
+}
+
+const getFilters = () => {
+  return {
+    server_ip: selectedServers.value.length === 1 ? selectedServers.value[0] : ''
+  };
+}
+
+const onServerFilterChange = () => {
+  store.clearCheckedRows();
+  if (checkAllRef.value) {
+    checkAllRef.value.checked = false;
+  }
+
+  if (selectedServers.value.length === 1) {
+    store.getProcesses(1, getFilters());
+  } else {
+    store.getProcesses(1, {});
+  }
+}
+
+const refreshProcesses = () => {
+  store.getProcesses(1, getFilters());
+  loadServerIps();
+}
+
+const onCheckAll = (e: Event) => {
+  store.checkRows(e);
+}
 
 const toggleProcess = process => {
-
   is.toggling = true;
   currentProcessId.value = process.id;
 
   ApiService.post("processes/toggle-process", {id: process.id})
-      .then(store.getProcesses)
+      .then(() => store.getProcesses(1, getFilters()))
       .finally(() => {
         is.toggling = false;
       });
-
 }
 
 const editProcess = (process) => {
@@ -275,12 +366,6 @@ const editProcess = (process) => {
 
 onMounted(() => {
   store.getProcesses();
+  loadServerIps();
 });
-
-const clicked = () => {
-
-  alert(store.checkedProcessRows)
-}
-
-
 </script>

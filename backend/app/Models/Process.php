@@ -41,4 +41,9 @@ class Process extends Model
         $this->status = $status;
         $this->save();
     }
+
+    public function scopeByServer($query, $serverIp)
+    {
+        return $query->where('server_ip', $serverIp);
+    }
 }
