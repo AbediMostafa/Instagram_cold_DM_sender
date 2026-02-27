@@ -334,7 +334,7 @@ class BrowserViewStoryEvent(BaseAction):
         self.setup_response_listener()
 
         go_to_page(self.ig, story_url, 'Story Page')
-        self.ig.pause(3000, 4000)
+        self.ig.pause(5000, 6000)
 
         # Check if redirected to profile (user has no story)
         current_url = self.ig.page.url
