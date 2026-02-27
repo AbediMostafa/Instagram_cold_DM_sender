@@ -6,14 +6,15 @@ from .Account import Account
 from .Balance import Balance
 from datetime import timedelta
 from decimal import Decimal
+import random
 
 
 # Rate per action type (divided by 1000)
 ACTION_RATES = {
-    'comment': Decimal('0.00025'),           # $0.25 / 1000
-    'view_story': Decimal('0.000025'),       # $0.025 / 1000
-    'view_all_stories': Decimal('0.00005'),  # $0.05 / 1000
-    'save_post': Decimal('0.000025'),        # $0.025 / 1000
+    'comment': Decimal('0.0003'),             # $0.30 / 1000
+    'view_story': Decimal('0.00005'),         # $0.05 / 1000
+    'view_all_stories': Decimal('0.00005'),   # $0.05 / 1000
+    'save_post': Decimal('0.00004'),          # $0.04 / 1000
 }
 
 
@@ -64,10 +65,17 @@ class OrderAction(BaseWithTimeZoneModel):
         self.save()
 
     def reset_to_free(self):
+        """Reset action to free status - uses atomic UPDATE"""
+        OrderAction.update(
+            status='free',
+            account=None,
+            updated_at=tehran_now()
+        ).where(
+            OrderAction.id == self.id
+        ).execute()
+
         self.status = 'free'
         self.account = None
-        self.updated_at = tehran_now()
-        self.save()
 
     @classmethod
     def is_valid_type(cls, action_type):
@@ -78,43 +86,64 @@ class OrderAction(BaseWithTimeZoneModel):
         return status in cls.VALID_STATUSES
 
 
-def get_next_action_for_account(account, action_types):
+def get_single_action_for_account(account, action_types, excluded_order_ids=None):
     """
-    Get next available order action for the given account and action types.
-    Uses FOR UPDATE to prevent race conditions with multiple threads.
+    Get a single action for the given account.
+    Uses atomic UPDATE instead of FOR UPDATE to avoid deadlocks.
 
     Args:
         account: Account model instance
-        action_types: list of action type strings, e.g. ['view_story', 'view_all_stories']
+        action_types: list of action type strings
+        excluded_order_ids: list of order IDs to exclude (orders already processed in this session)
 
     Returns:
         OrderAction or None
     """
-    db = OrderAction._meta.database
+    if excluded_order_ids is None:
+        excluded_order_ids = []
 
-    with db.atomic() as txn:
-        action = (
-            OrderAction
-            .select()
-            .join(Order)
-            .where(
-                (OrderAction.type.in_(action_types)) &
-                (Order.status.in_(['Pending', 'In progress'])) &
-                (OrderAction.status == 'free') &
-                ~OrderAction.order.in_(
-                    OrderAction
-                    .select(OrderAction.order)
-                    .where(OrderAction.account == account)
-                )
-            )
-            .order_by(OrderAction.id)
-            .for_update()
-            .first()
+    # Get orders this account already worked on
+    worked_order_ids = list(
+        OrderAction
+        .select(OrderAction.order)
+        .where(OrderAction.account == account)
+        .distinct()
+        .tuples()
+    )
+    worked_order_ids = [x[0] for x in worked_order_ids]
+
+    # Combine with excluded orders
+    all_excluded = set(worked_order_ids + excluded_order_ids)
+
+    # Random offset to distribute load across threads
+    random_offset = random.randint(0, 20)
+
+    # Build query - prioritize older orders first
+    query = (
+        OrderAction
+        .select(OrderAction.id, OrderAction.order)
+        .join(Order)
+        .where(
+            (OrderAction.type.in_(action_types)) &
+            (Order.status.in_(['Pending', 'In progress'])) &
+            (OrderAction.status == 'free')
         )
+        .order_by(Order.id, OrderAction.id)
+        .offset(random_offset)
+        .limit(10)
+    )
 
-        if not action:
-            return None
+    # Add exclusion if we have orders to exclude
+    if all_excluded:
+        query = query.where(~(OrderAction.order.in_(all_excluded)))
 
+    candidates = list(query)
+
+    if not candidates:
+        return None
+
+    # Try to claim one of the candidates
+    for candidate in candidates:
         updated = (
             OrderAction
             .update(
@@ -123,113 +152,40 @@ def get_next_action_for_account(account, action_types):
                 updated_at=tehran_now()
             )
             .where(
-                (OrderAction.id == action.id) &
+                (OrderAction.id == candidate.id) &
                 (OrderAction.status == 'free')
             )
             .execute()
         )
 
-        if updated == 0:
-            txn.rollback()
-            return None
+        if updated > 0:
+            # Successfully claimed - update order status if needed
+            Order.update(
+                status='In progress'
+            ).where(
+                (Order.id == candidate.order_id) &
+                (Order.status == 'Pending')
+            ).execute()
 
-        if action.order.status == 'Pending':
-            action.order.set_status_to('In progress')
+            return OrderAction.get_by_id(candidate.id)
 
-        return OrderAction.get_by_id(action.id)
-
-
-def get_batch_actions_for_account(account, action_types, batch_size=1):
-    """
-    Get multiple actions from DIFFERENT orders for the given account.
-    Each action will be from a unique order (no two actions from same order).
-
-    Args:
-        account: Account model instance
-        action_types: list of action type strings
-        batch_size: number of actions to get (from different orders)
-
-    Returns:
-        list of OrderAction instances
-    """
-    db = OrderAction._meta.database
-    actions = []
-    locked_order_ids = []
-
-    with db.atomic():
-        for _ in range(batch_size):
-            # Build exclusion list: orders this account already worked on + orders we just locked
-            excluded_orders = (
-                OrderAction
-                .select(OrderAction.order)
-                .where(OrderAction.account == account)
-            )
-
-            action = (
-                OrderAction
-                .select()
-                .join(Order)
-                .where(
-                    (OrderAction.type.in_(action_types)) &
-                    (Order.status.in_(['Pending', 'In progress'])) &
-                    (OrderAction.status == 'free') &
-                    ~OrderAction.order.in_(excluded_orders) &
-                    ~OrderAction.order.in_(locked_order_ids)  # Exclude orders we already picked
-                )
-                .order_by(OrderAction.id)
-                .for_update()
-                .first()
-            )
-
-            if not action:
-                break
-
-            updated = (
-                OrderAction
-                .update(
-                    status='processing',
-                    account=account,
-                    updated_at=tehran_now()
-                )
-                .where(
-                    (OrderAction.id == action.id) &
-                    (OrderAction.status == 'free')
-                )
-                .execute()
-            )
-
-            if updated == 0:
-                continue
-
-            if action.order.status == 'Pending':
-                action.order.set_status_to('In progress')
-
-            locked_order_ids.append(action.order_id)
-            actions.append(OrderAction.get_by_id(action.id))
-
-    return actions
+    return None
 
 
 def deduct_balance(action_type):
     """
-    Deduct balance for the customer based on action type.
-    Currently hardcoded for 'sadeghi' customer.
-
-    Args:
-        action_type: Type of action (view_story, view_all_stories, save_post, comment)
-
-    Returns:
-        True if successful, False otherwise
+    Deduct balance atomically.
     """
     rate = ACTION_RATES.get(action_type, Decimal('0.000025'))
 
     try:
-        balance = Balance.get(Balance.customer == 'sadeghi')
-        balance.balance = balance.balance - rate
-        balance.save()
-        return True
-    except Balance.DoesNotExist:
-        return False
+        updated = Balance.update(
+            balance=Balance.balance - rate
+        ).where(
+            Balance.customer == 'sadeghi'
+        ).execute()
+
+        return updated > 0
     except Exception as e:
         print(f"Error deducting balance: {e}")
         return False
@@ -237,37 +193,63 @@ def deduct_balance(action_type):
 
 def mark_action_completed(action):
     """
-    Mark an action as sent and check if order is completed.
-    Note: deduct_balance() is called separately in each module's mark_action_sent()
-
-    Args:
-        action: OrderAction model instance
+    Mark action as sent and increment order completed_count atomically.
     """
-    action.mark_as_sent()
-    action.order.make_order_completed()
+    # Mark action as sent
+    OrderAction.update(
+        status='sent',
+        updated_at=tehran_now()
+    ).where(
+        OrderAction.id == action.id
+    ).execute()
+
+    # Increment completed_count atomically
+    Order.update(
+        completed_count=Order.completed_count + 1
+    ).where(
+        Order.id == action.order_id
+    ).execute()
+
+    # Mark order as Completed if threshold reached
+    Order.update(
+        status='Completed'
+    ).where(
+        (Order.id == action.order_id) &
+        (Order.completed_count >= Order.total_count) &
+        (Order.status != 'Completed')
+    ).execute()
 
 
 def mark_action_failed(action):
     """
-    Mark an action as failed (client error - private account, bad link, etc.)
-    Note: deduct_balance() should still be called - client pays for their mistakes.
-
-    Args:
-        action: OrderAction model instance
+    Mark action as failed and increment completed_count.
+    Client pays for their mistakes.
     """
-    action.status = 'failed'
-    action.updated_at = tehran_now()
-    action.save()
+    OrderAction.update(
+        status='failed',
+        updated_at=tehran_now()
+    ).where(
+        OrderAction.id == action.id
+    ).execute()
 
-    action.order.make_order_completed()
+    Order.update(
+        completed_count=Order.completed_count + 1
+    ).where(
+        Order.id == action.order_id
+    ).execute()
+
+    Order.update(
+        status='Completed'
+    ).where(
+        (Order.id == action.order_id) &
+        (Order.completed_count >= Order.total_count) &
+        (Order.status != 'Completed')
+    ).execute()
 
 
 def get_order_actions_stats(order_id):
     """
     Get statistics for an order's actions.
-
-    Returns:
-        dict with counts for each status
     """
     from peewee import fn
 

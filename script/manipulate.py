@@ -104,12 +104,18 @@ from script.extra.actions.lead_generate_by_linkedin.LeadGenerateByLinkedinContex
 import requests
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
 from script.models.EnrichedLead import EnrichedLead, get_free_enriched_lead
+# from script.models.Order import get_next_order_for_account
 from script.models.OrderComment import get_next_comment_for_order, OrderComment
 from script.extra.actions.register_email.RegisterEmailContext import RegisterEmailContext
 from script.extra.actions.post_image_from_folder.PostImageFromFolderContext import PostImageFromFolderContext
 from script.extra.actions.post_from_folder_and_comment.PostFromFolderAndCommentContext import \
     PostFromFolderAndCommentContext
 from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext import CommentOnOthersPostContext
+from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
+from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
+from script.extra.actions.view_all_stories.ViewAllStoriesContext import ViewAllStoriesContext
+from script.extra.actions.save_post.SavePostContext import SavePostContext
+
 from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
@@ -126,13 +132,13 @@ from script.models.Profile import Profile
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
-from script.extra.actions.account_status_checker.AccountStatusCheckerContext import AccountStatusCheckerContext
 from script.extra.routes import *
 from script.models.AccountHelper import get_storage_state
 
 from datetime import timedelta
 from script.extra.helper import tehran_now
 
+# from script.models.Order import get_next_order_for_account
 import json
 
 # oc = OrderComment.get_by_id(210874)
@@ -140,12 +146,19 @@ import json
 # oc.save()
 from script.models.OrderComment import release_stuck_comments
 
+# print(updated_counts.count())
 account = get_next_account()
+# account = Account.get_by_id(33)
+# order = get_next_order_for_account(account)
+# print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-BrowserPostImageEvent(browser_ig).fire()
-# LeadGenerateByFollowersContext(browser_ig).fire()
+ViewStoryContext(browser_ig).fire()
+# ViewAllStoriesContext(browser_ig).fire()
+# SavePostContext(browser_ig).fire()
+# LikeAndCommentContext(browser_ig).fire()
+# LeadGenerateByPostEngagementContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

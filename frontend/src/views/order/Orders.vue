@@ -26,6 +26,80 @@
     </div>
     <!--end::Header-->
 
+    <!--begin::Filters-->
+    <div class="card-body py-3 border-bottom">
+      <div class="row g-3">
+        <!--Order ID Search-->
+        <div class="col-md-2">
+          <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Order ID"
+              v-model="filters.order_id"
+              @keyup.enter="applyFilters"
+          />
+        </div>
+
+        <!--Link Search-->
+        <div class="col-md-3">
+          <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Search by link..."
+              v-model="filters.link"
+              @keyup.enter="applyFilters"
+          />
+        </div>
+
+        <!--Status Filter-->
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" v-model="filters.status">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="In progress">In progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Canceled">Canceled</option>
+          </select>
+        </div>
+
+        <!--Service Type Filter-->
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" v-model="filters.service_type">
+            <option value="">All Services</option>
+            <option value="comment">Comment</option>
+            <option value="view_story">View Story</option>
+            <option value="save_post">Save Post</option>
+          </select>
+        </div>
+
+        <!--Date Range Filter-->
+        <div class="col-md-2">
+          <el-date-picker
+              v-model="filters.date_range"
+              type="daterange"
+              range-separator="-"
+              start-placeholder="From"
+              end-placeholder="To"
+              size="small"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              class="w-100"
+          />
+        </div>
+
+        <!--Filter Buttons-->
+        <div class="col-md-1 d-flex gap-2">
+          <button class="btn btn-sm btn-primary" @click="applyFilters">
+            <KTIcon icon-name="magnifier" icon-class="fs-4"/>
+          </button>
+          <button class="btn btn-sm btn-light" @click="resetFilters">
+            <KTIcon icon-name="arrows-circle" icon-class="fs-4"/>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!--end::Filters-->
+
     <!--begin::Body-->
     <div class="card-body py-3">
       <!--begin::Table container-->
@@ -133,7 +207,7 @@
             :page-size="configStore.pagination?.each_page?.leads"
             layout="prev, pager, next"
             :total="store.orders.total"
-            @current-change="page => store.getOrders(page)"
+            @current-change="page => store.getOrders(page, true, filters)"
         />
       </div>
       <!--end::Table container-->
@@ -147,7 +221,7 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, ref} from 'vue';
+import {onMounted, reactive, ref} from 'vue';
 import AddOrderModals from "@/components/modals/order/AddOrderModal.vue";
 import OrderActionsModal from "@/components/modals/order/OrderActionsModal.vue";
 import {showModal} from '@/core/helpers/modal';
@@ -160,16 +234,35 @@ const store = useOrderStore();
 const configStore = useAppConfigStore();
 const categoryStore = useCategoryStore();
 
-
 const actionsModal = ref(null)
+
+const filters = reactive({
+  order_id: '',
+  link: '',
+  status: '',
+  service_type: '',
+  date_range: null
+});
+
+const applyFilters = () => {
+  store.getOrders(1, true, filters);
+};
+
+const resetFilters = () => {
+  filters.order_id = '';
+  filters.link = '';
+  filters.status = '';
+  filters.service_type = '';
+  filters.date_range = null;
+  store.getOrders(1, true, {});
+};
 
 const openActions = (orderId: number) => {
   actionsModal.value.open(orderId)
 }
 
-// Fetch leads, tags, and categories on mount
 onMounted(() => {
   store.getOrders();
-  categoryStore.getCategories();  // Fetch all categories for the dropdown
+  categoryStore.getCategories();
 });
 </script>

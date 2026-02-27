@@ -23,51 +23,59 @@ class Order(BaseWithTimeZoneModel):
     )
 
     def set_status_to(self, status):
+        """Atomic status update"""
+        Order.update(
+            status=status,
+            updated_at=tehran_now()
+        ).where(
+            Order.id == self.id
+        ).execute()
         self.status = status
-        self.save()
 
     def status_is(self, status):
         return self.status == status
 
     def fail(self, message):
+        """Atomic fail"""
+        Order.update(
+            status='Canceled',
+            description=message,
+            updated_at=tehran_now()
+        ).where(
+            Order.id == self.id
+        ).execute()
+
         self.status = 'Canceled'
         self.description = message
-        self.save()
 
     def make_order_completed(self):
-        """Check if all actions are done (sent/failed) and mark order as Completed"""
-        from .OrderAction import OrderAction
+        """
+        Atomically increment completed_count and mark as Completed if threshold is reached.
+        Each UPDATE is atomic on its own - no transaction wrapper needed.
+        """
+        # Increment completed_count
+        Order.update(
+            completed_count=Order.completed_count + 1
+        ).where(
+            Order.id == self.id
+        ).execute()
 
-        done_count = (
-            OrderAction
-            .select()
-            .where(
-                (OrderAction.order == self.id) &
-                (OrderAction.status.in_(['sent', 'failed']))
-            )
-            .count()
-        )
-
-        print(f'Done: {done_count} / Total: {self.total_count}')
-
-        if done_count >= self.total_count:
-            (
-                Order
-                .update(status='Completed')
-                .where(
-                    (Order.id == self.id) &
-                    (Order.status != 'Completed')
-                )
-                .execute()
-            )
+        # Mark as Completed if threshold reached
+        Order.update(
+            status='Completed'
+        ).where(
+            (Order.id == self.id) &
+            (Order.completed_count >= Order.total_count) &
+            (Order.status != 'Completed')
+        ).execute()
 
     def actions(self):
-        """Get all actions for this order"""
+        """Get all actions for this order."""
         from .OrderAction import OrderAction
         return OrderAction.select().where(OrderAction.order == self.id)
 
     def comments(self):
-        """Get all comments for this order (legacy support)"""
+        """Get all comments for this order."""
         from .OrderComment import OrderComment
         return OrderComment.select().where(OrderComment.order == self.id)
 

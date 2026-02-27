@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->text('target_link');
             $table->integer('start_count')->default(0);
             $table->integer('total_count')->default(0);
+            $table->integer('completed_count')->default(0);
             $table->text('description')->nullable();
             $table->enum('status', Order::$statuses)->default('Pending');
             $table->timestamps();

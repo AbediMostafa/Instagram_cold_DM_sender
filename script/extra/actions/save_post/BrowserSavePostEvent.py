@@ -1,34 +1,42 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, deduct_balance
+from script.models.OrderAction import get_single_action_for_account, mark_action_completed, deduct_balance, OrderAction, ACTION_RATES
+from script.models.Order import Order
+from script.models.Balance import Balance
 from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from urllib.parse import urlparse
+from decimal import Decimal
 
 
 class BrowserSavePostEvent(BaseAction):
     command = None
     action = None
     order = None
-    actions = []
+    processed_order_ids = []
 
     def init(self):
-        self.pick_batch_actions()
+        batch_size = int(Setting.get_value('save_post_batch_size', 1))
+        self.processed_order_ids = []
 
-        if not self.actions:
-            raise Exception('There is no save_post order')
+        for i in range(batch_size):
+            action = get_single_action_for_account(
+                self.ig.account,
+                ['save_post'],
+                excluded_order_ids=self.processed_order_ids
+            )
 
-        for action in self.actions:
+            if not action:
+                if i == 0:
+                    raise Exception('There is no save_post order')
+                break
+
             self.action = action
             self.order = action.order
+            self.processed_order_ids.append(self.order.id)
+
+            self.ig.account.add_cli(f'Picked action #{i+1} for order {self.order.id}', print_only=True)
             self.process_single_action()
-
-    def pick_batch_actions(self):
-        batch_size = int(Setting.get_value('save_post_batch_size', 1))
-        self.actions = get_batch_actions_for_account(self.ig.account, ['save_post'], batch_size)
-
-        if self.actions:
-            self.ig.account.add_cli(f'Picked {len(self.actions)} save_post actions', print_only=True)
 
     def process_single_action(self):
         self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
@@ -51,17 +59,67 @@ class BrowserSavePostEvent(BaseAction):
 
         except LinkIsNotCorrect as e:
             self.ig.account.add_cli(f'FAILED - {str(e)}', print_only=True)
-            self.order.fail(str(e))
+            self.fail_order_with_full_charge(str(e))
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
         except Exception as e:
             self.ig.account.add_cli(f'ERROR - {str(e)}', print_only=True)
-            self.action.reset_to_free()
+            self._safe_reset_to_free()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
+
+    def _safe_reset_to_free(self):
+        """Safely reset action to free status"""
+        try:
+            OrderAction.update(
+                status='free',
+                account=None
+            ).where(
+                (OrderAction.id == self.action.id) &
+                (OrderAction.status == 'processing')
+            ).execute()
+        except Exception as e:
+            self.ig.account.add_cli(f'Error resetting action: {e}', print_only=True)
+
+    def fail_order_with_full_charge(self, message):
+        """
+        Fail the entire order and deduct balance for all actions.
+        """
+        try:
+            updated = Order.update(
+                status='Canceled',
+                description=message
+            ).where(
+                (Order.id == self.order.id) &
+                (Order.status != 'Canceled')
+            ).execute()
+
+            if updated == 0:
+                return
+
+            self.order.status = 'Canceled'
+
+            OrderAction.update(
+                status='failed'
+            ).where(
+                (OrderAction.order == self.order.id) &
+                (OrderAction.status == 'free')
+            ).execute()
+
+            rate = ACTION_RATES.get(self.order.service_type, Decimal('0.00004'))
+            total_charge = Decimal(self.order.total_count) * rate
+
+            Balance.update(
+                balance=Balance.balance - total_charge
+            ).where(
+                Balance.customer == 'sadeghi'
+            ).execute()
+
+        except Exception as e:
+            self.ig.account.add_cli(f"Failed to charge order: {e}", print_only=True)
 
     def post_url_validation(self):
         parsed = urlparse(self.order.target_link)
@@ -106,6 +164,11 @@ class BrowserSavePostEvent(BaseAction):
            self.ig.is_visible_by_text("The link may be broken") or \
            self.ig.is_visible_by_text("the profile may have been removed"):
             raise LinkIsNotCorrect("Post isn't available")
+
+        if self.ig.is_visible_by_text("Sorry, this page isn't available") or \
+           self.ig.is_visible_by_text("Page is not available") or \
+           self.ig.is_visible_by_text("This page isn't available"):
+            raise LinkIsNotCorrect("Page is not available")
 
         self.ig.account.add_cli("Checking if There's an issue", print_only=True)
         if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):

@@ -1,9 +1,12 @@
 from script.extra.helper import go_to_page
-from script.models.OrderAction import get_batch_actions_for_account, mark_action_completed, mark_action_failed,  deduct_balance
+from script.models.OrderAction import get_single_action_for_account, mark_action_completed, mark_action_failed, deduct_balance, OrderAction
+from script.models.Order import Order
+from script.models.Balance import Balance
 from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from .LinkParser import LinkParser
+from decimal import Decimal
 import time
 
 
@@ -15,7 +18,7 @@ class BrowserViewStoryEvent(BaseAction):
     target_username = None
     story_seen_count = 0
     response_listener_active = False
-    actions = []
+    processed_order_ids = []
 
     def setup_response_listener(self):
         """Setup listener for story seen responses"""
@@ -63,22 +66,27 @@ class BrowserViewStoryEvent(BaseAction):
         return False
 
     def init(self):
-        self.pick_batch_actions()
+        batch_size = int(Setting.get_value('view_story_batch_size', 1))
+        self.processed_order_ids = []
 
-        if not self.actions:
-            raise Exception('There is no view_story order')
+        for i in range(batch_size):
+            action = get_single_action_for_account(
+                self.ig.account,
+                ['view_story'],
+                excluded_order_ids=self.processed_order_ids
+            )
 
-        for action in self.actions:
+            if not action:
+                if i == 0:
+                    raise Exception('There is no view_story order')
+                break
+
             self.action = action
             self.order = action.order
+            self.processed_order_ids.append(self.order.id)
+
+            self.ig.account.add_cli(f'Picked action #{i+1} for order {self.order.id}', print_only=True)
             self.process_single_action()
-
-    def pick_batch_actions(self):
-        batch_size = int(Setting.get_value('view_story_batch_size', 1))
-        self.actions = get_batch_actions_for_account(self.ig.account, ['view_story'], batch_size)
-
-        if self.actions:
-            self.ig.account.add_cli(f'Picked {len(self.actions)} view_story actions', print_only=True)
 
     def process_single_action(self):
         self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
@@ -100,27 +108,50 @@ class BrowserViewStoryEvent(BaseAction):
 
         except LinkIsNotCorrect as e:
             self.ig.account.add_cli(f'FAILED - Link error: {str(e)}', print_only=True)
-
-            if self.order.status == 'Canceled':
-                self.action.status = 'failed'
-                self.action.save()
-            else:
-                self.mark_action_failed_with_charge()
+            self._handle_link_error()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
         except Exception as e:
             self.ig.account.add_cli(f'ERROR - {str(e)}', print_only=True)
-            self.action.reset_to_free()
+            self._safe_reset_to_free()
 
             if self.command:
                 self.command.update_cmd('state', 'fail')
 
+        finally:
+            self.remove_response_listener()
+
+    def _handle_link_error(self):
+        """Handle link errors - check if order is canceled first"""
+        refreshed_order = Order.select(Order.status).where(Order.id == self.order.id).first()
+
+        if refreshed_order and refreshed_order.status == 'Canceled':
+            OrderAction.update(
+                status='failed'
+            ).where(
+                OrderAction.id == self.action.id
+            ).execute()
+        else:
+            self.mark_action_failed_with_charge()
+
+    def _safe_reset_to_free(self):
+        """Safely reset action to free status"""
+        try:
+            OrderAction.update(
+                status='free',
+                account=None
+            ).where(
+                (OrderAction.id == self.action.id) &
+                (OrderAction.status == 'processing')
+            ).execute()
+        except Exception as e:
+            self.ig.account.add_cli(f'Error resetting action: {e}', print_only=True)
+
     def parse_and_validate_link(self):
         self.parsed_link = LinkParser.parse(self.order.target_link)
 
-        # Reject highlights - not supported
         if self.parsed_link['type'] == LinkParser.TYPE_HIGHLIGHT:
             raise LinkIsNotCorrect("Highlights are not supported")
 
@@ -142,6 +173,8 @@ class BrowserViewStoryEvent(BaseAction):
         """Extract username from post/reel page"""
         go_to_page(self.ig, self.order.target_link, 'Post Page')
         self.ig.pause(3000, 4000)
+
+        self.check_page_not_available()
 
         username = self.click_and_extract_username()
 
@@ -221,8 +254,10 @@ class BrowserViewStoryEvent(BaseAction):
         go_to_page(self.ig, story_url, 'Story Page')
         self.ig.pause(3000, 4000)
 
+        self.check_story_unavailable()
+
         self.click_view_story_button()
-        self.check_story_fail_situations()
+        self.check_story_unavailable()
         self.wait_for_story_view()
 
     def click_view_story_button(self):
@@ -301,72 +336,105 @@ class BrowserViewStoryEvent(BaseAction):
         go_to_page(self.ig, story_url, 'Story Page')
         self.ig.pause(3000, 4000)
 
-        # Check for no story situations
-        if self.ig.is_visible_by_text("This story is unavailable"):
+        # Check if redirected to profile (user has no story)
+        current_url = self.ig.page.url
+        if '/stories/' not in current_url:
             self.remove_response_listener()
-            raise Exception("Story unavailable")
+            self.fail_order_with_full_charge("User has no active story")
+            raise LinkIsNotCorrect("Redirected to profile - user has no story")
 
-        if self.ig.is_visible_by_text("No stories available"):
-            self.remove_response_listener()
-            return
+        self.check_story_unavailable()
 
         self.click_view_story_button()
-        self.check_story_fail_situations()
+        self.check_story_unavailable()
         self.wait_for_story_view()
 
-    def check_story_fail_situations(self):
-        if self.ig.is_visible_by_text("This story is unavailable"):
-            self.fail_order_with_full_charge("Story is unavailable")
-            raise LinkIsNotCorrect("Story is unavailable")
+    def check_story_unavailable(self):
+        """
+        Check all possible story unavailable situations.
+        All these are client errors - charge the full order.
+        """
+        current_url = self.ig.page.url
 
-        if self.ig.is_visible_by_text("Sorry, this page isn't available"):
-            self.fail_order_with_full_charge("Story not found")
-            raise LinkIsNotCorrect("Story not found")
+        # Check URL for unavailable indicator
+        if 'show_story_unavailable=1' in current_url:
+            self.fail_order_with_full_charge("Story is unavailable")
+            raise LinkIsNotCorrect("Story is unavailable (URL redirect)")
+
+        # Check page texts for unavailable states
+        unavailable_texts = [
+            "This story is unavailable",
+            "Sorry, this page isn't available",
+            "Page is not available",
+            "This page isn't available",
+            "No stories available",
+            "The link you followed may be broken",
+            "the page may have been removed",
+        ]
+
+        for text in unavailable_texts:
+            if self.ig.is_visible_by_text(text):
+                self.fail_order_with_full_charge(f"Story unavailable: {text}")
+                raise LinkIsNotCorrect(text)
+
+    def check_page_not_available(self):
+        """
+        Check if page (post/reel/profile) is not available.
+        Used when extracting username from post/reel.
+        """
+        unavailable_texts = [
+            "Sorry, this page isn't available",
+            "Page is not available",
+            "This page isn't available",
+            "The link you followed may be broken",
+            "the page may have been removed",
+            "Post isn't available",
+        ]
+
+        for text in unavailable_texts:
+            if self.ig.is_visible_by_text(text):
+                self.fail_order_with_full_charge(f"Page unavailable: {text}")
+                raise LinkIsNotCorrect(text)
 
     def fail_order_with_full_charge(self, message):
-        """Fail the entire order and deduct balance for all actions"""
-        from script.models.Balance import Balance
-        from script.models.Order import Order
-        from script.models.OrderAction import OrderAction
-        from decimal import Decimal
-
-        db = Order._meta.database
+        """
+        Fail the entire order and deduct balance for all actions.
+        All UPDATEs are atomic - no transaction needed, no FOR UPDATE.
+        """
+        from script.models.OrderAction import ACTION_RATES
 
         try:
-            with db.atomic():
-                order = (
-                    Order
-                    .select()
-                    .where(Order.id == self.order.id)
-                    .for_update()
-                    .first()
-                )
+            # Cancel order atomically
+            updated = Order.update(
+                status='Canceled',
+                description=message
+            ).where(
+                (Order.id == self.order.id) &
+                (Order.status != 'Canceled')
+            ).execute()
 
-                if order.status == 'Canceled':
-                    return
+            if updated == 0:
+                return
 
-                order.status = 'Canceled'
-                order.description = message
-                order.save()
+            self.order.status = 'Canceled'
 
-                self.order.status = 'Canceled'
+            # Fail all free actions atomically
+            OrderAction.update(
+                status='failed'
+            ).where(
+                (OrderAction.order == self.order.id) &
+                (OrderAction.status == 'free')
+            ).execute()
 
-                (
-                    OrderAction
-                    .update(status='failed')
-                    .where(
-                        (OrderAction.order == self.order.id) &
-                        (OrderAction.status == 'free')
-                    )
-                    .execute()
-                )
+            # Deduct balance atomically
+            rate = ACTION_RATES.get(self.order.service_type, Decimal('0.00005'))
+            total_charge = Decimal(self.order.total_count) * rate
 
-                rate = Decimal('0.000025')
-                total_charge = Decimal(order.total_count) * rate
-
-                balance = Balance.get(Balance.customer == 'sadeghi')
-                balance.balance = balance.balance - total_charge
-                balance.save()
+            Balance.update(
+                balance=Balance.balance - total_charge
+            ).where(
+                Balance.customer == 'sadeghi'
+            ).execute()
 
         except Exception as e:
             self.ig.account.add_cli(f"Failed to charge order: {e}", print_only=True)
@@ -377,7 +445,8 @@ class BrowserViewStoryEvent(BaseAction):
 
         if '/stories/' not in current_url:
             self.remove_response_listener()
-            raise Exception(f"Not in story page")
+            self.fail_order_with_full_charge("User has no story or story not accessible")
+            raise LinkIsNotCorrect("Not in story page - user has no story")
 
         story_confirmed = self.wait_for_story_seen(timeout=30)
 
@@ -416,7 +485,6 @@ class BrowserViewStoryEvent(BaseAction):
     def mark_action_sent(self):
         mark_action_completed(self.action)
         deduct_balance('view_story')
-
 
     def mark_action_failed_with_charge(self):
         mark_action_failed(self.action)

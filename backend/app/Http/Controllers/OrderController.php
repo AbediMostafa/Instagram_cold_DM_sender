@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 
-use App\Http\Controllers\Controller;
-use App\Models\Account;
 use App\Models\Balance;
 use App\Models\Order;
 use App\Models\OrderAction;
 use App\Models\SadeghiTelegramOrder;
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,41 +17,40 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::query()
-            ->with('service:id,service')
-            ->withCount([
-                'actions as completed_count' => function ($query) {
-                    $query->whereIn('status', ['sent', 'failed']);
-                }
-            ])
-            ->orderBy('id', 'desc')->paginate(200);
+        $query = Order::query()->with('service:id,service');
+
+        // Filter by Order ID
+        if ($orderId = request('order_id')) {
+            $query->where('id', $orderId);
+        }
+
+        // Filter by Link
+        if ($link = request('link')) {
+            $query->where('target_link', 'like', '%' . $link . '%');
+        }
+
+        // Filter by Status
+        if ($status = request('status')) {
+            $query->where('status', $status);
+        }
+
+        // Filter by Service Type
+        if ($serviceType = request('service_type')) {
+            $query->where('service_type', $serviceType);
+        }
+
+        // Filter by Date Range
+        if ($dateFrom = request('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo = request('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $orders = $query->orderBy('id', 'desc')->paginate(200);
 
         return $orders;
     }
-
-
-    // public function placeOrder()
-    // {
-    //     $comments = explode("\n", request('comments'));
-    //     $service = Service::query()
-    //         ->where('service', "like_and_comment")
-    //         ->first();
-    //
-    //     $order = Order::query()->create([
-    //         "customer" => r("site_url") || r('customer'),
-    //         "service_id" => $service->id,
-    //         "target_link" => r("link"),
-    //         "total_count" => count($comments),
-    //     ]);
-    //
-    //     foreach ($comments as $comment) {
-    //         OrderComment::query()->create([
-    //             'order_id' => $order->id, 'content' => $comment
-    //         ]);
-    //     }
-    //
-    //     return $order;
-    // }
 
     public function create()
     {
@@ -69,25 +67,76 @@ class OrderController extends Controller
 
     public function finish()
     {
-
         return tryCatch(
             function () {
-                $order = Order::query()->find(request('id'));
-                $order->status = 'Completed';
-                $order->save();
+                $orderId = request('id');
+                $maxRetries = 3;
+                $attempt = 0;
 
-                // Mark all remaining actions as sent
-                $order->actions()->whereNotIn('status', ['sent', 'failed'])->update([
-                    'status' => 'sent'
-                ]);
+                while ($attempt < $maxRetries) {
+                    try {
+                        DB::transaction(function () use ($orderId) {
+                            $order = Order::query()
+                                ->where('id', $orderId)
+                                ->lockForUpdate()
+                                ->first();
+
+                            if (!$order) {
+                                throw new \Exception('Order not found');
+                            }
+
+                            $countToComplete = $order->actions()
+                                ->whereNotIn('status', ['sent', 'failed'])
+                                ->count();
+
+                            if ($countToComplete > 0) {
+                                $this->deductBalance($order->service_type, $countToComplete);
+
+                                $order->actions()
+                                    ->whereNotIn('status', ['sent', 'failed'])
+                                    ->update(['status' => 'sent']);
+                            }
+
+                            $order->status = 'Completed';
+                            $order->save();
+                        });
+
+                        return;
+
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        $attempt++;
+                        if ($attempt >= $maxRetries || !str_contains($e->getMessage(), 'deadlock')) {
+                            throw $e;
+                        }
+                        usleep(100000 * $attempt);
+                    }
+                }
             },
             'Order finished successfully',
         );
     }
 
+    private function deductBalance($actionType, $count = 1)
+    {
+        $rates = [
+            'comment' => 0.0003,
+            'view_story' => 0.00005,
+            'view_all_stories' => 0.00005,
+            'save_post' => 0.00004,
+        ];
+
+        $rate = $rates[$actionType] ?? 0.00005;
+        $totalCharge = $rate * $count;
+
+        $balance = Balance::where('customer', 'sadeghi')->first();
+        if ($balance) {
+            $balance->balance -= $totalCharge;
+            $balance->save();
+        }
+    }
+
     public function fail()
     {
-
         return tryCatch(
             function () {
                 $order = Order::query()->find(request('id'));
@@ -100,7 +149,6 @@ class OrderController extends Controller
 
     public function reset()
     {
-
         return tryCatch(
             function () {
                 $order = Order::query()->find(request('id'));
@@ -111,7 +159,6 @@ class OrderController extends Controller
                     'status' => 'free',
                     'account_id' => null
                 ]);
-
             },
             'Order reset successfully',
         );
@@ -130,13 +177,13 @@ class OrderController extends Controller
 
     public function v3()
     {
+
         $action = request('action');
 
         $serviceMap = [
-            740 => ['type' => 'comment', 'rate' => 0.25],
-            741 => ['type' => 'view_story', 'rate' => 0.025],
-            742 => ['type' => 'view_all_stories', 'rate' => 0.05],
-            743 => ['type' => 'save_post', 'rate' => 0.025],
+            740 => ['type' => 'comment', 'rate' => 0.30],
+            741 => ['type' => 'view_story', 'rate' => 0.05],
+            743 => ['type' => 'save_post', 'rate' => 0.04],
         ];
 
         if ($action === 'balance') {
@@ -154,7 +201,7 @@ class OrderController extends Controller
                     "service" => 740,
                     "name" => "Comment",
                     "category" => "SSM-fire",
-                    "rate" => "0.25$",
+                    "rate" => "0.30$",
                     "min" => 5,
                     "max" => 2000,
                     "type" => "custom_comments",
@@ -167,7 +214,7 @@ class OrderController extends Controller
                     "service" => 741,
                     "name" => "View Story",
                     "category" => "SSM-fire",
-                    "rate" => "0.025$",
+                    "rate" => "0.05$",
                     "min" => 10,
                     "max" => 10000,
                     "type" => "default",
@@ -177,23 +224,10 @@ class OrderController extends Controller
                     "cancel" => false,
                 ],
                 [
-                    "service" => 742,
-                    "name" => "View All Stories",
-                    "category" => "SSM-fire",
-                    "rate" => "0.05$",
-                    "min" => 10,
-                    "max" => 10000,
-                    "type" => "default",
-                    "desc" => "View all stories of a user",
-                    "dripfeed" => false,
-                    "refill" => false,
-                    "cancel" => false,
-                ],
-                [
                     "service" => 743,
                     "name" => "Save Post",
                     "category" => "SSM-fire",
-                    "rate" => "0.025$",
+                    "rate" => "0.04$",
                     "min" => 10,
                     "max" => 10000,
                     "type" => "default",
@@ -233,6 +267,14 @@ class OrderController extends Controller
                 }
             }
 
+            $cleanLink = $this->cleanInstagramLink($link);
+
+            // Duplicate link validation
+            $duplicateCheck = $this->checkDuplicateLink($cleanLink, $serviceType);
+            if ($duplicateCheck !== true) {
+                return $duplicateCheck;
+            }
+
             $minQty = ($serviceType === 'comment') ? 5 : 10;
             $maxQty = ($serviceType === 'comment') ? 2000 : 10000;
 
@@ -246,9 +288,6 @@ class OrderController extends Controller
             $service = Service::query()
                 ->where('service', $serviceType)
                 ->first();
-
-            // Clean the link - remove tracking parameters
-            $cleanLink = $this->cleanInstagramLink($link);
 
             $order = Order::query()->create([
                 "customer" => request("site_url") ?? request('customer'),
@@ -284,99 +323,8 @@ class OrderController extends Controller
     }
 
 
-    // public function v3_old()
-    // {
-    //     $action = request('action');
-    //
-    //     if ($action === 'balance') {
-    //         $balance = Balance::query()->where('customer', 'sadeghi')->first();
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'balance' => $balance->balance,
-    //             'currency' => 'IRT'
-    //         ]);
-    //     }
-    //
-    //     if ($action === 'services') {
-    //         return response()->json([
-    //             [
-    //                 "service" => 740,
-    //                 "name" => "Comment",
-    //                 "category" => "SSM-fire",
-    //                 "rate" => "0.25$",
-    //                 "min" => 5,
-    //                 "max" => 2000,
-    //                 "type" => "custom_comments",
-    //                 "desc" => "Best and Fast Comment",
-    //                 "dripfeed" => false,
-    //                 "refill" => false,
-    //                 "cancel" => false,
-    //                 "brand" => "",
-    //             ]
-    //         ]);
-    //     }
-    //
-    //     if ($action === 'add') {
-    //         $order = $this->placeOrder();
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'order' => $order->id
-    //         ]);
-    //     }
-    //
-    //     if ($action === 'status') {
-    //         if ($orders = request('orders')) {
-    //             $orderIds = explode(',', $orders);
-    //             $response = [];
-    //
-    //             foreach ($orderIds as $id) {
-    //                 $id = trim($id);
-    //                 $order = Order::query()->find($id);
-    //
-    //                 if (!$order) {
-    //                     $response[$id] = "Incorrect order ID";
-    //                     continue;
-    //                 }
-    //
-    //                 $response[$id] = [
-    //                     'order' => (string)$order->id,
-    //                     'status' => $order->status,
-    //                     'charge' => "0.0000",
-    //                     'start_count' => $order->start_count,
-    //                     'remains' => (string)$order->getRemains(),
-    //                     'currency' => "USD"
-    //                 ];
-    //             }
-    //
-    //             return response()->json($response);
-    //         }
-    //         if ($ordersInput = request('order')) {
-    //             $order = Order::query()->find($ordersInput);
-    //
-    //             if (!$order) {
-    //                 return response()->json([
-    //                     $ordersInput => "Incorrect order ID",
-    //                     'status' => 'error',
-    //                 ]);
-    //             }
-    //
-    //             return response()->json([
-    //                 (string)$order->id => [
-    //                     'order' => (string)$order->id,
-    //                     'status' => $order->status ?? "Completed",
-    //                     'charge' => "0.0000",
-    //                     'start_count' => $order->start_count,
-    //                     'remains' => (string)$order->getRemains(),
-    //                     'currency' => "USD"
-    //                 ]
-    //             ]);
-    //         }
-    //     }
-    // }
-
     public function telegramGroupSender()
     {
-
         Log::info('telegramGroupSender', [
             'body' => r()->all(),
         ]);
@@ -409,7 +357,6 @@ class OrderController extends Controller
         }
 
         if ($action === 'add') {
-
             $commentsCount = r('quantity');
             $postLink = r('link');
 
@@ -454,9 +401,7 @@ class OrderController extends Controller
         }
 
         if ($action === 'status') {
-
             if ($orders = request('orders')) {
-
                 $orderIds = explode(',', $orders);
                 $response = [];
 
@@ -482,7 +427,6 @@ class OrderController extends Controller
                 return response()->json($response);
             }
             if ($ordersInput = request('order')) {
-
                 $order = Order::query()->find($ordersInput);
 
                 if (!$order) {
@@ -504,7 +448,6 @@ class OrderController extends Controller
                 ]);
             }
         }
-
     }
 
 
@@ -515,7 +458,6 @@ class OrderController extends Controller
             ->with('account:id,username')
             ->orderBy('id')
             ->get();
-
     }
 
 
@@ -524,10 +466,10 @@ class OrderController extends Controller
         $action = request('action');
 
         $serviceMap = [
-            740 => ['type' => 'comment', 'rate' => 0.25],
-            741 => ['type' => 'view_story', 'rate' => 0.025],
+            740 => ['type' => 'comment', 'rate' => 0.30],
+            741 => ['type' => 'view_story', 'rate' => 0.05],
             742 => ['type' => 'view_all_stories', 'rate' => 0.05],
-            743 => ['type' => 'save_post', 'rate' => 0.025],
+            743 => ['type' => 'save_post', 'rate' => 0.04],
         ];
 
         if ($action === 'balance') {
@@ -624,6 +566,14 @@ class OrderController extends Controller
                 }
             }
 
+            $cleanLink = $this->cleanInstagramLink($link);
+
+            // Duplicate link validation
+//            $duplicateCheck = $this->checkDuplicateLink($cleanLink, $serviceType);
+//            if ($duplicateCheck !== true) {
+//                return $duplicateCheck;
+//            }
+
             $minQty = ($serviceType === 'comment') ? 5 : 1;
             $maxQty = ($serviceType === 'comment') ? 2000 : 10000;
 
@@ -637,8 +587,6 @@ class OrderController extends Controller
             $service = Service::query()
                 ->where('service', $serviceType)
                 ->first();
-
-            $cleanLink = $this->cleanInstagramLink($link);
 
             $order = Order::query()->create([
                 "customer" => request("site_url") ?? request('customer'),
@@ -695,11 +643,17 @@ class OrderController extends Controller
             ]);
         }
 
+        $cleanLink = $this->cleanInstagramLink($link);
+
+        // Duplicate link validation
+        $duplicateCheck = $this->checkDuplicateLink($cleanLink, 'comment');
+        if ($duplicateCheck !== true) {
+            return $duplicateCheck;
+        }
+
         $service = Service::query()
             ->where('service', 'comment')
             ->first();
-
-        $cleanLink = $this->cleanInstagramLink($link);
 
         $order = Order::query()->create([
             "customer" => request("site_url") ?? request('customer'),
@@ -786,7 +740,8 @@ class OrderController extends Controller
 
     private function calculateCharge($order, $rate)
     {
-        return number_format($order->getCompletedCount() * $rate, 6);
+        $perUnitRate = $rate / 1000;
+        return number_format($order->completed_count * $perUnitRate, 6);
     }
 
     private function v4PlaceCommentOrder($link, $quantity)
@@ -810,11 +765,17 @@ class OrderController extends Controller
             ]);
         }
 
+        $cleanLink = $this->cleanInstagramLink($link);
+
+        // Duplicate link validation
+        $duplicateCheck = $this->checkDuplicateLink($cleanLink, 'comment');
+        if ($duplicateCheck !== true) {
+            return $duplicateCheck;
+        }
+
         $service = Service::query()
             ->where('service', 'comment')
             ->first();
-
-        $cleanLink = $this->cleanInstagramLink($link);
 
         $order = Order::query()->create([
             "customer" => request("site_url") ?? request('customer'),
@@ -901,7 +862,49 @@ class OrderController extends Controller
 
     private function calculateChargeV4($order, $rate)
     {
-        return number_format($order->getCompletedCount() * $rate, 6);
+        $perUnitRate = $rate / 1000;
+        return number_format($order->completed_count * $perUnitRate, 6);
+    }
+
+    /**
+     * Check if link is duplicate based on service type
+     * - save_post, comment: always reject duplicates
+     * - view_story, view_all_stories: reject only if less than 12 hours old
+     */
+    private function checkDuplicateLink($cleanLink, $serviceType)
+    {
+        $existingOrder = Order::query()
+            ->where('target_link', $cleanLink)
+            ->where('service_type', $serviceType)
+            ->latest()
+            ->first();
+
+        if (!$existingOrder) {
+            return true;
+        }
+
+        // save_post and comment: always reject duplicates
+        if (in_array($serviceType, ['save_post', 'comment'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Duplicate link. This link has already been ordered.'
+            ]);
+        }
+
+        // view_story and view_all_stories: reject only if less than 12 hours
+        if (in_array($serviceType, ['view_story', 'view_all_stories'])) {
+            $hoursSinceOrder = $existingOrder->created_at->diffInHours(now());
+
+            if ($hoursSinceOrder < 12) {
+                $remainingHours = 12 - $hoursSinceOrder;
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Duplicate link. Please wait {$remainingHours} more hour(s) before ordering again."
+                ]);
+            }
+        }
+
+        return true;
     }
 
     private function cleanInstagramLink($link)

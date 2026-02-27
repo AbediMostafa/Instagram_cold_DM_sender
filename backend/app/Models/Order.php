@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class Order extends Model
 {
@@ -37,7 +37,7 @@ class Order extends Model
 
     public function getRemains()
     {
-        return $this->actions()->whereIn('status', ['free', 'processing'])->count();
+        return max(0, $this->total_count - $this->completed_count);
     }
 
     public function setStatusTo($status)
