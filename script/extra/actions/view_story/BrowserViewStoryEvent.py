@@ -252,7 +252,14 @@ class BrowserViewStoryEvent(BaseAction):
         self.setup_response_listener()
 
         go_to_page(self.ig, story_url, 'Story Page')
-        self.ig.pause(3000, 4000)
+        self.ig.pause(5000, 6000)
+
+        # Check if redirected away from story
+        current_url = self.ig.page.url
+        if '/stories/' not in current_url:
+            self.remove_response_listener()
+            self.handle_no_story_redirect()
+            return
 
         self.check_story_unavailable()
 
@@ -340,14 +347,65 @@ class BrowserViewStoryEvent(BaseAction):
         current_url = self.ig.page.url
         if '/stories/' not in current_url:
             self.remove_response_listener()
-            self.fail_order_with_full_charge("User has no active story")
-            raise LinkIsNotCorrect("Redirected to profile - user has no story")
+            self.handle_no_story_redirect()
+            return
 
         self.check_story_unavailable()
 
         self.click_view_story_button()
         self.check_story_unavailable()
         self.wait_for_story_view()
+
+    def handle_no_story_redirect(self):
+        """
+        Handle when redirected to profile instead of story page.
+        If completed_count > 0, verify by checking story ring on profile.
+        """
+        # Refresh order to get latest completed_count
+        refreshed_order = Order.select(Order.completed_count).where(Order.id == self.order.id).first()
+        completed_count = refreshed_order.completed_count if refreshed_order else 0
+
+        if completed_count == 0:
+            # First attempt - probably no story
+            self.fail_order_with_full_charge("User has no active story")
+            raise LinkIsNotCorrect("User has no active story")
+
+        # completed_count > 0, others succeeded before - check profile for story ring
+        self.ig.account.add_cli(f'Completed count is {completed_count}, checking profile for story ring...', print_only=True)
+
+        profile_url = f"https://www.instagram.com/{self.target_username}/"
+        go_to_page(self.ig, profile_url, 'Profile Page')
+        self.ig.pause(3000, 4000)
+
+        if self.has_story_ring():
+            # Story exists, problem is with this account
+            self.ig.account.add_cli('Story ring found - resetting action to free', print_only=True)
+            self._safe_reset_to_free()
+            raise Exception("Story exists but could not load - reset to free")
+        else:
+            # No story ring - story actually expired/removed
+            self.ig.account.add_cli('No story ring found - story expired', print_only=True)
+            self.fail_order_with_full_charge("Story has expired")
+            raise LinkIsNotCorrect("Story has expired")
+
+    def has_story_ring(self):
+        """Check if profile has story ring (colored circle around avatar)"""
+        story_ring_selectors = [
+            'canvas.x1upo8f9',
+            'section canvas[height="135"]',
+            'section canvas[width="135"]',
+            'header canvas',
+        ]
+
+        for selector in story_ring_selectors:
+            try:
+                element = self.ig.page.locator(selector).first
+                if element.count() > 0 and element.is_visible():
+                    return True
+            except:
+                continue
+
+        return False
 
     def check_story_unavailable(self):
         """
@@ -400,6 +458,7 @@ class BrowserViewStoryEvent(BaseAction):
         """
         Fail the entire order and deduct balance for all actions.
         All UPDATEs are atomic - no transaction needed, no FOR UPDATE.
+        Actions stay free/sent - not failed - so order can be reset later.
         """
         from script.models.OrderAction import ACTION_RATES
 
@@ -418,12 +477,13 @@ class BrowserViewStoryEvent(BaseAction):
 
             self.order.status = 'Canceled'
 
-            # Fail all free actions atomically
+            # Reset processing actions to free (not failed)
             OrderAction.update(
-                status='failed'
+                status='free',
+                account=None
             ).where(
                 (OrderAction.order == self.order.id) &
-                (OrderAction.status == 'free')
+                (OrderAction.status == 'processing')
             ).execute()
 
             # Deduct balance atomically
@@ -445,8 +505,8 @@ class BrowserViewStoryEvent(BaseAction):
 
         if '/stories/' not in current_url:
             self.remove_response_listener()
-            self.fail_order_with_full_charge("User has no story or story not accessible")
-            raise LinkIsNotCorrect("Not in story page - user has no story")
+            self.handle_no_story_redirect()
+            return
 
         story_confirmed = self.wait_for_story_seen(timeout=30)
 

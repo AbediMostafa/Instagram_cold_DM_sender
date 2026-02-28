@@ -67,6 +67,7 @@ class OrderController extends Controller
 
     public function finish()
     {
+
         return tryCatch(
             function () {
                 $orderId = request('id');
