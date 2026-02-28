@@ -67,7 +67,6 @@ class OrderController extends Controller
 
     public function finish()
     {
-
         return tryCatch(
             function () {
                 $orderId = request('id');
@@ -98,6 +97,7 @@ class OrderController extends Controller
                                     ->update(['status' => 'sent']);
                             }
 
+                            $order->completed_count = $order->total_count;
                             $order->status = 'Completed';
                             $order->save();
                         });
@@ -115,9 +115,7 @@ class OrderController extends Controller
             },
             'Order finished successfully',
         );
-    }
-
-    private function deductBalance($actionType, $count = 1)
+    }    private function deductBalance($actionType, $count = 1)
     {
         $rates = [
             'comment' => 0.0003,

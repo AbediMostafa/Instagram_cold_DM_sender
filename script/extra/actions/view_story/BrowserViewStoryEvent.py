@@ -428,6 +428,7 @@ class BrowserViewStoryEvent(BaseAction):
             "No stories available",
             "The link you followed may be broken",
             "the page may have been removed",
+            "There's an issue and the page could not be loaded",
         ]
 
         for text in unavailable_texts:
