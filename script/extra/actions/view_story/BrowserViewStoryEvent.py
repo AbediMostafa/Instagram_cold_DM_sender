@@ -88,6 +88,8 @@ class BrowserViewStoryEvent(BaseAction):
             self.ig.account.add_cli(f'Picked action #{i+1} for order {self.order.id}', print_only=True)
             self.process_single_action()
 
+        self.force_exit_story()
+
     def process_single_action(self):
         self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
 
@@ -592,11 +594,7 @@ class BrowserViewStoryEvent(BaseAction):
 
         if not story_confirmed:
             self.remove_response_listener()
-            self.force_exit_story()
             raise Exception("Story not viewed - no confirmation")
-
-        self.remove_response_listener()
-        self.force_exit_story()
 
     def force_exit_story(self):
         """Force exit from story"""
