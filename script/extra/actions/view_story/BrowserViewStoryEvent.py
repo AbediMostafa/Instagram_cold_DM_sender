@@ -472,10 +472,8 @@ class BrowserViewStoryEvent(BaseAction):
     def has_story_ring(self):
         """Check if profile has story ring (colored circle around avatar)"""
         story_ring_selectors = [
-            'canvas.x1upo8f9',
-            'section canvas[height="135"]',
-            'section canvas[width="135"]',
-            'header canvas',
+        'section.xlo4toe canvas[height="135"]',
+        'section.xlo4toe canvas.x1upo8f9',
         ]
 
         for selector in story_ring_selectors:
