@@ -50,9 +50,11 @@ class Order extends Model
     {
         $this->setStatusTo('In progress');
 
-        $this->actions()->where('status', 'processing')->update([
-            'status' => 'free',
-            'account_id' => null
-        ]);
+        $this->actions()
+            ->where('status', '!=', 'sent')
+            ->update([
+                'status' => 'free',
+                'account_id' => null
+            ]);
     }
 }

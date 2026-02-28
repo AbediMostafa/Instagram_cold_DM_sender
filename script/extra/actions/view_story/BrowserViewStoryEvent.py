@@ -245,6 +245,64 @@ class BrowserViewStoryEvent(BaseAction):
 
         return username
 
+    def wait_for_page_load(self, page_type='profile', timeout=10):
+        """
+        Wait for page to load and check for errors.
+        Returns: 'loaded', 'error', or 'timeout'
+        """
+        if page_type == 'profile':
+            success_selectors = [
+                'button._aswp',
+                'svg[aria-label="Posts"]',
+                'div[role="tablist"]',
+            ]
+        elif page_type == 'story':
+            success_selectors = [
+                'svg[aria-label="Like"]',
+                'div[aria-label="Toggle audio"]',
+                'svg[aria-label="Audio is muted"]',
+            ]
+        else:
+            success_selectors = []
+
+        error_texts = [
+            "There's an issue and the page could not be loaded",
+        ]
+
+        start = time.time()
+        while time.time() - start < timeout:
+            # Check for error first
+            for text in error_texts:
+                if self.ig.is_visible_by_text(text):
+                    return 'error'
+
+            # Check for success elements
+            for selector in success_selectors:
+                try:
+                    element = self.ig.page.locator(selector).first
+                    if element.count() > 0 and element.is_visible():
+                        return 'loaded'
+                except:
+                    continue
+
+            time.sleep(0.5)
+
+        return 'timeout'
+
+    def check_page_load_error(self):
+        """
+        Check if page failed to load completely.
+        This means Instagram couldn't load the page at all - fail immediately.
+        """
+        error_texts = [
+            "There's an issue and the page could not be loaded",
+        ]
+
+        for text in error_texts:
+            if self.ig.is_visible_by_text(text):
+                self.fail_order_with_full_charge(f"Page load error: {text}")
+                raise LinkIsNotCorrect(text)
+
     def view_specific_story(self):
         """View a specific story from direct URL"""
         story_url = self.order.target_link
@@ -253,6 +311,9 @@ class BrowserViewStoryEvent(BaseAction):
 
         go_to_page(self.ig, story_url, 'Story Page')
         self.ig.pause(5000, 6000)
+
+        # Check for page load error FIRST - fail immediately
+        self.check_page_load_error()
 
         # Check if redirected away from story
         current_url = self.ig.page.url
@@ -343,6 +404,9 @@ class BrowserViewStoryEvent(BaseAction):
         go_to_page(self.ig, story_url, 'Story Page')
         self.ig.pause(5000, 6000)
 
+        # Check for page load error FIRST - fail immediately
+        self.check_page_load_error()
+
         # Check if redirected to profile (user has no story)
         current_url = self.ig.page.url
         if '/stories/' not in current_url:
@@ -377,6 +441,21 @@ class BrowserViewStoryEvent(BaseAction):
         go_to_page(self.ig, profile_url, 'Profile Page')
         self.ig.pause(3000, 4000)
 
+        # Wait for profile page to load
+        page_status = self.wait_for_page_load(page_type='profile', timeout=10)
+
+        if page_status == 'error':
+            # Page load error - fail immediately
+            self.fail_order_with_full_charge("Page load error")
+            raise LinkIsNotCorrect("There's an issue and the page could not be loaded")
+
+        if page_status == 'timeout':
+            # Could not determine - reset to free for retry
+            self.ig.account.add_cli('Profile page load timeout - resetting action to free', print_only=True)
+            self._safe_reset_to_free()
+            raise Exception("Profile page load timeout - reset to free")
+
+        # Page loaded successfully, now check for story ring
         if self.has_story_ring():
             # Story exists, problem is with this account
             self.ig.account.add_cli('Story ring found - resetting action to free', print_only=True)
@@ -428,7 +507,6 @@ class BrowserViewStoryEvent(BaseAction):
             "No stories available",
             "The link you followed may be broken",
             "the page may have been removed",
-            "There's an issue and the page could not be loaded",
         ]
 
         for text in unavailable_texts:
@@ -448,6 +526,7 @@ class BrowserViewStoryEvent(BaseAction):
             "The link you followed may be broken",
             "the page may have been removed",
             "Post isn't available",
+            "There's an issue and the page could not be loaded",
         ]
 
         for text in unavailable_texts:
