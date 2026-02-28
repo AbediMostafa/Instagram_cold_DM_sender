@@ -1,83 +1,98 @@
 <?php
 
-use App\Classes\AdspowerProfileMaker;
-use App\Classes\AdsPowerProfileUpdateProxy;
-use App\Classes\Fingerprint;
-use App\Classes\ProfileDelete;
 use App\Classes\ProfileMaker;
-use App\Classes\ProfileMakerV2;
-use App\Classes\ProfileRequest;
-use App\Models\Account;
-use App\Models\CharityLead;
-use App\Models\Command;
-use App\Models\DmPost;
-use App\Models\Message;
-use App\Models\Profile;
-use App\Models\Proxy;
-use App\Models\Setting;
-use App\Models\Spintax;
-use App\Models\Thread;
-use App\Models\TikTokLink;
-use App\Models\User;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountSpecController;
+use App\Http\Controllers\AppConfigController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CliController;
+use App\Http\Controllers\ColorController;
+use App\Http\Controllers\CommandController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DmPostController;
+use App\Http\Controllers\HashtagController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadSourceController;
+use App\Http\Controllers\LoomController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProcessController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProxyController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SpintaxController;
+use App\Http\Controllers\TagController;
+use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\ThreadController;
+use App\Http\Controllers\TikTokLinkController;
+use App\Http\Controllers\TikTokTagController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkflowController;
+use App\Models\Template;
 use Carbon\Carbon;
+use Dotenv\Dotenv;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
-use \App\Http\Controllers\AccountController;
-use \App\Http\Controllers\AppConfigController;
-use \App\Http\Controllers\TemplateController;
-use \App\Http\Controllers\CliController;
-use \App\Http\Controllers\LeadController;
-use \App\Http\Controllers\ProxyController;
-use \App\Http\Controllers\ThreadController;
-use \App\Http\Controllers\MessageController;
-use \App\Http\Controllers\CommandController;
-use \App\Http\Controllers\LoomController;
-use \App\Http\Controllers\DashboardController;
-use \App\Http\Controllers\SpintaxController;
-use \App\Http\Controllers\AuthController;
-use \App\Http\Controllers\CategoryController;
-use \App\Http\Controllers\TagController;
-use \App\Http\Controllers\UserController;
-use \App\Http\Controllers\ProfileController;
-use \Illuminate\Support\Facades\Http;
-use \App\Http\Controllers\HashtagController;
-use App\Http\Controllers\LeadSourceController;
-use App\Http\Controllers\DmPostController;
-use \App\Http\Controllers\OrderController;
-use \App\Http\Controllers\TikTokTagController;
-use \App\Models\Tag;
-use JetBrains\PhpStorm\ArrayShape;
+use Illuminate\Support\Facades\Storage;
 use Morilog\Jalali\Jalalian;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use Dotenv\Dotenv;
-use \App\Classes\ProfileUpdateProxy;
-use \App\Http\Controllers\ColorController;
-use \App\Models\Hashtag;
-use \App\Classes\ProfileGetProxy;
-use \App\Models\Category;
-use \App\Models\Template;
-use \App\Models\LeadSource;
-use \App\Models\Lead;
-use \App\Models\Role;
-use \App\Models\EnrichedLead;
-use \App\Models\Order;
-use \App\Models\OrderComment;
-use \App\Http\Controllers\SettingController;
-use \App\Http\Controllers\ProcessController;
-use App\Http\Controllers\ServiceController;
-use \App\Http\Controllers\WorkflowController;
-use App\Http\Controllers\ModuleController;
-use \Illuminate\Support\Facades\Cache;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use App\Http\Controllers\AccountSpecController;
-use \App\Http\Controllers\TikTokLinkController;
-use \Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
+//    $updated = Order::query()
+//        ->where('status', 'Pending')
+//
+//        ->update(['status' => "Canceled"]);
+//dd(1);
+    $orderIds = [];
+//
+    if ($orderIds) {
+
+//        $orderIds = explode(',', $orderIds);
+        $orders = \App\Models\Order::query()
+            ->whereIn('id', $orderIds)
+            ->get();
+    } else {
+        $orders = \App\Models\Order::query()
+            ->where('service_type', 'view_story')
+            ->where('status', 'In progress')
+            ->get();
+    }
+
+    $results = [];
+
+    foreach ($orders as $order) {
+        try {
+            request()->merge(['id' => $order->id]);
+
+            app(\App\Http\Controllers\OrderController::class)->finish();
+
+            $results[] = [
+                'order_id' => $order->id,
+                'status' => 'finished'
+            ];
+        } catch (\Exception $e) {
+            $results[] = [
+                'order_id' => $order->id,
+                'status' => 'failed',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    return [
+        'total' => $orders->count(),
+        'results' => $results
+    ];
 //   $s = DB::select("
 //   SELECT * FROM pg_locks;
 //   ");

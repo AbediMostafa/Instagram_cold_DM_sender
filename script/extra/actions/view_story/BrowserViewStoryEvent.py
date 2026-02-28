@@ -245,20 +245,6 @@ class BrowserViewStoryEvent(BaseAction):
 
         return username
 
-    def check_page_load_error(self):
-        """
-        Check if page failed to load completely.
-        This means Instagram couldn't load the page at all - fail immediately.
-        """
-        error_texts = [
-            "There's an issue and the page could not be loaded",
-        ]
-
-        for text in error_texts:
-            if self.ig.is_visible_by_text(text):
-                self.fail_order_with_full_charge(f"Page load error: {text}")
-                raise LinkIsNotCorrect(text)
-
     def view_specific_story(self):
         """View a specific story from direct URL"""
         story_url = self.order.target_link
@@ -267,9 +253,6 @@ class BrowserViewStoryEvent(BaseAction):
 
         go_to_page(self.ig, story_url, 'Story Page')
         self.ig.pause(5000, 6000)
-
-        # Check for page load error FIRST - fail immediately
-        self.check_page_load_error()
 
         # Check if redirected away from story
         current_url = self.ig.page.url
@@ -360,9 +343,6 @@ class BrowserViewStoryEvent(BaseAction):
         go_to_page(self.ig, story_url, 'Story Page')
         self.ig.pause(5000, 6000)
 
-        # Check for page load error FIRST - fail immediately
-        self.check_page_load_error()
-
         # Check if redirected to profile (user has no story)
         current_url = self.ig.page.url
         if '/stories/' not in current_url:
@@ -448,6 +428,7 @@ class BrowserViewStoryEvent(BaseAction):
             "No stories available",
             "The link you followed may be broken",
             "the page may have been removed",
+            "There's an issue and the page could not be loaded",
         ]
 
         for text in unavailable_texts:
@@ -467,7 +448,6 @@ class BrowserViewStoryEvent(BaseAction):
             "The link you followed may be broken",
             "the page may have been removed",
             "Post isn't available",
-            "There's an issue and the page could not be loaded",
         ]
 
         for text in unavailable_texts:
