@@ -194,20 +194,22 @@ def deduct_balance(action_type):
 def mark_action_completed(action):
     """
     Mark action as sent and increment order completed_count atomically.
+    Order: First increment count, then update action status.
+    This ensures count is never less than actual sent actions.
     """
-    # Mark action as sent
+    # First increment completed_count
+    Order.update(
+        completed_count=Order.completed_count + 1
+    ).where(
+        Order.id == action.order_id
+    ).execute()
+
+    # Then mark action as sent
     OrderAction.update(
         status='sent',
         updated_at=tehran_now()
     ).where(
         OrderAction.id == action.id
-    ).execute()
-
-    # Increment completed_count atomically
-    Order.update(
-        completed_count=Order.completed_count + 1
-    ).where(
-        Order.id == action.order_id
     ).execute()
 
     # Mark order as Completed if threshold reached
@@ -224,7 +226,16 @@ def mark_action_failed(action):
     """
     Mark action as failed and increment completed_count.
     Client pays for their mistakes.
+    Order: First increment count, then update action status.
     """
+    # First increment completed_count
+    Order.update(
+        completed_count=Order.completed_count + 1
+    ).where(
+        Order.id == action.order_id
+    ).execute()
+
+    # Then mark action as failed
     OrderAction.update(
         status='failed',
         updated_at=tehran_now()
@@ -232,12 +243,7 @@ def mark_action_failed(action):
         OrderAction.id == action.id
     ).execute()
 
-    Order.update(
-        completed_count=Order.completed_count + 1
-    ).where(
-        Order.id == action.order_id
-    ).execute()
-
+    # Mark order as Completed if threshold reached
     Order.update(
         status='Completed'
     ).where(
