@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Morilog\Jalali\Jalalian;
@@ -46,156 +47,54 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use \App\Models\Order;
+use \App\Models\Setting;
+use \App\Models\Account;
 
 Route::get('/', function () {
-//    $updated = Order::query()
-//        ->where('status', 'Pending')
-//
-//        ->update(['status' => "Canceled"]);
-//dd(1);
-    $orderIds = [];
-//
-    if ($orderIds) {
-
-//        $orderIds = explode(',', $orderIds);
-        $orders = \App\Models\Order::query()
-            ->whereIn('id', $orderIds)
-            ->get();
-    } else {
-        $orders = \App\Models\Order::query()
-            ->where('service_type', 'view_story')
-            ->where('status', 'In progress')
-            ->get();
-    }
-
-    $results = [];
-
-    foreach ($orders as $order) {
-        try {
-            request()->merge(['id' => $order->id]);
-
-            app(\App\Http\Controllers\OrderController::class)->finish();
-
-            $results[] = [
-                'order_id' => $order->id,
-                'status' => 'finished'
-            ];
-        } catch (\Exception $e) {
-            $results[] = [
-                'order_id' => $order->id,
-                'status' => 'failed',
-                'error' => $e->getMessage()
-            ];
-        }
-    }
-
-    return [
-        'total' => $orders->count(),
-        'results' => $results
-    ];
-//   $s = DB::select("
-//   SELECT * FROM pg_locks;
-//   ");
-//
-//   dd($s);
-
-
-//    $ports = [10000, 10001,10002,10003,10004];
-//
-//    foreach ($ports as $port) {
-//        Proxy::query()->create([
-//            'ip'=>'private.residential.proxyrack.net',
-//            'port'=>$port,
-//            'username'=>'sajilepubugupa',
-//            'password'=>'WHVSVK9-F1THMWM-HDXU1WL-7WDLSBZ-KZFAMVN-SPXL653-MUCTOXX',
-//            'type'=>'residential',
-//        ]);
-//    }
-//
-//    dd('shd');
-
-//    $s = DB::statement("
-//    ALTER TABLE processes
-//ALTER COLUMN pid TYPE varchar(255)
-//USING pid::varchar;
-//    ");
-//
-//    dd($s);
-
-    //
-//    $accounts = Account::query()->where('instagram_state',  'active')
-//    ->update([
-//    'is_used'=>0
-//    ]);
-//
-//    dd($accounts);
-
-//    $s = DB::select("
-//    ALTER TABLE commands
-//DROP CONSTRAINT commands_type_check;
-//
-//    ");
-//
-//    dd($s);
-//
-//    for ($i = 0; $i < 100; $i++)
-//        $proxy = Proxy::query()->create([
-//            'ip' => 'gw.dataimpulse.com',
-//            'port' => '824',
-//            'username' => '239c1e03149f4688d9b7__cr.gb,us',
-//            'password' => 'd4c552dfbab2110c',
-//            'type' => 'data-impulse-residential',
-//        ]);
-////
-////dd($proxies);
-
+    dd(\App\Models\Balance::query()->first()->balance);
 });
 
-Route::get('/export', function () {
-    ini_set('memory_limit', '1024000M');
-    $templates = Template::query()
+Route::get('/get-state', function () {
+    $orders = Order::query()
+        ->orderBy('id', 'desc')
+        ->whereHas('actions', function ($actions) {
+            $actions->where('status', 'failed');
+        })->get()
+        ->pluck('id')->toArray();
+
+    dd($orders);
+
+    $orders = \App\Models\Order::query()->where('status', 'Completed')
+        ->withCount(['actions as nullAccounts' => function ($action) {
+            $action->whereNull('account_id');
+        }])
+        ->withCount(['actions' => function ($action) {
+            $action
+                ->where('status', 'sent')
+                ->whereNotNull('account_id');
+        }])
+        ->orderBy('id', 'desc')
+        ->whereHas('actions', function ($actions) {
+            $actions->where(function ($q) {
+                $q->whereNull('account_id')
+                    ->orWhere('status', 'failed');
+            });
+        })
         ->get()
-        ->toJson(JSON_PRETTY_PRINT);
-    Storage::put('templates.json', $templates);
+        ->pluck('id')->toArray();
+
+    dd($orders);
 });
 
-Route::get('/import', function () {
-    $table = Storage::get('templates.json');
-    $table = json_decode($table, true);
-    $table = array_map(function ($item) {
-        unset($item['id']);
-        return $item;
-    }, $table);
 
-    foreach ($table as $item) {
-        Template::query()->create($item);
-    }
-
-    dd('shod');
-//////////    // Remove 'id' and filter out promo_url category
-//    $accounts = array_map(function($item) {
-//        $item['bio']='';
-//        $item['log']='';
-//        $item['service_id']=1;
-//        unset($item['id']);
-//        unset($item['fingerprint']);
-//        unset($item['category_id']);
-//        unset($item['profile_id']);
-//        return $item;
-//    }, $accounts);
 //
-//    foreach ($accounts as $account) {
-//        Account::query()->where('username', $account['username'])->doesntExist() &&
-//        Account::query()->create($account);
+//$order->completed_count = $order->actions_count;
+//$order->status = 'In progress';
+//$order->save();
+//$order->actions()->whereNull('account_id')->update(['status'=>'free']);
 //
-//    }
-//
-//    dd('done');
-
-//////
-//////    dd($modules);
-
-});
+//dd($order);
 
 
 Route::post('login', [AuthController::class, 'login']);

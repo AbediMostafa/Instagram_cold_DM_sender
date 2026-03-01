@@ -116,7 +116,7 @@
                 <input class="form-check-input" type="checkbox" @change="store.checkRows($event)"/>
               </div>
             </th>
-            <th class="min-w-150px">CUSTOMER</th>
+            <th class="min-w-100px">CUSTOMER</th>
             <th class="min-w-120px">LINK</th>
             <th class="min-w-120px">COUNT/SENT</th>
             <th class="min-w-150px">CREATED AT</th>
@@ -142,7 +142,10 @@
                 <a class="badge ms-2 badge-light-primary" v-else-if="order.status=='In progress'">{{ order.status }}</a>
                 <a class="badge ms-2 badge-light-warning" v-else-if="order.status=='Pending'">{{ order.status }}</a>
                 <div v-else-if="order.status=='Canceled'">
-                  <div class="badge ms-2 badge-light-danger" v-if="order.description">{{ order.description }}</div>
+                  <div class="badge ms-2 badge-light-danger" v-if="order.description">{{
+                      order.description.length >50 ?order.description.slice(0,50):order.description
+
+                    }}</div>
                   <a class="badge ms-2 badge-light-danger" v-else>{{ order.status }}</a>
                 </div>
                 <a class="badge ms-2 badge-light-info" v-else>{{ order.status }}</a>
@@ -155,7 +158,14 @@
 
               <td>
                 <a class="text-gray-700 fw-bold text-hover-primary fs-7" :href="order.target_link"
-                   target="_blank">{{ order.target_link }}</a>
+                   target="_blank">{{
+                    order.target_link ?
+                        order.target_link.length > 47 ?
+                            order.target_link.slice(0, 50) + '...' :
+                            order.target_link :
+                        '-'
+
+                  }}</a>
               </td>
 
               <td>

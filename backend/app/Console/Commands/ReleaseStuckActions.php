@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Order;
 use App\Models\OrderAction;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class ReleaseStuckActions extends Command
 {
@@ -13,7 +15,6 @@ class ReleaseStuckActions extends Command
 
     public function handle()
     {
-        \Log::info("test",[]);
         $minutes = $this->option('minutes');
         $threshold = Carbon::now()->subMinutes($minutes);
 
@@ -29,5 +30,25 @@ class ReleaseStuckActions extends Command
         if ($count > 0) {
             $this->info("Released {$count} stuck actions");
         }
+
+        Order::query()
+            ->withCount([
+                'actions as sent_actions_count' => function ($q) {
+                    $q->where('status', 'sent');
+                }
+            ])
+            ->where('status', 'In progress')
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get()
+            ->each(function (Order $order) {
+                if ($order->total_count == $order->sent_actions_count && $order->is('In progress')) {
+                    $order->setStatusTo('Completed');
+                    Log::channel("incoming_requests")->info("Completed order : {$order->id}");
+                }
+            });
+
+        Log::channel("incoming_requests")->info("Updated Counts : $count");
+
     }
 }

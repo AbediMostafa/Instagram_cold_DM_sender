@@ -15,6 +15,9 @@ class LeadGenerateByFollowersContext(InstagramMiddleware):
 
     def execute(self):
         try:
+            if self.ig.account.get_passed_days_since_creation() < 10:
+                return self.ig.account.add_cli(f"Account is not old enough to Generating leads Through Followers ")
+
             self.cant_perform()
             self.ig.account.add_cli("Generating lead by followers")
             BrowserLeadGenerateByFollowersEvent(self.ig).init(self.lead_source_count)

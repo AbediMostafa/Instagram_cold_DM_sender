@@ -57,4 +57,9 @@ class Order extends Model
                 'account_id' => null
             ]);
     }
+
+    public function is($status)
+    {
+        return $this->status == $status;
+    }
 }

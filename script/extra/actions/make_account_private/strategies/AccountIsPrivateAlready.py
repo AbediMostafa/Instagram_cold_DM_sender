@@ -12,6 +12,6 @@ class AccountIsPrivateAlready:
 
     def can(self):
 
-        if self.account.is_public:
+        if not self.account.is_public:
             self.account.add_cli("Account is private")
             raise CantPerformAction("Account is private")

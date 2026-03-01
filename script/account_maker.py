@@ -267,6 +267,7 @@ class AccountCreator:
                 'temp-mail.org needs to review the security'):
             raise Exception('Verify you are human')
 
+
     def fill_user_props(self):
         self.page.get_by_label("Mobile Number or Email").press_sequentially(self.email, delay=30)
         self.pause(1000, 1200)

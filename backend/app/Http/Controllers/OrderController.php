@@ -115,7 +115,8 @@ class OrderController extends Controller
             },
             'Order finished successfully',
         );
-    }    private function deductBalance($actionType, $count = 1)
+    }
+    private function deductBalance($actionType, $count = 1)
     {
         $rates = [
             'comment' => 0.0003,
@@ -202,7 +203,7 @@ class OrderController extends Controller
                     "category" => "SSM-fire",
                     "rate" => "0.30$",
                     "min" => 5,
-                    "max" => 2000,
+                    "max" => 4000,
                     "type" => "custom_comments",
                     "desc" => "Instagram Comment Service",
                     "dripfeed" => false,
@@ -215,7 +216,7 @@ class OrderController extends Controller
                     "category" => "SSM-fire",
                     "rate" => "0.05$",
                     "min" => 10,
-                    "max" => 10000,
+                    "max" => 4000,
                     "type" => "default",
                     "desc" => "View first or specific story",
                     "dripfeed" => false,
@@ -228,7 +229,7 @@ class OrderController extends Controller
                     "category" => "SSM-fire",
                     "rate" => "0.04$",
                     "min" => 10,
-                    "max" => 10000,
+                    "max" => 4000,
                     "type" => "default",
                     "desc" => "Save a post or reel",
                     "dripfeed" => false,

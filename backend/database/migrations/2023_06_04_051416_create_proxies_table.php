@@ -19,6 +19,8 @@ return new class extends Migration {
             $table->string('password');
             $table->string('real_ip')->nullable();
             $table->string('type');
+            $table->string('provider_name')->nullable();
+            $table->string('provider_username')->nullable();
             $table->unsignedTinyInteger('is_used')->default(0);
             $table->enum('state', Proxy::$states)->default('active');
             $table->timestamp('real_ip_checked_at')->nullable();

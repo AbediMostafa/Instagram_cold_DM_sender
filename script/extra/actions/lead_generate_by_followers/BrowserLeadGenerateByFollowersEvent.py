@@ -14,7 +14,7 @@ class BrowserLeadGenerateByFollowersEvent:
     parser = None
     category = None
     command = None
-    scroll_times = 20
+    scroll_times = 5
     # scroll_container = 'div.xyi19xy.x1ccrb07.xtf3nb5.x1pc53ja.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6'
     # scroll_container = 'div.x7r02ix.x1bphaa0.x18nydb4.xcm95gh.x1vsb9q8.xb88tzc.xw2csxc.x1odjw0f.x5fp0pe'
     scroll_container = 'div.x6nl9eh.x1a5l9x9.x7vuprf.x1mg3h75.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6'
@@ -24,7 +24,6 @@ class BrowserLeadGenerateByFollowersEvent:
         self.category_model = self.ig.account.category
         self.base = BrowserBaseEvent(self.ig)
         self.ig.page.on("response", lambda response: self.handle_response(response))
-        self.search_for = SearchForAction(self.ig)
         self.scroll = ScrollAction(self.ig).start
 
     def handle_response(self, response):
@@ -69,22 +68,7 @@ class BrowserLeadGenerateByFollowersEvent:
     def generate_lead(self, lead_sources):
         for lead_source in lead_sources:
             self.category = lead_source.category
-            self.search_for.start(lead_source.title)
-            self.ig.pause(4000, 6000)
-
-            if self.ig.is_visible_by_text('No results found'):
-                self.ig.account.add_cli(f'No lead source found for {lead_source.title}')
-                continue
-
-            try:
-                self.ig.page.locator(
-                    "div.x9f619.x78zum5.xdt5ytf.x1iyjqo2.x6ikm8r.x1odjw0f.xh8yej3.xocp1fn a").first.click(timeout=4000)
-
-            except Exception as e:
-                self.ig.account.add_cli(f'Problem clicking on first a lead_source {str(e)}')
-                go_to_page(self.ig, f'https://www.instagram.com/{lead_source.title}', "Lead source")
-
-
+            go_to_page(self.ig, f'https://www.instagram.com/{lead_source.title}', "Lead source")
             self.ig.pause(4000, 6000)
 
             if self.ig.is_visible_by_text('No results') or self.ig.is_visible_by_text("We couldn't find anything"):
@@ -94,11 +78,7 @@ class BrowserLeadGenerateByFollowersEvent:
             self.ig.page.keyboard.press('Escape')
 
             self.click_on_followers()
-
-            for _ in range(self.scroll_times):
-                self.scroll(self.scroll_container, 400, 600, 5000, 7000)
-
-            self.ig.pause(2000, 3000)
+            self.ig.pause(6000, 7000)
             self.ig.page.keyboard.press('Escape')
             self.ig.pause(2000, 3000)
 

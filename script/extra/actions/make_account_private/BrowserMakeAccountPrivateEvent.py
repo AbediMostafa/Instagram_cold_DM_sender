@@ -21,7 +21,7 @@ class BrowserMakeAccountPrivateEvent:
 
             self.change_hook()
             self.ig.account.add_cli(f'Setting account private ....')
-            self.ig.account.set('is_public', 1)
+            self.ig.account.set('is_public', 0)
             self.ig.account.add_cli(f'Account private set')
             self.command.update_cmd('state', 'success')
 

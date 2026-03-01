@@ -34,8 +34,10 @@
           <thead>
           <tr class="fw-bold text-muted">
             <th class="min-w-50px">ID</th>
-            <th class="min-w-350px">PROXY</th>
-            <th class="min-w-150px">Type</th>
+            <th class="min-w-200px">PROXY</th>
+            <th class="min-w-150px">TYPE</th>
+            <th class="min-w-150px">PROVIDER</th>
+            <th class="min-w-150px">PROVIDER USERNAME</th>
             <th class="min-w-100px text-end">Actions</th>
           </tr>
           </thead>
@@ -64,11 +66,30 @@
                   <span class="badge badge-light-primary ms-1">
                     <span
                         @click="copyToClipboard(proxy.username)"
-                    >{{ proxy.username }}</span>@
+                    >
+
+                      {{
+                        proxy.username
+                            ? proxy.username.length > 15
+                                ? proxy.username.slice(0, 12) + '...'
+                                : proxy.username
+                            : '—'
+                      }}
+
+
+                    </span>@
 
                     <span
                         @click="copyToClipboard(proxy.password)"
-                    >{{ proxy.password }}</span>
+                    >
+                    {{
+                        proxy.password
+                            ? proxy.password.length > 12
+                                ? proxy.password.slice(0, 12) + '...'
+                                : proxy.password
+                            : '—'
+                      }}
+                    </span>
                     </span>
                 </div>
               </td>
@@ -77,6 +98,19 @@
                   {{ proxy.type }}
                 </a>
               </td>
+
+              <td>
+                <a class="text-gray-700 fw-bold text-hover-primary fs-7">
+                  {{ proxy.provider_name }}
+                </a>
+              </td>
+
+              <td>
+                <a class="text-gray-700 fw-bold text-hover-primary fs-7">
+                  {{ proxy.provider_username }}
+                </a>
+              </td>
+
 
               <td class="text-end">
                 <a

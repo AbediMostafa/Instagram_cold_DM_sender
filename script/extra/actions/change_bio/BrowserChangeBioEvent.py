@@ -2,6 +2,7 @@ from script.models.Template import get_a
 from script.extra.playwright.base_actions.GoToProfilePageAction import GoToProfilePageAction
 from script.extra.helper import go_to_page
 from script.extra.routes import get_template
+from script.models.Template import get_next
 
 
 class BrowserChangeBioEvent:
@@ -39,12 +40,12 @@ class BrowserChangeBioEvent:
             self.ig.pause(3000, 4000)
 
     def get_bio(self):
-        self.bio = get_template(self.ig.account.id, 'bio')
+        self.bio = get_next('bio')
 
         if not self.bio:
             raise Exception(f'No bio ...')
 
-        self.bio = self.bio['text']
+        self.bio = self.bio.text
 
     def before_change_hook(self):
 

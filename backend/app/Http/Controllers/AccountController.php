@@ -109,8 +109,8 @@ class AccountController extends Controller
                     $q->whereIn('id', $services);
                 }, '=', count($services));
             })
-//            ->orderBy('id', 'DESC')
-            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
+            ->orderBy('id', 'DESC')
+//            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
                 config('data.pagination.each_page.accounts')
             );

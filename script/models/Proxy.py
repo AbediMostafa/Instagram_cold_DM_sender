@@ -91,7 +91,7 @@ def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts
         attempts += 1
 
         if proxy_type == 'complex':
-            proxy_types = ["global_datacenter", "datacenter", "unmetered_resedential", "residential"]
+            proxy_types = ["global_datacenter", "datacenter"]
 
             query = Proxy.select().where(
                 (Proxy.is_used == 0) &

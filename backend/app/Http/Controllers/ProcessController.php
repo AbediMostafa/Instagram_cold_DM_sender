@@ -20,7 +20,7 @@ class ProcessController extends Controller
             $query->byServer(request('server_ip'));
         }
 
-        return $query->paginate(75);
+        return $query->paginate(200);
     }
 
     public function check()
