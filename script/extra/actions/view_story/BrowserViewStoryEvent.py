@@ -88,6 +88,8 @@ class BrowserViewStoryEvent(BaseAction):
             self.ig.account.add_cli(f'Picked action #{i+1} for order {self.order.id}', print_only=True)
             self.process_single_action()
 
+        self.force_exit_story()
+
     def process_single_action(self):
         self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)
 
@@ -470,10 +472,8 @@ class BrowserViewStoryEvent(BaseAction):
     def has_story_ring(self):
         """Check if profile has story ring (colored circle around avatar)"""
         story_ring_selectors = [
-            'canvas.x1upo8f9',
-            'section canvas[height="135"]',
-            'section canvas[width="135"]',
-            'header canvas',
+        'section.xlo4toe canvas[height="135"]',
+        'section.xlo4toe canvas.x1upo8f9',
         ]
 
         for selector in story_ring_selectors:
@@ -592,11 +592,7 @@ class BrowserViewStoryEvent(BaseAction):
 
         if not story_confirmed:
             self.remove_response_listener()
-            self.force_exit_story()
             raise Exception("Story not viewed - no confirmation")
-
-        self.remove_response_listener()
-        self.force_exit_story()
 
     def force_exit_story(self):
         """Force exit from story"""
