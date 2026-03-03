@@ -70,8 +70,9 @@ class Order(BaseWithTimeZoneModel):
         ).execute()
 
     def actions(self):
-        """Get all actions for this order."""
         from .OrderAction import OrderAction
+
+        """Get all actions for this order."""
         return OrderAction.select().where(OrderAction.order == self.id)
 
     def comments(self):
@@ -81,3 +82,30 @@ class Order(BaseWithTimeZoneModel):
 
     class Meta:
         table_name = 'orders'
+
+
+def get_next_order_for_account(account):
+    from .OrderAction import OrderAction
+
+    # Orders not completed
+    order = (
+        Order
+        .select()
+        .where(Order.completed_count < Order.total_count)
+        .where(Order.status.in_(['Pending', 'In progress']))
+        # .where(Order.service_type == service_type)
+        .where(
+            # This account has NOT sent any comment for this order
+            ~Order.id.in_(
+                OrderAction
+                .select(OrderAction.order)
+                .where(OrderAction.account == account)
+            )
+        )
+        .order_by(Order.id)
+    ).first()
+
+    order.completed_count = order.completed_count + 1
+    order.save()
+
+    return order

@@ -14,24 +14,6 @@ class InstagramMobileMiddleware:
     def __init__(self, account):
         self.account = account
         self.client = Client()
-
-        # Set a custom User-Agent and device settings
-        self.client.set_device({
-            'phone_manufacturer': 'Samsung',
-            'phone_model': 'SM-G960F',
-            'android_version': 29,
-            'android_release': '10.0',
-            'dpi': '420dpi',
-            'resolution': '1080x1920',
-            'chipset': 'exynos9810',
-            'gpu': 'Mali-G72',
-            'cpu': 'Samsung Exynos 9810',
-            'os': 'android'
-        })
-
-        self.client.set_user_agent(
-            "Instagram 150.0.0.33.120 Android (29/10; 420dpi; 1080x1920; Samsung; SM-G960F; starlte; exynos9810; en_US; 217141713)")
-
         self.error_handler = InstagramErrorHandler(self.account)
         self.client.delay_range = [4, 6]
         self.login_attempt = 0
@@ -124,6 +106,10 @@ class InstagramMobileMiddleware:
     def media_seen(self, media_url):
         media_pk = self.client.media_pk_from_url(media_url)
         self.client.media_seen([media_pk])
+
+    @try_except
+    def story_seen(self, media_pk):
+        self.client.story_seen([media_pk])
 
     @try_except
     def get_user_id(self, username):

@@ -113,7 +113,6 @@ from script.extra.actions.post_from_folder_and_comment.PostFromFolderAndCommentC
 from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext import CommentOnOthersPostContext
 from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
-from script.extra.actions.view_all_stories.ViewAllStoriesContext import ViewAllStoriesContext
 from script.extra.actions.save_post.SavePostContext import SavePostContext
 
 from urllib.parse import urlparse
@@ -134,10 +133,9 @@ from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
 from script.models.AccountHelper import get_storage_state
-
+from script.extra.api_actions.BrowserApiViewStoryEvent import BrowserApiViewStoryEvent
 from datetime import timedelta
 from script.extra.helper import tehran_now
-
 # from script.models.Order import get_next_order_for_account
 import json
 
@@ -154,7 +152,8 @@ account = get_next_account()
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-ViewStoryContext(browser_ig).fire()
+BrowserApiViewStoryEvent(browser_ig).fire()
+# ViewStoryContext(browser_ig).fire()
 # ViewAllStoriesContext(browser_ig).fire()
 # SavePostContext(browser_ig).fire()
 # LikeAndCommentContext(browser_ig).fire()

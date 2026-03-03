@@ -5,6 +5,7 @@ from script.models.Command import performed_command_count
 from script.extra.exceptions import SuccessfulLogin
 from script.extra.exceptions import *
 from script.extra.helper import go_to_page
+from script.extra.parsers.RequestPayloadFetcherParser import RequestPayloadFetcherParser
 import random
 import json
 import re
@@ -16,10 +17,22 @@ import re
 class BrowserLoginEvent:
     command = None
     errors = None
+    listener = None
 
     def __init__(self, ig):
         self.ig = ig
         self.errors = ErrorIndicators(self.ig)
+        self.add_listener()
+
+    def add_listener(self):
+        """Attach temporary listener To get requets payloads"""
+
+        def on_response(response):
+            RequestPayloadFetcherParser(response, self.ig).parse()
+
+        self.listener = on_response
+        self.ig.page.on("response", self.listener)
+
 
     def init(self):
 
