@@ -17,7 +17,21 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $query = Order::query()->with('service:id,service');
+        $query = Order::query()
+            ->withCount([
+                'actions as sent_actions_count' => fn($query) =>
+                $query->where('status', 'sent'),
+
+                'actions as free_actions_count' => fn($query) =>
+                $query->where('status', 'free'),
+
+                'actions as processing_actions_count' => fn($query) =>
+                $query->where('status', 'processing'),
+
+                'actions as failed_actions_count' => fn($query) =>
+                $query->where('status', 'failed'),
+            ])
+            ->with('service:id,service');
 
         // Filter by Order ID
         if ($orderId = request('order_id')) {
@@ -85,16 +99,19 @@ class OrderController extends Controller
                                 throw new \Exception('Order not found');
                             }
 
-                            $countToComplete = $order->actions()
-                                ->whereNotIn('status', ['sent', 'failed'])
-                                ->count();
+                            // Calculate how many actions need to be completed
+                            $remainingCount = $order->total_count - $order->completed_count;
 
-                            if ($countToComplete > 0) {
-                                $this->deductBalance($order->service_type, $countToComplete);
+                            if ($remainingCount > 0) {
+                                // Always deduct balance for remaining
+                                $this->deductBalance($order->service_type, $remainingCount);
 
-                                $order->actions()
-                                    ->whereNotIn('status', ['sent', 'failed'])
-                                    ->update(['status' => 'sent']);
+                                // Only update actions if is_prepared = 2 (actions exist)
+                                if ($order->is_prepared == 2) {
+                                    $order->actions()
+                                        ->whereNotIn('status', ['sent', 'failed'])
+                                        ->update(['status' => 'sent']);
+                                }
                             }
 
                             $order->completed_count = $order->total_count;
@@ -116,6 +133,7 @@ class OrderController extends Controller
             'Order finished successfully',
         );
     }
+
     private function deductBalance($actionType, $count = 1)
     {
         $rates = [
@@ -141,6 +159,7 @@ class OrderController extends Controller
             function () {
                 $order = Order::query()->find(request('id'));
                 $order->status = 'Canceled';
+                $order->is_prepared = 0;
                 $order->save();
             },
             'Order failed successfully',
@@ -153,12 +172,12 @@ class OrderController extends Controller
             function () {
                 $order = Order::query()->find(request('id'));
                 $order->status = 'Pending';
+                $order->is_prepared = 0;
+                $order->completed_count = 0;
                 $order->save();
 
-                $order->actions()->update([
-                    'status' => 'free',
-                    'account_id' => null
-                ]);
+                // Delete all actions (preparer will recreate them)
+                $order->actions()->delete();
             },
             'Order reset successfully',
         );
@@ -167,9 +186,16 @@ class OrderController extends Controller
     public function changProcessingCommentsToFree()
     {
         return tryCatch(
-            fn() => Order::query()
-                ->find(r('id'))
-                ->changeProcessingToFree(),
+            function () {
+                $order = Order::query()->find(r('id'));
+
+                // Only process actions if is_prepared = 2
+                if ($order->is_prepared == 2) {
+                    $order->changeProcessingToFree();
+                } else {
+                    $order->setStatusTo('In progress');
+                }
+            },
             'Order reseted successfully',
         );
     }
@@ -298,12 +324,16 @@ class OrderController extends Controller
                 "status" => "Pending",
             ]);
 
-            for ($i = 0; $i < $quantity; $i++) {
-                OrderAction::query()->create([
-                    'order_id' => $order->id,
-                    'type' => $serviceType,
-                    'status' => 'free',
-                ]);
+            // Only create OrderActions for save_post (not view_story)
+            // view_story actions are created by StoryPreparerEvent
+            if ($serviceType === 'save_post') {
+                for ($i = 0; $i < $quantity; $i++) {
+                    OrderAction::query()->create([
+                        'order_id' => $order->id,
+                        'type' => $serviceType,
+                        'status' => 'free',
+                    ]);
+                }
             }
 
             return response()->json([
@@ -453,8 +483,18 @@ class OrderController extends Controller
 
     public function getActions()
     {
-        return Order::query()->find(r('orderId'))
-            ->actions()
+        $order = Order::query()->find(r('orderId'));
+
+        // If is_prepared != 2, no actions exist yet (for view_story)
+        if ($order->service_type === 'view_story' && $order->is_prepared != 2) {
+            return response()->json([
+                'message' => 'Order is not prepared yet',
+                'is_prepared' => $order->is_prepared,
+                'actions' => []
+            ]);
+        }
+
+        return $order->actions()
             ->with('account:id,username')
             ->orderBy('id')
             ->get();
@@ -597,12 +637,16 @@ class OrderController extends Controller
                 "status" => "Pending",
             ]);
 
-            for ($i = 0; $i < $quantity; $i++) {
-                OrderAction::query()->create([
-                    'order_id' => $order->id,
-                    'type' => $serviceType,
-                    'status' => 'free',
-                ]);
+            // Only create OrderActions for save_post (not view_story/view_all_stories)
+            // view_story actions are created by StoryPreparerEvent
+            if ($serviceType === 'save_post') {
+                for ($i = 0; $i < $quantity; $i++) {
+                    OrderAction::query()->create([
+                        'order_id' => $order->id,
+                        'type' => $serviceType,
+                        'status' => 'free',
+                    ]);
+                }
             }
 
             return response()->json([
@@ -868,43 +912,25 @@ class OrderController extends Controller
 
     /**
      * Check if link is duplicate based on service type
-     * - save_post, comment: always reject duplicates
-     * - view_story, view_all_stories: reject only if less than 12 hours old
+     * Only reject if order is still active (Pending or In progress)
+     * Allow if previous order is Completed or Canceled
      */
     private function checkDuplicateLink($cleanLink, $serviceType)
     {
         $existingOrder = Order::query()
             ->where('target_link', $cleanLink)
             ->where('service_type', $serviceType)
-            ->latest()
+            ->whereIn('status', ['Pending', 'In progress'])
             ->first();
 
         if (!$existingOrder) {
             return true;
         }
 
-        // save_post and comment: always reject duplicates
-        if (in_array($serviceType, ['save_post', 'comment'])) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Duplicate link. This link has already been ordered.'
-            ]);
-        }
-
-        // view_story and view_all_stories: reject only if less than 12 hours
-        if (in_array($serviceType, ['view_story', 'view_all_stories'])) {
-            $hoursSinceOrder = $existingOrder->created_at->diffInHours(now());
-
-            if ($hoursSinceOrder < 12) {
-                $remainingHours = 12 - $hoursSinceOrder;
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Duplicate link. Please wait {$remainingHours} more hour(s) before ordering again."
-                ]);
-            }
-        }
-
-        return true;
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Duplicate link. An active order with this link already exists.'
+        ]);
     }
 
     private function cleanInstagramLink($link)
@@ -947,7 +973,8 @@ class OrderController extends Controller
 
     private function getRateForServiceType($serviceType, $serviceMap)
     {
-        foreach ($serviceMap as $code => $info) {
+        foreach ($serviceMap
+                 as $code => $info) {
             if ($info['type'] === $serviceType) {
                 return $info['rate'];
             }
