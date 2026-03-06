@@ -140,10 +140,6 @@ from script.extra.helper import tehran_now
 import json
 account = Account.get_by_id(5146)
 # account = get_next_account()
-browser_ig = BasePlaywright(account)
-browser_ig.init()
-LoginContext(browser_ig).fire()
-ChangeNameUsernameContext(browser_ig).fire()
 # LeadGenerateByPostEngagementContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

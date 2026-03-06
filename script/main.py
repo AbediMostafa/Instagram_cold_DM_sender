@@ -106,37 +106,21 @@ from script.extra.events.api_events.DmEvent import DmEvent
 #         account.add_cli('Media type is not video')
 import pyotp
 
-
-
-import logging
-
-
-# تنظیمات لاگر
-logging.basicConfig(
-    level=logging.INFO,  # سطح لاگ: DEBUG, INFO, WARNING, ERROR, CRITICAL
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("app.log"),  # ذخیره در فایل
-        logging.StreamHandler()          # چاپ در کنسول
-    ]
-)
-ids =  [68,69,74, 77,83]
-
 # while True :
 # try:
-account = Account.get_by_id(69)
-# account = get_next_account_for_api()
-# account = get_next_account()
-ig = InstagramMobile(account)
-ig.log_in()
-sleep(2)
-# bio = get_a('bio', account)
-ig.media_seen('https://www.instagram.com/p/C9gw8NfMJKy/?hl=en')
-    # ig.change_bio(bio.text)
-    # DmEvent(account, ig).fire()
-# except Exception as e:
-#     print(e)
-
+#
+# # account = get_next_account_for_api()
+# # account = get_next_account()
+# ig = InstagramMobile(account)
+# ig.log_in()
+# sleep(2)
+# # bio = get_a('bio', account)
+# ig.story_seen('3843464862475268454')
+#     # ig.change_bio(bio.text)
+#     # DmEvent(account, ig).fire()
+# # except Exception as e:
+# #     print(e)
+#
 
 
 # for account_id in account_ids:

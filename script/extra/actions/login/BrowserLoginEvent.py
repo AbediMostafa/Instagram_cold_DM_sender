@@ -5,24 +5,43 @@ from script.models.Command import performed_command_count
 from script.extra.exceptions import SuccessfulLogin
 from script.extra.exceptions import *
 from script.extra.helper import go_to_page
+from script.extra.parsers.RequestPayloadFetcherParser import RequestPayloadFetcherParser
 import random
 import json
 import re
 
 
-# Confirm you're human to use your account, ecom_maven_tiktok_ed
-
-
 class BrowserLoginEvent:
     command = None
     errors = None
+    listener = None
+    graphql_captured = False
 
     def __init__(self, ig):
         self.ig = ig
         self.errors = ErrorIndicators(self.ig)
+        self.graphql_captured = False
+        self.ig.graphql_data = None
+        self._add_response_listener()
+
+    def _add_response_listener(self):
+        """Attach response listener to capture GraphQL requests"""
+        def on_response(response):
+            if self.graphql_captured:
+                return
+
+            if '/graphql/query' not in response.url:
+                return
+
+            parser = RequestPayloadFetcherParser(response, self.ig)
+            if parser.parse():
+                self.graphql_captured = True
+                self.ig.account.add_cli('[GraphQL] Captured successfully')
+
+        self.listener = on_response
+        self.ig.page.on('response', self.listener)
 
     def init(self):
-
         self.ig.account.add_cli('Starting Login ...')
 
         for _ in range(2):
@@ -78,37 +97,130 @@ class BrowserLoginEvent:
 
         for attempt in range(max_retries):
             try:
-                self.ig.page.goto("https://www.instagram.com", timeout=100000)
+                self.ig.page.goto('https://www.instagram.com', timeout=100000)
                 self.ig.pause(2000, 3000)
                 self.the_messaging_tab_has_a_new_look()
 
                 if self.ig.is_visible_by_text('Notifications') or self.ig.is_visible_by_text('Explore'):
-                    self.ig.account.add_cli("User logged in before")
+                    self.ig.account.add_cli('User logged in before')
 
-                    # if self.ig.page.url.rstrip("/") == "https://www.instagram.com/direct/inbox":
                     self.ig.pause(3000, 4000)
                     self.we_need_you_to_agree_to_the_following_items()
                     self.turn_on_notif()
                     self.the_messaging_tab_has_a_new_look()
                     self.save_session()
                     self.find_friends_and_accounts_you_like()
-                    # self.follow_suggested()
-                    raise SuccessfulLogin("Logged in successfully")
 
-                # We're not logged in and should login
+                    self._capture_graphql_data()
+
+                    raise SuccessfulLogin('Logged in successfully')
+
                 return True
 
             except SuccessfulLogin as e:
-                raise SuccessfulLogin("Logged in successfully")
+                raise SuccessfulLogin('Logged in successfully')
 
             except Exception as e:
-                self.ig.account.add_cli(f"Attempt {attempt + 1} failed: {e}")
+                self.ig.account.add_cli(f'Attempt {attempt + 1} failed: {e}')
 
-            # Optionally: short pause before retrying
             self.ig.pause(5000, 7000)
 
-        self.ig.account.add_cli("Failed to reach Instagram direct inbox after 5 attempts.")
-        raise Exception("Failed to reach Instagram direct inbox after 5 attempts.")
+        self.ig.account.add_cli('Failed to reach Instagram direct inbox after 5 attempts.')
+        raise Exception('Failed to reach Instagram direct inbox after 5 attempts.')
+
+    def _capture_graphql_data(self):
+        """Capture GraphQL data by liking and unliking a post on feed"""
+        if self.graphql_captured and self.ig.graphql_data:
+            self.ig.account.add_cli('[GraphQL] Already captured')
+            return
+
+        self.ig.account.add_cli('[GraphQL] Capturing via like action...')
+
+        try:
+            # Make sure we're on home feed
+            if '/direct/' in self.ig.page.url or self.ig.page.url.rstrip('/') != 'https://www.instagram.com':
+                go_to_page(self.ig, 'https://www.instagram.com/', 'Home')
+                self.ig.pause(3000, 4000)
+
+            # Scroll down to find posts
+            scroll_amount = random.randint(300, 600)
+            self.ig.page.mouse.wheel(0, scroll_amount)
+            self.ig.pause(1500, 2500)
+
+            if random.random() > 0.5:
+                scroll_amount = random.randint(200, 400)
+                self.ig.page.mouse.wheel(0, scroll_amount)
+                self.ig.pause(1000, 1500)
+
+            # Find and click a like button
+            like_selectors = [
+                'span.x1qfufaz div[role="button"]:has(svg[aria-label="Like"])',
+                'div.x1ypdohk div[role="button"]:has(svg[aria-label="Like"])',
+                'svg[aria-label="Like"]',
+                'span svg[aria-label="Like"]',
+                'div[role="button"] svg[aria-label="Like"]',
+                'div[role="button"]:has(svg[aria-label="Like"])',
+            ]
+
+            like_clicked = False
+
+            for selector in like_selectors:
+                if like_clicked:
+                    break
+
+                try:
+                    elements = self.ig.page.locator(selector)
+                    count = elements.count()
+
+                    if count > 0:
+                        for i in range(min(count, 5)):
+                            try:
+                                element = elements.nth(i)
+                                if element.is_visible():
+                                    element.scroll_into_view_if_needed()
+                                    self.ig.pause(500, 800)
+                                    element.click(timeout=3000)
+                                    self.ig.account.add_cli(f'[Like] Clicked element #{i}')
+                                    like_clicked = True
+
+                                    # Long pause after like to ensure GraphQL is captured
+                                    self.ig.account.add_cli('[Like] Waiting 10 seconds to ensure GraphQL capture...')
+                                    self.ig.pause(10000, 11000)
+                                    break
+                            except:
+                                continue
+                except:
+                    continue
+
+            if like_clicked:
+                # Unlike immediately
+                try:
+                    self.ig.pause(1000, 1500)
+                    unlike_selectors = [
+                        'svg[aria-label="Unlike"]',
+                        'div[role="button"]:has(svg[aria-label="Unlike"])',
+                        'span svg[aria-label="Unlike"]',
+                    ]
+
+                    for selector in unlike_selectors:
+                        try:
+                            unlike_btn = self.ig.page.locator(selector).first
+                            if unlike_btn.count() > 0 and unlike_btn.is_visible():
+                                unlike_btn.click(timeout=2000)
+                                break
+                        except:
+                            continue
+                except:
+                    pass
+
+            # Log result
+            if self.graphql_captured:
+                self.ig.account.add_cli('[GraphQL] Capture successful')
+            else:
+                self.ig.account.add_cli('[GraphQL] Capture failed')
+
+        except Exception as e:
+            self.ig.account.add_cli(f'[GraphQL] Error: {str(e)[:50]}')
 
     def we_need_you_to_agree_to_the_following_items(self):
         is_visible = self.ig.is_visible_by_text('we need you to agree to the following') or self.ig.is_visible_by_text(
@@ -122,37 +234,35 @@ class BrowserLoginEvent:
             for i, toggle in enumerate(toggles, start=1):
                 toggle.click()
                 self.ig.pause(1000, 1500)
-                print(f"Clicked toggle {i}")
 
-            self.ig.pause(3000,4000)
+            self.ig.pause(3000, 4000)
 
-            self.ig.page.get_by_role("button", name=re.compile(r"I agree", re.I)).click(timeout=3000)
-            self.ig.pause(3000,4000)
-            self.ig.page.get_by_role("button", name=re.compile(r"Close", re.I)).click(timeout=3000)
-
+            self.ig.page.get_by_role('button', name=re.compile(r'I agree', re.I)).click(timeout=3000)
+            self.ig.pause(3000, 4000)
+            self.ig.page.get_by_role('button', name=re.compile(r'Close', re.I)).click(timeout=3000)
 
     def two_fa_process(self):
         is_visible = self.ig.is_visible_by_text('Enter the 6-digit code generated by') or self.ig.is_visible_by_text(
             "If you're unable to receive a login code from an authentication app") or self.ig.is_visible_by_text(
             'Enter a 6-digit login code generated by')
-        # Enter a 6-digit login code generated by an authentication app.
-        # Enter a 6-digit login code generated by an authentication app.
 
         self.ig.account.add_cli('Checking two factor .... ')
 
         if is_visible:
             self.ig.account.add_cli('Two factor is visible ... ')
-            self.ig.page.get_by_label("Security Code").press_sequentially(self.ig.account.get_verification_code(),
-                                                                          delay=100)
+            self.ig.page.get_by_label('Security Code').press_sequentially(
+                self.ig.account.get_verification_code(),
+                delay=100
+            )
 
-            self.ig.page.get_by_role("button", name="Confirm").click()
+            self.ig.page.get_by_role('button', name='Confirm').click()
             self.ig.account.add_cli('2FA confirm clicked')
             self.ig.pause(19000, 21000)
 
     def login_handler(self):
         is_visible = self.ig.is_visible_by_text('Phone number, username, or email') or self.ig.is_visible_by_text(
             "Don't have an account") or self.ig.is_visible_by_text(
-            "Mobile number, username or email")
+            'Mobile number, username or email')
 
         if is_visible:
             self.ig.account.add_cli('User is not logged in before trying to login ...')
@@ -160,10 +270,9 @@ class BrowserLoginEvent:
             self.ig.pause(6000, 6500)
 
     def fill_username_password(self):
-
-        input1 = self.ig.page.get_by_label("Phone number, username, or email")
-        input2 = self.ig.page.get_by_label("Phone number, username or email address")
-        input3 = self.ig.page.get_by_label("Mobile number, username or email")
+        input1 = self.ig.page.get_by_label('Phone number, username, or email')
+        input2 = self.ig.page.get_by_label('Phone number, username or email address')
+        input3 = self.ig.page.get_by_label('Mobile number, username or email')
 
         try:
             input3.fill('')
@@ -184,12 +293,14 @@ class BrowserLoginEvent:
                     self.ig.account.add_cli('Third locator didnt found')
 
         self.ig.pause(1800, 3000)
-        self.ig.page.get_by_label("Password").fill('')
-        self.ig.page.get_by_label("Password").press_sequentially(self.ig.account.password, delay=100, timeout=6000)
+        self.ig.page.get_by_label('Password').fill('')
+        self.ig.page.get_by_label('Password').press_sequentially(
+            self.ig.account.password, delay=100, timeout=6000
+        )
         self.ig.pause(2000, 3000)
 
         try:
-            self.ig.page.get_by_role("button", name="Log in").click(timeout=3000)
+            self.ig.page.get_by_role('button', name='Log in').click(timeout=3000)
         except:
             self.ig.account.add_cli('First login locator failed')
             self.ig.page.locator('[aria-label="Log In"]').click(timeout=3000)
@@ -205,22 +316,22 @@ class BrowserLoginEvent:
                 raise HelpUsConfirmItsYouError("we'll send you a security code")
 
             try:
-                self.ig.page.get_by_role("button", name="This Was Me").click(timeout=3000)
+                self.ig.page.get_by_role('button', name='This Was Me').click(timeout=3000)
             except:
-                self.ig.page.get_by_role("button", name=re.compile(r"this was me", re.IGNORECASE)).click()
+                self.ig.page.get_by_role('button', name=re.compile(r'this was me', re.IGNORECASE)).click()
 
             self.ig.pause(5000, 6000)
 
     def we_removed_some_content_or_messages_handler(self):
         if self.ig.is_visible_by_text('What happened') or self.ig.is_visible_by_text(
-                "We removed some content or messages"):
+                'We removed some content or messages'):
             self.ig.account.add_cli('We removed some content or messages')
 
             try:
                 self.ig.page.locator('div.wbloks_1[role="button"]').first.click(timeout=3000)
                 self.ig.pause(4000, 5000)
 
-                go_to_page(self.ig, 'https://www.instagram.com/', "Home")
+                go_to_page(self.ig, 'https://www.instagram.com/', 'Home')
 
                 self.ig.pause(3000, 4000)
             except Exception as e:
@@ -228,55 +339,51 @@ class BrowserLoginEvent:
 
     def your_post_goes_against_our_community_handler(self):
         if self.ig.is_visible_by_text('Your Post Goes Against Our Community') or self.ig.is_visible_by_text(
-                "We removed your post because it goes against our"):
+                'We removed your post because it goes against our'):
             self.ig.account.add_cli('Your Post Goes Against Our Community')
 
             try:
-                self.ig.page.get_by_role("button", name="OK").first.click()
+                self.ig.page.get_by_role('button', name='OK').first.click()
             except Exception as e:
                 self.ig.page.locator(
-                    'div.x1i10hfl.xjqpnuy.xa49m3k.xqeqjp1.x2hbi6w.x972fbf.xcfux6l.x1qhh985.xm0m39n.xdl72j9.x2lah0s.xe8uvvx.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x2lwn1j.xeuugli.xexx8yu').first.click()
+                    'div.x1i10hfl.xjqpnuy.xa49m3k.xqeqjp1.x2hbi6w.x972fbf.xcfux6l.x1qhh985.xm0m39n.xdl72j9.x2lah0s.xe8uvvx.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x2lwn1j.xeuugli.xexx8yu'
+                ).first.click()
 
             self.ig.pause(5000, 6000)
 
     def please_log_in_to_continue(self):
         if self.ig.is_visible_by_text('Please log in to continue'):
-            self.ig.page.get_by_role("button", name="Log in").click(timeout=3000)
+            self.ig.page.get_by_role('button', name='Log in').click(timeout=3000)
 
     def save_info(self):
-
         if self.ig.is_visible_by_text('Save info'):
             try:
                 self.ig.account.add_cli('Saving information ...')
-                self.ig.page.get_by_role("button", name="Save info", exact=True).click(timeout=3500)
+                self.ig.page.get_by_role('button', name='Save info', exact=True).click(timeout=3500)
                 self.ig.pause(5000, 6000)
             except:
                 self.ig.account.add_cli("Save info doesn't exists")
 
     def turn_on_notif(self):
-
         if self.ig.is_visible_by_text('Turn On notif'):
-
             try:
-                self.ig.page.get_by_role("button", name=re.compile(r"Turn On", re.IGNORECASE)).click()
+                self.ig.page.get_by_role('button', name=re.compile(r'Turn On', re.IGNORECASE)).click()
                 self.ig.pause(4000, 5000)
             except:
                 self.ig.account.add_cli("Turn On doesn't exists")
                 pass
 
-    #         The messaging tab has a new look
-
     def the_messaging_tab_has_a_new_look(self):
         if self.ig.is_visible_by_text('The messaging tab has'):
-            self.ig.page.get_by_role("button", name=re.compile(r"OK", re.IGNORECASE)).click()
+            self.ig.page.get_by_role('button', name=re.compile(r'OK', re.IGNORECASE)).click()
 
     def find_friends_and_accounts_you_like(self):
         if self.ig.is_visible_by_text('Find friends and accounts you like'):
             self.ig.account.add_cli('Find friends and accounts you like')
             try:
-                self.ig.page.get_by_role("button", name=re.compile(r"next", re.IGNORECASE)).click()
+                self.ig.page.get_by_role('button', name=re.compile(r'next', re.IGNORECASE)).click()
             except Exception as e:
-                self.ig.account.add_cli(f'Problem clicking on Find friends  :  {str(e)}')
+                self.ig.account.add_cli(f'Problem clicking on Find friends: {str(e)}')
             self.ig.pause(7000, 9000)
 
     def save_session(self):
@@ -289,18 +396,18 @@ class BrowserLoginEvent:
     def follow_suggested(self):
         passed_days = self.ig.account.get_passed_days_since_creation() if self.ig.account.passed_days_since_creation is None else self.ig.account.passed_days_since_creation
 
-        if passed_days < 25 :
-            return self.ig.account.add_cli('Account is under 25 ... ')
+        if passed_days < 25:
+            return self.ig.account.add_cli('Account is under 25 ...')
 
         allowed_follows = random.randint(15, SettingAdapter.max_follow())
         allowed_follows = min(allowed_follows, passed_days)
 
         command_count = performed_command_count(self.ig.account, ['follow'], 24)
 
-        self.ig.account.add_cli(f"performed follow :{command_count}, and allowed : {allowed_follows}")
+        self.ig.account.add_cli(f'performed follow: {command_count}, and allowed: {allowed_follows}')
 
         if command_count > allowed_follows:
-            self.ig.account.add_cli(f"We are not allowed to follow")
+            self.ig.account.add_cli('We are not allowed to follow')
             return False
 
         if self.ig.is_visible_by_text('Suggested for you'):
@@ -308,7 +415,7 @@ class BrowserLoginEvent:
             follow_buttons = self.ig.page.query_selector_all('button:has-text("Follow")')
 
             if len(follow_buttons) < 1 or len(follow_buttons) < random_follow_number:
-                self.ig.account.add_cli(f'small follow button : {len(follow_buttons)} ')
+                self.ig.account.add_cli(f'small follow button: {len(follow_buttons)}')
                 return False
 
             selected_follow_button = random.sample(follow_buttons, random_follow_number)
@@ -316,19 +423,17 @@ class BrowserLoginEvent:
 
             for button in selected_follow_button:
                 count += 1
-                self.ig.account.add_cli(f"Following suggested user for time : {count}")
+                self.ig.account.add_cli(f'Following suggested user for time: {count}')
 
                 command = self.ig.account.create_command('follow', 'processing')
                 try:
-                    # Generate a random number between 1 and 5
                     button.click()
                     command.update_cmd('state', 'success')
-                    self.ig.account.add_cli("Lead followed successfully")
+                    self.ig.account.add_cli('Lead followed successfully')
 
                 except Exception as e:
-                    self.ig.account.add_cli(f"Failed to follow suggested : {str(e)}")
+                    self.ig.account.add_cli(f'Failed to follow suggested: {str(e)}')
                     command.update_cmd('state', 'fail')
-                # Optional: Wait a bit between clicks to mimic human behavior and avoid rate limits
-                self.ig.pause(1000, 3500)  # Wait for 1 second0
+                self.ig.pause(1000, 3500)
 
         self.ig.pause(2000, 3500)

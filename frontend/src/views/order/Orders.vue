@@ -109,18 +109,18 @@
             v-loading="store.is.loading"
         >
           <!--begin::Table head-->
-          <thead>
+          <thead class="fs-7">
           <tr class="fw-bold text-muted">
             <th class="w-25px">
               <div class="form-check form-check-sm form-check-custom form-check-solid">
                 <input class="form-check-input" type="checkbox" @change="store.checkRows($event)"/>
               </div>
             </th>
-            <th class="min-w-100px">CUSTOMER</th>
+            <th class="min-w-100px">ORDER</th>
             <th class="min-w-120px">LINK</th>
-            <th class="min-w-120px">COUNT/SENT</th>
+            <th class="min-w-120px">COUNT/SENT/PROCESSING/FAILED</th>
             <th class="min-w-150px">CREATED AT</th>
-            <th class="min-w-100px text-end">Actions</th>
+            <th class="min-w-100px text-end">ACTIONS</th>
           </tr>
           </thead>
           <!--end::Table head-->
@@ -170,8 +170,17 @@
 
               <td>
                 <div>
-                  <span class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.total_count }}</span>/
-                  <span class="text-gray-700 fw-bold text-hover-primary fs-7">{{ order.completed_count }}</span>
+                  <span class="badge badge-light-primary">{{ order.total_count }}</span>/
+                  <span class="badge badge-light-success">{{ order.sent_actions_count }}</span>
+                  <span v-if="order.processing_actions_count">/</span>
+                  <span class="badge badge-light-info" v-if="order.processing_actions_count">{{ order.processing_actions_count }}</span>
+                  <span v-if="order.failed_actions_count">/</span>
+                  <span class="badge badge-light-danger" v-if="order.failed_actions_count">{{ order.failed_actions_count }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-600 fw-bold text-hover-primary fs-9">
+                    Completed Count : {{ order.completed_count }}
+                  </span>
                 </div>
 
               </td>

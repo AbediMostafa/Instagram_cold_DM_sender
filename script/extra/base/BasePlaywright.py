@@ -9,6 +9,7 @@ class BasePlaywright:
     browser = None
     context = None
     page = None
+    proxy = None
 
     def __init__(self, account):
         self.account = account
@@ -21,6 +22,9 @@ class BasePlaywright:
         self.browser = self.handler.get_browser()
         self.context = self.handler.get_context()
         self.page = self.handler.get_page()
+
+        # Transfer proxy reference from handler for use in API requests
+        self.proxy = self.handler.proxy
 
         return self
 

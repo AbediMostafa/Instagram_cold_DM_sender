@@ -9,6 +9,7 @@ from time import sleep
 
 class AdsPowerHandler(IBrowserHandler):
     user_id_not_open_message = 'User_id is not open'
+    proxy = None
 
     def create_profile(self):
         self.account.add_cli('Creating Profile ....')
@@ -30,6 +31,11 @@ class AdsPowerHandler(IBrowserHandler):
 
         updator = ProfileUpdator(self.account, profile)
         updator.update()
+
+        # Store proxy reference for later use in API requests
+        self.proxy = updator.proxy_obj
+        if self.proxy:
+            self.account.add_cli(f'[PROXY] Stored proxy: {self.proxy.get_proxy_identifier()}')
 
     def delete_profile(self):
         if self.account.profile is None:

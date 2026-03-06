@@ -50,9 +50,12 @@ use Symfony\Component\Process\Process;
 use \App\Models\Order;
 use \App\Models\Setting;
 use \App\Models\Account;
+use \App\Models\Proxy;
 
 Route::get('/', function () {
-    dd(\App\Models\Balance::query()->first()->balance);
+});
+Route::get('/test', function () {
+
 });
 
 Route::get('/get-state', function () {

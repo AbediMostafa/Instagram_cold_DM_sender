@@ -16,8 +16,8 @@ class BrowserLikeAndCommentEvent(BaseAction):
     processed_order_ids = []
 
     def init(self):
-        if self.ig.account.get_passed_days_since_creation() < 2:
-            return self.ig.account.add_cli(f"Account is not old enough to send comment")
+        # if self.ig.account.get_passed_days_since_creation() < 2:
+        #     return self.ig.account.add_cli(f"Account is not old enough to send comment")
 
         batch_size = int(Setting.get_value('comment_batch_size', 1))
         self.processed_order_ids = []

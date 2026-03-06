@@ -21,7 +21,6 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->enum('service_type', ['comment', 'like', 'like_and_comment', 'follow', 'view', 'view_story',
-                'view_all_stories',
                 'save_post']);
             $table->text('target_link');
             $table->integer('start_count')->default(0);
@@ -29,7 +28,11 @@ return new class extends Migration {
             $table->integer('completed_count')->default(0);
             $table->text('description')->nullable();
             $table->enum('status', Order::$statuses)->default('Pending');
+            $table->json('action_data')->nullable();
+            $table->tinyInteger('is_prepared')->default(0);
             $table->timestamps();
+
+            $table->index(['service_type', 'is_prepared', 'status']);
 
         });
     }

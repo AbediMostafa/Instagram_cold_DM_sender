@@ -17,8 +17,8 @@ class InstagramMobile(InstagramMobileMiddleware):
     def set_proxy(self):
 
         try:
-            # self.proxy = Proxy.get_by_id(177)
-            self.proxy = get_next_proxy()
+            self.proxy = Proxy.get_by_id(3046)
+            # self.proxy = get_next_proxy()
             # self.proxy = self.account.get_proxy()
             self.account.add_cli('Setting proxy')
 
@@ -47,7 +47,7 @@ class InstagramMobile(InstagramMobileMiddleware):
             raise Exception(str(e))
 
     def log_in(self):
-        # self.set_proxy()
+        self.set_proxy()
         session = self.account.get_mobile_session()
 
         try:
@@ -56,11 +56,11 @@ class InstagramMobile(InstagramMobileMiddleware):
             super().login(
                 self.account.username,
                 self.account.password,
-                account=self.account
+                verification_code=self.account.get_verification_code()
             )
 
             try:
-                time.sleep(random.randint(2,5))
+                time.sleep(random.randint(2, 5))
                 self.account.add_cli("Trying to get feeds")
                 self.feeds = self.get_timeline_feed()
 
@@ -73,7 +73,7 @@ class InstagramMobile(InstagramMobileMiddleware):
                 super().login(
                     self.account.username,
                     self.account.password,
-                    account=self.account
+                    verification_code=self.account.get_verification_code()
                 )
 
                 self.account.add_cli("Trying to get feeds again ... ")

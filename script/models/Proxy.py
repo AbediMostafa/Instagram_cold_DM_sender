@@ -1,4 +1,3 @@
-# proxies.py
 from peewee import *
 from .Base import BaseModel
 import requests
@@ -39,6 +38,29 @@ class Proxy(BaseModel):
             self.real_ip_checked_at = real_ip_checked_at
 
         self.save()
+
+    def to_requests_proxy(self):
+        """
+        Build proxy dict for requests library (SOCKS5).
+        Returns format compatible with requests library proxies parameter.
+        """
+        if self.username and self.password:
+            auth = f'{urllib.parse.quote(self.username)}:{urllib.parse.quote(self.password)}@'
+        else:
+            auth = ''
+
+        proxy_url = f'socks5://{auth}{self.ip}:{self.port}'
+        return {'http': proxy_url, 'https': proxy_url}
+
+    def get_proxy_identifier(self):
+        """
+        Returns a string identifier for logging purposes.
+        Shows host:port and real_ip if available.
+        """
+        identifier = f'{self.ip}:{self.port}'
+        if self.real_ip:
+            identifier += f' (real_ip: {self.real_ip})'
+        return identifier
 
     class Meta:
         table_name = 'proxies'
