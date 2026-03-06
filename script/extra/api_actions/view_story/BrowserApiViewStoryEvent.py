@@ -56,7 +56,7 @@ class BrowserApiViewStoryEvent(BaseAction):
             self.ig.account.add_cli(f'API viewing story for order #{self.order.id}')
             self._process_action()
 
-            self.ig.pause(300, 600)
+            self.ig.pause(3000, 5000)
 
         if self.session:
             self.session.close()
