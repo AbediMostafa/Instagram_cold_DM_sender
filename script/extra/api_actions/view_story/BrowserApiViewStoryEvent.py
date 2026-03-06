@@ -23,14 +23,14 @@ API_URL = 'https://www.instagram.com/graphql/query'
 class BrowserApiViewStoryEvent(BaseAction):
     """View stories using direct API calls instead of browser interaction"""
 
+    action = None
+    order = None
+    action_data = None
+    processed_order_ids = []
+
     def init(self):
         if not self._validate_graphql_data():
             self.ig.account.add_cli('GraphQL data not available, skipping API view')
-            return
-
-        # Create proxied session for this instance
-        self.session = self._create_proxied_session()
-        if not self.session:
             return
 
         batch_size = int(Setting.get_value('view_story_batch_size', 10))
@@ -59,52 +59,6 @@ class BrowserApiViewStoryEvent(BaseAction):
             self._process_action()
 
             self.ig.pause(300, 600)
-
-        # Close session when done
-        if hasattr(self, 'session') and self.session:
-            self.session.close()
-
-    def _create_proxied_session(self):
-        """
-        Create requests session with proxy from ig (BasePlaywright).
-        Uses the same proxy that is set on AdsPower profile.
-        """
-        session = requests.Session()
-
-        try:
-            proxy = self.ig.proxy
-            if not proxy:
-                self.ig.account.add_cli('[PROXY] No proxy found')
-                return session
-
-            session.proxies = proxy.to_requests_proxy()
-            self._verify_proxy_ip(session, proxy)
-
-        except Exception as e:
-            self.ig.account.add_cli(f'[PROXY] Setup error: {str(e)}')
-
-        return session
-
-    def _verify_proxy_ip(self, session, proxy):
-        """
-        Verify that session is using the correct proxy by checking external IP.
-        """
-        stored_ip = proxy.real_ip or 'unknown'
-
-        try:
-            response = session.get('https://api.ipify.org?format=json', timeout=10)
-            if response.status_code == 200:
-                current_ip = response.json().get('ip', 'unknown')
-
-                if current_ip == stored_ip:
-                    self.ig.account.add_cli(f'[PROXY] {current_ip} -> OK')
-                else:
-                    self.ig.account.add_cli(f'[PROXY] {current_ip} vs {stored_ip} -> MISMATCH')
-            else:
-                self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify failed (status {response.status_code})')
-
-        except Exception:
-            self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify failed (blocked)')
 
     def _validate_graphql_data(self):
         """Check if graphql_data is available"""
@@ -154,11 +108,11 @@ class BrowserApiViewStoryEvent(BaseAction):
             self._reset_action()
 
     def _send_api_request(self):
-        """Send story view API request through proxied session"""
+        """Send story view API request"""
         headers = self._build_headers()
         payload = self._build_payload()
 
-        response = self.session.post(
+        response = requests.post(
             API_URL,
             headers=headers,
             data=payload,
