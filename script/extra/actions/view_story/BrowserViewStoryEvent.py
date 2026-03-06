@@ -5,9 +5,14 @@ from script.models.Balance import Balance
 from script.models.Setting import Setting
 from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
+from script.extra.helper import tehran_now
 from .LinkParser import LinkParser
 from decimal import Decimal
 import time
+
+
+# Order ID threshold - orders below this use legacy browser method
+LEGACY_ORDER_THRESHOLD = 15622
 
 
 class BrowserViewStoryEvent(BaseAction):
@@ -70,11 +75,7 @@ class BrowserViewStoryEvent(BaseAction):
         self.processed_order_ids = []
 
         for i in range(batch_size):
-            action = get_single_action_for_account(
-                self.ig.account,
-                ['view_story'],
-                excluded_order_ids=self.processed_order_ids
-            )
+            action = self._get_legacy_action()
 
             if not action:
                 if i == 0:
@@ -89,6 +90,73 @@ class BrowserViewStoryEvent(BaseAction):
             self.process_single_action()
 
         self.force_exit_story()
+
+    def _get_legacy_action(self):
+        """
+        Get action for legacy orders only (order.id < LEGACY_ORDER_THRESHOLD).
+        New orders use StoryPreparerEvent + BrowserApiViewStoryEvent.
+        """
+        excluded_order_ids = self.processed_order_ids or []
+
+        worked_order_ids = list(
+            OrderAction
+            .select(OrderAction.order)
+            .where(OrderAction.account == self.ig.account)
+            .distinct()
+            .tuples()
+        )
+        worked_order_ids = [x[0] for x in worked_order_ids]
+
+        all_excluded = set(worked_order_ids + excluded_order_ids)
+
+        query = (
+            OrderAction
+            .select(OrderAction.id, OrderAction.order)
+            .join(Order)
+            .where(
+                (OrderAction.type == 'view_story') &
+                (Order.status.in_(['Pending', 'In progress'])) &
+                (Order.id < LEGACY_ORDER_THRESHOLD) &
+                (OrderAction.status == 'free')
+            )
+            .order_by(Order.id, OrderAction.id)
+            .limit(10)
+        )
+
+        if all_excluded:
+            query = query.where(~(OrderAction.order.in_(all_excluded)))
+
+        candidates = list(query)
+
+        if not candidates:
+            return None
+
+        for candidate in candidates:
+            updated = (
+                OrderAction
+                .update(
+                    status='processing',
+                    account=self.ig.account,
+                    updated_at=tehran_now()
+                )
+                .where(
+                    (OrderAction.id == candidate.id) &
+                    (OrderAction.status == 'free')
+                )
+                .execute()
+            )
+
+            if updated > 0:
+                Order.update(
+                    status='In progress'
+                ).where(
+                    (Order.id == candidate.order_id) &
+                    (Order.status == 'Pending')
+                ).execute()
+
+                return OrderAction.get_by_id(candidate.id)
+
+        return None
 
     def process_single_action(self):
         self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)

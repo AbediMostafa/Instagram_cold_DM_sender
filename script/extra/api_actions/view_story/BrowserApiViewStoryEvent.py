@@ -62,7 +62,7 @@ class BrowserApiViewStoryEvent(BaseAction):
             self.session.close()
 
     def _create_proxied_session(self):
-        """Create requests session with proxy. Returns None if proxy unavailable."""
+        """Create requests session with proxy. Returns None if proxy unavailable or MISMATCH."""
         session = requests.Session()
 
         try:
@@ -72,7 +72,9 @@ class BrowserApiViewStoryEvent(BaseAction):
                 return None
 
             session.proxies = proxy.to_requests_proxy()
-            self._verify_proxy_ip(session, proxy)
+
+            if not self._verify_proxy_ip(session, proxy):
+                return None
 
         except Exception as e:
             self.ig.account.add_cli(f'[PROXY] Setup error: {str(e)}')
@@ -81,17 +83,27 @@ class BrowserApiViewStoryEvent(BaseAction):
         return session
 
     def _verify_proxy_ip(self, session, proxy):
-        """Verify proxy IP matches expected"""
+        """Verify proxy IP matches expected. Returns False on MISMATCH."""
         stored_ip = proxy.real_ip or 'unknown'
 
         try:
             response = session.get('https://api.ipify.org?format=json', timeout=10)
             if response.status_code == 200:
                 current_ip = response.json().get('ip', 'unknown')
-                status = 'OK' if current_ip == stored_ip else 'MISMATCH'
-                self.ig.account.add_cli(f'[PROXY] {current_ip} -> {status}')
+
+                if current_ip == stored_ip:
+                    self.ig.account.add_cli(f'[PROXY] {current_ip} -> OK')
+                    return True
+                else:
+                    self.ig.account.add_cli(f'[PROXY] {current_ip} vs {stored_ip} -> MISMATCH')
+                    return False
+
+            self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify skipped')
+            return True
+
         except Exception:
-            self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify failed')
+            self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify skipped')
+            return True
 
     def _validate_graphql_data(self):
         """Check if graphql_data is available"""
