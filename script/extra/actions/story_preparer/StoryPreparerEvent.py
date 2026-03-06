@@ -1,13 +1,14 @@
 import time
 import json
 import re
+import traceback
 from datetime import timedelta
 from urllib.parse import parse_qs
 from script.extra.helper import go_to_page, tehran_now
 from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddleware
 from script.extra.actions.view_story.LinkParser import LinkParser
 from script.models.Order import Order
-from script.models.OrderAction import OrderAction, ACTION_RATES
+from script.models.OrderAction import OrderAction, ACTION_RATES, deduct_balance
 from script.models.Balance import Balance
 from script.models.Setting import Setting
 from decimal import Decimal
@@ -52,15 +53,12 @@ class StoryPreparerEvent(InstagramMiddleware):
         """Reset orders stuck in preparing state"""
         cutoff_time = tehran_now() - timedelta(seconds=STUCK_TIMEOUT_SECONDS)
 
-        updated = Order.update(
+        Order.update(
             is_prepared=0
         ).where(
             (Order.is_prepared == 1) &
             (Order.updated_at < cutoff_time)
         ).execute()
-
-        if updated > 0:
-            self.ig.account.add_cli(f'Reset {updated} stuck orders')
 
     def _claim_next_order(self):
         """Find and claim next order using atomic UPDATE"""
@@ -114,6 +112,7 @@ class StoryPreparerEvent(InstagramMiddleware):
 
         except Exception as e:
             self._handle_error(str(e))
+            self._log_to_file(f'EXCEPTION: {str(e)}\n{traceback.format_exc()}', 'exception')
 
         finally:
             self._cleanup_listeners()
@@ -141,7 +140,7 @@ class StoryPreparerEvent(InstagramMiddleware):
         raise Exception('Could not determine username from link')
 
     def _process_direct_story_link(self):
-        """Process direct story link (instagram.com/stories/username/STORY_ID)"""
+        """Process direct story link"""
         self._setup_story_listener()
 
         go_to_page(self.ig, self.order.target_link, 'Story Page')
@@ -164,7 +163,6 @@ class StoryPreparerEvent(InstagramMiddleware):
         self._validate_profile_data()
 
         self._remove_profile_listener()
-
         self._setup_story_listener()
 
         story_url = f'https://www.instagram.com/stories/{self.target_username}/'
@@ -176,7 +174,7 @@ class StoryPreparerEvent(InstagramMiddleware):
         self._wait_for_story_data()
 
     def _setup_profile_listener(self):
-        """Listen for PolarisProfilePageContentQuery response"""
+        """Listen for profile response"""
         self.profile_data = None
 
         def on_response(response):
@@ -201,6 +199,7 @@ class StoryPreparerEvent(InstagramMiddleware):
                 user_data = json_data.get('data', {}).get('user', {})
 
                 if not user_data:
+                    self._log_to_file(f'PROFILE_NO_USER: {json.dumps(json_data)[:500]}', 'unknown')
                     return
 
                 self.profile_data = {
@@ -210,10 +209,8 @@ class StoryPreparerEvent(InstagramMiddleware):
                     'username': user_data.get('username', ''),
                 }
 
-                self.ig.account.add_cli(f'Profile data captured: {self.profile_data}')
-
             except Exception as e:
-                self.ig.account.add_cli(f'Profile listener error: {str(e)}')
+                self._log_to_file(f'PROFILE_LISTENER: {str(e)}\n{traceback.format_exc()}', 'exception')
 
         self.profile_listener = on_response
         self.ig.page.on('response', self.profile_listener)
@@ -228,7 +225,7 @@ class StoryPreparerEvent(InstagramMiddleware):
             pass
 
     def _wait_for_profile_data(self):
-        """Wait for profile data with timeout"""
+        """Wait for profile data"""
         start = time.time()
 
         while time.time() - start < CAPTURE_TIMEOUT_SECONDS:
@@ -251,7 +248,7 @@ class StoryPreparerEvent(InstagramMiddleware):
             raise Exception('User has no active story')
 
     def _setup_story_listener(self):
-        """Listen for story seen request payload"""
+        """Listen for story seen request"""
         self.captured_data = None
 
         def on_response(response):
@@ -267,7 +264,6 @@ class StoryPreparerEvent(InstagramMiddleware):
                     return
 
                 parsed = parse_qs(post_data, keep_blank_values=True)
-
                 fb_api_name = parsed.get('fb_api_req_friendly_name', [''])[0]
 
                 if 'StoriesV3SeenMutation' not in fb_api_name:
@@ -279,9 +275,11 @@ class StoryPreparerEvent(InstagramMiddleware):
                 try:
                     variables = json.loads(variables_str)
                 except:
+                    self._log_to_file(f'STORY_INVALID_VARS: {variables_str[:300]}', 'unknown')
                     return
 
                 if 'reelMediaId' not in variables:
+                    self._log_to_file(f'STORY_NO_MEDIA_ID: {json.dumps(variables)[:500]}', 'unknown')
                     return
 
                 self.captured_data = {
@@ -295,7 +293,7 @@ class StoryPreparerEvent(InstagramMiddleware):
                 self.ig.account.add_cli(f'Story data captured: {self.captured_data}')
 
             except Exception as e:
-                self.ig.account.add_cli(f'Story listener error: {str(e)}')
+                self._log_to_file(f'STORY_LISTENER: {str(e)}\n{traceback.format_exc()}', 'exception')
 
         self.story_listener = on_response
         self.ig.page.on('response', self.story_listener)
@@ -310,7 +308,7 @@ class StoryPreparerEvent(InstagramMiddleware):
             pass
 
     def _wait_for_story_data(self):
-        """Wait for story data with timeout"""
+        """Wait for story data"""
         start = time.time()
 
         while time.time() - start < CAPTURE_TIMEOUT_SECONDS:
@@ -447,14 +445,8 @@ class StoryPreparerEvent(InstagramMiddleware):
         ).execute()
 
     def _create_order_actions(self):
-        """Create OrderAction records
-
-        First action: status='sent' (preparer viewed the story)
-        Remaining actions: status='free' (for API to process)
-        """
-        from script.models.OrderAction import deduct_balance
-
-        # First action - preparer's view (already done by visiting story page)
+        """Create OrderAction records"""
+        # First action - preparer's view
         OrderAction.create(
             order_id=self.order.id,
             type='view_story',
@@ -462,36 +454,24 @@ class StoryPreparerEvent(InstagramMiddleware):
             account=self.ig.account
         )
 
-        # Update completed_count for first view
-        Order.update(
-            completed_count=1
-        ).where(
-            Order.id == self.order.id
-        ).execute()
-
-        # Deduct balance for first view
+        Order.update(completed_count=1).where(Order.id == self.order.id).execute()
         deduct_balance('view_story')
 
-        # Remaining actions (total_count - 1)
+        # Remaining actions
         remaining_count = self.order.total_count - 1
 
         if remaining_count > 0:
             actions = [
-                {
-                    'order_id': self.order.id,
-                    'type': 'view_story',
-                    'status': 'free',
-                }
+                {'order_id': self.order.id, 'type': 'view_story', 'status': 'free'}
                 for _ in range(remaining_count)
             ]
             OrderAction.insert_many(actions).execute()
 
-        self.ig.account.add_cli(f'Created 1 sent + {remaining_count} free actions for order #{self.order.id}')
+        self.ig.account.add_cli(f'Created 1 sent + {remaining_count} free actions')
 
     def _handle_timeout(self, message):
         """Handle timeout - reset for retry"""
         self.ig.account.add_cli(f'Order #{self.order.id} timeout: {message}')
-        self._log_to_file(message, 'timeout')
 
         Order.update(
             is_prepared=0,
@@ -503,7 +483,6 @@ class StoryPreparerEvent(InstagramMiddleware):
     def _handle_error(self, message):
         """Handle error - cancel order and charge"""
         self.ig.account.add_cli(f'Order #{self.order.id} failed: {message}')
-        self._log_to_file(message, 'error')
 
         Order.update(
             status='Canceled',
@@ -517,7 +496,7 @@ class StoryPreparerEvent(InstagramMiddleware):
         self._charge_full_order()
 
     def _log_to_file(self, message, log_type='info'):
-        """Log to file"""
+        """Log to file for debugging Instagram API changes"""
         try:
             import os
 
@@ -527,14 +506,16 @@ class StoryPreparerEvent(InstagramMiddleware):
 
             log_file = os.path.join(log_dir, 'story_preparer.log')
 
-            log_line = f'[{tehran_now()}] [{log_type.upper()}] order_id={self.order.id} | {message} | link={self.order.target_link}\n'
+            order_id = self.order.id if self.order else 'N/A'
+            account_id = self.ig.account.id if self.ig.account else 'N/A'
+            link = self.order.target_link if self.order else 'N/A'
+
+            log_line = f'[{tehran_now()}] [{log_type.upper()}] order={order_id} | account={account_id} | link={link} | {message}\n'
 
             with open(log_file, 'a', encoding='utf-8') as f:
                 f.write(log_line)
-
-            self.ig.account.add_cli(f'Logged to {log_file}')
-        except Exception as e:
-            self.ig.account.add_cli(f'Failed to write log: {str(e)}')
+        except:
+            pass
 
     def _charge_full_order(self):
         """Charge full order amount"""
@@ -547,7 +528,7 @@ class StoryPreparerEvent(InstagramMiddleware):
             Balance.customer == 'sadeghi'
         ).execute()
 
-        self.ig.account.add_cli(f'Charged ${total_charge} for order #{self.order.id}')
+        self.ig.account.add_cli(f'Charged ${total_charge}')
 
     def _cleanup_listeners(self):
         """Remove all listeners"""

@@ -1,18 +1,16 @@
 import time
 import json
 import random
+import traceback
 import requests
-from decimal import Decimal
 from script.extra.actions.BaseAction import BaseAction
 from script.extra.helper import tehran_now
 from script.models.Order import Order
 from script.models.OrderAction import (
     OrderAction,
-    get_single_action_for_account,
     mark_action_completed,
     mark_action_failed,
     deduct_balance,
-    ACTION_RATES
 )
 from script.models.Setting import Setting
 
@@ -23,14 +21,14 @@ API_URL = 'https://www.instagram.com/graphql/query'
 class BrowserApiViewStoryEvent(BaseAction):
     """View stories using direct API calls instead of browser interaction"""
 
-    action = None
-    order = None
-    action_data = None
-    processed_order_ids = []
-
     def init(self):
         if not self._validate_graphql_data():
             self.ig.account.add_cli('GraphQL data not available, skipping API view')
+            return
+
+        self.session = self._create_proxied_session()
+        if not self.session:
+            self.ig.account.add_cli('Cannot proceed without proxy')
             return
 
         batch_size = int(Setting.get_value('view_story_batch_size', 10))
@@ -59,6 +57,41 @@ class BrowserApiViewStoryEvent(BaseAction):
             self._process_action()
 
             self.ig.pause(300, 600)
+
+        if self.session:
+            self.session.close()
+
+    def _create_proxied_session(self):
+        """Create requests session with proxy. Returns None if proxy unavailable."""
+        session = requests.Session()
+
+        try:
+            proxy = self.ig.proxy
+            if not proxy:
+                self.ig.account.add_cli('[PROXY] No proxy found')
+                return None
+
+            session.proxies = proxy.to_requests_proxy()
+            self._verify_proxy_ip(session, proxy)
+
+        except Exception as e:
+            self.ig.account.add_cli(f'[PROXY] Setup error: {str(e)}')
+            return None
+
+        return session
+
+    def _verify_proxy_ip(self, session, proxy):
+        """Verify proxy IP matches expected"""
+        stored_ip = proxy.real_ip or 'unknown'
+
+        try:
+            response = session.get('https://api.ipify.org?format=json', timeout=10)
+            if response.status_code == 200:
+                current_ip = response.json().get('ip', 'unknown')
+                status = 'OK' if current_ip == stored_ip else 'MISMATCH'
+                self.ig.account.add_cli(f'[PROXY] {current_ip} -> {status}')
+        except Exception:
+            self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify failed')
 
     def _validate_graphql_data(self):
         """Check if graphql_data is available"""
@@ -105,6 +138,7 @@ class BrowserApiViewStoryEvent(BaseAction):
 
         except Exception as e:
             self.ig.account.add_cli(f'Error processing action: {str(e)}')
+            self._log_to_file(f'EXCEPTION: {str(e)}\n{traceback.format_exc()}', 'exception')
             self._reset_action()
 
     def _send_api_request(self):
@@ -112,7 +146,7 @@ class BrowserApiViewStoryEvent(BaseAction):
         headers = self._build_headers()
         payload = self._build_payload()
 
-        response = requests.post(
+        response = self.session.post(
             API_URL,
             headers=headers,
             data=payload,
@@ -124,10 +158,8 @@ class BrowserApiViewStoryEvent(BaseAction):
     def _build_headers(self):
         """Build request headers"""
         headers = self.ig.graphql_data['headers'].copy()
-
         headers['x-fb-friendly-name'] = 'PolarisStoriesV3SeenMutation'
         headers['x-root-field-name'] = 'xdt_api__v1__stories__reel__seen'
-
         return headers
 
     def _build_payload(self):
@@ -153,26 +185,28 @@ class BrowserApiViewStoryEvent(BaseAction):
 
     def _handle_response(self, response):
         """Handle API response"""
-        self.ig.account.add_cli(f'API response status: {response.status_code}')
+        self.ig.account.add_cli(f'API response: {response.status_code}')
 
         if response.status_code == 200:
             try:
                 json_data = response.json()
 
+                # Success
                 if json_data.get('status') == 'ok' or 'data' in json_data:
                     self._mark_success()
                     return
 
-                error_msg = json_data.get('message', 'Unknown API error')
-                self.ig.account.add_cli(f'API error: {error_msg}')
-
+                # Known client error
                 if self._is_client_error(json_data):
                     self._mark_failed()
-                else:
-                    self._reset_action()
+                    return
+
+                # Unknown response - log for analysis
+                self._log_to_file(f'UNKNOWN_200: {json.dumps(json_data)[:1000]}', 'unknown')
+                self._reset_action()
 
             except json.JSONDecodeError:
-                self.ig.account.add_cli('Invalid JSON response')
+                self._log_to_file(f'INVALID_JSON: {response.text[:500]}', 'unknown')
                 self._reset_action()
 
         elif response.status_code == 429:
@@ -180,20 +214,19 @@ class BrowserApiViewStoryEvent(BaseAction):
             self._reset_action()
 
         elif response.status_code in [401, 403]:
-            self.ig.account.add_cli('Auth error - session may be invalid')
+            self._log_to_file(f'AUTH_ERROR_{response.status_code}: {response.text[:500]}', 'unknown')
             self._reset_action()
 
         elif response.status_code >= 500:
-            self.ig.account.add_cli('Server error')
             self._reset_action()
 
         else:
-            self.ig.account.add_cli(f'HTTP error: {response.status_code}')
+            self._log_to_file(f'HTTP_{response.status_code}: {response.text[:500]}', 'unknown')
             self._reset_action()
 
     def _is_client_error(self, json_data):
-        """Check if error is client's fault (invalid link, expired, etc)"""
-        error_messages = [
+        """Check if error is client's fault"""
+        error_keywords = [
             'story_not_found',
             'media_not_found',
             'user_not_found',
@@ -202,29 +235,22 @@ class BrowserApiViewStoryEvent(BaseAction):
         ]
 
         error_msg = str(json_data.get('message', '')).lower()
-
-        for err in error_messages:
-            if err in error_msg:
-                return True
-
-        return False
+        return any(kw in error_msg for kw in error_keywords)
 
     def _mark_success(self):
         """Mark action as successful"""
         mark_action_completed(self.action)
         deduct_balance('view_story')
-#         self._log_to_file('Story viewed successfully', 'success')
-        self.ig.account.add_cli(f'SUCCESS - Story viewed via API for order #{self.order.id}')
+        self.ig.account.add_cli(f'SUCCESS order #{self.order.id}')
 
     def _mark_failed(self):
         """Mark action as failed (client error)"""
         mark_action_failed(self.action)
         deduct_balance('view_story')
-        self._log_to_file('Client error - marked as failed', 'error')
-        self.ig.account.add_cli(f'FAILED - Client error for order #{self.order.id}')
+        self.ig.account.add_cli(f'FAILED order #{self.order.id}')
 
     def _reset_action(self):
-        """Reset action to free (our error, let another account try)"""
+        """Reset action to free for retry"""
         try:
             OrderAction.update(
                 status='free',
@@ -234,14 +260,11 @@ class BrowserApiViewStoryEvent(BaseAction):
                 (OrderAction.id == self.action.id) &
                 (OrderAction.status == 'processing')
             ).execute()
-
-            self._log_to_file('Reset to free for retry', 'retry')
-            self.ig.account.add_cli(f'Reset action to free for order #{self.order.id}')
         except Exception as e:
-            self.ig.account.add_cli(f'Error resetting action: {str(e)}')
+            self.ig.account.add_cli(f'Reset error: {str(e)}')
 
     def _log_to_file(self, message, log_type='info'):
-        """Log to file"""
+        """Log to file for debugging Instagram API changes"""
         try:
             import os
 
@@ -253,13 +276,14 @@ class BrowserApiViewStoryEvent(BaseAction):
 
             order_id = self.order.id if self.order else 'N/A'
             action_id = self.action.id if self.action else 'N/A'
+            account_id = self.ig.account.id if self.ig.account else 'N/A'
 
-            log_line = f'[{tehran_now()}] [{log_type.upper()}] order_id={order_id} | action_id={action_id} | {message}\n'
+            log_line = f'[{tehran_now()}] [{log_type.upper()}] order={order_id} | action={action_id} | account={account_id} | {message}\n'
 
             with open(log_file, 'a', encoding='utf-8') as f:
                 f.write(log_line)
-        except Exception as e:
-            self.ig.account.add_cli(f'Failed to write log: {str(e)}')
+        except:
+            pass
 
 
 def get_single_action_for_account_prepared(account, action_types, excluded_order_ids=None):
@@ -281,8 +305,6 @@ def get_single_action_for_account_prepared(account, action_types, excluded_order
 
     all_excluded = set(worked_order_ids + excluded_order_ids)
 
-    random_offset = random.randint(0, 20)
-
     query = (
         OrderAction
         .select(OrderAction.id, OrderAction.order)
@@ -294,7 +316,6 @@ def get_single_action_for_account_prepared(account, action_types, excluded_order
             (OrderAction.status == 'free')
         )
         .order_by(Order.id, OrderAction.id)
-        .offset(random_offset)
         .limit(10)
     )
 
