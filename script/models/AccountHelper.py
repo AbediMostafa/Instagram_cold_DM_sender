@@ -1,5 +1,7 @@
 from .Account import Account
+from .Lock import Lock
 from peewee import fn, JOIN
+import random
 
 
 def free_account_query(tag_titles=None, specific_ids=None, service_id=None):
@@ -40,97 +42,354 @@ def free_account_query(tag_titles=None, specific_ids=None, service_id=None):
 
 def get_next_account(tag_titles=None, specific_ids=None, service_id=None):
     """
-    Select the next free account, optionally filtered by tags.
+    Select the next free account using atomic claiming.
     """
     print('Selecting account ...')
 
-    query = free_account_query(tag_titles, specific_ids, service_id)
+    for attempt in range(3):
+        account = _try_claim_account(tag_titles, specific_ids, service_id)
+        if account:
+            print(f'Selected account : {account.username}')
+            return account
 
-    # Refresh accounts if no free accounts exist
-    if not query.exists():
-        Account.update(is_used=False).execute()
+    reset_done = _try_reset_accounts(service_id)
+    if reset_done:
+        print('Accounts reset completed')
 
-    # Get the first non-used account with the specified tags
-    next_account = (query
-                    .order_by(Account.id)
-                    .first())
+    for attempt in range(3):
+        account = _try_claim_account(tag_titles, specific_ids, service_id)
+        if account:
+            print(f'Selected account : {account.username}')
+            return account
 
-    # Set the next account's is_used to True
-    if next_account:
-        next_account.is_used = True
-        next_account.save()
-        print(f'Selected account : {next_account.username}')
+    print('No account available')
+    return None
 
-    return next_account
+
+def _try_claim_account(tag_titles=None, specific_ids=None, service_id=None):
+    """
+    Atomically claim one free account.
+    """
+    from .Tag import Tag
+    from .Taggable import Taggable
+
+    random_offset = random.randint(0, 10)
+
+    query = (
+        Account
+        .select(Account.id)
+        .where(
+            (Account.is_used == 0) &
+            (Account.instagram_state == 'active')
+        )
+    )
+
+    if specific_ids:
+        query = query.where(Account.id.in_(specific_ids))
+
+    if service_id:
+        query = query.where(Account.service_id == service_id)
+
+    if tag_titles:
+        tags_to_include = Tag.select().where(Tag.title.in_(tag_titles))
+        account_class = Taggable.get_taggable_class('Account')
+
+        query = (
+            query
+            .join(Taggable, on=(
+                (Taggable.taggable_id == Account.id) &
+                (Taggable.taggable_type == account_class)
+            ))
+            .where(Taggable.tag.in_(tags_to_include))
+        )
+
+    candidates = list(
+        query
+        .order_by(Account.id)
+        .offset(random_offset)
+        .limit(5)
+    )
+
+    if not candidates:
+        return None
+
+    for candidate in candidates:
+        updated = (
+            Account
+            .update(is_used=True)
+            .where(
+                (Account.id == candidate.id) &
+                (Account.is_used == 0)
+            )
+            .execute()
+        )
+
+        if updated > 0:
+            return Account.get_by_id(candidate.id)
+
+    return None
+
+
+def _try_reset_accounts(service_id=None):
+    """
+    Reset accounts with lock to prevent multiple threads from resetting.
+    """
+    if not Lock.acquire('account_reset', duration_seconds=30):
+        return False
+
+    try:
+        query = Account.update(is_used=False).where(Account.instagram_state == 'active')
+
+        if service_id:
+            query = query.where(Account.service_id == service_id)
+
+        query.execute()
+        return True
+
+    finally:
+        Lock.release('account_reset')
 
 
 def get_next_account_for_api():
-    query = Account.select().where(
-        (Account.api_is_used == 0)
+    print('Selecting API account ...')
+
+    for attempt in range(3):
+        account = _try_claim_api_account()
+        if account:
+            print(f'Selected account : {account.id} -- {account.username}')
+            return account
+
+    reset_done = _try_reset_api_accounts()
+    if reset_done:
+        print('API accounts reset completed')
+
+    for attempt in range(3):
+        account = _try_claim_api_account()
+        if account:
+            print(f'Selected account : {account.id} -- {account.username}')
+            return account
+
+    print('No API account available')
+    return None
+
+
+def _try_claim_api_account():
+    """
+    Atomically claim one free API account.
+    """
+    random_offset = random.randint(0, 10)
+
+    candidates = list(
+        Account
+        .select(Account.id)
+        .where(Account.api_is_used == 0)
+        .order_by(Account.id)
+        .offset(random_offset)
+        .limit(5)
     )
 
-    if not query.exists():
+    if not candidates:
+        return None
+
+    for candidate in candidates:
+        updated = (
+            Account
+            .update(api_is_used=True)
+            .where(
+                (Account.id == candidate.id) &
+                (Account.api_is_used == 0)
+            )
+            .execute()
+        )
+
+        if updated > 0:
+            return Account.get_by_id(candidate.id)
+
+    return None
+
+
+def _try_reset_api_accounts():
+    """
+    Reset API accounts with lock.
+    """
+    if not Lock.acquire('api_account_reset', duration_seconds=30):
+        return False
+
+    try:
         Account.update(api_is_used=False).execute()
-
-        # Get the first non-used account with the specified tags
-    next_account = (query
-                    .order_by(Account.id)
-                    .first())
-
-    # Set the next account's is_used to True
-    if next_account:
-        next_account.api_is_used = True
-        next_account.save()
-        print(f'Selected account : {next_account.id} -- {next_account.username}')
-
-    return next_account
+        return True
+    finally:
+        Lock.release('api_account_reset')
 
 
 def get_next_profile():
     from .Profile import Profile
 
-    query = Profile.select().where((Profile.is_used == 0))
+    print('Selecting profile ...')
 
-    if not query.exists():
+    for attempt in range(3):
+        profile = _try_claim_profile()
+        if profile:
+            print(f'selected profile {profile.id}')
+            return profile
+
+    reset_done = _try_reset_profiles()
+    if reset_done:
+        print('Profiles reset completed')
+
+    for attempt in range(3):
+        profile = _try_claim_profile()
+        if profile:
+            print(f'selected profile {profile.id}')
+            return profile
+
+    print('No profile available')
+    return None
+
+
+def _try_claim_profile():
+    """
+    Atomically claim one free profile.
+    """
+    from .Profile import Profile
+
+    random_offset = random.randint(0, 10)
+
+    candidates = list(
+        Profile
+        .select(Profile.id)
+        .where(Profile.is_used == 0)
+        .order_by(Profile.id)
+        .offset(random_offset)
+        .limit(5)
+    )
+
+    if not candidates:
+        return None
+
+    for candidate in candidates:
+        updated = (
+            Profile
+            .update(is_used=True)
+            .where(
+                (Profile.id == candidate.id) &
+                (Profile.is_used == 0)
+            )
+            .execute()
+        )
+
+        if updated > 0:
+            return Profile.get_by_id(candidate.id)
+
+    return None
+
+
+def _try_reset_profiles():
+    """
+    Reset profiles with lock.
+    """
+    from .Profile import Profile
+
+    if not Lock.acquire('profile_reset', duration_seconds=30):
+        return False
+
+    try:
         Profile.update(is_used=False).execute()
-
-    next_profile = (query
-                    .order_by(Profile.id)
-                    .first())
-
-    # Set the next account's is_used to True
-    if next_profile:
-        next_profile.is_used = True
-        next_profile.save()
-
-    print(f'selected profile {next_profile.id}')
-
-    return next_profile
+        return True
+    finally:
+        Lock.release('profile_reset')
 
 
 def get_next_proxy(mobile_only=False):
     from .Proxy import Proxy
 
-    query = Proxy.select().where((Proxy.is_used == 0))
+    print('Selecting proxy ...')
+
+    for attempt in range(3):
+        proxy = _try_claim_proxy(mobile_only)
+        if proxy:
+            print(f'selected Proxy {proxy.id}')
+            return proxy
+
+    reset_done = _try_reset_proxies(mobile_only)
+    if reset_done:
+        print('Proxies reset completed')
+
+    for attempt in range(3):
+        proxy = _try_claim_proxy(mobile_only)
+        if proxy:
+            print(f'selected Proxy {proxy.id}')
+            return proxy
+
+    print('No proxy available')
+    return None
+
+
+def _try_claim_proxy(mobile_only=False):
+    """
+    Atomically claim one free proxy.
+    """
+    from .Proxy import Proxy
+
+    random_offset = random.randint(0, 5)
+
+    query = (
+        Proxy
+        .select(Proxy.id)
+        .where(Proxy.is_used == 0)
+    )
 
     if mobile_only:
         query = query.where(Proxy.ip == 'x488.fxdx.in')
 
-    if not query.exists():
-        Proxy.update(is_used=False).execute()
+    candidates = list(
+        query
+        .order_by(Proxy.id)
+        .offset(random_offset)
+        .limit(5)
+    )
 
-    next_proxy = (query
-                  .order_by(Proxy.id)
-                  .first())
+    if not candidates:
+        return None
 
-    # Set the next account's is_used to True
-    if next_proxy:
-        next_proxy.is_used = True
-        next_proxy.save()
+    for candidate in candidates:
+        updated = (
+            Proxy
+            .update(is_used=True)
+            .where(
+                (Proxy.id == candidate.id) &
+                (Proxy.is_used == 0)
+            )
+            .execute()
+        )
 
-    print(f'selected Proxy {next_proxy.id}')
+        if updated > 0:
+            return Proxy.get_by_id(candidate.id)
 
-    return next_proxy
+    return None
+
+
+def _try_reset_proxies(mobile_only=False):
+    """
+    Reset proxies with lock.
+    """
+    from .Proxy import Proxy
+
+    lock_name = 'proxy_reset_mobile' if mobile_only else 'proxy_reset'
+
+    if not Lock.acquire(lock_name, duration_seconds=30):
+        return False
+
+    try:
+        query = Proxy.update(is_used=False)
+
+        if mobile_only:
+            query = query.where(Proxy.ip == 'x488.fxdx.in')
+
+        query.execute()
+        return True
+    finally:
+        Lock.release(lock_name)
 
 
 def get_first_proxy_with_less_accounts(exception_proxy_ids=None):
