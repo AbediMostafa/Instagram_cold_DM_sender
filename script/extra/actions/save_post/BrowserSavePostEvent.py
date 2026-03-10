@@ -1,5 +1,5 @@
-from script.extra.helper import go_to_page
-from script.models.OrderAction import get_single_action_for_account, mark_action_completed, deduct_balance, OrderAction, ACTION_RATES
+from script.extra.helper import go_to_page, tehran_now
+from script.models.OrderAction import mark_action_completed, deduct_balance, OrderAction, ACTION_RATES
 from script.models.Order import Order
 from script.models.Balance import Balance
 from script.models.Setting import Setting
@@ -7,6 +7,11 @@ from script.extra.exceptions import LinkIsNotCorrect
 from script.extra.actions.BaseAction import BaseAction
 from urllib.parse import urlparse
 from decimal import Decimal
+import random
+
+
+# Legacy cutoff - only process orders created before new API system
+LEGACY_ORDER_MAX_ID = 17513
 
 
 class BrowserSavePostEvent(BaseAction):
@@ -20,15 +25,11 @@ class BrowserSavePostEvent(BaseAction):
         self.processed_order_ids = []
 
         for i in range(batch_size):
-            action = get_single_action_for_account(
-                self.ig.account,
-                ['save_post'],
-                excluded_order_ids=self.processed_order_ids
-            )
+            action = self._get_legacy_action()
 
             if not action:
                 if i == 0:
-                    raise Exception('There is no save_post order')
+                    raise Exception('There is no legacy save_post order')
                 break
 
             self.action = action
@@ -37,6 +38,74 @@ class BrowserSavePostEvent(BaseAction):
 
             self.ig.account.add_cli(f'Picked action #{i+1} for order {self.order.id}', print_only=True)
             self.process_single_action()
+
+    def _get_legacy_action(self):
+        """
+        Get action only from legacy orders (id < LEGACY_ORDER_MAX_ID).
+        Uses atomic UPDATE to avoid race conditions.
+        """
+        worked_order_ids = list(
+            OrderAction
+            .select(OrderAction.order)
+            .where(OrderAction.account == self.ig.account)
+            .distinct()
+            .tuples()
+        )
+        worked_order_ids = [x[0] for x in worked_order_ids]
+
+        all_excluded = set(worked_order_ids + self.processed_order_ids)
+
+        random_offset = random.randint(0, 20)
+
+        query = (
+            OrderAction
+            .select(OrderAction.id, OrderAction.order)
+            .join(Order)
+            .where(
+                (OrderAction.type == 'save_post') &
+                (Order.id < LEGACY_ORDER_MAX_ID) &
+                (Order.status.in_(['Pending', 'In progress'])) &
+                (OrderAction.status == 'free')
+            )
+            .order_by(Order.id, OrderAction.id)
+            .offset(random_offset)
+            .limit(10)
+        )
+
+        if all_excluded:
+            query = query.where(~(OrderAction.order.in_(all_excluded)))
+
+        candidates = list(query)
+
+        if not candidates:
+            return None
+
+        for candidate in candidates:
+            updated = (
+                OrderAction
+                .update(
+                    status='processing',
+                    account=self.ig.account,
+                    updated_at=tehran_now()
+                )
+                .where(
+                    (OrderAction.id == candidate.id) &
+                    (OrderAction.status == 'free')
+                )
+                .execute()
+            )
+
+            if updated > 0:
+                Order.update(
+                    status='In progress'
+                ).where(
+                    (Order.id == candidate.order_id) &
+                    (Order.status == 'Pending')
+                ).execute()
+
+                return OrderAction.get_by_id(candidate.id)
+
+        return None
 
     def process_single_action(self):
         self.ig.account.add_cli(f'Order: {self.order.id} | Target: {self.order.target_link}', print_only=True)

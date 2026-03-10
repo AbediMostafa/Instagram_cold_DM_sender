@@ -22,7 +22,7 @@ class SettingController extends Controller
             // Batch sizes
             'save_post_batch_size' => Setting::getValue('save_post_batch_size'),
             'comment_batch_size' => Setting::getValue('comment_batch_size'),
-            'story_prepare_batch_size' => Setting::getValue('story_prepare_batch_size'),
+            'order_prepare_batch_size' => Setting::getValue('order_prepare_batch_size'),
             'view_story_batch_size' => Setting::getValue('view_story_batch_size'),
         ];
     }

@@ -219,9 +219,9 @@ class SettingSeeder extends Seeder
         [
             'type' => 'text',
             'category' => 'Post',
-            'key' => 'story_prepare_batch_size',
+            'key' => 'order_prepare_batch_size',
             'value' => '3',
-            'description' => 'Batch size for preparing stories',
+            'description' => 'Batch size for preparing orders (view_story, save_post)',
         ],
         [
             'type' => 'text',

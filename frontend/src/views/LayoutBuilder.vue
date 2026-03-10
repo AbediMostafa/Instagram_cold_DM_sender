@@ -121,15 +121,15 @@
             <div class="fs-7 text-muted mt-1">Number of orders to process per account in comment</div>
           </div>
 
-          <!-- Story Prepare Batch Size -->
+          <!-- Order Prepare Batch Size -->
           <div class="col-md-6 mb-5">
-            <label class="form-label fw-bold text-gray-700">Story Prepare Batch Size</label>
+            <label class="form-label fw-bold text-gray-700">Order Prepare Batch Size</label>
             <el-input
-                v-model="settingsData.story_prepare_batch_size"
+                v-model="settingsData.order_prepare_batch_size"
                 type="text"
                 placeholder="3"
             ></el-input>
-            <div class="fs-7 text-muted mt-1">Batch size for preparing stories</div>
+            <div class="fs-7 text-muted mt-1">Batch size for preparing orders (view_story, save_post)</div>
           </div>
 
           <!-- View Story Batch Size -->
@@ -182,7 +182,7 @@ export default defineComponent({
       'critical_only_mode': '',
       'save_post_batch_size': '',
       'comment_batch_size': '',
-      'story_prepare_batch_size': '',
+      'order_prepare_batch_size': '',
       'view_story_batch_size': '',
     });
 
@@ -200,7 +200,7 @@ export default defineComponent({
             settingsData.allowed_posting_age = response.data.allowed_posting_age;
             settingsData.save_post_batch_size = response.data.save_post_batch_size;
             settingsData.comment_batch_size = response.data.comment_batch_size;
-            settingsData.story_prepare_batch_size = response.data.story_prepare_batch_size;
+            settingsData.order_prepare_batch_size = response.data.order_prepare_batch_size;
             settingsData.view_story_batch_size = response.data.view_story_batch_size;
           })
     }

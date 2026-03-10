@@ -116,7 +116,9 @@ from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
 from script.extra.actions.save_post.SavePostContext import SavePostContext
 
 from script.extra.actions.story_preparer.StoryPreparerContext import StoryPreparerContext
+from script.extra.actions.order_preparer.OrderPreparerContext import OrderPreparerContext
 from script.extra.api_actions.view_story.ApiViewStoryContext import ApiViewStoryContext
+from script.extra.api_actions.save_post.ApiSavePostContext import ApiSavePostContext
 
 from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
@@ -155,7 +157,9 @@ account = get_next_account()
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-StoryPreparerContext(browser_ig).fire()
+OrderPreparerContext(browser_ig).fire()
+ApiSavePostContext(browser_ig).fire()
+# StoryPreparerContext(browser_ig).fire()
 ApiViewStoryContext(browser_ig).fire()
 # ViewStoryContext(browser_ig).fire()
 # ViewAllStoriesContext(browser_ig).fire()

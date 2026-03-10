@@ -324,17 +324,8 @@ class OrderController extends Controller
                 "status" => "Pending",
             ]);
 
-            // Only create OrderActions for save_post (not view_story)
-            // view_story actions are created by StoryPreparerEvent
-            if ($serviceType === 'save_post') {
-                for ($i = 0; $i < $quantity; $i++) {
-                    OrderAction::query()->create([
-                        'order_id' => $order->id,
-                        'type' => $serviceType,
-                        'status' => 'free',
-                    ]);
-                }
-            }
+            // view_story and save_post actions are created by OrderPreparer after data capture
+            // No immediate action creation needed for these types
 
             return response()->json([
                 'status' => 'success',
@@ -485,8 +476,8 @@ class OrderController extends Controller
     {
         $order = Order::query()->find(r('orderId'));
 
-        // If is_prepared != 2, no actions exist yet (for view_story)
-        if ($order->service_type === 'view_story' && $order->is_prepared != 2) {
+        // If is_prepared != 2, no actions exist yet (for view_story and save_post)
+        if (in_array($order->service_type, ['view_story', 'save_post']) && $order->is_prepared != 2) {
             return response()->json([
                 'message' => 'Order is not prepared yet',
                 'is_prepared' => $order->is_prepared,
@@ -637,17 +628,8 @@ class OrderController extends Controller
                 "status" => "Pending",
             ]);
 
-            // Only create OrderActions for save_post (not view_story/view_all_stories)
-            // view_story actions are created by StoryPreparerEvent
-            if ($serviceType === 'save_post') {
-                for ($i = 0; $i < $quantity; $i++) {
-                    OrderAction::query()->create([
-                        'order_id' => $order->id,
-                        'type' => $serviceType,
-                        'status' => 'free',
-                    ]);
-                }
-            }
+            // view_story and save_post actions are created by OrderPreparer after data capture
+            // No immediate action creation needed for these types
 
             return response()->json([
                 'status' => 'success',
