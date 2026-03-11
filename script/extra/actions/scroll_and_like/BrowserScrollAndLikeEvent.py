@@ -16,7 +16,6 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
         try:
             self.command = self.ig.account.create_command('scroll and like', 'processing')
             self.ig.account.add_cli("Starting scroll and like ...")
-            go_to_page(self.ig, "https://www.instagram.com/", "Home")
             self.scroll_and_like()
             self.command.update_cmd('state', 'success')
 

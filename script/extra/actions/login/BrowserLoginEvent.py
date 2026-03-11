@@ -101,14 +101,15 @@ class BrowserLoginEvent:
                 self.ig.pause(2000, 3000)
                 self.the_messaging_tab_has_a_new_look()
 
-                if self.ig.is_visible_by_text('Notifications') or self.ig.is_visible_by_text('Explore'):
-                    self.ig.account.add_cli('User logged in before')
+                if self.ig.page.locator('a[href="/"]').count() > 0:
 
                     self.ig.pause(3000, 4000)
                     self.we_need_you_to_agree_to_the_following_items()
-                    self.turn_on_notif()
                     self.the_messaging_tab_has_a_new_look()
                     self.save_session()
+                    self.ig.pause(700, 1200)
+
+                    self.turn_on_notif()
                     self.find_friends_and_accounts_you_like()
 
                     self._capture_graphql_data()

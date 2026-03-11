@@ -54,20 +54,20 @@ class IBrowserHandler:
         # self.page.route("**/*", self.handle_route)
 
     def handle_route(self, route, request):
-        # url = request.url
-        #
-        # blocked_domains = [
-        #     "instagram.fath3-3.fna.fbcdn",
-        # ]
-        #
-        # if any(domain in url for domain in blocked_domains):
-        #     return route.abort()
-        #
-        # if "scontent-" in url and ".cdninstagram.com" in url:
-        #     return route.abort()
-        #
-        # if request.resource_type in ['image', 'media']:
-        #     return route.abort()
+        url = request.url
+
+        blocked_domains = [
+            "instagram.fath3-3.fna.fbcdn",
+        ]
+
+        if any(domain in url for domain in blocked_domains):
+            return route.abort()
+
+        if "scontent-" in url and ".cdninstagram.com" in url:
+            return route.abort()
+
+        if request.resource_type in ['image', 'media']:
+            return route.abort()
 
         request = route.request
         url = request.url
