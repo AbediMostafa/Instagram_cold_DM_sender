@@ -173,36 +173,22 @@ class BrowserApiSavePostEvent(BaseAction):
         return headers
 
     def _build_payload(self):
-        """Build request payload"""
+        """Build request payload - always use post format"""
         payload = self.ig.graphql_data['payload'].copy()
 
-        is_reel = self.action_data.get('is_reel', False)
-
-        if is_reel:
-            request_data = {
-                'container_module': 'reels_tab',
-                'inventory_source': None,
-                'logging_info_token': None,
-                'nav_chain': 'PolarisClipsTabDesktopContainer:reelsTab:1:via_cold_start'
-            }
-            crn = 'comet.igweb.PolarisClipsTabDesktopProfiledContentRoute'
-        else:
-            request_data = {
+        variables = {
+            'media_id': self.action_data['media_id'],
+            'request_data': {
                 'container_module': 'single_post',
                 'inventory_source': None,
                 'logging_info_token': None,
                 'nav_chain': 'PolarisDesktopPostRoot:postPage:1:via_cold_start'
             }
-            crn = 'comet.igweb.PolarisDesktopPostRoute'
-
-        variables = {
-            'media_id': self.action_data['media_id'],
-            'request_data': request_data
         }
 
         payload['doc_id'] = self.action_data.get('doc_id')
         payload['fb_api_req_friendly_name'] = 'usePolarisSaveMediaSaveMutation'
-        payload['__crn'] = crn
+        payload['__crn'] = 'comet.igweb.PolarisDesktopPostRoute'
         payload['variables'] = json.dumps(variables)
 
         return payload

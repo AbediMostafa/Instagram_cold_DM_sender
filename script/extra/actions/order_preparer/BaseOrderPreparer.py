@@ -17,6 +17,11 @@ CAPTURE_TIMEOUT_SECONDS = 30
 SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post']
 
 
+class RetryableError(Exception):
+    """Error that should trigger retry instead of cancel"""
+    pass
+
+
 class BaseOrderPreparer(BaseAction):
     """Base class for preparing orders with shared methods"""
 
@@ -27,7 +32,7 @@ class BaseOrderPreparer(BaseAction):
     def init(self):
         self._reset_stuck_orders()
 
-        batch_size = int(Setting.get_value('story_prepare_batch_size', 3))
+        batch_size = int(Setting.get_value('order_prepare_batch_size', 3))
 
         for i in range(batch_size):
             order = self._claim_next_order()
@@ -119,6 +124,10 @@ class BaseOrderPreparer(BaseAction):
 
         except TimeoutError as e:
             self._handle_timeout(str(e))
+
+        except RetryableError as e:
+            self._handle_timeout(str(e))
+            self._log_to_file(f'RETRYABLE: {str(e)}', 'retry')
 
         except Exception as e:
             self._handle_error(str(e))

@@ -5,6 +5,7 @@ from urllib.parse import parse_qs
 
 from script.extra.helper import go_to_page
 from ..LinkParser import LinkParser
+from ..BaseOrderPreparer import RetryableError
 
 
 CAPTURE_TIMEOUT_SECONDS = 30
@@ -147,7 +148,7 @@ class StoryPrepareHandler:
     def _validate_profile_data(self):
         """Validate profile data"""
         if not self.profile_data:
-            raise Exception('No profile data captured')
+            raise RetryableError('No profile data captured')
 
         if self.profile_data.get('is_private'):
             raise Exception('Account is private')
@@ -298,7 +299,7 @@ class StoryPrepareHandler:
             except:
                 continue
 
-        raise Exception('Could not extract username from post')
+        raise RetryableError('Could not extract username from post')
 
     def _parse_username_from_href(self, href):
         """Parse username from href"""
