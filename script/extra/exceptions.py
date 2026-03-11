@@ -113,3 +113,7 @@ class LinkIsNotCorrect(Exception):
 class ProcessShouldStop(Exception):
     pass
 
+class RetryableError(Exception):
+    """Error that should trigger retry instead of cancel"""
+    pass
+

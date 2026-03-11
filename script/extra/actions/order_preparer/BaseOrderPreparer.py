@@ -17,10 +17,6 @@ CAPTURE_TIMEOUT_SECONDS = 30
 SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post']
 
 
-class RetryableError(Exception):
-    """Error that should trigger retry instead of cancel"""
-    pass
-
 
 class BaseOrderPreparer(BaseAction):
     """Base class for preparing orders with shared methods"""

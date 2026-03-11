@@ -4,6 +4,7 @@ import requests
 import datetime
 import pytz
 import urllib.parse
+import random
 from script.extra.helper import tehran_now
 from script.extra.exceptions import ProxyStuck
 
@@ -103,6 +104,81 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
     return None
 
 
+def _try_claim_proxy(proxy_type):
+    """
+    Atomically claim one free proxy.
+    """
+    random_offset = random.randint(0, 10)
+
+    if proxy_type == 'complex':
+        proxy_types = ["global_datacenter", "datacenter"]
+        query = (
+            Proxy
+            .select(Proxy.id)
+            .where(
+                (Proxy.is_used == 0) &
+                (Proxy.type.in_(proxy_types))
+            )
+        )
+    else:
+        query = (
+            Proxy
+            .select(Proxy.id)
+            .where(
+                (Proxy.is_used == 0) &
+                (Proxy.type == proxy_type)
+            )
+        )
+
+    candidates = list(
+        query
+        .order_by(fn.Random())
+        .offset(random_offset)
+        .limit(5)
+    )
+
+    if not candidates:
+        return None
+
+    for candidate in candidates:
+        updated = (
+            Proxy
+            .update(is_used=1)
+            .where(
+                (Proxy.id == candidate.id) &
+                (Proxy.is_used == 0)
+            )
+            .execute()
+        )
+
+        if updated > 0:
+            return Proxy.get_by_id(candidate.id)
+
+    return None
+
+
+def _try_reset_proxies(proxy_type):
+    """
+    Reset proxies with lock to prevent multiple threads from resetting.
+    """
+    from .Lock import Lock
+
+    if not Lock.acquire('proxy_reset', duration_seconds=30):
+        return False
+
+    try:
+        if proxy_type == 'complex':
+            proxy_types = ["global_datacenter", "datacenter"]
+            Proxy.update(is_used=0).where(Proxy.type.in_(proxy_types)).execute()
+        else:
+            Proxy.update(is_used=0).where(Proxy.type == proxy_type).execute()
+
+        return True
+
+    finally:
+        Lock.release('proxy_reset')
+
+
 def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts=50):
     from .Setting import Setting
 
@@ -112,30 +188,14 @@ def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts
     while attempts < max_attempts:
         attempts += 1
 
-        if proxy_type == 'complex':
-            proxy_types = ["global_datacenter", "datacenter"]
+        next_proxy = _try_claim_proxy(proxy_type)
 
-            query = Proxy.select().where(
-                (Proxy.is_used == 0) &
-                (Proxy.type.in_(proxy_types))
-            )
-
-        else:
-            query = Proxy.select().where(
-                (Proxy.is_used == 0) &
-                (Proxy.type == proxy_type)
-            )
-
-        if not query.exists():
-            Proxy.update(is_used=0).execute()
-            continue
-
-        next_proxy = query.order_by(fn.Random()).first()
-        # next_proxy = query.order_by(Proxy.id).first()
         if not next_proxy:
+            reset_done = _try_reset_proxies(proxy_type)
+            if reset_done:
+                print('Proxies reset completed')
             continue
 
-        next_proxy.set_is_used(1)
         print(f'Selected proxy : {next_proxy.ip}:{next_proxy.port}: {next_proxy.real_ip}')
 
         observed_ip = _fetch_external_ip_via_proxy(
