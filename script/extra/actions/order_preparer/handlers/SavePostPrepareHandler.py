@@ -3,6 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 from script.extra.helper import go_to_page
 from ..LinkParser import LinkParser
+from ..BaseOrderPreparer import RetryableError
 
 
 class SavePostPrepareHandler:
@@ -152,7 +153,7 @@ class SavePostPrepareHandler:
 
         # Try to save
         if not self._try_save():
-            raise Exception("Failed to click save button")
+            raise RetryableError("Failed to click save button")
 
         self.ig.pause(1500, 2500)
 
@@ -221,6 +222,6 @@ class SavePostPrepareHandler:
         self.ig.pause(1000, 1500)
 
         if not self._is_saved():
-            raise Exception("Post was not saved - verification failed")
+            raise RetryableError("Post was not saved - verification failed")
 
         self.ig.account.add_cli("Post saved successfully")
