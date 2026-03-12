@@ -111,19 +111,20 @@ from script.extra.actions.post_image_from_folder.PostImageFromFolderContext impo
 from script.extra.actions.post_from_folder_and_comment.PostFromFolderAndCommentContext import \
     PostFromFolderAndCommentContext
 from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext import CommentOnOthersPostContext
-from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
-from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
-from script.extra.actions.save_post.SavePostContext import SavePostContext
+# from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
+# from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
+# from script.extra.actions.save_post.SavePostContext import SavePostContext
 
-from script.extra.actions.story_preparer.StoryPreparerContext import StoryPreparerContext
+
 from script.extra.actions.order_preparer.OrderPreparerContext import OrderPreparerContext
 from script.extra.api_actions.view_story.ApiViewStoryContext import ApiViewStoryContext
 from script.extra.api_actions.save_post.ApiSavePostContext import ApiSavePostContext
+from script.extra.api_actions.comment.ApiCommentContext import ApiCommentContext
 
 from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
-from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
+# from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import LeadProfileExtractor
 from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import ReelsAverageExtractor
 from script.ProcessManager import ProcessManager
@@ -158,13 +159,14 @@ browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
 OrderPreparerContext(browser_ig).fire()
-ApiSavePostContext(browser_ig).fire()
+ApiCommentContext(browser_ig).fire()
+# ApiSavePostContext(browser_ig).fire()
 # StoryPreparerContext(browser_ig).fire()
-ApiViewStoryContext(browser_ig).fire()
+# ApiViewStoryContext(browser_ig).fire()
 # ViewStoryContext(browser_ig).fire()
 # ViewAllStoriesContext(browser_ig).fire()
 # SavePostContext(browser_ig).fire()
-LikeAndCommentContext(browser_ig).fire()
+# LikeAndCommentContext(browser_ig).fire()
 # LeadGenerateByPostEngagementContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
