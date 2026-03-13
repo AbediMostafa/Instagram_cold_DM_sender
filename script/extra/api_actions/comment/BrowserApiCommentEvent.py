@@ -1,6 +1,4 @@
-import time
 import json
-import random
 import traceback
 import requests
 from script.extra.actions.BaseAction import BaseAction
@@ -17,12 +15,12 @@ from script.models.Setting import Setting
 API_URL = 'https://www.instagram.com/graphql/query'
 
 
-class BrowserApiViewStoryEvent(BaseAction):
-    """View stories using direct API calls instead of browser interaction"""
+class BrowserApiCommentEvent(BaseAction):
+    """Post comments using direct API calls instead of browser interaction"""
 
     def init(self):
         if not self._validate_graphql_data():
-            self.ig.account.add_cli('GraphQL data not available, skipping API view')
+            self.ig.account.add_cli('GraphQL data not available, skipping API comment')
             return
 
         self.session = self._create_proxied_session()
@@ -30,7 +28,7 @@ class BrowserApiViewStoryEvent(BaseAction):
             self.ig.account.add_cli('Cannot proceed without proxy')
             return
 
-        batch_size = int(Setting.get_value('view_story_batch_size', 10))
+        batch_size = int(Setting.get_value('comment_batch_size', 1))
         self.processed_order_ids = []
 
         for i in range(batch_size):
@@ -38,7 +36,7 @@ class BrowserApiViewStoryEvent(BaseAction):
 
             if not action:
                 if i == 0:
-                    self.ig.account.add_cli('No prepared view_story actions available')
+                    self.ig.account.add_cli('No prepared comment actions available')
                 break
 
             self.action = action
@@ -59,7 +57,12 @@ class BrowserApiViewStoryEvent(BaseAction):
                 self._reset_action()
                 continue
 
-            self.ig.account.add_cli(f'API viewing story for order #{self.order.id}')
+            if not self.action.content:
+                self.ig.account.add_cli(f'Action #{self.action.id} has no content, skipping')
+                self._reset_action()
+                continue
+
+            self.ig.account.add_cli(f'API posting comment for order #{self.order.id}: {self.action.content[:30]}...')
             self._process_action()
 
             self.ig.pause(3000, 5000)
@@ -125,7 +128,7 @@ class BrowserApiViewStoryEvent(BaseAction):
         """Get next action from prepared orders only"""
         return get_single_action_for_account_prepared(
             self.ig.account,
-            ['view_story'],
+            ['comment'],
             excluded_order_ids=self.processed_order_ids
         )
 
@@ -160,7 +163,7 @@ class BrowserApiViewStoryEvent(BaseAction):
             self._reset_action()
 
     def _send_api_request(self):
-        """Send story view API request"""
+        """Send comment API request"""
         headers = self._build_headers()
         payload = self._build_payload()
 
@@ -176,27 +179,33 @@ class BrowserApiViewStoryEvent(BaseAction):
     def _build_headers(self):
         """Build request headers"""
         headers = self.ig.graphql_data['headers'].copy()
-        headers['x-fb-friendly-name'] = 'PolarisStoriesV3SeenMutation'
-        headers['x-root-field-name'] = 'xdt_api__v1__stories__reel__seen'
+        headers['x-fb-friendly-name'] = 'PolarisPostCommentInputRevampedMutation'
+        headers['x-root-field-name'] = 'xdt_web__comments__media_id__add_queryable'
         return headers
 
     def _build_payload(self):
-        """Build request payload"""
+        """Build request payload for comment"""
         payload = self.ig.graphql_data['payload'].copy()
 
-        view_seen_at = int(time.time()) - random.randint(5, 30)
+        media_id = self.action_data['media_id']
+        comment_text = self.action.content
+
+        # Build connections string with media_id
+        connections = [
+            f'client:root:__PolarisPostComments__xdt_api__v1__media__media_id__comments__connection_connection(data:{{}},media_id:"{media_id}",sort_order:"popular")'
+        ]
 
         variables = {
-            'reelId': self.action_data['reelId'],
-            'reelMediaId': self.action_data['reelMediaId'],
-            'reelMediaOwnerId': self.action_data['reelMediaOwnerId'],
-            'reelMediaTakenAt': self.action_data['reelMediaTakenAt'],
-            'viewSeenAt': view_seen_at
+            'connections': connections,
+            'request_data': {
+                'comment_text': comment_text
+            },
+            'media_id': media_id
         }
 
-        payload['doc_id'] = self.action_data.get('doc_id')
-        payload['fb_api_req_friendly_name'] = 'PolarisStoriesV3SeenMutation'
-        payload['__crn'] = 'comet.igweb.PolarisStoriesV3Route'
+        payload['doc_id'] = self.action_data.get('doc_id', '24396936719894935')
+        payload['fb_api_req_friendly_name'] = 'PolarisPostCommentInputRevampedMutation'
+        payload['__crn'] = 'comet.igweb.PolarisDesktopPostRoute'
         payload['variables'] = json.dumps(variables)
 
         return payload
@@ -212,17 +221,19 @@ class BrowserApiViewStoryEvent(BaseAction):
                 # Check for client error: data is null with errors
                 data = json_data.get('data')
                 if data is None and json_data.get('errors'):
-                    self._cancel_order('Story is not available')
+                    self._cancel_order('Comments are disabled on this post')
                     return
 
-                # Success
-                if json_data.get('status') == 'ok' or data:
-                    self._mark_success()
-                    return
+                # Success: {"data":{"xdt_web__comments__media_id__add_queryable":{"node":{...}}},"status":"ok"}
+                if data and isinstance(data, dict):
+                    comment_data = data.get('xdt_web__comments__media_id__add_queryable', {})
+                    if comment_data and comment_data.get('node'):
+                        self._mark_success()
+                        return
 
                 # Known client error from message field
                 if self._is_client_error(json_data):
-                    self._cancel_order('Story is not available')
+                    self._cancel_order('Post is not available')
                     return
 
                 # Unknown response - log for analysis
@@ -238,24 +249,25 @@ class BrowserApiViewStoryEvent(BaseAction):
             self._reset_action()
 
         elif response.status_code in [401, 403]:
-            self._log_to_file(f'AUTH_ERROR_{response.status_code}: {response.text[:500]}', 'unknown')
             self._reset_action()
 
         elif response.status_code >= 500:
             self._reset_action()
 
         else:
-            self._log_to_file(f'HTTP_{response.status_code}: {response.text[:500]}', 'unknown')
             self._reset_action()
 
     def _is_client_error(self, json_data):
-        """Check if error is client's fault"""
+        """Check if error is client's fault (post not found, etc.)"""
         error_keywords = [
-            'story_not_found',
             'media_not_found',
+            'post_not_found',
             'user_not_found',
-            'expired',
             'unavailable',
+            'not_found',
+            'does_not_exist',
+            'comments_disabled',
+            'commenting_disabled',
         ]
 
         error_msg = str(json_data.get('message', '')).lower()
@@ -267,7 +279,7 @@ class BrowserApiViewStoryEvent(BaseAction):
         self.ig.account.add_cli(f'SUCCESS order #{self.order.id}')
 
     def _cancel_order(self, reason):
-        """Cancel entire order due to client error (e.g., story expired)"""
+        """Cancel entire order due to client error (e.g., comments disabled)"""
         self.ig.account.add_cli(f'Canceling order #{self.order.id}: {reason}')
 
         # Reset current action to free first
@@ -296,7 +308,7 @@ class BrowserApiViewStoryEvent(BaseAction):
             if fresh_order:
                 remaining = fresh_order.total_count - fresh_order.completed_count
                 if remaining > 0:
-                    total_charge = Balance.deduct_for_actions('view_story', remaining)
+                    total_charge = Balance.deduct_for_actions('comment', remaining)
                     self.ig.account.add_cli(f'Charged ${total_charge} for {remaining} remaining actions')
 
     def _reset_action(self):
@@ -322,7 +334,7 @@ class BrowserApiViewStoryEvent(BaseAction):
             log_dir = os.path.join(base_dir, 'logs')
             os.makedirs(log_dir, exist_ok=True)
 
-            log_file = os.path.join(log_dir, 'api_view_story.log')
+            log_file = os.path.join(log_dir, 'api_comment.log')
 
             order_id = self.order.id if self.order else 'N/A'
             action_id = self.action.id if self.action else 'N/A'

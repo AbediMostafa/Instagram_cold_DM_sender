@@ -7,9 +7,8 @@ from script.models.Order import Order
 from script.models.OrderAction import (
     OrderAction,
     mark_action_completed,
-    mark_action_failed,
-    deduct_balance,
 )
+from script.models.Balance import Balance
 from script.models.Setting import Setting
 
 
@@ -43,6 +42,13 @@ class BrowserApiSavePostEvent(BaseAction):
             self.action = action
             self.order = action.order
             self.processed_order_ids.append(self.order.id)
+
+            # Check if order is already canceled (by another thread)
+            fresh_order = Order.select(Order.status).where(Order.id == self.order.id).first()
+            if fresh_order and fresh_order.status == 'Canceled':
+                self.ig.account.add_cli(f'Order #{self.order.id} already canceled, skipping')
+                self._reset_action()
+                continue
 
             self._load_action_data()
 
@@ -201,14 +207,20 @@ class BrowserApiSavePostEvent(BaseAction):
             try:
                 json_data = response.json()
 
+                # Check for client error: data is null with errors
+                data = json_data.get('data')
+                if data is None and json_data.get('errors'):
+                    self._cancel_order('Post is not available')
+                    return
+
                 # Success: {"data":{"xdt_api__v1__web__save__media_id__save":{"__typename":"XDTEmptyRecord"}},"status":"ok"}
-                if json_data.get('status') == 'ok' or 'data' in json_data:
+                if json_data.get('status') == 'ok' or data:
                     self._mark_success()
                     return
 
-                # Known client error
+                # Known client error from message field
                 if self._is_client_error(json_data):
-                    self._mark_failed()
+                    self._cancel_order('Post is not available')
                     return
 
                 # Unknown response - log for analysis
@@ -251,14 +263,40 @@ class BrowserApiSavePostEvent(BaseAction):
     def _mark_success(self):
         """Mark action as successful"""
         mark_action_completed(self.action)
-        deduct_balance('save_post')
         self.ig.account.add_cli(f'SUCCESS order #{self.order.id}')
 
-    def _mark_failed(self):
-        """Mark action as failed (client error)"""
-        mark_action_failed(self.action)
-        deduct_balance('save_post')
-        self.ig.account.add_cli(f'FAILED order #{self.order.id}')
+    def _cancel_order(self, reason):
+        """Cancel entire order due to client error (e.g., post deleted)"""
+        self.ig.account.add_cli(f'Canceling order #{self.order.id}: {reason}')
+
+        # Reset current action to free first
+        OrderAction.update(
+            status='free',
+            account=None,
+            updated_at=tehran_now()
+        ).where(
+            (OrderAction.id == self.action.id) &
+            (OrderAction.status == 'processing')
+        ).execute()
+
+        # Atomically cancel order (only if not already canceled)
+        updated = Order.update(
+            status='Canceled',
+            description=reason,
+            updated_at=tehran_now()
+        ).where(
+            (Order.id == self.order.id) &
+            (Order.status != 'Canceled')
+        ).execute()
+
+        if updated > 0:
+            # Only first thread deducts balance for remaining
+            fresh_order = Order.select(Order.total_count, Order.completed_count).where(Order.id == self.order.id).first()
+            if fresh_order:
+                remaining = fresh_order.total_count - fresh_order.completed_count
+                if remaining > 0:
+                    total_charge = Balance.deduct_for_actions('save_post', remaining)
+                    self.ig.account.add_cli(f'Charged ${total_charge} for {remaining} remaining actions')
 
     def _reset_action(self):
         """Reset action to free for retry"""

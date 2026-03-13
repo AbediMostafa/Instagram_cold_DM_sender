@@ -18,12 +18,26 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // Insert default lock for account reset
+        // Insert default locks
         DB::table('locks')->insert([
-            'name' => 'account_reset',
-            'locked_until' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
+            [
+                'name' => 'account_reset',
+                'locked_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'proxy_reset',
+                'locked_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'profile_reset',
+                'locked_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 

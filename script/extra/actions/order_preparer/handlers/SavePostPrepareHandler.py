@@ -3,7 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 from script.extra.helper import go_to_page
 from ..LinkParser import LinkParser
-from ..BaseOrderPreparer import RetryableError
+from script.extra.exceptions import RetryableError
 
 
 class SavePostPrepareHandler:

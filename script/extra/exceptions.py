@@ -113,3 +113,6 @@ class LinkIsNotCorrect(Exception):
 class ProcessShouldStop(Exception):
     pass
 
+
+class RetryableError(Exception):
+    pass

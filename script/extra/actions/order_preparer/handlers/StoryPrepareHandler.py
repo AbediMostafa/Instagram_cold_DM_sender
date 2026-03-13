@@ -5,7 +5,8 @@ from urllib.parse import parse_qs
 
 from script.extra.helper import go_to_page
 from ..LinkParser import LinkParser
-from ..BaseOrderPreparer import RetryableError
+from script.extra.exceptions import RetryableError
+
 
 
 CAPTURE_TIMEOUT_SECONDS = 30

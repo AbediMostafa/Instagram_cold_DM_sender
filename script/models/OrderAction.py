@@ -5,17 +5,7 @@ from .Order import Order
 from .Account import Account
 from .Balance import Balance
 from datetime import timedelta
-from decimal import Decimal
 import random
-
-
-# Rate per action type (divided by 1000)
-ACTION_RATES = {
-    'comment': Decimal('0.0003'),             # $0.30 / 1000
-    'view_story': Decimal('0.00005'),         # $0.05 / 1000
-    'view_all_stories': Decimal('0.00005'),   # $0.05 / 1000
-    'save_post': Decimal('0.00004'),          # $0.04 / 1000
-}
 
 
 class OrderAction(BaseWithTimeZoneModel):
@@ -35,7 +25,6 @@ class OrderAction(BaseWithTimeZoneModel):
         'free',
         'processing',
         'sent',
-        'failed',
     ]
 
     order = ForeignKeyField(Order, backref='order_actions')
@@ -172,30 +161,10 @@ def get_single_action_for_account(account, action_types, excluded_order_ids=None
     return None
 
 
-def deduct_balance(action_type):
-    """
-    Deduct balance atomically.
-    """
-    rate = ACTION_RATES.get(action_type, Decimal('0.000025'))
-
-    try:
-        updated = Balance.update(
-            balance=Balance.balance - rate
-        ).where(
-            Balance.customer == 'sadeghi'
-        ).execute()
-
-        return updated > 0
-    except Exception as e:
-        print(f"Error deducting balance: {e}")
-        return False
-
-
 def mark_action_completed(action):
     """
-    Mark action as sent and increment order completed_count atomically.
-    Order: First increment count, then update action status.
-    This ensures count is never less than actual sent actions.
+    Mark action as sent, increment order completed_count, and deduct balance.
+    Order: First increment count, then update action status, then deduct balance.
     """
     # First increment completed_count
     Order.update(
@@ -212,36 +181,8 @@ def mark_action_completed(action):
         OrderAction.id == action.id
     ).execute()
 
-    # Mark order as Completed if threshold reached
-    Order.update(
-        status='Completed'
-    ).where(
-        (Order.id == action.order_id) &
-        (Order.completed_count >= Order.total_count) &
-        (Order.status != 'Completed')
-    ).execute()
-
-
-def mark_action_failed(action):
-    """
-    Mark action as failed and increment completed_count.
-    Client pays for their mistakes.
-    Order: First increment count, then update action status.
-    """
-    # First increment completed_count
-    Order.update(
-        completed_count=Order.completed_count + 1
-    ).where(
-        Order.id == action.order_id
-    ).execute()
-
-    # Then mark action as failed
-    OrderAction.update(
-        status='failed',
-        updated_at=tehran_now()
-    ).where(
-        OrderAction.id == action.id
-    ).execute()
+    # Deduct balance for this action
+    Balance.deduct_for_actions(action.type, 1)
 
     # Mark order as Completed if threshold reached
     Order.update(
@@ -267,7 +208,7 @@ def get_order_actions_stats(order_id):
         .dicts()
     )
 
-    result = {'free': 0, 'processing': 0, 'sent': 0, 'failed': 0}
+    result = {'free': 0, 'processing': 0, 'sent': 0}
     for stat in stats:
         result[stat['status']] = stat['count']
 

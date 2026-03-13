@@ -1,12 +1,12 @@
 import time
 import traceback
 from datetime import timedelta
-from decimal import Decimal
 
 from script.extra.helper import tehran_now
 from script.extra.actions.BaseAction import BaseAction
+from script.extra.exceptions import RetryableError
 from script.models.Order import Order
-from script.models.OrderAction import OrderAction, ACTION_RATES, deduct_balance
+from script.models.OrderAction import OrderAction
 from script.models.Balance import Balance
 from script.models.Setting import Setting
 
@@ -14,12 +14,7 @@ from script.models.Setting import Setting
 STUCK_TIMEOUT_SECONDS = 120
 CAPTURE_TIMEOUT_SECONDS = 30
 
-SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post']
-
-
-class RetryableError(Exception):
-    """Error that should trigger retry instead of cancel"""
-    pass
+SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post', 'comment']
 
 
 class BaseOrderPreparer(BaseAction):
@@ -112,6 +107,11 @@ class BaseOrderPreparer(BaseAction):
                 handler = SavePostPrepareHandler(self.ig, self)
                 handler.prepare(self.order)
 
+            elif self.order.service_type == 'comment':
+                from .handlers.CommentPrepareHandler import CommentPrepareHandler
+                handler = CommentPrepareHandler(self.ig, self)
+                handler.prepare(self.order)
+
             else:
                 raise Exception(f'Unknown service_type: {self.order.service_type}')
 
@@ -119,7 +119,13 @@ class BaseOrderPreparer(BaseAction):
                 raise Exception('Failed to capture data')
 
             self._save_action_data()
-            self._create_order_actions()
+
+            # For comment, actions already exist - just mark first as sent
+            if self.order.service_type == 'comment':
+                self._mark_first_comment_action_sent()
+            else:
+                self._create_order_actions()
+
             self.ig.account.add_cli(f'Order #{self.order.id} prepared successfully')
 
         except TimeoutError as e:
@@ -158,7 +164,7 @@ class BaseOrderPreparer(BaseAction):
         )
 
         Order.update(completed_count=1).where(Order.id == self.order.id).execute()
-        deduct_balance(self.order.service_type)
+        Balance.deduct_for_actions(self.order.service_type, 1)
 
         # Remaining actions
         remaining_count = self.order.total_count - 1
@@ -171,6 +177,39 @@ class BaseOrderPreparer(BaseAction):
             OrderAction.insert_many(actions).execute()
 
         self.ig.account.add_cli(f'Created 1 sent + {remaining_count} free actions')
+
+    def _mark_first_comment_action_sent(self):
+        """Mark the first comment action as sent (used by preparer)
+
+        For comments, OrderActions are created by OrderController with content.
+        Preparer just marks the first one as sent after posting it.
+        """
+        # Find and mark first free action as sent
+        first_action = (
+            OrderAction
+            .select()
+            .where(
+                (OrderAction.order == self.order.id) &
+                (OrderAction.status == 'free')
+            )
+            .order_by(OrderAction.id.asc())
+            .first()
+        )
+
+        if first_action:
+            OrderAction.update(
+                status='sent',
+                account=self.ig.account,
+                updated_at=tehran_now()
+            ).where(
+                (OrderAction.id == first_action.id) &
+                (OrderAction.status == 'free')
+            ).execute()
+
+            Order.update(completed_count=1).where(Order.id == self.order.id).execute()
+            Balance.deduct_for_actions('comment', 1)
+
+            self.ig.account.add_cli(f'Marked first comment action as sent')
 
     def _handle_timeout(self, message):
         """Handle timeout - reset for retry"""
@@ -200,15 +239,7 @@ class BaseOrderPreparer(BaseAction):
 
     def _charge_full_order(self):
         """Deduct full order amount from balance"""
-        rate = ACTION_RATES.get(self.order.service_type, Decimal('0.00005'))
-        total_charge = Decimal(self.order.total_count) * rate
-
-        Balance.update(
-            balance=Balance.balance - total_charge
-        ).where(
-            Balance.customer == 'sadeghi'
-        ).execute()
-
+        total_charge = Balance.deduct_for_actions(self.order.service_type, self.order.total_count)
         self.ig.account.add_cli(f'Charged ${total_charge}')
 
     def _cleanup_listeners(self):

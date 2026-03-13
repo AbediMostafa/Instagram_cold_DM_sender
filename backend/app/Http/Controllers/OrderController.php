@@ -174,10 +174,19 @@ class OrderController extends Controller
                 $order->status = 'Pending';
                 $order->is_prepared = 0;
                 $order->completed_count = 0;
+                $order->action_data = null;
                 $order->save();
 
-                // Delete all actions (preparer will recreate them)
-                $order->actions()->delete();
+                if ($order->service_type === 'comment') {
+                    // For comments: keep actions but reset status and account
+                    $order->actions()->update([
+                        'status' => 'free',
+                        'account_id' => null,
+                    ]);
+                } else {
+                    // For view_story and save_post: delete actions (preparer will recreate them)
+                    $order->actions()->delete();
+                }
             },
             'Order reset successfully',
         );
