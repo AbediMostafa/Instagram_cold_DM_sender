@@ -16,7 +16,7 @@ from script.models.Setting import Setting
 STUCK_TIMEOUT_SECONDS = 120
 
 # Maximum time to wait for browser to capture GraphQL data
-CAPTURE_TIMEOUT_SECONDS = 30
+CAPTURE_TIMEOUT_SECONDS = 45
 
 # Service types that can be prepared by this class
 SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post', 'comment']
@@ -307,6 +307,9 @@ class BaseOrderPreparer(BaseAction):
                 # Deduct balance for this one action
                 Balance.deduct_for_actions(self.order.service_type, 1)
 
+                # Check if order is now complete
+                self._check_order_completion()
+
                 self.ig.account.add_cli(f'Marked one existing action as sent, incremented completed_count')
             else:
                 # No free actions left - order should be completed
@@ -392,6 +395,9 @@ class BaseOrderPreparer(BaseAction):
                 # Deduct balance for this one action
                 Balance.deduct_for_actions('comment', 1)
 
+                # Check if order is now complete
+                self._check_order_completion()
+
                 self.ig.account.add_cli(f'Marked first comment action as sent')
         else:
             # No free actions - might be re-prepare with all actions already sent
@@ -469,6 +475,26 @@ class BaseOrderPreparer(BaseAction):
             else:
                 self.ig.account.add_cli(f'No remaining actions to charge')
 
+    def _check_order_completion(self):
+        """
+        Check if order has reached completion threshold and mark as Completed.
+
+        This is called after incrementing completed_count to handle the case
+        where the last action was completed during prepare phase (re-prepare scenario).
+
+        Uses atomic UPDATE with conditions to prevent race conditions.
+        """
+        updated = Order.update(
+            status='Completed'
+        ).where(
+            (Order.id == self.order.id) &
+            (Order.completed_count >= Order.total_count) &
+            (Order.status != 'Completed')
+        ).execute()
+
+        if updated > 0:
+            self.ig.account.add_cli(f'Order #{self.order.id} marked as Completed')
+
     def _cleanup_listeners(self):
         """
         Remove all registered network event listeners.
@@ -522,7 +548,6 @@ class BaseOrderPreparer(BaseAction):
                 f.write(log_line)
         except:
             pass
-
 
     def wait_for_capture(self, timeout=CAPTURE_TIMEOUT_SECONDS):
         """

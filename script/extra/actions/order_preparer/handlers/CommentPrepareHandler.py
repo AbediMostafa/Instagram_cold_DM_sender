@@ -225,7 +225,7 @@ class CommentPrepareHandler:
         Waits longer than other handlers because comment UI takes time to load.
         """
         go_to_page(self.ig, self.normalized_link, 'Post Page')
-        self.ig.pause(7000, 8000)
+        self.ig.pause(8000, 10000)
 
     def _check_post_errors(self):
         """
@@ -312,15 +312,15 @@ class CommentPrepareHandler:
         if 'reels' in self.ig.page.url or 'reel' in self.ig.page.url:
             try:
                 # Try clicking comment icon
-                self.ig.page.locator("svg[aria-label='Comment']").first.click(timeout=3000)
-                self.ig.pause(3000, 3500)
+                self.ig.page.locator("svg[aria-label='Comment']").first.click(timeout=5000)
+                self.ig.pause(5000, 6500)
             except:
                 try:
                     # Fallback: click button containing comment icon
                     self.ig.page.locator("div[role='button']").filter(
                         has=self.ig.page.locator("svg[aria-label='Comment']")
-                    ).click(timeout=3000)
-                    self.ig.pause(3000, 3500)
+                    ).click(timeout=5000)
+                    self.ig.pause(5000, 6500)
                 except Exception as e:
                     self.ig.account.add_cli(f'Open comment box error: {str(e)}')
 
@@ -393,7 +393,7 @@ class CommentPrepareHandler:
 
             # Type the comment text
             comment_input.fill(comment_text, timeout=5000)
-            self.ig.pause(1500, 2000)
+            self.ig.pause(2500, 4000)
 
             # Find and click Post button
             post_button = self.ig.page.get_by_role("button", name="Post", exact=True)
@@ -402,7 +402,7 @@ class CommentPrepareHandler:
                 raise RetryableError("Post button not found")
 
             post_button.click()
-            self.ig.pause(2000, 3000)
+            self.ig.pause(3000, 4000)
 
             # Verify we're still on the same post after posting
             self._verify_still_on_same_post()
@@ -425,7 +425,7 @@ class CommentPrepareHandler:
         Raises:
             Exception: If comment posting error message is visible
         """
-        self.ig.pause(1000, 1500)
+        self.ig.pause(3000, 4500)
 
         if self.ig.is_visible_by_text("Couldn't post comment"):
             raise Exception("Couldn't post comment")

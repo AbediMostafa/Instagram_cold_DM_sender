@@ -183,7 +183,7 @@ class SavePostPrepareHandler:
         Waits for page to fully load before continuing.
         """
         go_to_page(self.ig, self.order.target_link, 'Post Page')
-        self.ig.pause(5000, 6000)
+        self.ig.pause(6000, 8000)
 
     def _check_post_errors(self):
         """
@@ -251,13 +251,13 @@ class SavePostPrepareHandler:
         if self._is_saved():
             self.ig.account.add_cli("Post is already saved, unsaving first...")
             self._unsave_post()
-            self.ig.pause(2000, 3000)
+            self.ig.pause(4000, 6000)
 
         # Click save button
         if not self._try_save():
             raise RetryableError("Failed to click save button")
 
-        self.ig.pause(1500, 2500)
+        self.ig.pause(3000, 5000)
 
     def _try_save(self):
         """
@@ -359,7 +359,7 @@ class SavePostPrepareHandler:
         Raises:
             RetryableError: If verification fails (save didn't work)
         """
-        self.ig.pause(1000, 1500)
+        self.ig.pause(2000, 4000)
 
         if not self._is_saved():
             raise RetryableError("Post was not saved - verification failed")

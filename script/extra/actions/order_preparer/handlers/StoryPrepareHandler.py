@@ -9,7 +9,7 @@ from script.extra.exceptions import RetryableError
 
 
 # Maximum time to wait for profile data to be captured
-CAPTURE_TIMEOUT_SECONDS = 30
+CAPTURE_TIMEOUT_SECONDS = 45
 
 
 class StoryPrepareHandler:
@@ -126,7 +126,7 @@ class StoryPrepareHandler:
 
         # Navigate directly to story URL
         go_to_page(self.ig, self.order.target_link, 'Story Page')
-        self.ig.pause(4000, 5000)
+        self.ig.pause(5000, 7000)
 
         self._check_story_errors()
         self._click_view_story()
@@ -147,7 +147,7 @@ class StoryPrepareHandler:
 
         profile_url = f'https://www.instagram.com/{self.target_username}/'
         go_to_page(self.ig, profile_url, 'Profile Page')
-        self.ig.pause(3000, 4000)
+        self.ig.pause(6000, 8000)
 
         self._check_page_errors()
         self._wait_for_profile_data()
@@ -159,7 +159,7 @@ class StoryPrepareHandler:
 
         story_url = f'https://www.instagram.com/stories/{self.target_username}/'
         go_to_page(self.ig, story_url, 'Story Page')
-        self.ig.pause(4000, 5000)
+        self.ig.pause(6000, 8000)
 
         self._check_story_errors()
         self._click_view_story()
@@ -374,14 +374,14 @@ class StoryPrepareHandler:
                     btn = self.ig.page.locator(selector).first
                     if btn.count() > 0 and btn.is_visible():
                         btn.click(timeout=5000)
-                        self.ig.pause(2000, 3000)
+                        self.ig.pause(3000, 4000)
                         return
                 except:
                     continue
 
             # Fallback: use role-based selector
             self.ig.page.get_by_role('button', name=re.compile(r'View story', re.I)).click(timeout=5000)
-            self.ig.pause(2000, 3000)
+            self.ig.pause(3000, 4000)
 
         except Exception as e:
             self.ig.account.add_cli(f'Click view story error: {str(e)}')
@@ -464,7 +464,7 @@ class StoryPrepareHandler:
         """
         # Navigate to post page
         go_to_page(self.ig, self.order.target_link, 'Post Page')
-        self.ig.pause(3000, 4000)
+        self.ig.pause(4000, 5000)
 
         self._check_page_errors()
 
