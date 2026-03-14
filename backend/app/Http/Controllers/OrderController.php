@@ -194,21 +194,46 @@ class OrderController extends Controller
 
     public function changProcessingCommentsToFree()
     {
-        return tryCatch(
-            function () {
-                $order = Order::query()->find(r('id'));
+        $order = Order::query()->find(r('id'));
 
-                // Only process actions if is_prepared = 2
-                if ($order->is_prepared == 2) {
-                    $order->changeProcessingToFree();
-                } else {
-                    $order->setStatusTo('In progress');
-                }
-            },
-            'Order reseted successfully',
-        );
+        // If order was canceled, refund the remaining balance first
+        if ($order->status === 'Canceled') {
+            $remaining = $order->total_count - $order->completed_count;
+            if ($remaining > 0) {
+                $this->refundBalance($order->service_type, $remaining);
+            }
+        }
+
+        // Send to prepare queue (works for all service types)
+        $order->status = 'Pending';
+        $order->is_prepared = 0;
+        $order->save();
+
+        // Reset all non-sent actions to free
+        $order->actions()->where('status', '!=', 'sent')->update([
+            'status' => 'free',
+            'account_id' => null
+        ]);
     }
 
+    private function refundBalance($actionType, $count)
+    {
+        $rates = [
+            'comment' => 0.0003,
+            'view_story' => 0.00005,
+            'view_all_stories' => 0.00005,
+            'save_post' => 0.00004,
+        ];
+
+        $rate = $rates[$actionType] ?? 0.00005;
+        $totalRefund = $rate * $count;
+
+        $balance = Balance::where('customer', 'sadeghi')->first();
+        if ($balance) {
+            $balance->balance += $totalRefund;  // Add back
+            $balance->save();
+        }
+    }
 
     public function v3()
     {
