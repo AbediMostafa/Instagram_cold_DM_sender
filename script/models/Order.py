@@ -88,17 +88,33 @@ class Order(BaseWithTimeZoneModel):
 
 
 def get_next_order_for_account(account):
+    """
+    Get the next available order for the given account using atomic UPDATE.
+
+    Finds orders that:
+    - Are not yet completed (completed_count < total_count)
+    - Are in active status (Pending or In progress)
+    - Have not been worked on by this account before
+
+    Uses atomic UPDATE to safely increment completed_count and prevent
+    race conditions between concurrent threads.
+
+    Args:
+        account: Account model instance
+
+    Returns:
+        Order instance or None if no order available
+    """
     from .OrderAction import OrderAction
 
-    # Orders not completed
-    order = (
+    # Get multiple candidates to handle race conditions
+    candidates = list(
         Order
-        .select()
+        .select(Order.id)
         .where(Order.completed_count < Order.total_count)
         .where(Order.status.in_(['Pending', 'In progress']))
-        # .where(Order.service_type == service_type)
         .where(
-            # This account has NOT sent any comment for this order
+            # This account has NOT worked on this order before
             ~Order.id.in_(
                 OrderAction
                 .select(OrderAction.order)
@@ -106,9 +122,25 @@ def get_next_order_for_account(account):
             )
         )
         .order_by(Order.id)
-    ).first()
+        .limit(5)
+    )
 
-    order.completed_count = order.completed_count + 1
-    order.save()
+    if not candidates:
+        return None
 
-    return order
+    # Try to atomically claim one of the candidates
+    for candidate in candidates:
+        updated = (
+            Order
+            .update(completed_count=Order.completed_count + 1)
+            .where(
+                (Order.id == candidate.id) &
+                (Order.completed_count < Order.total_count)
+            )
+            .execute()
+        )
+
+        if updated > 0:
+            return Order.get_by_id(candidate.id)
+
+    return None

@@ -47,9 +47,19 @@ class BaseOrderPreparer(BaseAction):
     we need to handle existing OrderAction records and completed_count properly.
     """
 
-    order = None
-    captured_data = None
-    listeners = []
+    def __init__(self, ig):
+        """
+        Initialize instance variables.
+
+        These must be on the instance (not the class) to prevent sharing
+        between concurrent instances. In particular, 'listeners' is a mutable
+        list — defining it on the class would cause all instances to share
+        the same list, leading to cross-contamination bugs.
+        """
+        super().__init__(ig)
+        self.order = None
+        self.captured_data = None
+        self.listeners = []
 
     def init(self):
         """
@@ -94,35 +104,52 @@ class BaseOrderPreparer(BaseAction):
         Orders with is_prepared=1 are being actively prepared by some thread.
         If they stay in this state too long, the thread probably crashed.
         Reset them to is_prepared=0 so another thread can try.
+
+        Uses Lock to prevent all threads from running this same UPDATE
+        every time init() is called. Only one thread per 60 seconds will
+        actually execute the reset — the rest skip it immediately.
         """
-        cutoff_time = tehran_now() - timedelta(seconds=STUCK_TIMEOUT_SECONDS)
+        from script.models.Lock import Lock
 
-        updated = Order.update(
-            is_prepared=0
-        ).where(
-            (Order.is_prepared == 1) &
-            (Order.service_type.in_(SUPPORTED_SERVICE_TYPES)) &
-            (Order.updated_at < cutoff_time)
-        ).execute()
+        if not Lock.acquire('order_stuck_reset', duration_seconds=60):
+            return
 
-        if updated > 0:
-            self.ig.account.add_cli(f'Reset {updated} stuck orders')
+        try:
+            cutoff_time = tehran_now() - timedelta(seconds=STUCK_TIMEOUT_SECONDS)
+
+            updated = Order.update(
+                is_prepared=0
+            ).where(
+                (Order.is_prepared == 1) &
+                (Order.service_type.in_(SUPPORTED_SERVICE_TYPES)) &
+                (Order.updated_at < cutoff_time)
+            ).execute()
+
+            if updated > 0:
+                self.ig.account.add_cli(f'Reset {updated} stuck orders')
+
+        finally:
+            Lock.release('order_stuck_reset')
 
     def _claim_next_order(self):
         """
         Find and claim the next order to prepare using atomic UPDATE.
 
-        Uses atomic update pattern to prevent race conditions:
-        1. Find a candidate order
-        2. Try to update is_prepared from 0 to 1 atomically
+        Uses multi-candidate approach to handle thread contention:
+        1. Find several candidate orders (not just one)
+        2. Try to update is_prepared from 0 to 1 atomically for each
         3. If update succeeds (affected rows > 0), we own it
-        4. If update fails, another thread got it first
+        4. If update fails, another thread got it first — try the next candidate
+
+        Without multi-candidate, when 10 threads all see the same first order,
+        only 1 succeeds and the other 9 return None even though more orders
+        are available. This wastes processing cycles.
 
         Returns:
             Order instance or None if no orders available
         """
-        # Find oldest pending order that needs preparation
-        candidate = (
+        # Find oldest pending orders that need preparation
+        candidates = list(
             Order
             .select(Order.id)
             .where(
@@ -131,26 +158,27 @@ class BaseOrderPreparer(BaseAction):
                 (Order.status == 'Pending')
             )
             .order_by(Order.id.asc())
-            .first()
+            .limit(5)
         )
 
-        if not candidate:
+        if not candidates:
             return None
 
-        # Atomically claim the order
-        updated = Order.update(
-            is_prepared=1,
-            updated_at=tehran_now()
-        ).where(
-            (Order.id == candidate.id) &
-            (Order.is_prepared == 0)
-        ).execute()
+        # Try to atomically claim one of the candidates
+        for candidate in candidates:
+            updated = Order.update(
+                is_prepared=1,
+                updated_at=tehran_now()
+            ).where(
+                (Order.id == candidate.id) &
+                (Order.is_prepared == 0)
+            ).execute()
 
-        # If no rows updated, another thread claimed it first
-        if updated == 0:
-            return None
+            if updated > 0:
+                return Order.get_by_id(candidate.id)
 
-        return Order.get_by_id(candidate.id)
+        # All candidates were claimed by other threads
+        return None
 
     def _process_order(self):
         """
@@ -261,42 +289,34 @@ class BaseOrderPreparer(BaseAction):
 
         This distinction is critical for correct balance deduction and count tracking.
         """
-        # Check if actions already exist (re-prepare scenario)
-        existing_count = (
+        # Try to find a free action directly (avoids a separate COUNT query)
+        # If one exists, this is a re-prepare scenario
+        free_action = (
             OrderAction
             .select()
-            .where(OrderAction.order == self.order.id)
-            .count()
+            .where(
+                (OrderAction.order == self.order.id) &
+                (OrderAction.status == 'free')
+            )
+            .order_by(OrderAction.id.asc())
+            .first()
         )
 
-        if existing_count > 0:
-            # Re-prepare scenario: actions already exist
-            # Just mark one more free action as sent
-            self.ig.account.add_cli(f'Re-prepare: {existing_count} actions already exist')
+        if free_action:
+            # Re-prepare scenario: free action exists, mark it as sent
+            self.ig.account.add_cli(f'Re-prepare: marking one free action as sent')
 
-            # Find a free action to mark as sent
-            free_action = (
-                OrderAction
-                .select()
-                .where(
-                    (OrderAction.order == self.order.id) &
-                    (OrderAction.status == 'free')
-                )
-                .order_by(OrderAction.id.asc())
-                .first()
-            )
+            # Mark this action as sent by preparer
+            updated = OrderAction.update(
+                status='sent',
+                account=self.ig.account,
+                updated_at=tehran_now()
+            ).where(
+                (OrderAction.id == free_action.id) &
+                (OrderAction.status == 'free')
+            ).execute()
 
-            if free_action:
-                # Mark this action as sent by preparer
-                OrderAction.update(
-                    status='sent',
-                    account=self.ig.account,
-                    updated_at=tehran_now()
-                ).where(
-                    (OrderAction.id == free_action.id) &
-                    (OrderAction.status == 'free')
-                ).execute()
-
+            if updated > 0:
                 # Increment completed_count (not set to 1!)
                 Order.update(
                     completed_count=Order.completed_count + 1
@@ -311,42 +331,56 @@ class BaseOrderPreparer(BaseAction):
                 self._check_order_completion()
 
                 self.ig.account.add_cli(f'Marked one existing action as sent, incremented completed_count')
-            else:
-                # No free actions left - order should be completed
-                self.ig.account.add_cli(f'No free actions left for re-prepare')
 
-        else:
-            # Fresh order: create all actions from scratch
+            return
 
-            # First action - preparer's action (already done via browser)
-            OrderAction.create(
-                order_id=self.order.id,
-                type=self.order.service_type,
-                status='sent',
-                account=self.ig.account
-            )
+        # No free action found - check if any actions exist at all
+        has_any = (
+            OrderAction
+            .select()
+            .where(OrderAction.order == self.order.id)
+            .exists()
+        )
 
-            # Set completed_count to 1 (fresh start)
-            Order.update(
-                completed_count=1
-            ).where(
-                Order.id == self.order.id
-            ).execute()
+        if has_any:
+            # Re-prepare but all actions are sent/processing - nothing to do
+            self.ig.account.add_cli(f'No free actions left for re-prepare')
+            return
 
-            # Deduct balance for this one action
-            Balance.deduct_for_actions(self.order.service_type, 1)
+        # Fresh order: create all actions from scratch
 
-            # Create remaining actions with free status
-            remaining_count = self.order.total_count - 1
+        # First action - preparer's action (already done via browser)
+        OrderAction.create(
+            order_id=self.order.id,
+            type=self.order.service_type,
+            status='sent',
+            account=self.ig.account
+        )
 
-            if remaining_count > 0:
-                actions = [
-                    {'order_id': self.order.id, 'type': self.order.service_type, 'status': 'free'}
-                    for _ in range(remaining_count)
-                ]
-                OrderAction.insert_many(actions).execute()
+        # Set completed_count to 1 (fresh start)
+        Order.update(
+            completed_count=1
+        ).where(
+            Order.id == self.order.id
+        ).execute()
 
-            self.ig.account.add_cli(f'Created 1 sent + {remaining_count} free actions')
+        # Deduct balance for this one action
+        Balance.deduct_for_actions(self.order.service_type, 1)
+
+        # Create remaining actions with free status
+        remaining_count = self.order.total_count - 1
+
+        if remaining_count > 0:
+            actions = [
+                {'order_id': self.order.id, 'type': self.order.service_type, 'status': 'free'}
+                for _ in range(remaining_count)
+            ]
+            OrderAction.insert_many(actions).execute()
+
+        # Check if single-action order is already complete
+        self._check_order_completion()
+
+        self.ig.account.add_cli(f'Created 1 sent + {remaining_count} free actions')
 
     def _mark_first_comment_action_sent(self):
         """

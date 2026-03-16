@@ -9,6 +9,7 @@ from script.models.Order import Order
 from script.models.OrderAction import (
     OrderAction,
     mark_action_completed,
+    get_single_action_for_account_prepared,
 )
 from script.models.Balance import Balance
 from script.models.Setting import Setting
@@ -362,16 +363,28 @@ class BrowserApiViewStoryEvent(BaseAction):
         These errors are ambiguous - could be:
         - Temporary Instagram issue (should retry)
         - Story expired or user went private (should cancel)
+        - Account is restricted/blocked (should skip, let other accounts try)
 
         Strategy:
-        1. Retry up to MAX_RETRY_ATTEMPTS times with this same account
-        2. If all retries fail, send order back to prepare queue
-        3. Prepare will verify if story is still available via browser
+        1. Check if error is account-level (restricted/blocked) - if so, reset immediately
+        2. Retry up to MAX_RETRY_ATTEMPTS times with this same account
+        3. If all retries fail, send order back to prepare queue
+        4. Prepare will verify if story is still available via browser
         """
-        self.ig.account.add_cli(f'Execution error detected, attempting retries...')
+        self.ig.account.add_cli(f'Execution error detected')
         self._log_to_file(f'EXECUTION_ERROR: {json.dumps(json_data)[:1000]}', 'error')
 
+        # Check if the error is account-level (restricted/blocked)
+        # Retrying with the same account is pointless in this case -
+        # just free the action so other accounts can pick it up
+        if self._is_account_restricted(json_data):
+            self.ig.account.add_cli('Account is restricted/blocked, skipping retries and freeing action')
+            self._log_to_file(f'ACCOUNT_RESTRICTED: order={self.order.id}', 'error')
+            self._reset_action()
+            return
+
         # Retry loop - try MAX_RETRY_ATTEMPTS times
+        self.ig.account.add_cli(f'Attempting retries...')
         for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
             self.ig.account.add_cli(f'Retry attempt {attempt}/{MAX_RETRY_ATTEMPTS}')
             self.ig.pause(2000, 3000)
@@ -402,6 +415,35 @@ class BrowserApiViewStoryEvent(BaseAction):
         self.ig.account.add_cli(f'All {MAX_RETRY_ATTEMPTS} retries failed, sending order back to prepare')
         self._log_to_file(f'RETRIES_EXHAUSTED: order={self.order.id} sent back to prepare', 'error')
         self._send_to_prepare()
+
+    def _is_account_restricted(self, json_data):
+        """
+        Check if the execution error indicates the account is restricted or blocked.
+
+        These errors mean the problem is with the account, not the story.
+        Retrying with the same account will always fail, so we should free
+        the action for other accounts to handle.
+
+        Args:
+            json_data: Parsed JSON response from Instagram API
+
+        Returns:
+            True if error is account-level (restricted/blocked)
+            False if error is something else (should proceed with retries)
+        """
+        errors = json_data.get('errors', [])
+
+        for error in errors:
+            summary = str(error.get('summary', '')).lower()
+            description = str(error.get('description', '')).lower()
+
+            combined = f'{summary} {description}'
+
+            if 'account is restricted' in combined or \
+               'temporarily blocked' in combined:
+                return True
+
+        return False
 
     def _send_to_prepare(self):
         """
@@ -561,88 +603,3 @@ class BrowserApiViewStoryEvent(BaseAction):
                 f.write(log_line)
         except:
             pass
-
-
-def get_single_action_for_account_prepared(account, action_types, excluded_order_ids=None):
-    """
-    Get a single action from prepared orders for the given account.
-
-    Only considers orders with is_prepared=2 (fully prepared with action_data).
-    Uses atomic UPDATE to prevent race conditions between threads.
-
-    Args:
-        account: Account model instance
-        action_types: List of action type strings to consider
-        excluded_order_ids: Order IDs to exclude (already processed in this session)
-
-    Returns:
-        OrderAction instance or None if no action available
-    """
-    if excluded_order_ids is None:
-        excluded_order_ids = []
-
-    # Get orders this account has already worked on (to avoid duplicate work)
-    worked_order_ids = list(
-        OrderAction
-        .select(OrderAction.order)
-        .where(OrderAction.account == account)
-        .distinct()
-        .tuples()
-    )
-    worked_order_ids = [x[0] for x in worked_order_ids]
-
-    # Combine with explicitly excluded orders
-    all_excluded = set(worked_order_ids + excluded_order_ids)
-
-    # Query for available actions from prepared orders
-    query = (
-        OrderAction
-        .select(OrderAction.id, OrderAction.order)
-        .join(Order)
-        .where(
-            (OrderAction.type.in_(action_types)) &
-            (Order.status.in_(['Pending', 'In progress'])) &
-            (Order.is_prepared == 2) &
-            (OrderAction.status == 'free')
-        )
-        .order_by(Order.id, OrderAction.id)
-        .limit(10)
-    )
-
-    # Exclude orders we've already worked on
-    if all_excluded:
-        query = query.where(~(OrderAction.order.in_(all_excluded)))
-
-    candidates = list(query)
-
-    if not candidates:
-        return None
-
-    # Try to atomically claim one of the candidates
-    for candidate in candidates:
-        updated = (
-            OrderAction
-            .update(
-                status='processing',
-                account=account,
-                updated_at=tehran_now()
-            )
-            .where(
-                (OrderAction.id == candidate.id) &
-                (OrderAction.status == 'free')
-            )
-            .execute()
-        )
-
-        if updated > 0:
-            # Successfully claimed - update order status if needed
-            Order.update(
-                status='In progress'
-            ).where(
-                (Order.id == candidate.order_id) &
-                (Order.status == 'Pending')
-            ).execute()
-
-            return OrderAction.get_by_id(candidate.id)
-
-    return None

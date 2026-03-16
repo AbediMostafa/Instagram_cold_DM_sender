@@ -31,7 +31,7 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
-use App\Models\Template;
+use App\Models\Order;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 use Illuminate\Support\Facades\Auth;
@@ -47,10 +47,6 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use \App\Models\Order;
-use \App\Models\Setting;
-use \App\Models\Account;
-use \App\Models\Proxy;
 
 Route::get('/', function () {
 });
@@ -243,7 +239,7 @@ Route::post('order/delete', [OrderController::class, 'delete']);
 Route::post('order/finish', [OrderController::class, 'finish']);
 Route::post('order/fail', [OrderController::class, 'fail']);
 Route::post('order/reset', [OrderController::class, 'reset']);
-Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
+Route::post('order/change-processing-to-free', [OrderController::class, 'changeProcessingToFree']);
 Route::post('order/get-actions', [OrderController::class, 'getActions']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);

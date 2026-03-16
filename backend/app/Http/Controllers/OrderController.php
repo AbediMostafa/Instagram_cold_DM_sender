@@ -18,24 +18,25 @@ class OrderController extends Controller
     public function index()
     {
         $query = Order::query()
-            ->withCount([
-                'actions as sent_actions_count' => fn($query) =>
-                $query->where('status', 'sent'),
-
-                'actions as free_actions_count' => fn($query) =>
-                $query->where('status', 'free'),
-
-                'actions as processing_actions_count' => fn($query) =>
-                $query->where('status', 'processing'),
-
-                'actions as failed_actions_count' => fn($query) =>
-                $query->where('status', 'failed'),
-            ])
+            ->select('orders.*')
+            ->selectSub(
+            // Single subquery with conditional counts instead of 4 separate withCount subqueries
+            // This generates one correlated subquery instead of four
+                \App\Models\OrderAction::selectRaw("
+                    CONCAT(
+                        COALESCE(SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END), 0), ',',
+                        COALESCE(SUM(CASE WHEN status = 'free' THEN 1 ELSE 0 END), 0), ',',
+                        COALESCE(SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END), 0), ',',
+                        COALESCE(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END), 0)
+                    )
+                ")->whereColumn('order_actions.order_id', 'orders.id'),
+                'action_counts_raw'
+            )
             ->with('service:id,service');
 
         // Filter by Order ID
         if ($orderId = request('order_id')) {
-            $query->where('id', $orderId);
+            $query->where('orders.id', $orderId);
         }
 
         // Filter by Link
@@ -55,13 +56,25 @@ class OrderController extends Controller
 
         // Filter by Date Range
         if ($dateFrom = request('date_from')) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereDate('orders.created_at', '>=', $dateFrom);
         }
         if ($dateTo = request('date_to')) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('orders.created_at', '<=', $dateTo);
         }
 
-        $orders = $query->orderBy('id', 'desc')->paginate(200);
+        $orders = $query->orderBy('orders.id', 'desc')->paginate(200);
+
+        // Parse the concatenated counts into separate attributes for frontend compatibility
+        // Frontend expects: sent_actions_count, free_actions_count, processing_actions_count, failed_actions_count
+        $orders->getCollection()->transform(function ($order) {
+            $counts = explode(',', $order->action_counts_raw ?? '0,0,0,0');
+            $order->sent_actions_count = (int) ($counts[0] ?? 0);
+            $order->free_actions_count = (int) ($counts[1] ?? 0);
+            $order->processing_actions_count = (int) ($counts[2] ?? 0);
+            $order->failed_actions_count = (int) ($counts[3] ?? 0);
+            unset($order->action_counts_raw);
+            return $order;
+        });
 
         return $orders;
     }
@@ -146,11 +159,8 @@ class OrderController extends Controller
         $rate = $rates[$actionType] ?? 0.00005;
         $totalCharge = $rate * $count;
 
-        $balance = Balance::where('customer', 'sadeghi')->first();
-        if ($balance) {
-            $balance->balance -= $totalCharge;
-            $balance->save();
-        }
+        // Atomic decrement to prevent race conditions with concurrent balance updates
+        Balance::where('customer', 'sadeghi')->decrement('balance', $totalCharge);
     }
 
     public function fail()
@@ -192,28 +202,37 @@ class OrderController extends Controller
         );
     }
 
-    public function changProcessingCommentsToFree()
+    public function changeProcessingToFree()
     {
-        $order = Order::query()->find(r('id'));
+        return tryCatch(
+            function () {
+                $order = Order::query()->find(request('id'));
 
-        // If order was canceled, refund the remaining balance first
-        if ($order->status === 'Canceled') {
-            $remaining = $order->total_count - $order->completed_count;
-            if ($remaining > 0) {
-                $this->refundBalance($order->service_type, $remaining);
-            }
-        }
+                if (!$order) {
+                    throw new \Exception('Order not found');
+                }
 
-        // Send to prepare queue (works for all service types)
-        $order->status = 'Pending';
-        $order->is_prepared = 0;
-        $order->save();
+                // If order was canceled, refund the remaining balance first
+                if ($order->status === 'Canceled') {
+                    $remaining = $order->total_count - $order->completed_count;
+                    if ($remaining > 0) {
+                        $this->refundBalance($order->service_type, $remaining);
+                    }
+                }
 
-        // Reset all non-sent actions to free
-        $order->actions()->where('status', '!=', 'sent')->update([
-            'status' => 'free',
-            'account_id' => null
-        ]);
+                // Send to prepare queue (works for all service types)
+                $order->status = 'Pending';
+                $order->is_prepared = 0;
+                $order->save();
+
+                // Reset all non-sent actions to free
+                $order->actions()->where('status', '!=', 'sent')->update([
+                    'status' => 'free',
+                    'account_id' => null
+                ]);
+            },
+            'Order processing actions reset successfully',
+        );
     }
 
     private function refundBalance($actionType, $count)
@@ -228,11 +247,8 @@ class OrderController extends Controller
         $rate = $rates[$actionType] ?? 0.00005;
         $totalRefund = $rate * $count;
 
-        $balance = Balance::where('customer', 'sadeghi')->first();
-        if ($balance) {
-            $balance->balance += $totalRefund;  // Add back
-            $balance->save();
-        }
+        // Atomic increment to prevent race conditions with concurrent balance updates
+        Balance::where('customer', 'sadeghi')->increment('balance', $totalRefund);
     }
 
     public function v3()

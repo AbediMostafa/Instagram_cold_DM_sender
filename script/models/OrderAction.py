@@ -213,3 +213,101 @@ def get_order_actions_stats(order_id):
         result[stat['status']] = stat['count']
 
     return result
+
+
+def get_single_action_for_account_prepared(account, action_types, excluded_order_ids=None):
+    """
+    Get a single action from prepared orders for the given account.
+
+    Only considers orders with is_prepared=2 (fully prepared with action_data).
+    Uses atomic UPDATE to prevent race conditions between threads.
+
+    Args:
+        account: Account model instance
+        action_types: List of action type strings to consider
+        excluded_order_ids: Order IDs to exclude (already processed in this session)
+
+    Returns:
+        OrderAction instance or None if no action available
+    """
+    if excluded_order_ids is None:
+        excluded_order_ids = []
+
+    # Get orders this account has already worked on (to avoid duplicate work)
+    # Only check active orders - completed/canceled orders are already filtered out
+    # by the main query's Order.status check, so excluding them is unnecessary overhead.
+    # Without this filter, an account with 6 months of history would generate a NOT IN
+    # clause with thousands of IDs, most of which are irrelevant.
+    active_order_ids = (
+        Order
+        .select(Order.id)
+        .where(Order.status.in_(['Pending', 'In progress']))
+    )
+
+    worked_order_ids = list(
+        OrderAction
+        .select(OrderAction.order)
+        .where(
+            (OrderAction.account == account) &
+            (OrderAction.order.in_(active_order_ids))
+        )
+        .distinct()
+        .tuples()
+    )
+    worked_order_ids = [x[0] for x in worked_order_ids]
+
+    # Combine with explicitly excluded orders
+    all_excluded = set(worked_order_ids + excluded_order_ids)
+
+    # Query for available actions from prepared orders
+    query = (
+        OrderAction
+        .select(OrderAction.id, OrderAction.order)
+        .join(Order)
+        .where(
+            (OrderAction.type.in_(action_types)) &
+            (Order.status.in_(['Pending', 'In progress'])) &
+            (Order.is_prepared == 2) &
+            (OrderAction.status == 'free')
+        )
+        .order_by(Order.id, OrderAction.id)
+        .limit(10)
+    )
+
+    # Exclude orders we've already worked on
+    if all_excluded:
+        query = query.where(~(OrderAction.order.in_(all_excluded)))
+
+    candidates = list(query)
+
+    if not candidates:
+        return None
+
+    # Try to atomically claim one of the candidates
+    for candidate in candidates:
+        updated = (
+            OrderAction
+            .update(
+                status='processing',
+                account=account,
+                updated_at=tehran_now()
+            )
+            .where(
+                (OrderAction.id == candidate.id) &
+                (OrderAction.status == 'free')
+            )
+            .execute()
+        )
+
+        if updated > 0:
+            # Successfully claimed - update order status if needed
+            Order.update(
+                status='In progress'
+            ).where(
+                (Order.id == candidate.order_id) &
+                (Order.status == 'Pending')
+            ).execute()
+
+            return OrderAction.get_by_id(candidate.id)
+
+    return None

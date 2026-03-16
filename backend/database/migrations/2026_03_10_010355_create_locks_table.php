@@ -38,6 +38,12 @@ return new class extends Migration {
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'order_stuck_reset',
+                'locked_until' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 

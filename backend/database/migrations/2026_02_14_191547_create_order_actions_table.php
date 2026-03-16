@@ -30,6 +30,8 @@ return new class extends Migration {
             $table->index(['order_id', 'status']);
             $table->index(['type', 'status']);
             $table->index('account_id');
+            $table->index(['account_id', 'order_id']);
+            $table->index(['type', 'status', 'order_id']);
         });
     }
 
