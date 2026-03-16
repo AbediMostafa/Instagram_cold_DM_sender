@@ -441,69 +441,89 @@ class CommentPrepareHandler:
         Finds the comment input, types the comment text, and clicks Post.
         This triggers the GraphQL request that our listener captures.
 
-        Detection order:
-        1. Check for restricted/disabled placeholders (e.g., "Comments on this post have been limited")
-           If found -> permanent error, no point retrying
-        2. Check for normal comment input ("Add a comment…")
-           If found -> proceed to type and post
-        3. If normal input not found -> check Comment icon to distinguish timing vs disabled
+        The detection phase runs in a retry loop (up to 3 attempts) to avoid
+        false positives from slow page rendering, especially for reel content
+        loaded via /p/ URLs. Each attempt checks:
+
+        1. Restricted/disabled placeholders (e.g., "Comments on this post have been limited")
+           If found -> permanent error immediately, no more attempts needed
+        2. Normal comment input ("Add a comment…")
+           If found -> proceed to type and post, exit loop
+        3. Comment icon (svg[aria-label="Comment"])
+           If found but input not visible -> click icon, wait, try next attempt
+           If not found -> wait and try next attempt
+
+        Only after all 3 attempts fail with no restricted placeholder, no input,
+        and no icon does it declare comments as truly disabled.
 
         Raises:
             LinkIsNotCorrect: If comments are permanently disabled on this post
-            RetryableError: If post button not found or comment input not loaded yet
+            RetryableError: If post button not found or other temporary issues
         """
         comment_text = self.first_action.content
+        max_detection_attempts = 3
 
         try:
-            # Step 1: Check for restricted/disabled placeholders BEFORE looking for the normal input
-            # Instagram replaces the normal "Add a comment…" placeholder with these messages
-            # when commenting is restricted. The input element still exists but is non-functional.
-            restricted_placeholders = [
-                "Comments on this post have been limited",
-                "Commenting is off",
-                "Comments are turned off",
-                "Comments on this reel have been limited",
-            ]
+            comment_input = None
 
-            for restricted_text in restricted_placeholders:
+            for attempt in range(1, max_detection_attempts + 1):
+                self.ig.account.add_cli(f'Comment input detection attempt {attempt}/{max_detection_attempts}')
+
+                # Step 1: Check for restricted/disabled placeholders
+                # Instagram replaces the normal "Add a comment…" placeholder with these messages
+                # when commenting is restricted. The input element still exists but is non-functional.
+                # This is a definitive signal — no need to retry.
+                restricted_placeholders = [
+                    "Comments on this post have been limited",
+                    "Commenting is off",
+                    "Comments are turned off",
+                    "Comments on this reel have been limited",
+                ]
+
+                for restricted_text in restricted_placeholders:
+                    try:
+                        restricted_input = self.ig.page.get_by_placeholder(restricted_text)
+                        if restricted_input.count() > 0 and restricted_input.is_visible():
+                            raise LinkIsNotCorrect(f"Comments restricted: {restricted_text}")
+                    except LinkIsNotCorrect:
+                        raise
+                    except Exception:
+                        pass
+
+                # Step 2: Look for the normal comment input
+                comment_input_locator = self.ig.page.get_by_placeholder("Add a comment…")
+
                 try:
-                    restricted_input = self.ig.page.get_by_placeholder(restricted_text)
-                    if restricted_input.count() > 0 and restricted_input.is_visible():
-                        raise LinkIsNotCorrect(f"Comments restricted: {restricted_text}")
-                except LinkIsNotCorrect:
-                    raise
+                    if comment_input_locator.count() > 0 and comment_input_locator.is_visible():
+                        comment_input = comment_input_locator
+                        self.ig.account.add_cli(f'Comment input found on attempt {attempt}')
+                        break
                 except Exception:
                     pass
 
-            # Step 2: Find the normal comment input field by placeholder text
-            comment_input = self.ig.page.get_by_placeholder("Add a comment…")
-
-            # Check if the comment input is available and visible
-            input_found = comment_input.count() > 0 and comment_input.is_visible()
-
-            if not input_found:
-                # Step 3: Input not visible - determine if comments are disabled or just not loaded
-                # Check if the Comment icon (svg) exists on the page
-                comment_icon = self.ig.page.locator('svg[aria-label="Comment"]').first
-                icon_exists = False
-
+                # Step 3: Check if Comment icon exists (means comments are enabled but input not loaded)
                 try:
-                    icon_exists = comment_icon.count() > 0 and comment_icon.is_visible()
+                    comment_icon = self.ig.page.locator('svg[aria-label="Comment"]').first
+                    if comment_icon.count() > 0 and comment_icon.is_visible():
+                        # Icon exists — comments are enabled, input just hasn't rendered yet
+                        # Try clicking the icon again to reveal the input
+                        self.ig.account.add_cli(f'Attempt {attempt}: icon visible but input not loaded, clicking icon')
+                        comment_icon.click(timeout=5000)
+                        self.ig.pause(5000, 7000)
+                        continue
                 except Exception:
                     pass
 
-                if icon_exists:
-                    # Comment icon exists but input is not visible
-                    # This means comments ARE enabled, but the input hasn't rendered yet
-                    # (could be a timing issue, or the icon click in _open_comment_box didn't work)
-                    raise RetryableError(
-                        "Comment icon is visible but input is not loaded - possible timing issue"
-                    )
-                else:
-                    # No comment icon and no comment input - comments are truly disabled
-                    raise LinkIsNotCorrect("Comments are disabled on this post")
+                # Nothing found yet — wait before next attempt
+                if attempt < max_detection_attempts:
+                    self.ig.account.add_cli(f'Attempt {attempt}: nothing found, waiting before retry...')
+                    self.ig.pause(5000, 7000)
 
-            # Comment input is visible - type the comment text
+            # All attempts exhausted without finding the comment input
+            if not comment_input:
+                raise LinkIsNotCorrect("Comments are disabled on this post")
+
+            # Comment input is visible — type the comment text
             self.ig.account.add_cli(f'Typing comment: {comment_text[:40]}...')
             comment_input.fill(comment_text, timeout=5000)
             self.ig.pause(3000, 5000)
