@@ -372,16 +372,28 @@ class BrowserApiCommentEvent(BaseAction):
         These errors are ambiguous - could be:
         - Temporary Instagram issue (should retry)
         - Post was deleted or comments disabled (should cancel)
+        - Account is restricted/blocked (should skip, let other accounts try)
 
         Strategy:
-        1. Retry up to MAX_RETRY_ATTEMPTS times with this same account
-        2. If all retries fail, send order back to prepare queue
-        3. Prepare will verify if post/comments are still available via browser
+        1. Check if the error is account-level (restricted/blocked) - if so, reset action immediately
+        2. Retry up to MAX_RETRY_ATTEMPTS times with this same account
+        3. If all retries fail, send order back to prepare queue
+        4. Prepare will verify if post/comments are still available via browser
         """
-        self.ig.account.add_cli(f'Execution error detected, attempting retries...')
+        self.ig.account.add_cli(f'Execution error detected')
         self._log_to_file(f'EXECUTION_ERROR: {json.dumps(json_data)[:1000]}', 'error')
 
+        # Check if the error is account-level (restricted/blocked)
+        # Retrying with the same account is pointless in this case -
+        # just free the action so other accounts can pick it up
+        if self._is_account_restricted(json_data):
+            self.ig.account.add_cli('Account is restricted/blocked, skipping retries and freeing action')
+            self._log_to_file(f'ACCOUNT_RESTRICTED: order={self.order.id}', 'error')
+            self._reset_action()
+            return
+
         # Retry loop - try MAX_RETRY_ATTEMPTS times
+        self.ig.account.add_cli(f'Attempting retries...')
         for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
             self.ig.account.add_cli(f'Retry attempt {attempt}/{MAX_RETRY_ATTEMPTS}')
             self.ig.pause(2000, 3000)
@@ -414,6 +426,36 @@ class BrowserApiCommentEvent(BaseAction):
         self.ig.account.add_cli(f'All {MAX_RETRY_ATTEMPTS} retries failed, sending order back to prepare')
         self._log_to_file(f'RETRIES_EXHAUSTED: order={self.order.id} sent back to prepare', 'error')
         self._send_to_prepare()
+
+    def _is_account_restricted(self, json_data):
+        """
+        Check if the execution error indicates the account is restricted or blocked.
+
+        These errors mean the problem is with the account, not the post.
+        Retrying with the same account will always fail, so we should free
+        the action for other accounts to handle.
+
+        Args:
+            json_data: Parsed JSON response from Instagram API
+
+        Returns:
+            True if error is account-level (restricted/blocked)
+            False if error is something else (should proceed with retries)
+        """
+        errors = json_data.get('errors', [])
+
+        for error in errors:
+            summary = str(error.get('summary', '')).lower()
+            description = str(error.get('description', '')).lower()
+
+            # Check both summary and description fields for account restriction indicators
+            combined = f'{summary} {description}'
+
+            if 'account is restricted' in combined or \
+               'temporarily blocked' in combined:
+                return True
+
+        return False
 
     def _send_to_prepare(self):
         """
