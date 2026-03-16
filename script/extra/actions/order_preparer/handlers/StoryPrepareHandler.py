@@ -390,11 +390,18 @@ class StoryPrepareHandler:
         """
         Check for common page errors on profile page.
 
-        These errors indicate the profile doesn't exist or has been removed.
+        These errors indicate the profile doesn't exist, has been removed,
+        or is private (which prevents story viewing).
 
         Raises:
             Exception: If any error condition is detected
         """
+        # Check for private account messages
+        # Instagram uses different text variants depending on the UI version
+        if self.ig.is_visible_by_text('This account is private') or \
+           self.ig.is_visible_by_text('This profile is private'):
+            raise Exception('Account is private')
+
         error_texts = [
             "Sorry, this page isn't available",
             "Page is not available",
@@ -443,8 +450,10 @@ class StoryPrepareHandler:
             if self.ig.is_visible_by_text(text):
                 raise Exception(f'Story error: {text}')
 
-        # Check for private account message
-        if self.ig.is_visible_by_text('This account is private'):
+        # Check for private account messages
+        # Instagram uses different text variants depending on the UI version
+        if self.ig.is_visible_by_text('This account is private') or \
+           self.ig.is_visible_by_text('This profile is private'):
             raise Exception('Account is private')
 
     def _extract_username_from_post(self):

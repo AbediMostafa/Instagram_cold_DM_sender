@@ -222,10 +222,11 @@ class CommentPrepareHandler:
         Navigate browser to the post page using the normalized link.
 
         Uses normalized link (reel -> p) for more stable interaction.
-        Waits longer than other handlers because comment UI takes time to load.
+        Waits longer than other handlers because comment UI takes extra time
+        to fully render, especially for reel content loaded via /p/ URL.
         """
         go_to_page(self.ig, self.normalized_link, 'Post Page')
-        self.ig.pause(8000, 10000)
+        self.ig.pause(10000, 13000)
 
     def _check_post_errors(self):
         """
@@ -248,11 +249,17 @@ class CommentPrepareHandler:
         self.original_url = self.ig.page.url
 
         # Check if redirected away from post (e.g., private account redirects to profile)
+        # When accessing a private account's post, Instagram silently redirects to the
+        # profile page instead of showing the post. We detect this by checking if the
+        # current URL still contains a post/reel path segment.
         if '/p/' not in self.original_url and '/reel/' not in self.original_url and '/reels/' not in self.original_url:
-            raise LinkIsNotCorrect("Account is private or post isn't available")
+            self.ig.account.add_cli(f'Redirected to: {self.original_url}')
+            raise LinkIsNotCorrect("Account is private or post isn't available (redirected away from post)")
 
-        # Check for private account message
-        if self.ig.is_visible_by_text('This account is private'):
+        # Check for private account messages
+        # Instagram uses different text variants depending on the UI version
+        if self.ig.is_visible_by_text('This account is private') or \
+           self.ig.is_visible_by_text('This profile is private'):
             raise LinkIsNotCorrect('Account is private')
 
         # Check for limited comments
@@ -289,43 +296,102 @@ class CommentPrepareHandler:
 
         Common popups include "shared this with you" and "Stay up to date with"
         notifications that can overlay the comment input.
+        Waits before checking to allow popup animation to complete.
         """
+        self.ig.pause(1500, 2500)
+
         if self.ig.is_visible_by_text("shared this with you") or \
            self.ig.is_visible_by_text("Stay up to date with"):
             try:
                 self.ig.page.get_by_role("button", name="Not now").first.click(timeout=3000)
-                self.ig.pause(1000, 1500)
-            except:
+                self.ig.pause(2000, 3000)
+            except Exception:
                 pass
 
     def _open_comment_box(self):
         """
-        Open the comment input box for reels.
+        Ensure the comment input is visible and ready for interaction.
 
-        Reels have a different UI where you need to click the comment icon
-        to open the comment input. Regular posts show the input directly.
+        Uses UI-based detection instead of URL-based detection because:
+        - Normalized reel URLs (/p/) may still render with reel-like UI
+        - Instagram can show different layouts regardless of the URL format
+        - The comment input might be hidden behind the Comment icon click
 
-        Also verifies we're still on the same post after clicking, since
-        reels can auto-scroll to different content.
+        Logic:
+        1. Check if comment input (placeholder) is already visible
+        2. If visible -> done, no action needed (typical for regular posts)
+        3. If not visible -> look for Comment icon (svg[aria-label="Comment"])
+        4. If icon found -> click it to reveal the comment input
+        5. If icon not found -> comments are likely disabled (handled by _post_comment)
+
+        After clicking the icon, verifies we're still on the same post
+        since reels can auto-scroll to different content.
         """
-        # Only needed for reels
-        if 'reels' in self.ig.page.url or 'reel' in self.ig.page.url:
-            try:
-                # Try clicking comment icon
-                self.ig.page.locator("svg[aria-label='Comment']").first.click(timeout=5000)
-                self.ig.pause(5000, 6500)
-            except:
-                try:
-                    # Fallback: click button containing comment icon
-                    self.ig.page.locator("div[role='button']").filter(
-                        has=self.ig.page.locator("svg[aria-label='Comment']")
-                    ).click(timeout=5000)
-                    self.ig.pause(5000, 6500)
-                except Exception as e:
-                    self.ig.account.add_cli(f'Open comment box error: {str(e)}')
+        # Check if comment input is already visible (common for regular /p/ posts)
+        comment_input = self.ig.page.get_by_placeholder("Add a comment…")
 
-            # Verify we didn't scroll to a different post
-            self._verify_still_on_same_post()
+        try:
+            if comment_input.count() > 0 and comment_input.is_visible():
+                self.ig.account.add_cli('Comment input already visible, no need to click icon')
+                return
+        except Exception:
+            pass
+
+        self.ig.account.add_cli('Comment input not visible, looking for Comment icon...')
+
+        # Comment input is not visible - try clicking the Comment icon to reveal it
+        # This is needed for reels and some post layouts where the input is hidden
+        comment_icon_clicked = False
+
+        # Selector 1: Direct SVG icon click
+        try:
+            icon = self.ig.page.locator("svg[aria-label='Comment']").first
+            if icon.count() > 0 and icon.is_visible():
+                icon.click(timeout=5000)
+                comment_icon_clicked = True
+                self.ig.account.add_cli('Clicked Comment icon (svg)')
+                self.ig.pause(5000, 7000)
+        except Exception:
+            pass
+
+        # Selector 2: Parent button wrapping the Comment icon (fallback)
+        if not comment_icon_clicked:
+            try:
+                button = self.ig.page.locator("div[role='button']").filter(
+                    has=self.ig.page.locator("svg[aria-label='Comment']")
+                ).first
+                if button.count() > 0 and button.is_visible():
+                    button.click(timeout=5000)
+                    comment_icon_clicked = True
+                    self.ig.account.add_cli('Clicked Comment icon (parent button)')
+                    self.ig.pause(5000, 7000)
+            except Exception:
+                pass
+
+        # Selector 3: The span > div[role=button] wrapper seen in some UI versions
+        if not comment_icon_clicked:
+            try:
+                wrapper = self.ig.page.locator("span div[role='button']:has(svg[aria-label='Comment'])").first
+                if wrapper.count() > 0 and wrapper.is_visible():
+                    wrapper.click(timeout=5000)
+                    comment_icon_clicked = True
+                    self.ig.account.add_cli('Clicked Comment icon (span wrapper)')
+                    self.ig.pause(5000, 7000)
+            except Exception:
+                pass
+
+        if not comment_icon_clicked:
+            # No comment icon found - this will be handled by _post_comment
+            # which checks for the input and raises appropriate error
+            self.ig.account.add_cli('Comment icon not found, will check input in next step')
+            return
+
+        # After clicking the icon, verify we didn't scroll to a different post
+        # This can happen on reel pages where clicking triggers auto-scroll
+        self._verify_still_on_same_post()
+
+        # Extra wait after icon click for the comment input to fully render
+        self.ig.pause(2000, 3000)
 
     def _verify_still_on_same_post(self):
         """
@@ -375,34 +441,88 @@ class CommentPrepareHandler:
         Finds the comment input, types the comment text, and clicks Post.
         This triggers the GraphQL request that our listener captures.
 
+        Detection order:
+        1. Check for restricted/disabled placeholders (e.g., "Comments on this post have been limited")
+           If found -> permanent error, no point retrying
+        2. Check for normal comment input ("Add a comment…")
+           If found -> proceed to type and post
+        3. If normal input not found -> check Comment icon to distinguish timing vs disabled
+
         Raises:
-            LinkIsNotCorrect: If comments are disabled
-            RetryableError: If post button not found or other temporary issues
+            LinkIsNotCorrect: If comments are permanently disabled on this post
+            RetryableError: If post button not found or comment input not loaded yet
         """
         comment_text = self.first_action.content
 
         try:
-            # Find comment input field
+            # Step 1: Check for restricted/disabled placeholders BEFORE looking for the normal input
+            # Instagram replaces the normal "Add a comment…" placeholder with these messages
+            # when commenting is restricted. The input element still exists but is non-functional.
+            restricted_placeholders = [
+                "Comments on this post have been limited",
+                "Commenting is off",
+                "Comments are turned off",
+                "Comments on this reel have been limited",
+            ]
+
+            for restricted_text in restricted_placeholders:
+                try:
+                    restricted_input = self.ig.page.get_by_placeholder(restricted_text)
+                    if restricted_input.count() > 0 and restricted_input.is_visible():
+                        raise LinkIsNotCorrect(f"Comments restricted: {restricted_text}")
+                except LinkIsNotCorrect:
+                    raise
+                except Exception:
+                    pass
+
+            # Step 2: Find the normal comment input field by placeholder text
             comment_input = self.ig.page.get_by_placeholder("Add a comment…")
 
-            if comment_input.count() == 0:
-                raise LinkIsNotCorrect("Comments are disabled on this post")
+            # Check if the comment input is available and visible
+            input_found = comment_input.count() > 0 and comment_input.is_visible()
 
-            if not comment_input.is_visible():
-                raise LinkIsNotCorrect("Comment input is not visible - comments may be disabled")
+            if not input_found:
+                # Step 3: Input not visible - determine if comments are disabled or just not loaded
+                # Check if the Comment icon (svg) exists on the page
+                comment_icon = self.ig.page.locator('svg[aria-label="Comment"]').first
+                icon_exists = False
 
-            # Type the comment text
+                try:
+                    icon_exists = comment_icon.count() > 0 and comment_icon.is_visible()
+                except Exception:
+                    pass
+
+                if icon_exists:
+                    # Comment icon exists but input is not visible
+                    # This means comments ARE enabled, but the input hasn't rendered yet
+                    # (could be a timing issue, or the icon click in _open_comment_box didn't work)
+                    raise RetryableError(
+                        "Comment icon is visible but input is not loaded - possible timing issue"
+                    )
+                else:
+                    # No comment icon and no comment input - comments are truly disabled
+                    raise LinkIsNotCorrect("Comments are disabled on this post")
+
+            # Comment input is visible - type the comment text
+            self.ig.account.add_cli(f'Typing comment: {comment_text[:40]}...')
             comment_input.fill(comment_text, timeout=5000)
-            self.ig.pause(2500, 4000)
+            self.ig.pause(3000, 5000)
 
             # Find and click Post button
+            # Wait a moment for Instagram to enable the button after text input
             post_button = self.ig.page.get_by_role("button", name="Post", exact=True)
 
             if post_button.count() == 0 or not post_button.is_visible():
-                raise RetryableError("Post button not found")
+                # Post button not found after typing - could be a timing issue
+                # or Instagram hasn't enabled it yet. Give it one more chance.
+                self.ig.account.add_cli('Post button not visible yet, waiting...')
+                self.ig.pause(3000, 4000)
+
+                if post_button.count() == 0 or not post_button.is_visible():
+                    raise RetryableError("Post button not found after extended wait")
 
             post_button.click()
-            self.ig.pause(3000, 4000)
+            self.ig.pause(4000, 6000)
 
             # Verify we're still on the same post after posting
             self._verify_still_on_same_post()
@@ -422,10 +542,12 @@ class CommentPrepareHandler:
         Note: Success is primarily verified by the network listener
         capturing the GraphQL request.
 
+        Waits before checking to allow Instagram to display any error messages.
+
         Raises:
             Exception: If comment posting error message is visible
         """
-        self.ig.pause(3000, 4500)
+        self.ig.pause(4000, 6000)
 
         if self.ig.is_visible_by_text("Couldn't post comment"):
             raise Exception("Couldn't post comment")

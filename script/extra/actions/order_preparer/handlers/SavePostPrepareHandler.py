@@ -190,15 +190,32 @@ class SavePostPrepareHandler:
         Check for common post page errors.
 
         Detects various error conditions that indicate the order cannot be completed:
-        - Private account
+        - Redirect to profile page (private account or unavailable post)
+        - Private account message
         - Deleted/unavailable post
         - Page load errors
+
+        The redirect check is critical: when a private account's post is accessed,
+        Instagram silently redirects to the profile page (e.g., /reel/ABC123/ -> /username/).
+        Without this check, the handler would fail later with confusing errors like
+        "Failed to click save button" instead of a clear "Account is private" message.
 
         Raises:
             Exception: If any error condition is detected
         """
-        # Check for private account
-        if self.ig.is_visible_by_text('This account is private'):
+        current_url = self.ig.page.url
+
+        # Check if redirected away from post page
+        # If the current URL doesn't contain /p/, /reel/, or /reels/, it means
+        # Instagram redirected us (usually to the profile page of a private account)
+        if '/p/' not in current_url and '/reel/' not in current_url and '/reels/' not in current_url:
+            self.ig.account.add_cli(f'Redirected to: {current_url}')
+            raise Exception("Account is private or post isn't available (redirected away from post)")
+
+        # Check for private account messages
+        # Instagram uses different text variants depending on the UI version
+        if self.ig.is_visible_by_text('This account is private') or \
+           self.ig.is_visible_by_text('This profile is private'):
             raise Exception('Account is private')
 
         # Check for deleted/unavailable post
