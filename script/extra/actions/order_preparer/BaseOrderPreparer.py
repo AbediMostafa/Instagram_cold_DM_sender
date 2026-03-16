@@ -602,6 +602,6 @@ class BaseOrderPreparer(BaseAction):
         while time.time() - start < timeout:
             if self.captured_data:
                 return True
-            time.sleep(0.3)
+            time.sleep(1)
 
         raise TimeoutError('Timeout waiting for data capture')
