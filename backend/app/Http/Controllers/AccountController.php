@@ -2,18 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Classes\MultiloginService;
-use App\Http\Resources\account\AccountCollection;
+use App\Classes\Fingerprint;
 use App\Models\Account;
-use App\Models\Message;
-use App\Models\Notif;
-use App\Models\Proxy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use \App\Classes\Fingerprint;
-use \imseyed\Auth2FA;
+use imseyed\Auth2FA;
 
 class AccountController extends Controller
 {
@@ -32,35 +27,11 @@ class AccountController extends Controller
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id', 'service_id',
-                'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name')
-//            ->withCount([
-//                'commands as total_cold_dms' => function ($query) use ($startDate, $endDate) {
-//                    $query->where('type', 'dm follow up')
-//                        ->where('times', 0)
-//                        ->where('state', 'success')
-//                        ->whereBetween('created_at', [$startDate, $endDate]);
-//                },
-//
-//                'commands as total_follow_ups' => function ($query) use ($startDate, $endDate) {
-//                    $query->where('type', 'dm follow up')
-//                        ->where('times', '>', 0)
-//                        ->where('state', 'success')
-//                        ->whereBetween('created_at', [$startDate, $endDate]);
-//                },
-//
-//                'threads as total_replies' => function ($query) use ($startDate, $endDate) {
-//                    $query->whereHas('messages', function ($subQuery) use ($startDate, $endDate) {
-//                        $subQuery->where('sender', 'lead')
-//                            ->where('type', 'text')
-//                            ->whereBetween('created_at', [$startDate, $endDate]);
-//                    });
-//                }
-//            ])
+                'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name',
+                'upload_post_status', 'app_state')
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
                 'service:id,title',
-//                'category:id,title',
-//                'proxy:id,ip',
                 'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
                     $query->select('created_at', 'account_id', 'cause')
@@ -70,6 +41,11 @@ class AccountController extends Controller
             ->when(
                 r('filter'),
                 fn($_) => $_->whereIn('instagram_state', r('filter'))
+            )
+            // Filter by upload_post_status when provided
+            ->when(
+                r('uploadPostFilter'),
+                fn($_) => $_->whereIn('upload_post_status', r('uploadPostFilter'))
             )
             ->when(
                 r('search'),
@@ -110,7 +86,6 @@ class AccountController extends Controller
                 }, '=', count($services));
             })
             ->orderBy('id', 'DESC')
-//            ->orderBy(r('sortBy'), r('sortDesc') ? 'DESC' : 'ASC')
             ->paginate(
                 config('data.pagination.each_page.accounts')
             );
@@ -340,6 +315,89 @@ class AccountController extends Controller
         }
     }
 
+    /**
+     * Set upload_post_status to 'pending' for selected accounts.
+     * This marks them for the Python worker to connect to Upload-Post.
+     */
+    public function uploadPostConnect()
+    {
+        return tryCatch(
+            fn() => Account::query()
+                ->whereIn('id', r('ids'))
+                ->update(['upload_post_status' => 'pending']),
+            'Account(s) marked for Upload-Post connection',
+        );
+    }
+
+    /**
+     * Set upload_post_status to 'disconnecting' for selected accounts.
+     * This marks them for the Python worker to disconnect from Upload-Post.
+     */
+    public function uploadPostDisconnect()
+    {
+        return tryCatch(
+            fn() => Account::query()
+                ->whereIn('id', r('ids'))
+                ->update(['upload_post_status' => 'disconnecting']),
+            'Account(s) marked for Upload-Post disconnection',
+        );
+    }
+
+    /**
+     * Reset upload_post_status to 'none' for selected accounts.
+     * upload_post_username is preserved so the same profile number can be reused if reconnected.
+     * Useful when status is incorrectly set (e.g. shows 'connected' but isn't actually connected).
+     */
+    public function resetUploadPostStatus()
+    {
+        return tryCatch(
+            fn() => Account::query()
+                ->whereIn('id', r('ids'))
+                ->update(['upload_post_status' => 'none']),
+            'Upload-Post status reset to none',
+        );
+    }
+
+    /**
+     * Toggle Upload-Post connection for a single account.
+     * Sets the appropriate status and runs the Python script which handles
+     * both connect and disconnect flows via the browser (with proxy).
+     *
+     * Based on current status:
+     *   - none/failed/disconnecting -> set to 'pending' and run script
+     *   - connected                 -> set to 'disconnecting' and run script
+     *   - pending/connecting        -> return error (already in progress)
+     */
+    public function toggleUploadPost()
+    {
+        try {
+            $account = Account::find(r('id'));
+
+            if (in_array($account->upload_post_status, ['none', 'failed', 'disconnecting'])) {
+                $account->upload_post_status = 'pending';
+                $account->save();
+
+                runPythonProcess('upload_post_connect.py', $account->id);
+
+                return jsonSuccess('Upload-Post connect started');
+
+            } elseif ($account->upload_post_status === 'connected') {
+                $account->upload_post_status = 'disconnecting';
+                $account->save();
+
+                runPythonProcess('upload_post_connect.py', $account->id);
+
+                return jsonSuccess('Upload-Post disconnect started');
+
+            } else {
+                return jsonError('Account is currently ' . $account->upload_post_status . ', please wait');
+            }
+
+        } catch (\Exception $e) {
+            return jsonError($e->getMessage());
+        }
+    }
+
     public function assignFingerprint()
     {
         $fingerprint = new Fingerprint();
@@ -450,5 +508,3 @@ class AccountController extends Controller
         );
     }
 }
-
-

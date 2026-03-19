@@ -189,27 +189,41 @@ class SavePostPrepareHandler:
         """
         Check for common post page errors.
 
-        Detects various error conditions that indicate the order cannot be completed:
-        - Redirect to profile page (private account or unavailable post)
-        - Private account message
-        - Deleted/unavailable post
-        - Page load errors
+        Detects various error conditions and categorizes them:
 
-        The redirect check is critical: when a private account's post is accessed,
-        Instagram silently redirects to the profile page (e.g., /reel/ABC123/ -> /username/).
-        Without this check, the handler would fail later with confusing errors like
-        "Failed to click save button" instead of a clear "Account is private" message.
+        Account-level issues (our automation account has a problem):
+        - Redirect to login/challenge/consent → RetryableError (another account should try)
+
+        Post-level issues (the target post/account is inaccessible):
+        - Redirect to profile page → Exception (cancel + charge)
+        - Private account message → Exception
+        - Deleted/unavailable post → Exception
+
+        Temporary issues:
+        - Page load errors → RetryableError
 
         Raises:
-            Exception: If any error condition is detected
+            Exception: For permanent issues with the post (cancel + charge)
+            RetryableError: For temporary issues (retry with another account)
         """
         current_url = self.ig.page.url
 
         # Check if redirected away from post page
-        # If the current URL doesn't contain /p/, /reel/, or /reels/, it means
-        # Instagram redirected us (usually to the profile page of a private account)
         if '/p/' not in current_url and '/reel/' not in current_url and '/reels/' not in current_url:
             self.ig.account.add_cli(f'Redirected to: {current_url}')
+
+            # Check if redirect is due to our account's issue (login/challenge/consent)
+            # These are temporary — another account should try this order
+            account_issue_paths = ['/accounts/login', '/challenge', '/consent']
+            is_account_issue = any(path in current_url for path in account_issue_paths)
+
+            # Redirect to Instagram home page is also likely an account issue
+            if is_account_issue or current_url.rstrip('/') in ['https://www.instagram.com', 'https://instagram.com']:
+                raise RetryableError(
+                    f"Account issue detected (redirected to {current_url})"
+                )
+
+            # Any other redirect (e.g., to profile page) means the post is inaccessible
             raise Exception("Account is private or post isn't available (redirected away from post)")
 
         # Check for private account messages
@@ -232,7 +246,7 @@ class SavePostPrepareHandler:
 
         # Check for temporary load errors
         if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):
-            raise Exception("Page load issue - temporary error")
+            raise RetryableError("Page load issue - temporary error")
 
     def _dismiss_popup(self):
         """

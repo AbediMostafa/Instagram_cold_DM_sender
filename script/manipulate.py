@@ -114,6 +114,7 @@ from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext impo
 # from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 # from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
 # from script.extra.actions.save_post.SavePostContext import SavePostContext
+from script.extra.actions.connect_to_uploadPost.UploadPostConnectContext import UploadPostConnectContext
 
 
 from script.extra.actions.order_preparer.OrderPreparerContext import OrderPreparerContext
@@ -139,7 +140,6 @@ from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
 from script.extra.routes import *
 from script.models.AccountHelper import get_storage_state
-from script.extra.api_actions.BrowserApiViewStoryEvent import BrowserApiViewStoryEvent
 from datetime import timedelta
 from script.extra.helper import tehran_now
 # from script.models.Order import get_next_order_for_account
@@ -151,14 +151,15 @@ import json
 from script.models.OrderComment import release_stuck_comments
 
 # print(updated_counts.count())
-account = get_next_account()
-# account = Account.get_by_id(33)
+# account = get_next_account()
+account = Account.get_by_id(7558)
 # order = get_next_order_for_account(account)
 # print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-OrderPreparerContext(browser_ig).fire()
+UploadPostConnectContext(browser_ig).fire()
+# OrderPreparerContext(browser_ig).fire()
 # ApiCommentContext(browser_ig).fire()
 # ApiSavePostContext(browser_ig).fire()
 # StoryPreparerContext(browser_ig).fire()

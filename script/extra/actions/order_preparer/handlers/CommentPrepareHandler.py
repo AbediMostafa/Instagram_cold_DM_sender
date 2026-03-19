@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, urlparse
 from script.extra.helper import go_to_page
 from script.extra.exceptions import RetryableError, LinkIsNotCorrect
 from script.models.OrderAction import OrderAction
+from peewee import fn
 
 
 class CommentPrepareHandler:
@@ -81,28 +82,95 @@ class CommentPrepareHandler:
         comment text stored in the 'content' field. We need to find the
         first one with content to post via browser.
 
+        Includes a retry mechanism for the race condition where Laravel has
+        created the order but hasn't finished inserting all OrderAction records yet.
+        If no actions are found at all (total=0), waits 30 seconds and retries
+        up to 3 times before giving up.
+
         Raises:
-            Exception: If no action with content found or content is empty
+            Exception: If no action with content found after all retries, or content is empty
         """
-        self.first_action = (
-            OrderAction
-            .select()
-            .where(
-                (OrderAction.order == self.order.id) &
-                (OrderAction.status == 'free') &
-                (OrderAction.content.is_null(False))
+        import time
+
+        max_retry_attempts = 3
+        retry_wait_seconds = 30
+
+        for attempt in range(1, max_retry_attempts + 1):
+            # Query for the first free action with content
+            self.first_action = (
+                OrderAction
+                .select()
+                .where(
+                    (OrderAction.order == self.order.id) &
+                    (OrderAction.status == 'free') &
+                    (OrderAction.content.is_null(False))
+                )
+                .order_by(OrderAction.id.asc())
+                .first()
             )
-            .order_by(OrderAction.id.asc())
-            .first()
-        )
 
-        if not self.first_action:
-            raise Exception('No comment action with content found')
+            # Found an action — proceed normally
+            if self.first_action:
+                if not self.first_action.content or not self.first_action.content.strip():
+                    raise Exception('Comment content is empty')
 
-        if not self.first_action.content or not self.first_action.content.strip():
-            raise Exception('Comment content is empty')
+                self.ig.account.add_cli(f'First comment: {self.first_action.content[:50]}...')
+                return
 
-        self.ig.account.add_cli(f'First comment: {self.first_action.content[:50]}...')
+            # No action found — collect debug info to understand why
+            try:
+                total = OrderAction.select().where(
+                    OrderAction.order == self.order.id
+                ).count()
+
+                free = OrderAction.select().where(
+                    (OrderAction.order == self.order.id) &
+                    (OrderAction.status == 'free')
+                ).count()
+
+                free_with_content = OrderAction.select().where(
+                    (OrderAction.order == self.order.id) &
+                    (OrderAction.status == 'free') &
+                    (OrderAction.content.is_null(False))
+                ).count()
+
+                # Get status distribution for this order
+                statuses = list(
+                    OrderAction
+                    .select(OrderAction.status, fn.COUNT(OrderAction.id).alias('cnt'))
+                    .where(OrderAction.order == self.order.id)
+                    .group_by(OrderAction.status)
+                    .dicts()
+                )
+
+                debug_msg = (
+                    f'DEBUG_NO_ACTION: order_id={self.order.id} | attempt={attempt}/{max_retry_attempts} | '
+                    f'total_actions={total} | free={free} | free_with_content={free_with_content} | '
+                    f'statuses={statuses}'
+                )
+
+                self.base._log_to_file(debug_msg, 'debug')
+                self.ig.account.add_cli(debug_msg)
+
+                # If total_actions=0, Laravel might still be inserting actions
+                # Wait and retry to handle this race condition
+                if total == 0 and attempt < max_retry_attempts:
+                    self.ig.account.add_cli(
+                        f'No actions found for order #{self.order.id}, '
+                        f'waiting {retry_wait_seconds}s before retry (attempt {attempt}/{max_retry_attempts})'
+                    )
+                    time.sleep(retry_wait_seconds)
+                    continue
+
+                # If total > 0 but no free actions with content, no point retrying
+                # Actions exist but are all processing/sent or have no content
+                break
+
+            except Exception as debug_err:
+                self.base._log_to_file(f'DEBUG_ERROR: {str(debug_err)}', 'debug')
+                break
+
+        raise Exception('No comment action with content found')
 
     def _validate_link(self):
         """
@@ -233,27 +301,41 @@ class CommentPrepareHandler:
         Check for post page errors that prevent commenting.
 
         Detects various conditions:
-        - Private account (can't comment)
+        - Redirect to login/challenge/consent (our account issue → RetryableError)
+        - Redirect to profile page (private account → LinkIsNotCorrect)
+        - Private account message visible
         - Comments limited/disabled
         - Post deleted or unavailable
         - Page load errors
-        - Comment box not visible (comments disabled)
 
-        Also checks if we were redirected away from the post page,
-        which can happen with private accounts.
+        The redirect check distinguishes between two categories:
+        - Our account has an issue (login expired, challenged, consent needed):
+          These are temporary and another account should try → RetryableError
+        - The post/account is genuinely inaccessible (private, deleted):
+          These are permanent → LinkIsNotCorrect (cancel + charge)
 
         Raises:
             LinkIsNotCorrect: For permanent issues with the post
-            RetryableError: For temporary load errors
+            RetryableError: For temporary issues with our account or page loading
         """
         self.original_url = self.ig.page.url
 
-        # Check if redirected away from post (e.g., private account redirects to profile)
-        # When accessing a private account's post, Instagram silently redirects to the
-        # profile page instead of showing the post. We detect this by checking if the
-        # current URL still contains a post/reel path segment.
+        # Check if redirected away from post page
         if '/p/' not in self.original_url and '/reel/' not in self.original_url and '/reels/' not in self.original_url:
             self.ig.account.add_cli(f'Redirected to: {self.original_url}')
+
+            # Check if redirect is due to our account's issue (login/challenge/consent)
+            # These are temporary — another account should try this order
+            account_issue_paths = ['/accounts/login', '/challenge', '/consent']
+            is_account_issue = any(path in self.original_url for path in account_issue_paths)
+
+            # Redirect to Instagram home page is also likely an account issue
+            if is_account_issue or self.original_url.rstrip('/') in ['https://www.instagram.com', 'https://instagram.com']:
+                raise RetryableError(
+                    f"Account issue detected (redirected to {self.original_url})"
+                )
+
+            # Any other redirect (e.g., to profile page) means the post is inaccessible
             raise LinkIsNotCorrect("Account is private or post isn't available (redirected away from post)")
 
         # Check for private account messages
@@ -533,7 +615,7 @@ class CommentPrepareHandler:
             post_button = self.ig.page.get_by_role("button", name="Post", exact=True)
 
             if post_button.count() == 0 or not post_button.is_visible():
-                # Post button not found after typing - could be a timing issue
+                # Post button not found after typing — could be a timing issue
                 # or Instagram hasn't enabled it yet. Give it one more chance.
                 self.ig.account.add_cli('Post button not visible yet, waiting...')
                 self.ig.pause(3000, 4000)

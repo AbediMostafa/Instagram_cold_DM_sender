@@ -731,23 +731,30 @@ class OrderController extends Controller
             ->where('service', 'comment')
             ->first();
 
-        $order = Order::query()->create([
-            "customer" => request("site_url") ?? request('customer'),
-            "service_id" => $service ? $service->id : null,
-            "service_type" => 'comment',
-            "target_link" => $cleanLink,
-            "total_count" => count($commentList),
-            "status" => "Pending",
-        ]);
-
-        foreach ($commentList as $comment) {
-            OrderAction::query()->create([
-                'order_id' => $order->id,
-                'type' => 'comment',
-                'content' => $comment,
-                'status' => 'free',
+        // Wrap order + actions creation in a transaction to prevent race condition.
+        // Without this, the Python preparer can see the order (is_prepared=0, status=Pending)
+        // before the actions are inserted, causing "No comment action with content found" errors.
+        $order = DB::transaction(function () use ($cleanLink, $commentList, $service) {
+            $order = Order::query()->create([
+                "customer" => request("site_url") ?? request('customer'),
+                "service_id" => $service ? $service->id : null,
+                "service_type" => 'comment',
+                "target_link" => $cleanLink,
+                "total_count" => count($commentList),
+                "status" => "Pending",
             ]);
-        }
+
+            foreach ($commentList as $comment) {
+                OrderAction::query()->create([
+                    'order_id' => $order->id,
+                    'type' => 'comment',
+                    'content' => $comment,
+                    'status' => 'free',
+                ]);
+            }
+
+            return $order;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -853,23 +860,30 @@ class OrderController extends Controller
             ->where('service', 'comment')
             ->first();
 
-        $order = Order::query()->create([
-            "customer" => request("site_url") ?? request('customer'),
-            "service_id" => $service ? $service->id : null,
-            "service_type" => 'comment',
-            "target_link" => $cleanLink,
-            "total_count" => count($commentList),
-            "status" => "Pending",
-        ]);
-
-        foreach ($commentList as $comment) {
-            OrderAction::query()->create([
-                'order_id' => $order->id,
-                'type' => 'comment',
-                'content' => $comment,
-                'status' => 'free',
+        // Wrap order + actions creation in a transaction to prevent race condition.
+        // Without this, the Python preparer can see the order (is_prepared=0, status=Pending)
+        // before the actions are inserted, causing "No comment action with content found" errors.
+        $order = DB::transaction(function () use ($cleanLink, $commentList, $service) {
+            $order = Order::query()->create([
+                "customer" => request("site_url") ?? request('customer'),
+                "service_id" => $service ? $service->id : null,
+                "service_type" => 'comment',
+                "target_link" => $cleanLink,
+                "total_count" => count($commentList),
+                "status" => "Pending",
             ]);
-        }
+
+            foreach ($commentList as $comment) {
+                OrderAction::query()->create([
+                    'order_id' => $order->id,
+                    'type' => 'comment',
+                    'content' => $comment,
+                    'status' => 'free',
+                ]);
+            }
+
+            return $order;
+        });
 
         return response()->json([
             'status' => 'success',

@@ -299,4 +299,9 @@ Route::post('tik-tok-tags/store', [TikTokTagController::class, 'index']);
 Route::delete('tik-tok-tags/{id}', [TikTokTagController::class, 'destroy']);
 
 
+Route::post('account/upload-post-connect', [AccountController::class, 'uploadPostConnect']);
+Route::post('account/upload-post-disconnect', [AccountController::class, 'uploadPostDisconnect']);
+Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
+Route::post('account/reset-upload-post-status', [AccountController::class, 'resetUploadPostStatus']);
+
 //});

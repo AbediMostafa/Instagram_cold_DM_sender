@@ -49,6 +49,13 @@ class Account(BaseWithTimeZoneModel):
     updated_at = DateTimeField(null=True)
     next_login = DateTimeField(null=True)
 
+    # Upload-Post connection status: none | pending | connecting | connected | failed | disconnecting
+    upload_post_status = CharField(default='none')
+
+    # Sequential numeric profile name on Upload-Post (e.g. '001', '002', '003')
+    # Assigned once atomically during connect, never reused across accounts.
+    upload_post_username = CharField(null=True)
+
     # Possibilities
     passed_days_since_creation = None
     allowed_number_of_dms = None

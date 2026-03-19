@@ -56,6 +56,26 @@
       </div>
     </div>
 
+    <!-- Upload-Post bulk actions -->
+    <div class="separator my-3 opacity-75"></div>
+    <div class="menu-item px-3">
+      <div class="menu-content fs-6 text-gray-900 fw-bold px-3 pb-2">
+        Upload-Post
+      </div>
+    </div>
+    <div class="menu-item ">
+      <div class="px-3 fill-flex d-flex align-items-center">
+        <a
+            class="btn btn-light-success btn-sm px-4 me-2"
+            @click="store.connectUploadPost(store.checkedAccountRows)">Connect Upload-Post</a>
+        <a
+            class="btn btn-light-danger btn-sm px-4 me-2"
+            @click="store.disconnectUploadPost(store.checkedAccountRows)">Disconnect Upload-Post</a>
+        <a
+            class="btn btn-light-warning btn-sm px-4"
+            @click="store.resetUploadPostStatus(store.checkedAccountRows)">Reset Status</a>
+      </div>
+    </div>
 
     <div class="menu-item">
       <div class="menu-content fs-6 text-gray-900 fw-bold px-3 pt-4">
@@ -119,6 +139,25 @@
         </div>
 
       </div>
+
+      <!-- Upload-Post status filter -->
+      <div class="menu-content px-3 mt-3">
+        <span class="text-muted fw-semibold fs-8 d-block mb-2">Upload-Post Status</span>
+        <el-checkbox-group
+            v-model="store.accounts.uploadPostFilter"
+            size="small"
+        >
+          <el-checkbox-button
+              v-for="state in store.uploadPostStates"
+              :key="state.value"
+              :value="state.value"
+              :label="state.label"
+              @click="actionClicked"
+          >
+            {{ state.label }}
+          </el-checkbox-button>
+        </el-checkbox-group>
+      </div>
     </div>
 
   </div>
@@ -126,13 +165,13 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, onMounted, ref} from "vue";
+import {defineComponent, ref} from "vue";
 import {useAccountStore} from "@/stores/Account";
 import {useTagStore} from "@/stores/Tag";
 import {showModal} from "@/core/helpers/modal";
 import {useProfileStore} from "@/stores/Profile";
-import ApiService from "@/core/services/ApiService";
 import {useServiceStore} from "@/stores/Service";
+import {useDebounceFn} from "@vueuse/core";
 
 export default defineComponent({
   name: "accounts-drop-down",
@@ -142,13 +181,17 @@ export default defineComponent({
     const tagStore = useTagStore();
     const serviceStore = useServiceStore();
     const tagLoading = ref(false)
+    const store = useAccountStore();
+
+    const actionClicked = useDebounceFn(() => store.getAccounts(store.accounts.current_page), 300);
 
     return {
-      store: useAccountStore(),
+      store,
       profileStore: useProfileStore(),
       tagStore,
       tagLoading,
       serviceStore,
+      actionClicked,
     }
 
   }

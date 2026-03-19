@@ -393,9 +393,25 @@ class StoryPrepareHandler:
         These errors indicate the profile doesn't exist, has been removed,
         or is private (which prevents story viewing).
 
+        Also detects account-level redirects (login/challenge/consent) which
+        indicate our automation account has an issue, not the target profile.
+
         Raises:
-            Exception: If any error condition is detected
+            Exception: For permanent issues with the profile
+            RetryableError: For temporary account issues
         """
+        current_url = self.ig.page.url
+
+        # Check if redirected to login/challenge/consent (our account's issue)
+        account_issue_paths = ['/accounts/login', '/challenge', '/consent']
+        is_account_issue = any(path in current_url for path in account_issue_paths)
+
+        if is_account_issue or current_url.rstrip('/') in ['https://www.instagram.com', 'https://instagram.com']:
+            self.ig.account.add_cli(f'Redirected to: {current_url}')
+            raise RetryableError(
+                f"Account issue detected (redirected to {current_url})"
+            )
+
         # Check for private account messages
         # Instagram uses different text variants depending on the UI version
         if self.ig.is_visible_by_text('This account is private') or \
@@ -418,14 +434,22 @@ class StoryPrepareHandler:
         """
         Check for story-specific errors.
 
-        Detects various conditions that prevent story viewing:
-        - Story unavailable (URL parameter or visible text)
-        - No active story (redirected away from stories URL)
-        - Private account
-        - Page load errors
+        Detects various conditions and categorizes them:
+
+        Account-level issues (our automation account has a problem):
+        - Redirect to login/challenge/consent → RetryableError (another account should try)
+
+        Story-level issues (the target story/account is inaccessible):
+        - Story unavailable flag in URL → Exception (cancel + charge)
+        - Redirect to non-story page (profile, home) → Exception
+        - Private account message → Exception
+
+        Temporary issues:
+        - Page load errors → RetryableError
 
         Raises:
-            Exception: If any error condition is detected
+            Exception: For permanent issues with the story (cancel + charge)
+            RetryableError: For temporary issues (retry with another account)
         """
         current_url = self.ig.page.url
 
@@ -433,8 +457,22 @@ class StoryPrepareHandler:
         if 'show_story_unavailable=1' in current_url:
             raise Exception('Story is unavailable')
 
-        # Check if redirected away from stories page (no active story)
+        # Check if redirected away from stories page
         if '/stories/' not in current_url:
+            self.ig.account.add_cli(f'Redirected to: {current_url}')
+
+            # Check if redirect is due to our account's issue (login/challenge/consent)
+            # These are temporary — another account should try this order
+            account_issue_paths = ['/accounts/login', '/challenge', '/consent']
+            is_account_issue = any(path in current_url for path in account_issue_paths)
+
+            # Redirect to Instagram home page is also likely an account issue
+            if is_account_issue or current_url.rstrip('/') in ['https://www.instagram.com', 'https://instagram.com']:
+                raise RetryableError(
+                    f"Account issue detected (redirected to {current_url})"
+                )
+
+            # Any other redirect means the story/user is not accessible
             raise Exception('User has no active story')
 
         # Check for visible error messages
@@ -449,6 +487,10 @@ class StoryPrepareHandler:
         for text in error_texts:
             if self.ig.is_visible_by_text(text):
                 raise Exception(f'Story error: {text}')
+
+        # Check for temporary page load errors
+        if self.ig.is_visible_by_text("There's an issue and the page could not be loaded"):
+            raise RetryableError("Page load issue - temporary error")
 
         # Check for private account messages
         # Instagram uses different text variants depending on the UI version
