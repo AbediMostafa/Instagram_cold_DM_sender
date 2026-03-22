@@ -19,10 +19,10 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('accounts', function (Blueprint $table) {
-//            $table->string('upload_post_status')->default('none');
+            $table->string('upload_post_status')->default('none');
             $table->string('upload_post_username')->nullable();
 
-//            $table->index('upload_post_status', 'idx_accounts_upload_post_status');
+            $table->index('upload_post_status', 'idx_accounts_upload_post_status');
         });
     }
 

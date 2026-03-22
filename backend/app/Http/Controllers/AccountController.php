@@ -377,7 +377,10 @@ class AccountController extends Controller
                 $account->upload_post_status = 'pending';
                 $account->save();
 
-                runPythonProcess('upload_post_connect.py', $account->id);
+                $path = base_path("../script/upload_post_connect.py");
+                $process = new \Symfony\Component\Process\Process(['python', $path, (string)$account->id]);
+                $process->setTimeout(400);
+                $process->run();
 
                 return jsonSuccess('Upload-Post connect started');
 
@@ -385,15 +388,30 @@ class AccountController extends Controller
                 $account->upload_post_status = 'disconnecting';
                 $account->save();
 
-                runPythonProcess('upload_post_connect.py', $account->id);
+
+                $path = base_path("../script/upload_post_connect.py");
+                $process = new \Symfony\Component\Process\Process(['python', $path, (string)$account->id]);
+                $process->setTimeout(400);
+                $process->run();
 
                 return jsonSuccess('Upload-Post disconnect started');
 
             } else {
+                \Log::warning('[UploadPost Toggle] Skipped - already in progress', [
+                    'account_id' => $account->id,
+                    'current_status' => $account->upload_post_status,
+                ]);
+
                 return jsonError('Account is currently ' . $account->upload_post_status . ', please wait');
             }
 
         } catch (\Exception $e) {
+            \Log::error('[UploadPost Toggle] Exception', [
+                'account_id' => r('id'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return jsonError($e->getMessage());
         }
     }

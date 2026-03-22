@@ -49,7 +49,7 @@ class BrowserUploadPostConnectEvent:
         First cleans up one suspended account's Upload-Post profile, then
         checks the current account's upload_post_status and routes to connect or disconnect.
         """
-        # clean up one suspended account's Upload-Post profile per cycle
+        # Housekeeping: clean up one suspended account's Upload-Post profile per cycle
         self._cleanup_one_suspended_profile()
 
         status = self.account.upload_post_status
@@ -84,10 +84,16 @@ class BrowserUploadPostConnectEvent:
 
             # Step 0: Assign a sequential profile number if not already assigned.
             # This is atomic to prevent duplicate numbers across concurrent threads.
-            profile_username = self._get_or_assign_profile_username()
+            # is_new=True means we need to create the profile on Upload-Post.
+            # is_new=False means profile already exists (reuse from previous attempt).
+            profile_username, is_new = self._get_or_assign_profile_username()
 
-            # Step 1: Create a profile on Upload-Post using the assigned number
-            self._create_profile(profile_username)
+            # Step 1: Only create profile on Upload-Post if this is a new number.
+            # If reusing an existing number, the profile was already created before.
+            if is_new:
+                self._create_profile(profile_username)
+            else:
+                self.account.add_cli(f'[UploadPost] Profile "{profile_username}" already exists on Upload-Post, skipping creation')
 
             # Step 2: Generate the secure access URL (JWT link, valid 48h)
             access_url = self._generate_jwt(profile_username)
@@ -147,14 +153,19 @@ class BrowserUploadPostConnectEvent:
         are assigning numbers simultaneously.
 
         Format: '001', '002', ..., '999', '1000', etc. (zero-padded to 3 digits minimum)
+
+        Returns: tuple (profile_username, is_new)
+          - is_new=False means profile was already created on Upload-Post before
+          - is_new=True means this is a brand new number, profile needs to be created
         """
         from script.models.Account import Account
         from script.models.Base import database
 
-        # If already assigned (e.g. retry after failure), reuse the same number
+        # If already assigned (e.g. retry after failure), reuse the same number.
+        # Profile already exists on Upload-Post, no need to create again.
         if self.account.upload_post_username:
             self.account.add_cli(f'[UploadPost] Reusing existing profile number: {self.account.upload_post_username}')
-            return self.account.upload_post_username
+            return self.account.upload_post_username, False
 
         # Atomically get the next number: find max existing number and add 1
         with database.atomic():
@@ -175,13 +186,14 @@ class BrowserUploadPostConnectEvent:
             self.account.save()
 
         self.account.add_cli(f'[UploadPost] Assigned new profile number: {profile_username}')
-        return profile_username
+        return profile_username, True
 
-    def _create_profile(self, username):
+    def _create_profile(self, username, is_retry=False):
         """
         Step 1: Create a user profile on Upload-Post.
         POST /api/uploadposts/users
         If the profile already exists, we log it and continue (not an error).
+        If PROFILE_LIMIT_REACHED, try to clean up a suspended profile and retry once.
         """
         self.account.add_cli(f'[UploadPost] Creating profile for "{username}"...')
 
@@ -198,6 +210,18 @@ class BrowserUploadPostConnectEvent:
         elif response.status_code == 409 or 'already exists' in str(data).lower():
             # Profile already exists - that's fine, continue (retry scenario)
             self.account.add_cli(f'[UploadPost] Profile already exists, continuing...')
+        elif data.get('error_code') == 'PROFILE_LIMIT_REACHED' and not is_retry:
+            # Plan limit reached. Try to free up a slot by cleaning a suspended profile.
+            self.account.add_cli(f'[UploadPost] Profile limit reached ({data.get("current_profiles")}/{data.get("profile_limit")}). Attempting cleanup...')
+
+            cleaned = self._cleanup_one_suspended_profile()
+
+            if cleaned:
+                # Slot freed, retry creating the profile once
+                self.account.add_cli(f'[UploadPost] Slot freed, retrying profile creation...')
+                self._create_profile(username, is_retry=True)
+            else:
+                raise Exception(f'Profile limit reached and no suspended profiles to clean up. Current: {data.get("current_profiles")}/{data.get("profile_limit")}')
         else:
             raise Exception(f'Failed to create profile: {response.status_code} - {data}')
 
@@ -461,6 +485,8 @@ class BrowserUploadPostConnectEvent:
         Only clears upload_post_status to 'none'. upload_post_username is kept
         in case the account becomes active again and needs to reconnect with
         the same profile number.
+
+        Returns True if a profile was successfully deleted, False otherwise.
         """
         from script.models.Account import Account
         from script.models.Base import database
@@ -481,29 +507,49 @@ class BrowserUploadPostConnectEvent:
                     .first())
 
                 if not suspended:
-                    return
+                    self.account.add_cli('[UploadPost Cleanup] No suspended accounts with profiles found')
+                    return False
 
-                self.account.add_cli(f'[UploadPost Cleanup] Found suspended account: {suspended.username} (ID: {suspended.id})')
+                profile_username = suspended.upload_post_username
+                self.account.add_cli(f'[UploadPost Cleanup] Found suspended account: {suspended.username} (ID: {suspended.id}, profile: {profile_username})')
 
                 # Delete the profile from Upload-Post API
-                profile_username = suspended.upload_post_username
-
                 response = requests.delete(
                     f'{UPLOAD_POST_BASE_URL}/uploadposts/users',
                     headers=self.headers,
                     json={'username': profile_username},
                 )
 
-                # Reset status to 'none' but keep upload_post_username
-                suspended.upload_post_status = 'none'
-                suspended.save()
+                # Verify that API delete actually succeeded
+                if response.text.strip():
+                    data = response.json()
+                else:
+                    data = {}
 
-                self.account.add_cli(f'[UploadPost Cleanup] Deleted profile "{profile_username}" for suspended account {suspended.username}')
+                if response.status_code == 200 and data.get('success'):
+                    # API confirmed deletion - safe to update local status
+                    suspended.upload_post_status = 'none'
+                    suspended.save()
+                    self.account.add_cli(f'[UploadPost Cleanup] Successfully deleted profile "{profile_username}" for {suspended.username}')
+                    return True
+                elif response.status_code == 404:
+                    # Profile didn't exist on Upload-Post anyway - still clean up local status
+                    suspended.upload_post_status = 'none'
+                    suspended.save()
+                    self.account.add_cli(f'[UploadPost Cleanup] Profile "{profile_username}" not found on Upload-Post, reset local status')
+                    return True
+                else:
+                    # API delete failed - do NOT update local status, leave for next cycle
+                    self.account.add_cli(f'[UploadPost Cleanup] API delete failed for "{profile_username}": {response.status_code} - {data}')
+                    return False
 
         except Exception as e:
             self.account.add_cli(f'[UploadPost Cleanup] Error: {str(e)}')
+            return False
 
-
+    # -------------------------------------------------------------------------
+    # Helpers
+    # -------------------------------------------------------------------------
 
     def _update_status(self, status):
         """
