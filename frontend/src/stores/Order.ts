@@ -40,7 +40,10 @@ export const useOrderStore = defineStore("OrderStore", {
                 confirmButtonText: "Yes, delete it!",
             }).then((result) => {
                 if (result.isConfirmed) {
-                    ApiService.post("order/delete", {ids}).then(() => this.getOrders());
+                    ApiService.post("order/delete", {ids}).then(() => {
+                        this.checkedOrderRows = [];
+                        this.getOrders();
+                    });
                 }
             });
         },
@@ -113,6 +116,7 @@ export const useOrderStore = defineStore("OrderStore", {
                 : [];
         },
 
+        // Single order actions (unchanged)
         finish(id) {
             Swal.fire({
                 title: "Are you sure you want to finish the order?",
@@ -187,6 +191,99 @@ export const useOrderStore = defineStore("OrderStore", {
                         });
                 }
             });
-        }
+        },
+
+        // Bulk actions
+        bulkFinish(ids) {
+            this.warnIfdosntSelected(ids) &&
+            Swal.fire({
+                title: `Are you sure you want to finish ${ids.length} order(s)?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, finish them!",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ApiService.post("order/finish", {ids})
+                        .then(() => {
+                            this.checkedOrderRows = [];
+                            this.getOrders(this.orders.current_page, false);
+                        })
+                        .finally(() => {
+                            this.is.loading = false;
+                        });
+                }
+            });
+        },
+
+        bulkFail(ids) {
+            this.warnIfdosntSelected(ids) &&
+            Swal.fire({
+                title: `Are you sure you want to fail ${ids.length} order(s)?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, fail them!",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ApiService.post("order/fail", {ids})
+                        .then(() => {
+                            this.checkedOrderRows = [];
+                            this.getOrders(this.orders.current_page, false);
+                        })
+                        .finally(() => {
+                            this.is.loading = false;
+                        });
+                }
+            });
+        },
+
+        bulkReset(ids) {
+            this.warnIfdosntSelected(ids) &&
+            Swal.fire({
+                title: `Are you sure you want to reset ${ids.length} order(s)?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, reset them!",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ApiService.post("order/reset", {ids})
+                        .then(() => {
+                            this.checkedOrderRows = [];
+                            this.getOrders(this.orders.current_page, false);
+                        })
+                        .finally(() => {
+                            this.is.loading = false;
+                        });
+                }
+            });
+        },
+
+        bulkChangeProcessingToFree(ids) {
+            this.warnIfdosntSelected(ids) &&
+            Swal.fire({
+                title: `Are you sure you want to change ${ids.length} order(s) processing to free?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, do it!",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ApiService.post("order/change-processing-to-free", {ids})
+                        .then(() => {
+                            this.checkedOrderRows = [];
+                            this.getOrders(this.orders.current_page, false);
+                        })
+                        .finally(() => {
+                            this.is.loading = false;
+                        });
+                }
+            });
+        },
     },
 });

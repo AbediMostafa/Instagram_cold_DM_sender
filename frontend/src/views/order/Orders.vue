@@ -12,15 +12,35 @@
         <a class="btn btn-sm btn-success me-2" @click="showModal('add_order_modal')">Add Order</a>
         <a class="btn btn-sm btn-light-primary me-2" @click="store.getOrders()">Refresh</a>
 
-        <button
-            type="button"
-            class="btn btn-sm btn-icon btn-color-primary btn-active-light-primary"
-            data-kt-menu-trigger="click"
-            data-kt-menu-placement="bottom-end"
-            data-kt-menu-flip="top-end"
-        >
-          <KTIcon icon-name="category" icon-class="fs-2"/>
-        </button>
+        <!--begin::Bulk Actions Dropdown-->
+        <el-dropdown class="me-2" @command="handleBulkAction">
+          <button
+              type="button"
+              class="btn btn-sm btn-icon btn-color-primary btn-active-light-primary"
+          >
+            <KTIcon icon-name="category" icon-class="fs-2"/>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="finish" :disabled="!store.checkedOrderRows.length">
+                Finish Selected ({{ store.checkedOrderRows.length }})
+              </el-dropdown-item>
+              <el-dropdown-item command="reset" :disabled="!store.checkedOrderRows.length">
+                Reset Selected ({{ store.checkedOrderRows.length }})
+              </el-dropdown-item>
+              <el-dropdown-item command="changeProcessingToFree" :disabled="!store.checkedOrderRows.length">
+                Change Processing To Free ({{ store.checkedOrderRows.length }})
+              </el-dropdown-item>
+              <el-dropdown-item command="fail" :disabled="!store.checkedOrderRows.length">
+                Fail Selected ({{ store.checkedOrderRows.length }})
+              </el-dropdown-item>
+              <el-dropdown-item command="delete" divided :disabled="!store.checkedOrderRows.length">
+                Delete Selected ({{ store.checkedOrderRows.length }})
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <!--end::Bulk Actions Dropdown-->
 
       </div>
     </div>
@@ -279,6 +299,28 @@ const resetFilters = () => {
 const openActions = (orderId: number) => {
   actionsModal.value.open(orderId)
 }
+
+const handleBulkAction = (command: string) => {
+  if (!store.checkedOrderRows.length) return;
+
+  switch (command) {
+    case 'finish':
+      store.bulkFinish(store.checkedOrderRows);
+      break;
+    case 'reset':
+      store.bulkReset(store.checkedOrderRows);
+      break;
+    case 'changeProcessingToFree':
+      store.bulkChangeProcessingToFree(store.checkedOrderRows);
+      break;
+    case 'fail':
+      store.bulkFail(store.checkedOrderRows);
+      break;
+    case 'delete':
+      store.deleteSelected(store.checkedOrderRows);
+      break;
+  }
+};
 
 onMounted(() => {
   store.getOrders();

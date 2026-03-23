@@ -121,16 +121,63 @@ class StoryPrepareHandler:
         For direct links, we can go straight to the story page without
         first checking the profile. This is faster but may fail if the
         story has expired.
+
+        Includes a retry mechanism for cases where the story page doesn't load
+        properly on the first attempt. Instagram's story viewer can be slow to
+        render, especially for direct links with story IDs. If the first attempt
+        gets "User has no active story" (which could be a false positive from
+        slow loading), we re-navigate and try again up to 3 times.
+
+        Raises:
+            Exception: If story is genuinely unavailable after all retries
+            RetryableError: If account-level issue detected (login/challenge)
         """
         self._setup_story_listener()
 
-        # Navigate directly to story URL
-        go_to_page(self.ig, self.order.target_link, 'Story Page')
-        self.ig.pause(5000, 7000)
+        max_attempts = 3
+        last_error = None
 
-        self._check_story_errors()
-        self._click_view_story()
-        self.base.wait_for_capture()
+        for attempt in range(1, max_attempts + 1):
+            self.ig.account.add_cli(
+                f'Direct story link attempt {attempt}/{max_attempts}: {self.order.target_link}'
+            )
+
+            # Navigate to story URL
+            go_to_page(self.ig, self.order.target_link, 'Story Page')
+            self.ig.pause(15000, 20000)
+
+            try:
+                self._check_story_errors()
+                # No errors — story loaded successfully, proceed
+                self._click_view_story()
+                self.base.wait_for_capture()
+                return
+
+            except RetryableError:
+                # Account-level issue (login/challenge) — don't retry, raise immediately
+                raise
+
+            except Exception as e:
+                last_error = e
+                error_msg = str(e)
+
+                # Only retry for "no active story" — could be false positive from slow loading
+                # Other errors (story unavailable, private account) are definitive
+                if 'no active story' not in error_msg.lower():
+                    raise
+
+                if attempt < max_attempts:
+                    self.ig.account.add_cli(
+                        f'Attempt {attempt} failed: {error_msg}, retrying...'
+                    )
+                    self.ig.pause(5000, 7000)
+                    continue
+
+        # All attempts exhausted — story is genuinely unavailable
+        self.ig.account.add_cli(
+            f'All {max_attempts} attempts failed for direct story link'
+        )
+        raise last_error
 
     def _process_username_link(self):
         """

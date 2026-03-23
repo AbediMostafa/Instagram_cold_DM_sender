@@ -96,54 +96,57 @@ class OrderController extends Controller
     {
         return tryCatch(
             function () {
-                $orderId = request('id');
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
                 $maxRetries = 3;
-                $attempt = 0;
 
-                while ($attempt < $maxRetries) {
-                    try {
-                        DB::transaction(function () use ($orderId) {
-                            $order = Order::query()
-                                ->where('id', $orderId)
-                                ->lockForUpdate()
-                                ->first();
+                foreach ($ids as $orderId) {
+                    $attempt = 0;
+                    while ($attempt < $maxRetries) {
+                        try {
+                            DB::transaction(function () use ($orderId) {
+                                $order = Order::query()
+                                    ->where('id', $orderId)
+                                    ->lockForUpdate()
+                                    ->first();
 
-                            if (!$order) {
-                                throw new \Exception('Order not found');
-                            }
-
-                            // Calculate how many actions need to be completed
-                            $remainingCount = $order->total_count - $order->completed_count;
-
-                            if ($remainingCount > 0) {
-                                // Always deduct balance for remaining
-                                $this->deductBalance($order->service_type, $remainingCount);
-
-                                // Only update actions if is_prepared = 2 (actions exist)
-                                if ($order->is_prepared == 2) {
-                                    $order->actions()
-                                        ->whereNotIn('status', ['sent', 'failed'])
-                                        ->update(['status' => 'sent']);
+                                if (!$order) {
+                                    throw new \Exception('Order not found');
                                 }
+
+                                // Calculate how many actions need to be completed
+                                $remainingCount = $order->total_count - $order->completed_count;
+
+                                if ($remainingCount > 0) {
+                                    // Always deduct balance for remaining
+                                    $this->deductBalance($order->service_type, $remainingCount);
+
+                                    // Only update actions if is_prepared = 2 (actions exist)
+                                    if ($order->is_prepared == 2) {
+                                        $order->actions()
+                                            ->whereNotIn('status', ['sent', 'failed'])
+                                            ->update(['status' => 'sent']);
+                                    }
+                                }
+
+                                $order->completed_count = $order->total_count;
+                                $order->status = 'Completed';
+                                $order->save();
+                            });
+
+                            break; // Success, move to next order
+
+                        } catch (\Illuminate\Database\QueryException $e) {
+                            $attempt++;
+                            if ($attempt >= $maxRetries || !str_contains($e->getMessage(), 'deadlock')) {
+                                throw $e;
                             }
-
-                            $order->completed_count = $order->total_count;
-                            $order->status = 'Completed';
-                            $order->save();
-                        });
-
-                        return;
-
-                    } catch (\Illuminate\Database\QueryException $e) {
-                        $attempt++;
-                        if ($attempt >= $maxRetries || !str_contains($e->getMessage(), 'deadlock')) {
-                            throw $e;
+                            usleep(100000 * $attempt);
                         }
-                        usleep(100000 * $attempt);
                     }
                 }
             },
-            'Order finished successfully',
+            'Order(s) finished successfully',
         );
     }
 
@@ -167,12 +170,15 @@ class OrderController extends Controller
     {
         return tryCatch(
             function () {
-                $order = Order::query()->find(request('id'));
-                $order->status = 'Canceled';
-                $order->is_prepared = 0;
-                $order->save();
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
+
+                Order::query()->whereIn('id', $ids)->update([
+                    'status' => 'Canceled',
+                    'is_prepared' => 0,
+                ]);
             },
-            'Order failed successfully',
+            'Order(s) failed successfully',
         );
     }
 
@@ -180,25 +186,32 @@ class OrderController extends Controller
     {
         return tryCatch(
             function () {
-                $order = Order::query()->find(request('id'));
-                $order->status = 'Pending';
-                $order->is_prepared = 0;
-                $order->completed_count = 0;
-                $order->action_data = null;
-                $order->save();
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
 
-                if ($order->service_type === 'comment') {
-                    // For comments: keep actions but reset status and account
-                    $order->actions()->update([
-                        'status' => 'free',
-                        'account_id' => null,
-                    ]);
-                } else {
-                    // For view_story and save_post: delete actions (preparer will recreate them)
-                    $order->actions()->delete();
+                foreach ($ids as $orderId) {
+                    $order = Order::query()->find($orderId);
+                    if (!$order) continue;
+
+                    $order->status = 'Pending';
+                    $order->is_prepared = 0;
+                    $order->completed_count = 0;
+                    $order->action_data = null;
+                    $order->save();
+
+                    if ($order->service_type === 'comment') {
+                        // For comments: keep actions but reset status and account
+                        $order->actions()->update([
+                            'status' => 'free',
+                            'account_id' => null,
+                        ]);
+                    } else {
+                        // For view_story and save_post: delete actions (preparer will recreate them)
+                        $order->actions()->delete();
+                    }
                 }
             },
-            'Order reset successfully',
+            'Order(s) reset successfully',
         );
     }
 
@@ -206,32 +219,34 @@ class OrderController extends Controller
     {
         return tryCatch(
             function () {
-                $order = Order::query()->find(request('id'));
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
 
-                if (!$order) {
-                    throw new \Exception('Order not found');
-                }
+                foreach ($ids as $orderId) {
+                    $order = Order::query()->find($orderId);
+                    if (!$order) continue;
 
-                // If order was canceled, refund the remaining balance first
-                if ($order->status === 'Canceled') {
-                    $remaining = $order->total_count - $order->completed_count;
-                    if ($remaining > 0) {
-                        $this->refundBalance($order->service_type, $remaining);
+                    // If order was canceled, refund the remaining balance first
+                    if ($order->status === 'Canceled') {
+                        $remaining = $order->total_count - $order->completed_count;
+                        if ($remaining > 0) {
+                            $this->refundBalance($order->service_type, $remaining);
+                        }
                     }
+
+                    // Send to prepare queue (works for all service types)
+                    $order->status = 'Pending';
+                    $order->is_prepared = 0;
+                    $order->save();
+
+                    // Reset all non-sent actions to free
+                    $order->actions()->where('status', '!=', 'sent')->update([
+                        'status' => 'free',
+                        'account_id' => null
+                    ]);
                 }
-
-                // Send to prepare queue (works for all service types)
-                $order->status = 'Pending';
-                $order->is_prepared = 0;
-                $order->save();
-
-                // Reset all non-sent actions to free
-                $order->actions()->where('status', '!=', 'sent')->update([
-                    'status' => 'free',
-                    'account_id' => null
-                ]);
             },
-            'Order processing actions reset successfully',
+            'Order(s) processing actions reset successfully',
         );
     }
 
