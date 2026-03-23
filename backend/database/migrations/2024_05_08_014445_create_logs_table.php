@@ -21,6 +21,8 @@ return new class extends Migration
             $table->text('log');
 
             $table->timestamp('created_at');
+
+            $table->index('account_id');
         });
     }
 
