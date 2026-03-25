@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Classes\AdsPowerProfileUpdateProxy;
-use App\Classes\MultiloginService;
-use App\Classes\ProfileDelete;
 use App\Classes\ProfileUpdateProxy;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -48,6 +46,23 @@ class Account extends Model
         'loom follow up',
         'delete initial posts',
         'get thread messages'
+    ];
+
+    // Upload-Post connection lifecycle states.
+    // Used to manage the OAuth connect/disconnect flow with Upload-Post service.
+    // - none:          No action taken (default)
+    // - pending:       Selected from admin panel for connection
+    // - connecting:    Worker has claimed this account and is running OAuth
+    // - connected:     Successfully linked to Upload-Post
+    // - failed:        Connection attempt failed (can be retried)
+    // - disconnecting: Marked for disconnection from admin panel
+    public static array $uploadPostStatuses = [
+        'none',
+        'pending',
+        'connecting',
+        'connected',
+        'failed',
+        'disconnecting',
     ];
 
     public function threads()
@@ -292,6 +307,23 @@ class Account extends Model
         }
 
         return $query;
+    }
+
+    /**
+     * Scope: accounts that are successfully connected to Upload-Post
+     */
+    public function scopeUploadPostConnected($query)
+    {
+        return $query->where('upload_post_status', 'connected');
+    }
+
+    /**
+     * Scope: accounts waiting to be connected or disconnected by the worker.
+     * Returns accounts with status 'pending' (needs connect) or 'disconnecting' (needs disconnect).
+     */
+    public function scopeUploadPostActionable($query)
+    {
+        return $query->whereIn('upload_post_status', ['pending', 'disconnecting']);
     }
 
     public static function next_account($serviceId = null, $specificIds = [], $tagTitles = [])

@@ -31,7 +31,7 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
-use App\Models\Template;
+use App\Models\Order;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 use Illuminate\Support\Facades\Auth;
@@ -47,67 +47,43 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use \App\Models\Order;
-use \App\Models\Setting;
-use \App\Models\Account;
-use \App\Models\Proxy;
-use \App\Models\City;
 
 Route::get('/', function () {
 });
 Route::get('/test', function () {
 
-    $accounts = Account::query()
-        ->where('instagram_state', 'active')
-        ->where('service_id', '7')
-        ->update([
-            'service_id' => 8
-        ]);
-    dump(
-        $accounts
-    );
-
-    dd(\App\Models\Balance::query()->first()->balance);
-
 });
 
 Route::get('/get-state', function () {
+    $orders = Order::query()
+        ->orderBy('id', 'desc')
+        ->whereHas('actions', function ($actions) {
+            $actions->where('status', 'failed');
+        })->get()
+        ->pluck('id')->toArray();
 
-    //"170.104480" // routes\web.php:70
+    dd($orders);
 
-$input = "";
-    $lines = preg_split('/\r\n|\r|\n/', $input);
+    $orders = \App\Models\Order::query()->where('status', 'Completed')
+        ->withCount(['actions as nullAccounts' => function ($action) {
+            $action->whereNull('account_id');
+        }])
+        ->withCount(['actions' => function ($action) {
+            $action
+                ->where('status', 'sent')
+                ->whereNotNull('account_id');
+        }])
+        ->orderBy('id', 'desc')
+        ->whereHas('actions', function ($actions) {
+            $actions->where(function ($q) {
+                $q->whereNull('account_id')
+                    ->orWhere('status', 'failed');
+            });
+        })
+        ->get()
+        ->pluck('id')->toArray();
 
-// remove empty lines
-    $lines = array_values(array_filter(array_map('trim', $lines)));
-
-    $result = [];
-    $count = 0;
-
-    for ($i = 0; $i < count($lines); $i += 2) {
-        if (!isset($lines[$i + 1])) {
-            continue; // skip broken pair
-        }
-
-        $email = $lines[$i];
-        $code = $lines[$i + 1];
-
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $result[] = $email . ',33355KHs,' . $code;
-            $count++;
-        }
-    }
-
-// optional: remove duplicates
-    $result = array_unique($result);
-
-    dd($result);
-
-// output result
-    echo implode(PHP_EOL, $result);
-
-// count check
-    echo "\n\nTotal rows: {$count}\n";
+    dd($orders);
 });
 
 
@@ -326,6 +302,6 @@ Route::delete('tik-tok-tags/{id}', [TikTokTagController::class, 'destroy']);
 Route::post('account/upload-post-connect', [AccountController::class, 'uploadPostConnect']);
 Route::post('account/upload-post-disconnect', [AccountController::class, 'uploadPostDisconnect']);
 Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
-
+Route::post('account/reset-upload-post-status', [AccountController::class, 'resetUploadPostStatus']);
 
 //});

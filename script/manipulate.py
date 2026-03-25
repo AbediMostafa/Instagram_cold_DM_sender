@@ -36,7 +36,7 @@ from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEve
 from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
 from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
-# from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
+from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
 from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
 from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
@@ -114,6 +114,7 @@ from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext impo
 # from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 # from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
 # from script.extra.actions.save_post.SavePostContext import SavePostContext
+from script.extra.actions.connect_to_uploadPost.UploadPostConnectContext import UploadPostConnectContext
 
 
 from script.extra.actions.order_preparer.OrderPreparerContext import OrderPreparerContext
@@ -137,18 +138,11 @@ from script.models.Profile import Profile
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
-from script.extra.actions.location_extractor.LocationExtractorContext import LocationExtractorContext
-from script.extra.actions.lead_generate_by_location.LeadGenerateByLocationContext import LeadGenerateByLocationContext
-from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
 from script.models.AccountHelper import get_storage_state
-# from script.extra.api_actions.BrowserApiViewStoryEvent import BrowserApiViewStoryEvent
-from script.extra.actions.get_account_username.GetAccountUsernameContext import GetAccountUsernameContext
-from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
 from datetime import timedelta
 from script.extra.helper import tehran_now
 # from script.models.Order import get_next_order_for_account
-from script.models.City import get_next
 import json
 
 # oc = OrderComment.get_by_id(210874)
@@ -158,13 +152,14 @@ from script.models.OrderComment import release_stuck_comments
 
 # print(updated_counts.count())
 # account = get_next_account()
-account = Account.get_by_id(12)
+account = Account.get_by_id(7558)
+# order = get_next_order_for_account(account)
+# print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-LeadFullDataExtractor(browser_ig).fire()
-# # order = get_next_order_for_account(account)
-# # print(order)
+UploadPostConnectContext(browser_ig).fire()
+# OrderPreparerContext(browser_ig).fire()
 # ApiCommentContext(browser_ig).fire()
 # ApiSavePostContext(browser_ig).fire()
 # StoryPreparerContext(browser_ig).fire()

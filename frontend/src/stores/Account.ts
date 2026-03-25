@@ -1,11 +1,8 @@
 import {defineStore} from "pinia";
 import ApiService from "@/core/services/ApiService";
-import {ref} from "vue";
-import {hideModal} from "@/core/helpers/modal";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import {ElMessage} from "element-plus";
-import {copyToClipboard} from "@/core/helpers/helper";
-import {warningPromise} from "@/core/helpers/helper";
+import {copyToClipboard, warningPromise} from "@/core/helpers/helper";
 
 export const useAccountStore = defineStore("AccountStore", {
     state() {
@@ -17,6 +14,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 current_page: 1,
                 total: 0,
                 filters: [],
+                uploadPostFilter: [],
                 search: '',
                 dateRange: '',
                 sortBy: 'id',
@@ -32,10 +30,20 @@ export const useAccountStore = defineStore("AccountStore", {
                 {value: "suspended", label: "suspended"},
                 {value: "challenging", label: "challenging"},
             ],
+            // Upload-Post status options for the filter checkbox group
+            uploadPostStates: [
+                {value: "none", label: "None"},
+                {value: "pending", label: "Pending"},
+                {value: "connecting", label: "Connecting"},
+                {value: "connected", label: "Connected"},
+                {value: "failed", label: "Failed"},
+                {value: "disconnecting", label: "Disconnecting"},
+            ],
             is: {
                 loading: false,
                 deleting: false,
                 profileStarting: false,
+                uploadPostStarting: false,
             },
         };
     },
@@ -57,6 +65,70 @@ export const useAccountStore = defineStore("AccountStore", {
                     this.is.profileStarting = false;
                 })
         },
+
+        // ---- Upload-Post actions ----
+
+        /**
+         * Set upload_post_status to 'pending' for selected accounts (bulk).
+         * The Python worker will pick these up and run the connect flow.
+         */
+        connectUploadPost(ids) {
+            this.warnIfdosntSelected(ids) &&
+            warningPromise("Mark selected account(s) for Upload-Post connection?")
+                .then(() => {
+                    ApiService.post("account/upload-post-connect", {ids})
+                        .then(() => {
+                            ElMessage.success('Account(s) marked for connection');
+                            this.getAccounts(this.accounts.current_page);
+                        })
+                })
+        },
+
+        /**
+         * Set upload_post_status to 'disconnecting' for selected accounts (bulk).
+         * The Python worker will pick these up and run the disconnect flow.
+         */
+        disconnectUploadPost(ids) {
+            this.warnIfdosntSelected(ids) &&
+            warningPromise("Mark selected account(s) for Upload-Post disconnection?")
+                .then(() => {
+                    ApiService.post("account/upload-post-disconnect", {ids})
+                        .then(() => {
+                            ElMessage.success('Account(s) marked for disconnection');
+                            this.getAccounts(this.accounts.current_page);
+                        })
+                })
+        },
+
+        /**
+         * Toggle Upload-Post for a single account.
+         * If not connected -> runs connect script (opens browser).
+         * If connected -> disconnects via API.
+         */
+        toggleUploadPost(id) {
+            ApiService.post("account/toggle-upload-post", {id})
+                .then((response) => {
+                    ElMessage.success(response.data.msg);
+                    this.getAccounts(this.accounts.current_page);
+                })
+        },
+
+        /**
+         * Reset upload_post_status to 'none' for selected accounts.
+         * Keeps upload_post_username so the profile number can be reused on reconnect.
+         */
+        resetUploadPostStatus(ids) {
+            this.warnIfdosntSelected(ids) &&
+            warningPromise("Reset Upload-Post status to 'none' for selected account(s)?")
+                .then(() => {
+                    ApiService.post("account/reset-upload-post-status", {ids})
+                        .then(() => {
+                            ElMessage.success('Upload-Post status reset');
+                            this.getAccounts(this.accounts.current_page);
+                        })
+                })
+        },
+
         warnIfdosntSelected(selected) {
             if (selected.length) return true;
 
@@ -76,6 +148,7 @@ export const useAccountStore = defineStore("AccountStore", {
             const data = {
                 page,
                 filter: this.accounts.filters,
+                uploadPostFilter: this.accounts.uploadPostFilter,
                 search: this.accounts.search,
                 type: this.accounts.type,
                 dateRange: this.accounts.dateRange,

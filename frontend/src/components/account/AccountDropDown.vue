@@ -18,6 +18,17 @@
         <el-dropdown-item @click="store.clearProfile([account?.id])">Clear Profile</el-dropdown-item>
         <el-dropdown-item @click="profileStore.assignProfiles([account?.id])">Assign Profile</el-dropdown-item>
         <el-dropdown-item @click="profileStore.changeProxyToResidential([account?.id])">Change Proxy To Residential</el-dropdown-item>
+
+        <!-- Upload-Post actions -->
+        <el-dropdown-item divided @click="store.connectUploadPost([account?.id])">
+          Connect Upload-Post
+        </el-dropdown-item>
+        <el-dropdown-item @click="store.disconnectUploadPost([account?.id])">
+          Disconnect Upload-Post
+        </el-dropdown-item>
+        <el-dropdown-item @click="store.resetUploadPostStatus([account?.id])">
+          Reset Upload-Post Status
+        </el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>

@@ -46,18 +46,6 @@
         </div>
 
         <div class="me-2">
-          <!--          <a class="btn btn-sm btn-light-success ms-2" @click="store.resetIsUsed()">Reset</a>-->
-
-          <!--          <el-date-picker-->
-          <!--              v-model="store.accounts.dateRange"-->
-          <!--              type="daterange"-->
-          <!--              range-separator="To"-->
-          <!--              start-placeholder="Start date"-->
-          <!--              end-placeholder="End date"-->
-          <!--              @change="actionClicked"-->
-          <!--              value-format="YYYY-MM-DD"-->
-          <!--              style="max-width: 250px;"-->
-          <!--          />-->
         </div>
         <div class="me-2">
           <el-input
@@ -142,10 +130,8 @@
               </div>
             </th>
             <th class="min-w-150px">USERNAME</th>
-            <th class="min-w-100px">QUICK ACTIONS</th>
-
+            <th class="min-w-200px">QUICK ACTIONS</th>
             <th class="min-w-300px">SERVICE</th>
-
 
             <th class="min-w-200px cursor-pointer" @click="sortBy('created_at')">
               CREATED / SUSPENDED AT
@@ -268,7 +254,29 @@
                   <span v-else>Start Profile</span>
 
                 </a>
+
+                <!-- Upload-Post: single button that switches between Connect / Disconnect -->
+                <a
+                    v-if="account.upload_post_status === 'pending' || account.upload_post_status === 'connecting'"
+                    class="btn btn-light-info btn-sm fs-8 px-3 py-2 ms-2" disabled>
+                  <span class="spinner-border spinner-border-sm align-middle me-1"></span>
+                  Connecting...
+                </a>
+                <a
+                    v-else-if="account.upload_post_status === 'connected'"
+                    @click="store.toggleUploadPost(account.id)"
+                    class="btn btn-light-danger btn-sm fs-8 px-3 py-2 ms-2">
+                  Disconnect
+                </a>
+                <a
+                    v-else
+                    @click="store.toggleUploadPost(account.id)"
+                    class="btn btn-light-primary btn-sm fs-8 px-3 py-2 ms-2">
+                  Connect
+                </a>
+                <upload-post-status-badge class="ms-2" :status="account.upload_post_status"/>
               </td>
+
               <td>
                 <span
                     v-if="account.service"
@@ -343,6 +351,7 @@ import AccountInstagramState from "@/components/account/AccountInstagramState.vu
 import AccountAppState from "@/components/account/AccountAppState.vue";
 import AccountsDropDown from "@/components/account/AccountsDropDown.vue";
 import AccountDropDown from "@/components/account/AccountDropDown.vue";
+import UploadPostStatusBadge from "@/components/account/UploadPostStatusBadge.vue";
 import {useAccountStore} from "@/stores/Account";
 import EditAccountModal from "@/components/modals/account/EditAccountModal.vue";
 import AccountUpdatePhoneModal from "@/components/modals/account/AccountUpdatePhoneModal.vue";

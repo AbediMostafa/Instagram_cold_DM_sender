@@ -7,6 +7,7 @@ from script.models.Order import Order
 from script.models.OrderAction import (
     OrderAction,
     mark_action_completed,
+    get_single_action_for_account_prepared,
 )
 from script.models.Balance import Balance
 from script.models.Setting import Setting
@@ -14,23 +15,53 @@ from script.models.Setting import Setting
 
 API_URL = 'https://www.instagram.com/graphql/query'
 
+# Maximum number of retry attempts for execution errors
+# After this many failures, order goes back to prepare queue
+MAX_RETRY_ATTEMPTS = 3
+
 
 class BrowserApiSavePostEvent(BaseAction):
-    """Save posts using direct API calls instead of browser interaction"""
+    """
+    Save posts using direct API calls instead of browser interaction.
+
+    This class handles the execution phase of save_post orders. It:
+    1. Gets prepared orders (is_prepared=2) with action_data containing media_id and doc_id
+    2. Sends GraphQL API requests to save posts
+    3. Handles success/failure scenarios appropriately
+
+    Error handling strategy:
+    - Success: Mark action as sent, deduct balance
+    - Client error (post deleted, account private): Cancel entire order, charge remaining
+    - Execution error with retries: Retry up to MAX_RETRY_ATTEMPTS times
+    - Execution error after retries: Send order back to prepare queue for verification
+    - Network/server error: Reset action to free for another account to try
+    """
 
     def init(self):
+        """
+        Main entry point for processing save_post actions.
+
+        Flow:
+        1. Validate GraphQL data is available
+        2. Create proxied session with IP verification
+        3. Process batch of actions based on batch_size setting
+        """
+        # Validate that we have the necessary GraphQL data from browser session
         if not self._validate_graphql_data():
             self.ig.account.add_cli('GraphQL data not available, skipping API save')
             return
 
+        # Create a requests session configured with the account's proxy
         self.session = self._create_proxied_session()
         if not self.session:
             self.ig.account.add_cli('Cannot proceed without proxy')
             return
 
+        # Get batch size from settings (how many actions to process per run)
         batch_size = int(Setting.get_value('save_post_batch_size', 1))
         self.processed_order_ids = []
 
+        # Process actions in batch
         for i in range(batch_size):
             action = self._get_next_action()
 
@@ -43,13 +74,14 @@ class BrowserApiSavePostEvent(BaseAction):
             self.order = action.order
             self.processed_order_ids.append(self.order.id)
 
-            # Check if order is already canceled (by another thread)
+            # Check if order was already canceled by another thread
             fresh_order = Order.select(Order.status).where(Order.id == self.order.id).first()
             if fresh_order and fresh_order.status == 'Canceled':
                 self.ig.account.add_cli(f'Order #{self.order.id} already canceled, skipping')
                 self._reset_action()
                 continue
 
+            # Load the action_data (media_id, doc_id) captured during prepare phase
             self._load_action_data()
 
             if not self.action_data:
@@ -60,13 +92,23 @@ class BrowserApiSavePostEvent(BaseAction):
             self.ig.account.add_cli(f'API saving post for order #{self.order.id}')
             self._process_action()
 
+            # Pause between actions to avoid rate limiting
             self.ig.pause(3000, 5000)
 
+        # Clean up session when done
         if self.session:
             self.session.close()
 
     def _create_proxied_session(self):
-        """Create requests session with proxy. Returns None if proxy unavailable or MISMATCH."""
+        """
+        Create a requests session configured with the account's SOCKS5 proxy.
+
+        Also verifies that the proxy IP matches the expected IP to ensure
+        requests go through the correct proxy.
+
+        Returns:
+            requests.Session or None if proxy unavailable or IP mismatch
+        """
         session = requests.Session()
 
         try:
@@ -75,8 +117,10 @@ class BrowserApiSavePostEvent(BaseAction):
                 self.ig.account.add_cli('[PROXY] No proxy found')
                 return None
 
+            # Configure session to use SOCKS5 proxy
             session.proxies = proxy.to_requests_proxy()
 
+            # Verify the proxy IP matches what we expect
             if not self._verify_proxy_ip(session, proxy):
                 return None
 
@@ -87,7 +131,16 @@ class BrowserApiSavePostEvent(BaseAction):
         return session
 
     def _verify_proxy_ip(self, session, proxy):
-        """Verify proxy IP matches expected. Returns False on MISMATCH."""
+        """
+        Verify that the proxy's external IP matches the stored real_ip.
+
+        This prevents requests from going through the wrong proxy or
+        being sent without a proxy at all.
+
+        Returns:
+            True if IP matches or verification was skipped
+            False if IP mismatch detected (requests should not proceed)
+        """
         stored_ip = proxy.real_ip or 'unknown'
 
         try:
@@ -102,15 +155,22 @@ class BrowserApiSavePostEvent(BaseAction):
                     self.ig.account.add_cli(f'[PROXY] {current_ip} vs {stored_ip} -> MISMATCH')
                     return False
 
+            # If we can't verify, allow to proceed (verification skipped)
             self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify skipped')
             return True
 
         except Exception:
+            # Network error during verification - allow to proceed
             self.ig.account.add_cli(f'[PROXY] {stored_ip} -> verify skipped')
             return True
 
     def _validate_graphql_data(self):
-        """Check if graphql_data is available"""
+        """
+        Check if the required GraphQL data is available from the browser session.
+
+        The graphql_data contains headers (cookies, tokens) and base payload
+        captured from the browser, which we need to make authenticated API calls.
+        """
         if not hasattr(self.ig, 'graphql_data') or not self.ig.graphql_data:
             return False
 
@@ -120,7 +180,12 @@ class BrowserApiSavePostEvent(BaseAction):
         return True
 
     def _get_next_action(self):
-        """Get next action from prepared orders only"""
+        """
+        Get the next available action from prepared orders.
+
+        Only considers orders with is_prepared=2 (fully prepared with action_data).
+        Uses atomic UPDATE to prevent race conditions with other threads.
+        """
         return get_single_action_for_account_prepared(
             self.ig.account,
             ['save_post'],
@@ -128,7 +193,12 @@ class BrowserApiSavePostEvent(BaseAction):
         )
 
     def _load_action_data(self):
-        """Load action_data from order"""
+        """
+        Load action_data from the order.
+
+        action_data contains media_id and doc_id captured during the prepare phase
+        when the first post was saved via browser.
+        """
         self.action_data = None
 
         try:
@@ -143,22 +213,34 @@ class BrowserApiSavePostEvent(BaseAction):
             self.ig.account.add_cli(f'Error loading action_data: {str(e)}')
 
     def _process_action(self):
-        """Process single action"""
+        """
+        Process a single save_post action.
+
+        Sends the API request and handles the response appropriately.
+        Network errors result in action being reset to free for retry.
+        """
         try:
             response = self._send_api_request()
             self._handle_response(response)
 
         except requests.exceptions.RequestException as e:
+            # Network error - reset action for another account to try
             self.ig.account.add_cli(f'Network error: {str(e)}')
             self._reset_action()
 
         except Exception as e:
+            # Unexpected error - log and reset action
             self.ig.account.add_cli(f'Error processing action: {str(e)}')
             self._log_to_file(f'EXCEPTION: {str(e)}\n{traceback.format_exc()}', 'exception')
             self._reset_action()
 
     def _send_api_request(self):
-        """Send save post API request"""
+        """
+        Send the GraphQL API request to save a post.
+
+        Returns:
+            requests.Response object
+        """
         headers = self._build_headers()
         payload = self._build_payload()
 
@@ -172,14 +254,23 @@ class BrowserApiSavePostEvent(BaseAction):
         return response
 
     def _build_headers(self):
-        """Build request headers"""
+        """
+        Build request headers for the save post API call.
+
+        Starts with base headers from graphql_data and adds
+        save-specific headers.
+        """
         headers = self.ig.graphql_data['headers'].copy()
         headers['x-fb-friendly-name'] = 'usePolarisSaveMediaSaveMutation'
         headers['x-root-field-name'] = 'xdt_api__v1__web__save__media_id__save'
         return headers
 
     def _build_payload(self):
-        """Build request payload - always use post format"""
+        """
+        Build the request payload for saving a post.
+
+        Uses media_id from action_data and adds required request_data fields.
+        """
         payload = self.ig.graphql_data['payload'].copy()
 
         variables = {
@@ -200,30 +291,42 @@ class BrowserApiSavePostEvent(BaseAction):
         return payload
 
     def _handle_response(self, response):
-        """Handle API response"""
+        """
+        Handle the API response and take appropriate action.
+
+        Response scenarios:
+        - 200 with data: Success, post was saved
+        - 200 with data=null and errors: Execution error, retry or send to prepare
+        - 200 with client error message: Cancel order (client's fault)
+        - 429: Rate limited, reset action for retry
+        - 401/403: Auth error, reset action
+        - 5xx: Server error, reset action
+        """
         self.ig.account.add_cli(f'API response: {response.status_code}')
 
         if response.status_code == 200:
             try:
                 json_data = response.json()
-
-                # Check for client error: data is null with errors
                 data = json_data.get('data')
+
+                # Check for execution error: data is null with errors array
+                # This could be temporary (Instagram issue) or permanent (post deleted)
                 if data is None and json_data.get('errors'):
-                    self._cancel_order('Post is not available')
+                    self._handle_execution_error(json_data)
                     return
 
-                # Success: {"data":{"xdt_api__v1__web__save__media_id__save":{"__typename":"XDTEmptyRecord"}},"status":"ok"}
+                # Success: post was saved
+                # Response format: {"data":{"xdt_api__v1__web__save__media_id__save":{"__typename":"XDTEmptyRecord"}},"status":"ok"}
                 if json_data.get('status') == 'ok' or data:
                     self._mark_success()
                     return
 
-                # Known client error from message field
+                # Check for known client errors in message field
                 if self._is_client_error(json_data):
                     self._cancel_order('Post is not available')
                     return
 
-                # Unknown response - log for analysis
+                # Unknown response format - log for analysis and reset action
                 self._log_to_file(f'UNKNOWN_200: {json.dumps(json_data)[:1000]}', 'unknown')
                 self._reset_action()
 
@@ -232,22 +335,162 @@ class BrowserApiSavePostEvent(BaseAction):
                 self._reset_action()
 
         elif response.status_code == 429:
+            # Rate limited - reset action for another account to try later
             self.ig.account.add_cli('Rate limited')
             self._reset_action()
 
         elif response.status_code in [401, 403]:
+            # Authentication error - reset action
             self._log_to_file(f'AUTH_ERROR_{response.status_code}: {response.text[:500]}', 'unknown')
             self._reset_action()
 
         elif response.status_code >= 500:
+            # Server error - reset action for retry
             self._reset_action()
 
         else:
+            # Other error - reset action
             self._log_to_file(f'HTTP_{response.status_code}: {response.text[:500]}', 'unknown')
             self._reset_action()
 
+    def _handle_execution_error(self, json_data):
+        """
+        Handle execution errors (data=null with errors array).
+
+        These errors are ambiguous - could be:
+        - Temporary Instagram issue (should retry)
+        - Post was deleted or account went private (should cancel)
+        - Account is restricted/blocked (should skip, let other accounts try)
+
+        Strategy:
+        1. Check if error is account-level (restricted/blocked) - if so, reset immediately
+        2. Retry up to MAX_RETRY_ATTEMPTS times with this same account
+        3. If all retries fail, send order back to prepare queue
+        4. Prepare will verify if post is still available via browser
+        """
+        self.ig.account.add_cli(f'Execution error detected')
+        self._log_to_file(f'EXECUTION_ERROR: {json.dumps(json_data)[:1000]}', 'error')
+
+        # Check if the error is account-level (restricted/blocked)
+        # Retrying with the same account is pointless in this case -
+        # just free the action so other accounts can pick it up
+        if self._is_account_restricted(json_data):
+            self.ig.account.add_cli('Account is restricted/blocked, skipping retries and freeing action')
+            self._log_to_file(f'ACCOUNT_RESTRICTED: order={self.order.id}', 'error')
+            self._reset_action()
+            return
+
+        # Retry loop - try MAX_RETRY_ATTEMPTS times
+        self.ig.account.add_cli(f'Attempting retries...')
+        for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
+            self.ig.account.add_cli(f'Retry attempt {attempt}/{MAX_RETRY_ATTEMPTS}')
+            self.ig.pause(2000, 3000)
+
+            try:
+                response = self._send_api_request()
+
+                if response.status_code == 200:
+                    retry_data = response.json()
+                    data = retry_data.get('data')
+
+                    # Success on retry
+                    if retry_data.get('status') == 'ok' or data:
+                        self.ig.account.add_cli(f'Retry {attempt} succeeded!')
+                        self._mark_success()
+                        return
+
+                    # Still getting execution error, continue retry loop
+                    if data is None and retry_data.get('errors'):
+                        self._log_to_file(f'RETRY_{attempt}_FAILED: {json.dumps(retry_data)[:500]}', 'error')
+                        continue
+
+            except Exception as e:
+                self._log_to_file(f'RETRY_{attempt}_EXCEPTION: {str(e)}', 'error')
+                continue
+
+        # All retries exhausted - send order back to prepare queue
+        self.ig.account.add_cli(f'All {MAX_RETRY_ATTEMPTS} retries failed, sending order back to prepare')
+        self._log_to_file(f'RETRIES_EXHAUSTED: order={self.order.id} sent back to prepare', 'error')
+        self._send_to_prepare()
+
+    def _is_account_restricted(self, json_data):
+        """
+        Check if the execution error indicates the account is restricted or blocked.
+
+        These errors mean the problem is with the account, not the post.
+        Retrying with the same account will always fail, so we should free
+        the action for other accounts to handle.
+
+        Args:
+            json_data: Parsed JSON response from Instagram API
+
+        Returns:
+            True if error is account-level (restricted/blocked)
+            False if error is something else (should proceed with retries)
+        """
+        errors = json_data.get('errors', [])
+
+        for error in errors:
+            summary = str(error.get('summary', '')).lower()
+            description = str(error.get('description', '')).lower()
+
+            combined = f'{summary} {description}'
+
+            if 'account is restricted' in combined or \
+               'temporarily blocked' in combined:
+                return True
+
+        return False
+
+    def _send_to_prepare(self):
+        """
+        Send order back to prepare queue for re-verification.
+
+        This is called when we get persistent execution errors that might indicate
+        the post was deleted or account went private. The prepare phase will verify
+        via browser whether the post is still accessible.
+
+        Actions:
+        - Reset current action to free
+        - Set order status to Pending
+        - Set is_prepared to 0 (needs re-preparation)
+        - Do NOT change completed_count or deduct balance
+        """
+        self.ig.account.add_cli(f'Sending order #{self.order.id} back to prepare queue')
+
+        # Reset current action to free
+        OrderAction.update(
+            status='free',
+            account=None,
+            updated_at=tehran_now()
+        ).where(
+            (OrderAction.id == self.action.id) &
+            (OrderAction.status == 'processing')
+        ).execute()
+
+        # Send order back to prepare queue
+        # Only update if order is still In progress (another thread might have completed it)
+        updated = Order.update(
+            status='Pending',
+            is_prepared=0,
+            updated_at=tehran_now()
+        ).where(
+            (Order.id == self.order.id) &
+            (Order.status == 'In progress')
+        ).execute()
+
+        if updated > 0:
+            self.ig.account.add_cli(f'Order #{self.order.id} sent to prepare queue')
+            self._log_to_file(f'SENT_TO_PREPARE: order={self.order.id}', 'info')
+        else:
+            self.ig.account.add_cli(f'Order #{self.order.id} status already changed, skipping')
+
     def _is_client_error(self, json_data):
-        """Check if error is client's fault (post not found, etc.)"""
+        """
+        Check if the error is the client's fault (post not found, etc.)
+
+        These errors mean the order should be canceled and client charged.
+        """
         error_keywords = [
             'media_not_found',
             'post_not_found',
@@ -261,12 +504,27 @@ class BrowserApiSavePostEvent(BaseAction):
         return any(kw in error_msg for kw in error_keywords)
 
     def _mark_success(self):
-        """Mark action as successful"""
+        """
+        Mark action as successfully completed.
+
+        This increments completed_count, marks action as sent,
+        and deducts balance (all handled by mark_action_completed).
+        """
         mark_action_completed(self.action)
         self.ig.account.add_cli(f'SUCCESS order #{self.order.id}')
 
     def _cancel_order(self, reason):
-        """Cancel entire order due to client error (e.g., post deleted)"""
+        """
+        Cancel entire order due to client error.
+
+        Called when we're certain the order cannot be completed
+        (e.g., post deleted, account went private).
+
+        Actions:
+        - Reset current action to free
+        - Cancel order with reason
+        - Deduct balance for all remaining actions (client pays for their mistake)
+        """
         self.ig.account.add_cli(f'Canceling order #{self.order.id}: {reason}')
 
         # Reset current action to free first
@@ -279,7 +537,7 @@ class BrowserApiSavePostEvent(BaseAction):
             (OrderAction.status == 'processing')
         ).execute()
 
-        # Atomically cancel order (only if not already canceled)
+        # Atomically cancel order (only if not already canceled by another thread)
         updated = Order.update(
             status='Canceled',
             description=reason,
@@ -290,7 +548,7 @@ class BrowserApiSavePostEvent(BaseAction):
         ).execute()
 
         if updated > 0:
-            # Only first thread deducts balance for remaining
+            # Only first thread to cancel deducts balance for remaining actions
             fresh_order = Order.select(Order.total_count, Order.completed_count).where(Order.id == self.order.id).first()
             if fresh_order:
                 remaining = fresh_order.total_count - fresh_order.completed_count
@@ -299,7 +557,13 @@ class BrowserApiSavePostEvent(BaseAction):
                     self.ig.account.add_cli(f'Charged ${total_charge} for {remaining} remaining actions')
 
     def _reset_action(self):
-        """Reset action to free for retry"""
+        """
+        Reset action to free status for retry by another account.
+
+        Called when we encounter temporary errors (network, rate limit, etc.)
+        that might succeed with a different account or at a different time.
+        No balance is deducted.
+        """
         try:
             OrderAction.update(
                 status='free',
@@ -313,7 +577,11 @@ class BrowserApiSavePostEvent(BaseAction):
             self.ig.account.add_cli(f'Reset error: {str(e)}')
 
     def _log_to_file(self, message, log_type='info'):
-        """Log to file for debugging Instagram API changes"""
+        """
+        Log message to file for debugging and analysis.
+
+        Log files help track Instagram API changes and debug issues.
+        """
         try:
             import os
 
@@ -331,74 +599,5 @@ class BrowserApiSavePostEvent(BaseAction):
 
             with open(log_file, 'a', encoding='utf-8') as f:
                 f.write(log_line)
-        except:
+        except Exception:
             pass
-
-
-def get_single_action_for_account_prepared(account, action_types, excluded_order_ids=None):
-    """
-    Get a single action for prepared orders only (is_prepared=2).
-    Uses atomic UPDATE to avoid race conditions.
-    """
-    if excluded_order_ids is None:
-        excluded_order_ids = []
-
-    worked_order_ids = list(
-        OrderAction
-        .select(OrderAction.order)
-        .where(OrderAction.account == account)
-        .distinct()
-        .tuples()
-    )
-    worked_order_ids = [x[0] for x in worked_order_ids]
-
-    all_excluded = set(worked_order_ids + excluded_order_ids)
-
-    query = (
-        OrderAction
-        .select(OrderAction.id, OrderAction.order)
-        .join(Order)
-        .where(
-            (OrderAction.type.in_(action_types)) &
-            (Order.status.in_(['Pending', 'In progress'])) &
-            (Order.is_prepared == 2) &
-            (OrderAction.status == 'free')
-        )
-        .order_by(Order.id, OrderAction.id)
-        .limit(10)
-    )
-
-    if all_excluded:
-        query = query.where(~(OrderAction.order.in_(all_excluded)))
-
-    candidates = list(query)
-
-    if not candidates:
-        return None
-
-    for candidate in candidates:
-        updated = (
-            OrderAction
-            .update(
-                status='processing',
-                account=account,
-                updated_at=tehran_now()
-            )
-            .where(
-                (OrderAction.id == candidate.id) &
-                (OrderAction.status == 'free')
-            )
-            .execute()
-        )
-
-        if updated > 0:
-            Order.update(
-                status='In progress'
-            ).where(
-                (Order.id == candidate.order_id) &
-                (Order.status == 'Pending')
-            ).execute()
-
-            return OrderAction.get_by_id(candidate.id)
-
-    return None

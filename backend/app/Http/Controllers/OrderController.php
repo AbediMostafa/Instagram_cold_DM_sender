@@ -18,24 +18,25 @@ class OrderController extends Controller
     public function index()
     {
         $query = Order::query()
-            ->withCount([
-                'actions as sent_actions_count' => fn($query) =>
-                $query->where('status', 'sent'),
-
-                'actions as free_actions_count' => fn($query) =>
-                $query->where('status', 'free'),
-
-                'actions as processing_actions_count' => fn($query) =>
-                $query->where('status', 'processing'),
-
-                'actions as failed_actions_count' => fn($query) =>
-                $query->where('status', 'failed'),
-            ])
+            ->select('orders.*')
+            ->selectSub(
+            // Single subquery with conditional counts instead of 4 separate withCount subqueries
+            // This generates one correlated subquery instead of four
+                \App\Models\OrderAction::selectRaw("
+                    CONCAT(
+                        COALESCE(SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END), 0), ',',
+                        COALESCE(SUM(CASE WHEN status = 'free' THEN 1 ELSE 0 END), 0), ',',
+                        COALESCE(SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END), 0), ',',
+                        COALESCE(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END), 0)
+                    )
+                ")->whereColumn('order_actions.order_id', 'orders.id'),
+                'action_counts_raw'
+            )
             ->with('service:id,service');
 
         // Filter by Order ID
         if ($orderId = request('order_id')) {
-            $query->where('id', $orderId);
+            $query->where('orders.id', $orderId);
         }
 
         // Filter by Link
@@ -55,13 +56,25 @@ class OrderController extends Controller
 
         // Filter by Date Range
         if ($dateFrom = request('date_from')) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereDate('orders.created_at', '>=', $dateFrom);
         }
         if ($dateTo = request('date_to')) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('orders.created_at', '<=', $dateTo);
         }
 
-        $orders = $query->orderBy('id', 'desc')->paginate(200);
+        $orders = $query->orderBy('orders.id', 'desc')->paginate(200);
+
+        // Parse the concatenated counts into separate attributes for frontend compatibility
+        // Frontend expects: sent_actions_count, free_actions_count, processing_actions_count, failed_actions_count
+        $orders->getCollection()->transform(function ($order) {
+            $counts = explode(',', $order->action_counts_raw ?? '0,0,0,0');
+            $order->sent_actions_count = (int) ($counts[0] ?? 0);
+            $order->free_actions_count = (int) ($counts[1] ?? 0);
+            $order->processing_actions_count = (int) ($counts[2] ?? 0);
+            $order->failed_actions_count = (int) ($counts[3] ?? 0);
+            unset($order->action_counts_raw);
+            return $order;
+        });
 
         return $orders;
     }
@@ -83,54 +96,57 @@ class OrderController extends Controller
     {
         return tryCatch(
             function () {
-                $orderId = request('id');
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
                 $maxRetries = 3;
-                $attempt = 0;
 
-                while ($attempt < $maxRetries) {
-                    try {
-                        DB::transaction(function () use ($orderId) {
-                            $order = Order::query()
-                                ->where('id', $orderId)
-                                ->lockForUpdate()
-                                ->first();
+                foreach ($ids as $orderId) {
+                    $attempt = 0;
+                    while ($attempt < $maxRetries) {
+                        try {
+                            DB::transaction(function () use ($orderId) {
+                                $order = Order::query()
+                                    ->where('id', $orderId)
+                                    ->lockForUpdate()
+                                    ->first();
 
-                            if (!$order) {
-                                throw new \Exception('Order not found');
-                            }
-
-                            // Calculate how many actions need to be completed
-                            $remainingCount = $order->total_count - $order->completed_count;
-
-                            if ($remainingCount > 0) {
-                                // Always deduct balance for remaining
-                                $this->deductBalance($order->service_type, $remainingCount);
-
-                                // Only update actions if is_prepared = 2 (actions exist)
-                                if ($order->is_prepared == 2) {
-                                    $order->actions()
-                                        ->whereNotIn('status', ['sent', 'failed'])
-                                        ->update(['status' => 'sent']);
+                                if (!$order) {
+                                    throw new \Exception('Order not found');
                                 }
+
+                                // Calculate how many actions need to be completed
+                                $remainingCount = $order->total_count - $order->completed_count;
+
+                                if ($remainingCount > 0) {
+                                    // Always deduct balance for remaining
+                                    $this->deductBalance($order->service_type, $remainingCount);
+
+                                    // Only update actions if is_prepared = 2 (actions exist)
+                                    if ($order->is_prepared == 2) {
+                                        $order->actions()
+                                            ->whereNotIn('status', ['sent', 'failed'])
+                                            ->update(['status' => 'sent']);
+                                    }
+                                }
+
+                                $order->completed_count = $order->total_count;
+                                $order->status = 'Completed';
+                                $order->save();
+                            });
+
+                            break; // Success, move to next order
+
+                        } catch (\Illuminate\Database\QueryException $e) {
+                            $attempt++;
+                            if ($attempt >= $maxRetries || !str_contains($e->getMessage(), 'deadlock')) {
+                                throw $e;
                             }
-
-                            $order->completed_count = $order->total_count;
-                            $order->status = 'Completed';
-                            $order->save();
-                        });
-
-                        return;
-
-                    } catch (\Illuminate\Database\QueryException $e) {
-                        $attempt++;
-                        if ($attempt >= $maxRetries || !str_contains($e->getMessage(), 'deadlock')) {
-                            throw $e;
+                            usleep(100000 * $attempt);
                         }
-                        usleep(100000 * $attempt);
                     }
                 }
             },
-            'Order finished successfully',
+            'Order(s) finished successfully',
         );
     }
 
@@ -146,23 +162,23 @@ class OrderController extends Controller
         $rate = $rates[$actionType] ?? 0.00005;
         $totalCharge = $rate * $count;
 
-        $balance = Balance::where('customer', 'sadeghi')->first();
-        if ($balance) {
-            $balance->balance -= $totalCharge;
-            $balance->save();
-        }
+        // Atomic decrement to prevent race conditions with concurrent balance updates
+        Balance::where('customer', 'sadeghi')->decrement('balance', $totalCharge);
     }
 
     public function fail()
     {
         return tryCatch(
             function () {
-                $order = Order::query()->find(request('id'));
-                $order->status = 'Canceled';
-                $order->is_prepared = 0;
-                $order->save();
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
+
+                Order::query()->whereIn('id', $ids)->update([
+                    'status' => 'Canceled',
+                    'is_prepared' => 0,
+                ]);
             },
-            'Order failed successfully',
+            'Order(s) failed successfully',
         );
     }
 
@@ -170,45 +186,85 @@ class OrderController extends Controller
     {
         return tryCatch(
             function () {
-                $order = Order::query()->find(request('id'));
-                $order->status = 'Pending';
-                $order->is_prepared = 0;
-                $order->completed_count = 0;
-                $order->action_data = null;
-                $order->save();
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
 
-                if ($order->service_type === 'comment') {
-                    // For comments: keep actions but reset status and account
-                    $order->actions()->update([
-                        'status' => 'free',
-                        'account_id' => null,
-                    ]);
-                } else {
-                    // For view_story and save_post: delete actions (preparer will recreate them)
-                    $order->actions()->delete();
+                foreach ($ids as $orderId) {
+                    $order = Order::query()->find($orderId);
+                    if (!$order) continue;
+
+                    $order->status = 'Pending';
+                    $order->is_prepared = 0;
+                    $order->completed_count = 0;
+                    $order->action_data = null;
+                    $order->save();
+
+                    if ($order->service_type === 'comment') {
+                        // For comments: keep actions but reset status and account
+                        $order->actions()->update([
+                            'status' => 'free',
+                            'account_id' => null,
+                        ]);
+                    } else {
+                        // For view_story and save_post: delete actions (preparer will recreate them)
+                        $order->actions()->delete();
+                    }
                 }
             },
-            'Order reset successfully',
+            'Order(s) reset successfully',
         );
     }
 
-    public function changProcessingCommentsToFree()
+    public function changeProcessingToFree()
     {
         return tryCatch(
             function () {
-                $order = Order::query()->find(r('id'));
+                $ids = request('ids', [request('id')]);
+                $ids = array_filter($ids);
 
-                // Only process actions if is_prepared = 2
-                if ($order->is_prepared == 2) {
-                    $order->changeProcessingToFree();
-                } else {
-                    $order->setStatusTo('In progress');
+                foreach ($ids as $orderId) {
+                    $order = Order::query()->find($orderId);
+                    if (!$order) continue;
+
+                    // If order was canceled, refund the remaining balance first
+                    if ($order->status === 'Canceled') {
+                        $remaining = $order->total_count - $order->completed_count;
+                        if ($remaining > 0) {
+                            $this->refundBalance($order->service_type, $remaining);
+                        }
+                    }
+
+                    // Send to prepare queue (works for all service types)
+                    $order->status = 'Pending';
+                    $order->is_prepared = 0;
+                    $order->save();
+
+                    // Reset all non-sent actions to free
+                    $order->actions()->where('status', '!=', 'sent')->update([
+                        'status' => 'free',
+                        'account_id' => null
+                    ]);
                 }
             },
-            'Order reseted successfully',
+            'Order(s) processing actions reset successfully',
         );
     }
 
+    private function refundBalance($actionType, $count)
+    {
+        $rates = [
+            'comment' => 0.0003,
+            'view_story' => 0.00005,
+            'view_all_stories' => 0.00005,
+            'save_post' => 0.00004,
+        ];
+
+        $rate = $rates[$actionType] ?? 0.00005;
+        $totalRefund = $rate * $count;
+
+        // Atomic increment to prevent race conditions with concurrent balance updates
+        Balance::where('customer', 'sadeghi')->increment('balance', $totalRefund);
+    }
 
     public function v3()
     {
@@ -690,23 +746,30 @@ class OrderController extends Controller
             ->where('service', 'comment')
             ->first();
 
-        $order = Order::query()->create([
-            "customer" => request("site_url") ?? request('customer'),
-            "service_id" => $service ? $service->id : null,
-            "service_type" => 'comment',
-            "target_link" => $cleanLink,
-            "total_count" => count($commentList),
-            "status" => "Pending",
-        ]);
-
-        foreach ($commentList as $comment) {
-            OrderAction::query()->create([
-                'order_id' => $order->id,
-                'type' => 'comment',
-                'content' => $comment,
-                'status' => 'free',
+        // Wrap order + actions creation in a transaction to prevent race condition.
+        // Without this, the Python preparer can see the order (is_prepared=0, status=Pending)
+        // before the actions are inserted, causing "No comment action with content found" errors.
+        $order = DB::transaction(function () use ($cleanLink, $commentList, $service) {
+            $order = Order::query()->create([
+                "customer" => request("site_url") ?? request('customer'),
+                "service_id" => $service ? $service->id : null,
+                "service_type" => 'comment',
+                "target_link" => $cleanLink,
+                "total_count" => count($commentList),
+                "status" => "Pending",
             ]);
-        }
+
+            foreach ($commentList as $comment) {
+                OrderAction::query()->create([
+                    'order_id' => $order->id,
+                    'type' => 'comment',
+                    'content' => $comment,
+                    'status' => 'free',
+                ]);
+            }
+
+            return $order;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -812,23 +875,30 @@ class OrderController extends Controller
             ->where('service', 'comment')
             ->first();
 
-        $order = Order::query()->create([
-            "customer" => request("site_url") ?? request('customer'),
-            "service_id" => $service ? $service->id : null,
-            "service_type" => 'comment',
-            "target_link" => $cleanLink,
-            "total_count" => count($commentList),
-            "status" => "Pending",
-        ]);
-
-        foreach ($commentList as $comment) {
-            OrderAction::query()->create([
-                'order_id' => $order->id,
-                'type' => 'comment',
-                'content' => $comment,
-                'status' => 'free',
+        // Wrap order + actions creation in a transaction to prevent race condition.
+        // Without this, the Python preparer can see the order (is_prepared=0, status=Pending)
+        // before the actions are inserted, causing "No comment action with content found" errors.
+        $order = DB::transaction(function () use ($cleanLink, $commentList, $service) {
+            $order = Order::query()->create([
+                "customer" => request("site_url") ?? request('customer'),
+                "service_id" => $service ? $service->id : null,
+                "service_type" => 'comment',
+                "target_link" => $cleanLink,
+                "total_count" => count($commentList),
+                "status" => "Pending",
             ]);
-        }
+
+            foreach ($commentList as $comment) {
+                OrderAction::query()->create([
+                    'order_id' => $order->id,
+                    'type' => 'comment',
+                    'content' => $comment,
+                    'status' => 'free',
+                ]);
+            }
+
+            return $order;
+        });
 
         return response()->json([
             'status' => 'success',

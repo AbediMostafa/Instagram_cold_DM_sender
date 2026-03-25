@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Account;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use \App\Models\Account;
 
 return new class extends Migration {
     /**
@@ -66,6 +66,9 @@ return new class extends Migration {
             $table->text('log')->nullable();
             $table->timestamps();
             $table->timestamp('next_login')->nullable();
+            $table->string('upload_post_status')->default('none');
+            $table->string('upload_post_username')->nullable();
+            $table->index('upload_post_status', 'idx_accounts_upload_post_status');
         });
     }
 

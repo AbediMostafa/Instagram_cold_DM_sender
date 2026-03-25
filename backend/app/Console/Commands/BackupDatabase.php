@@ -18,7 +18,7 @@ class BackupDatabase extends Command
         $dbport = config('database.connections.pgsql.port', 5432);
         $dbpass = config('database.connections.pgsql.password');
         $backupDir = env('BACKUP_DIR', 'C:\\Users\\bc');
-        $pgDumpPath = env('PG_DUMP_PATH', '"C:\\Program Files\\PostgreSQL\\18\\bin\\pg_dump.exe"');
+        $pgDumpPath = env('PG_DUMP_PATH', 'C:\\Program Files\\PostgreSQL\\18\\bin\\pg_dump.exe');
 
         // Ensure backup directory exists
         if (!File::isDirectory($backupDir)) {
