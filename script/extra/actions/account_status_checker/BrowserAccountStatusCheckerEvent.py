@@ -5,7 +5,7 @@ from script.models.Account import Account
 
 
 class BrowserAccountStatusCheckerEvent:
-    number_of_accounts_to_check = 15
+    number_of_accounts_to_check = 10
     command = None
     account_to_check = None
 

@@ -212,7 +212,8 @@ class BrowserApiViewStoryEvent(BaseAction):
                 # Check for client error: data is null with errors
                 data = json_data.get('data')
                 if data is None and json_data.get('errors'):
-                    self._cancel_order('Story is not available')
+                    self._log_to_file(f'RESPONSE ERROR: {json.dumps(json_data)[:1000]}', 'unknown')
+                    # self._cancel_order('Story is not available')
                     return
 
                 # Success

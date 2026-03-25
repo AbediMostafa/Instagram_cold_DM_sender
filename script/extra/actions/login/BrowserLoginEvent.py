@@ -87,10 +87,10 @@ class BrowserLoginEvent:
             self.errors.change_password_handler()
             self.please_log_in_to_continue()
             self.save_info()
-            self.turn_on_notif()
             self.save_session()
+            self.ig.pause(1000, 2000)
+            self.turn_on_notif()
 
-            self.ig.pause(1000, 1200)
 
     def check_for_login(self):
         max_retries = 4
@@ -258,7 +258,7 @@ class BrowserLoginEvent:
 
             self.ig.page.get_by_role('button', name='Confirm').click()
             self.ig.account.add_cli('2FA confirm clicked')
-            self.ig.pause(19000, 21000)
+            self.ig.pause(15000, 16000)
 
     def login_handler(self):
         is_visible = self.ig.is_visible_by_text('Phone number, username, or email') or self.ig.is_visible_by_text(
@@ -277,26 +277,26 @@ class BrowserLoginEvent:
 
         try:
             input3.fill('')
-            input3.press_sequentially(self.ig.account.username, delay=100, timeout=4000)
+            input3.press_sequentially(self.ig.account.username, delay=100, timeout=8000)
             self.ig.account.add_cli('First locator didnt found')
         except:
             try:
                 input2.fill('')
-                input2.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
+                input2.press_sequentially(self.ig.account.username, delay=100, timeout=8000)
                 self.ig.account.add_cli('Second locator didnt found')
 
             except:
                 input1.fill('')
 
                 try:
-                    input1.press_sequentially(self.ig.account.username, delay=100, timeout=6000)
+                    input1.press_sequentially(self.ig.account.username, delay=100, timeout=8000)
                 except:
                     self.ig.account.add_cli('Third locator didnt found')
 
         self.ig.pause(1800, 3000)
         self.ig.page.get_by_label('Password').fill('')
         self.ig.page.get_by_label('Password').press_sequentially(
-            self.ig.account.password, delay=100, timeout=6000
+            self.ig.account.password, delay=100, timeout=8000
         )
         self.ig.pause(2000, 3000)
 
@@ -306,7 +306,7 @@ class BrowserLoginEvent:
             self.ig.account.add_cli('First login locator failed')
             self.ig.page.locator('[aria-label="Log In"]').click(timeout=3000)
 
-        self.ig.pause(5000, 6000)
+        self.ig.pause(8000, 9000)
 
     def unusual_login_detected(self):
         if self.ig.is_visible_by_text('We Detected An Unusual Login') or self.ig.is_visible_by_text(

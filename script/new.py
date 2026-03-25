@@ -13,7 +13,7 @@ from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmF
 from script.extra.events.browser_events.BrowserMakeAccountPublic import BrowserMakeAccountPublic
 from script.extra.events.browser_events.BrowserGotoExploreEvent import BrowserGotoExploreEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
-from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
+# from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
 from script.models.Template import get_a, delete
 from script.extra.adapters.SettingAdapter import SettingAdapter
 from script.extra.hooks.CheckForAccountActionsHook import CheckForAccountActionsHook

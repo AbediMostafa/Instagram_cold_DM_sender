@@ -243,7 +243,7 @@ class AccountController extends Controller
     {
         return tryCatch(
             fn() => Account::whereIn('id', r('ids'))->get()
-                ->each(fn($account) => $account->makeActive()),
+                ->each(fn(Account $account) => $account->makeActive()),
             'Warning(s) deleted successfully',
             'Problem updating account',
         );

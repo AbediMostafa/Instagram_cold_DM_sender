@@ -9,12 +9,8 @@ import pandas as pd
 import csv
 import sys
 
-count = 0
 import random
-import sys
-import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import subprocess
 import sys
 from script.models.Process import Process
@@ -36,7 +32,7 @@ from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEve
 from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
 from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
-# from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
+from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
 from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
 from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
@@ -137,77 +133,102 @@ from script.models.Profile import Profile
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
 from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
-from script.extra.actions.location_extractor.LocationExtractorContext import LocationExtractorContext
-from script.extra.actions.lead_generate_by_location.LeadGenerateByLocationContext import LeadGenerateByLocationContext
-from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
 from script.models.AccountHelper import get_storage_state
-# from script.extra.api_actions.BrowserApiViewStoryEvent import BrowserApiViewStoryEvent
-from script.extra.actions.get_account_username.GetAccountUsernameContext import GetAccountUsernameContext
-from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
+from script.extra.api_actions.BrowserApiViewStoryEvent import BrowserApiViewStoryEvent
 from datetime import timedelta
 from script.extra.helper import tehran_now
 # from script.models.Order import get_next_order_for_account
-from script.models.City import get_next
 import json
 
-# oc = OrderComment.get_by_id(210874)
-# oc.updated_at = tehran_now()
-# oc.save()
-from script.models.OrderComment import release_stuck_comments
+import requests
+import requests
+import uuid
+import json
+import requests
+from script.models.Profile import Profile
+from script.models.Proxy import get_free_proxy
 
-# print(updated_counts.count())
-# account = get_next_account()
-account = Account.get_by_id(12)
-browser_ig = BasePlaywright(account)
-browser_ig.init()
-LoginContext(browser_ig).fire()
-LeadFullDataExtractor(browser_ig).fire()
-# # order = get_next_order_for_account(account)
-# # print(order)
-# ApiCommentContext(browser_ig).fire()
-# ApiSavePostContext(browser_ig).fire()
-# StoryPreparerContext(browser_ig).fire()
-# ApiViewStoryContext(browser_ig).fire()
-# ViewStoryContext(browser_ig).fire()
-# ViewAllStoriesContext(browser_ig).fire()
-# SavePostContext(browser_ig).fire()
-# LikeAndCommentContext(browser_ig).fire()
-# LeadGenerateByPostEngagementContext(browser_ig).fire()
-# ChangeNameUsernameContext(browser_ig).fire()
-# CommentOnOthersPostContext(browser_ig).fire()
-# ReelsAverageExtractor(browser_ig).fire()
-# PostImageFromFolderContext(browser_ig).fire()
-# LikeAndCommentContext(browser_ig).fire()
-# MakeAccountPublicContext(browser_ig).fire()
-# Format A: /p/{code}
-# BrowserChangeBioEvent(browser_ig).fire()
-# GetContactInformationContext(browser_ig).fire()
-# response = requests.get(url, verify=False)
-# print(response.json().get('data').get('status'))
-# DeleteInitialPostsContext(browser_ig).fire()
-# UnfollowContext(browser_ig).fire()
-# lead = Lead.get_by_id(2950649)
-# dm_post = get_or_reset_dm_post_for_lead(lead)
+url = "https://api.adspower.com/fbcc/user/single-import-user"
 
-# print(dm_post)
-# dm = DmPostLead.select().first()
-# print(dm.lead_id)
-# print(dm.dm_post_id)
-# print(type(account.fingerprint))
-# print(account.fingerprint['fingerprint_config'])
+headers = {
+    "accept": "application/json, text/plain, */*",
+    "content-type": "application/x-www-form-urlencoded",
+    "cpl": "feaae21d9508e8a0b41fd3f91af0442b008662c38d6b2e51",
+    "origin": "https://app.adspower.com",
+    "referer": "https://app.adspower.com/",
+    "user-agent": "Mozilla/5.0"
+}
 
-# account = Account.get_by_id(914)
-# account = get_next_account()
-# creator = ProfileCreator(account)
-# creator.create()
-# creator.delete()
-# browser_ig = BasePlaywright(account)
-# browser_ig.start_browser().go_to_instagram()
-# BrowserDmFollowUpEvent(browser_ig).fire()
-# SendDmContext(browser_ig).fire()
-# BrowserGetThreadMessagesEvent(browser_ig).fire()
+cookies = {
+    "__SYS_ID": "98607baca5b939a5a63e764b830814ff",
+    "LOCAL_KEY_IN_WEBSITE": "feaae21d9508e8a0b41fd3f91af0442b008662c38d6b2e51",
+}
 
-# UnfollowContext(browser_ig).fire()
+# base fingerprint config (reuse)
+fingerprint_config = {
+    "client_hints": {
+        "bitness": "64",
+        "platform": "Windows",
+        "architecture": "x86",
+        "ua_full_version": "143.0.7499.146",
+        "platform_version": "15.0.0"
+    },
+    "fonts": "all",
+    "canvas": "0",
+    "webgl": "2",
+    "audio": "1",
+    "webrtc": "disabled",
+    "browser": "chrome",
+    "language": ["en-US","en"],
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.146 Safari/537.36",
+}
 
-# HowManyEventsCanHandleStrategy(account, browser_ig, None).post_action_hook()
+for i in range(200):
+    sleep(3)
+    try:
+        # ✅ generate uuid name
+        profile_name = f"profile_{uuid.uuid4().hex[:12]}"
+
+        data = {
+            "name": profile_name,
+            "batch_id": 0,
+            "switch_random_finger": 1,
+            "browser_run_args": "",
+            "proxytype": "noproxy",
+            "proxy": "",
+            "fingerprint_config": json.dumps(fingerprint_config)
+        }
+
+        response = requests.post(
+            url,
+            headers=headers,
+            cookies=cookies,
+            data=data
+        )
+
+        print(f"{i + 1}/200 -> {response.status_code}")
+        print(f"{i + 1}/200 -> {response.json()}")
+
+        if response.status_code == 200:
+            res_json = response.json()
+
+            # ⚠️ adjust this based on actual API response
+            profile_id = str(res_json.get("data", {}).get("id", ""))
+            print(profile_id)
+
+            # ✅ save to DB
+            profile = Profile.create(
+                title=profile_name,
+                profile_id=profile_id,
+                folder="default",
+            )
+            print(profile)
+
+        else:
+            print(response.text)
+
+    except Exception as e:
+        print(f"Error at {i}: {e}")
+
+data = "name=salamsalam&batch_id=0&switch_random_finger=1&browser_run_args=&proxytype=noproxy&proxy=&fingerprint_config=%7B%22client_hints%22%3A%7B%22model%22%3A%22%22%2C%22wow64%22%3A%22%22%2C%22mobile%22%3A%22%22%2C%22bitness%22%3A%2264%22%2C%22platform%22%3A%22Windows%22%2C%22architecture%22%3A%22x86%22%2C%22ua_full_version%22%3A%22143.0.7499.146%22%2C%22platform_version%22%3A%2215.0.0%22%7D%2C%22fonts%22%3A%22all%22%2C%22canvas%22%3A%220%22%2C%22webgl%22%3A%222%22%2C%22audio%22%3A%221%22%2C%22webrtc%22%3A%22disabled%22%2C%22gpu%22%3A%220%22%2C%22tls%22%3A%22%22%2C%22page_language%22%3A%22native%22%2C%22allow_scan_ports%22%3A%22%22%2C%22screen_resolution%22%3A%22none%22%2C%22automatic_timezone%22%3A%221%22%2C%22media_devices%22%3A%221%22%2C%22client_rects%22%3A%221%22%2C%22webgl_config%22%3A%7B%22unmasked_vendor%22%3A%22Google%20Inc.%20(NVIDIA)%22%2C%22unmasked_renderer%22%3A%22ANGLE%20(NVIDIA%2C%20NVIDIA%20GeForce%20GTX%20650%20(0x00002504)%20Direct3D11%20vs_5_0%20ps_5_0%2C%20D3D11-27.21.14.6589)%22%2C%22system%22%3A%22Windows%22%2C%22webgpu%22%3A%7B%22webgpu_switch%22%3A%221%22%7D%7D%2C%22webgl_image%22%3A%220%22%2C%22do_not_track%22%3A%22default%22%2C%22hardware_concurrency%22%3A%2210%22%2C%22device_memory%22%3A%228%22%2C%22tls_switch%22%3A%220%22%2C%22scan_port_type%22%3A%221%22%2C%22device_name_switch%22%3A%222%22%2C%22device_name%22%3A%22PC-3PA6TET%22%2C%22speech_switch%22%3A%221%22%2C%22audio_id%22%3A%22-588%22%2C%22client_rects_id%22%3A%224139%22%2C%22dpr%22%3A2%2C%22flash%22%3A%22block%22%2C%22location%22%3A%22ask%22%2C%22accuracy%22%3A1000%2C%22browser%22%3A%22chrome%22%2C%22location_switch%22%3A%221%22%2C%22language_switch%22%3A%221%22%2C%22page_language_switch%22%3A%221%22%2C%22language%22%3A%22en-US%2Cen%22%2C%22ua%22%3A%22Mozilla%2F5.0%20(Windows%20NT%2010.0%3B%20Win64%3B%20x64)%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F143.0.7499.146%20Safari%2F537.36%22%2C%22browser_kernel_config%22%3A%7B%22version%22%3A%22ua_auto%22%2C%22type%22%3A%22chrome%22%7D%2C%22sys_resolution%22%3A%22%22%2C%22sys_dpr%22%3A%22%22%2C%22mac_address_config%22%3A%7B%22model%22%3A%222%22%2C%22address%22%3A%2210-7B-44-A9-87-98%22%7D%7D"

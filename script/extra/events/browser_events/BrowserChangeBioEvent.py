@@ -12,7 +12,7 @@ class BrowserChangeBioEvent(InstagramMiddleware):
 
     def execute(self):
 
-        if self.ig.account.get_passed_days_since_creation() < 5:
+        if self.ig.account.get_passed_days_since_creation() < 4:
             return self.ig.account.add_cli(f"Account is not old enough to change the bio")
 
         if self.ig.account.has('bio'):

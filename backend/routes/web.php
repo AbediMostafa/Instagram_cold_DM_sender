@@ -51,43 +51,63 @@ use \App\Models\Order;
 use \App\Models\Setting;
 use \App\Models\Account;
 use \App\Models\Proxy;
+use \App\Models\City;
 
 Route::get('/', function () {
 });
 Route::get('/test', function () {
 
+    $accounts = Account::query()
+        ->where('instagram_state', 'active')
+        ->where('service_id', '7')
+        ->update([
+            'service_id' => 8
+        ]);
+    dump(
+        $accounts
+    );
+
+    dd(\App\Models\Balance::query()->first()->balance);
+
 });
 
 Route::get('/get-state', function () {
-    $orders = Order::query()
-        ->orderBy('id', 'desc')
-        ->whereHas('actions', function ($actions) {
-            $actions->where('status', 'failed');
-        })->get()
-        ->pluck('id')->toArray();
 
-    dd($orders);
+    //"170.104480" // routes\web.php:70
 
-    $orders = \App\Models\Order::query()->where('status', 'Completed')
-        ->withCount(['actions as nullAccounts' => function ($action) {
-            $action->whereNull('account_id');
-        }])
-        ->withCount(['actions' => function ($action) {
-            $action
-                ->where('status', 'sent')
-                ->whereNotNull('account_id');
-        }])
-        ->orderBy('id', 'desc')
-        ->whereHas('actions', function ($actions) {
-            $actions->where(function ($q) {
-                $q->whereNull('account_id')
-                    ->orWhere('status', 'failed');
-            });
-        })
-        ->get()
-        ->pluck('id')->toArray();
+$input = "";
+    $lines = preg_split('/\r\n|\r|\n/', $input);
 
-    dd($orders);
+// remove empty lines
+    $lines = array_values(array_filter(array_map('trim', $lines)));
+
+    $result = [];
+    $count = 0;
+
+    for ($i = 0; $i < count($lines); $i += 2) {
+        if (!isset($lines[$i + 1])) {
+            continue; // skip broken pair
+        }
+
+        $email = $lines[$i];
+        $code = $lines[$i + 1];
+
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $result[] = $email . ',33355KHs,' . $code;
+            $count++;
+        }
+    }
+
+// optional: remove duplicates
+    $result = array_unique($result);
+
+    dd($result);
+
+// output result
+    echo implode(PHP_EOL, $result);
+
+// count check
+    echo "\n\nTotal rows: {$count}\n";
 });
 
 
@@ -243,7 +263,7 @@ Route::post('order/delete', [OrderController::class, 'delete']);
 Route::post('order/finish', [OrderController::class, 'finish']);
 Route::post('order/fail', [OrderController::class, 'fail']);
 Route::post('order/reset', [OrderController::class, 'reset']);
-Route::post('order/change-processing-to-free', [OrderController::class, 'changProcessingCommentsToFree']);
+Route::post('order/change-processing-to-free', [OrderController::class, 'changeProcessingToFree']);
 Route::post('order/get-actions', [OrderController::class, 'getActions']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
@@ -301,6 +321,11 @@ Route::prefix('tiktok-links')->group(function () {
 
 Route::post('tik-tok-tags/store', [TikTokTagController::class, 'index']);
 Route::delete('tik-tok-tags/{id}', [TikTokTagController::class, 'destroy']);
+
+
+Route::post('account/upload-post-connect', [AccountController::class, 'uploadPostConnect']);
+Route::post('account/upload-post-disconnect', [AccountController::class, 'uploadPostDisconnect']);
+Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
 
 
 //});
