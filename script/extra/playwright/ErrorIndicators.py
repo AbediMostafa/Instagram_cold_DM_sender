@@ -2,6 +2,7 @@ from script.extra.playwright.base_actions.BaseAction import BaseAction
 from script.extra.exceptions import *
 from script.extra.helper import go_to_page
 from script.extra.modules.adspower.Adspower import Adspower
+import re
 
 
 class ErrorIndicators(BaseAction):
@@ -30,10 +31,12 @@ class ErrorIndicators(BaseAction):
             raise Exception("You can send more messages after your invite is accepted")
 
     def suspect_automate_behavior_handler(self):
+        messages = ['suspect automated behavior',
+                    'suspect automated behaviour',
+                    'To prevent your account from being temporarily restricted',
+                    ]
 
-        if self.ig.is_visible_by_text('suspect automated behavior') or self.ig.is_visible_by_text(
-                'suspect automated behaviour') or self.ig.is_visible_by_text(
-            'To prevent your account from being temporarily restricted or permanently disabled'):
+        if self.ig.is_visible_by_texts(messages):
 
             try:
                 self.ig.pause(1000, 2000)
@@ -64,9 +67,12 @@ class ErrorIndicators(BaseAction):
 
     def choose_if_we_process_your_data(self):
         # Choose if we process your data for ads
+        messages = [
+            'Choose if we process your data',
+            'you can choose whether you consent to us processing',
+        ]
 
-        if self.ig.is_visible_by_text('Choose if we process your data') or self.ig.is_visible_by_text(
-                'you can choose whether you consent to us processing'):
+        if self.ig.is_visible_by_texts(messages):
 
             try:
                 self.ig.pause(1000, 2000)
@@ -98,8 +104,12 @@ class ErrorIndicators(BaseAction):
     def changes_to_how_we_manage_data(self):
         # Changes to How We Manage Data
 
-        if self.ig.is_visible_by_text('Changes to How We Manage Data') or self.ig.is_visible_by_text(
-                'Review and Agree'):
+        messages = [
+            'Changes to How We Manage Data',
+            'Review and Agree'
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
             self.ig.pause(1000, 2000)
             self.ig.account.add_cli('Changes to How We Manage Data ...')
             self.ig.page.get_by_role("button", name='Next').click(timeout=5000)
@@ -108,8 +118,8 @@ class ErrorIndicators(BaseAction):
             self.ig.pause(3500, 5500)
 
     def continue_as_handler(self):
-        if self.ig.is_visible_by_text('Continue as') or self.ig.is_visible_by_text(
-                'Continue As') or self.ig.is_visible_by_text('continue As'):
+        if self.ig.is_visible_by_text('Continue as'):
+
             self.ig.account.add_cli('Continue as is visible, Clicking on it')
             try:
                 self.ig.page.locator('//button[span[contains(text(), "Continue as")]]').click(timeout=3000)
@@ -140,6 +150,7 @@ class ErrorIndicators(BaseAction):
                 "We couldn't connect to Instagram. Make sure you're connected to the internet and try again.")
 
     def password_is_incorrect_handler(self):
+        # The password you entered is incorrect.
         if self.ig.is_visible_by_text('your password was incorrect'):
             raise YourPasswordWasIncorrectError('Your password was incorrect')
 
@@ -166,8 +177,12 @@ class ErrorIndicators(BaseAction):
             self.ig.pause(2000, 3000)
 
     def fill_code_sent_to_email(self):
-        if self.ig.is_visible_by_text('Enter the code we sent to') or self.ig.is_visible_by_text(
-                'Check your email') or self.ig.is_visible_by_text("Enter the 6-digit code we sent to the email"):
+        messages = [
+            'Enter the code we sent to',
+            'Check your email',
+            "Enter the 6-digit code we sent to the email"
+        ]
+        if self.ig.is_visible_by_texts(messages):
             raise FillCodeSentToError('Enter the code we sent to your email')
 
     def enter_your_mobile_number(self):
@@ -176,10 +191,12 @@ class ErrorIndicators(BaseAction):
 
     def we_sent_a_code_to_whatsapp(self):
         # Check your WhatsApp messages
-        # Enter the code we sent to your WhatsApp account
-        if self.ig.is_visible_by_text('We sent a code to WhatsApp') or self.ig.is_visible_by_text(
-                'Check your WhatsApp messages') or self.ig.is_visible_by_text(
-            'Enter the code we sent to your WhatsApp account'):
+        messages = [
+            'We sent a code to WhatsApp',
+            'Check your WhatsApp messages',
+            'Enter the code we sent to your WhatsApp'
+        ]
+        if self.ig.is_visible_by_texts(messages):
             raise EnterYourMobileError('We sent a code to WhatsApp')
 
     def suspended_account_handler(self):
@@ -194,13 +211,21 @@ class ErrorIndicators(BaseAction):
             raise AccountSuspendedError('We suspended your account')
 
     def disabled_account_handler(self):
-        if self.ig.is_visible_by_text('Your account has been disabled') or self.ig.is_visible_by_text(
-                'We disabled your account'):
+        messages = [
+            'Your account has been disabled',
+            'We disabled your account'
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
             raise AccountDisabledError('We disabled your account')
 
     def appeal_submitted_handler(self):
-        if self.ig.is_visible_by_text('You submitted an appeal') or self.ig.is_visible_by_text(
-                'It usually takes us just over a day to review your information'):
+        messages = [
+            'You submitted an appeal',
+            'It usually takes us just over a day to review your information'
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
             raise AppealSubmittedError('Appeal submitted')
 
     def check_your_text_messages(self):
@@ -212,14 +237,20 @@ class ErrorIndicators(BaseAction):
             raise CheckYourTextMessages('Choose a way to confirm')
 
     def upload_your_id_handler(self):
+        messages = [
+            'Upload your ID',
+            'We need a photo of your official ID'
+        ]
 
-        if self.ig.is_visible_by_text('Upload your ID') or self.ig.is_visible_by_text(
-                'We need a photo of your official ID'):
+        if self.ig.is_visible_by_texts(messages):
             raise UploadYourIdError('Upload your ID')
 
     def enter_your_email_handler(self):
-        if self.ig.is_visible_by_text('Enter your email') or self.ig.is_visible_by_text(
-                "We’ll send a confirmation code to this email"):
+        messages = [
+            'Enter your email',
+            "We’ll send a confirmation code to this email",
+        ]
+        if self.ig.is_visible_by_texts(messages):
             raise EnterYourEmailError('Enter your email address')
 
     def enter_confirmation_code_handler(self):
@@ -239,29 +270,46 @@ class ErrorIndicators(BaseAction):
                 raise HelpUsConfirmItsYouError("Confirm you're human")
 
     def add_a_phone_number(self):
-        if self.ig.is_visible_by_text('Add a phone number to get back into Instagram') or self.ig.is_visible_by_text(
-                "We will send a confirmation code via SMS to your phone"):
+        messages = [
+            'Add a phone number to get back into Instagram',
+            "We will send a confirmation code via SMS to your phone"
+        ]
+        if self.ig.is_visible_by_texts(messages):
             raise AddAPhoneNumberError('Add a phone number to get back into Instagram')
 
     def confirm_you_own_this_account(self):
         # Help us confirm you own this account
-        if self.ig.is_visible_by_text('confirm that you own this account') or self.ig.is_visible_by_text(
-                "You'll need to verify your identity") or self.ig.is_visible_by_text(
-            "Help us confirm you own this account"):
+        messages = [
+            'confirm that you own this account',
+            "You'll need to verify your identity",
+            "Help us confirm you own this account"
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
             raise ConfirmYouOwnThisAccount('Help us confirm that you own this account')
 
     def we_are_working_on_getting_this_fixed(self):
-        if self.ig.is_visible_by_text('Sorry, something went wrong') or self.ig.is_visible_by_text(
-                "working on getting this fixed as soon as we can"):
+        messages = [
+            'Sorry, something went wrong',
+            "working on getting this fixed as soon as we can",
+        ]
+        if self.ig.is_visible_by_texts(messages):
             raise SomethingWentWrong('Sorry, something went wrong')
 
     def help_us_confirm_its_you_handler(self):
-        if self.ig.is_visible_by_text('Help us confirm it') or self.ig.is_visible_by_text(
-                "Help us confirm that it's you"):
+        messages = [
+            'Help us confirm it',
+            "Help us confirm that it's you"
+        ]
+        if self.ig.is_visible_by_texts(messages):
             raise HelpUsConfirmItsYouError("Help us confirm it's you")
 
     def feedback_required(self):
-        if self.ig.is_visible_by_text('feedback_required') or self.ig.is_visible_by_text("feedback required"):
+        messages = [
+            'feedback_required',
+            "feedback required"
+        ]
+        if self.ig.is_visible_by_texts(messages):
             self.ig.account("Setting this account's is_used to 0 ...")
             self.ig.account.set('is_used', 0)
 
@@ -269,10 +317,13 @@ class ErrorIndicators(BaseAction):
 
     def change_password_handler(self):
         from script.extra.helper import generate_random_word
+        messages = [
+            'Change your password to secure your account',
+            'Someone may have your password',
+            'Change Your Password to Secure Your Account'
+        ]
 
-        if self.ig.is_visible_by_text('Change your password to secure your account') or self.ig.is_visible_by_text(
-                'Someone may have your password') or self.ig.is_visible_by_text(
-            'Change Your Password to Secure Your Account'):
+        if self.ig.is_visible_by_texts(messages):
 
             self.ig.account.add_cli("Change password page appeared")
 
@@ -339,3 +390,13 @@ class ErrorIndicators(BaseAction):
     def check_the_security_code(self):
         if self.ig.is_visible_by_text('check the security code'):
             raise CheckTheSecurityCode('Please check the security code.')
+
+    def trust_this_device(self):
+
+        messages = [
+            'trust this device to skip the step',
+        ]
+        if self.ig.is_visible_by_texts(messages):
+            self.ig.page.get_by_role('button', name=re.compile(r'Trust this device', re.IGNORECASE)).click(timeout=4000)
+            self.ig.account.add_cli('Trust this device clicked')
+            self.ig.pause(4000, 5000)

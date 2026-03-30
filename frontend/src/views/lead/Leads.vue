@@ -66,7 +66,9 @@
               </td>
 
               <td>
-                  <a class="text-gray-700 fw-bold text-hover-primary fs-7">{{ lead.username }}</a>
+                  <a class="text-gray-700 fw-bold text-hover-primary fs-7"
+                     @click="copyToClipboard(lead.username)"
+                  >{{ lead.username }}</a>
                   <lead-last-state :state="lead.last_state"/>
               </td>
 
@@ -134,6 +136,8 @@ import LeadsDropDown from '@/components/lead/LeadsDropDown.vue';
 import {useLeadStore} from '@/stores/Lead';
 import {useTagStore} from '@/stores/Tag';
 import {useCategoryStore} from '@/stores/Category';
+import {copyToClipboard} from "@/core/helpers/helper";
+
 
 const selectedId = ref(0);
 const store = useLeadStore();

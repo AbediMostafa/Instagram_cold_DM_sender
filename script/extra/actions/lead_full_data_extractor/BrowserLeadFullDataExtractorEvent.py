@@ -8,6 +8,8 @@ from script.extra.helper import go_to_page
 from datetime import datetime
 import requests
 import uuid
+from script.extra.playwright.base_actions.ScrollAction import ScrollAction
+from script.extra.exceptions import NotAReachableAccount
 
 
 class BrowserLeadFullDataExtractorEvent:
@@ -18,8 +20,11 @@ class BrowserLeadFullDataExtractorEvent:
 
     def __init__(self, ig):
         self.ig = ig
+        self.post_count = 0
+        self.scroll = ScrollAction(self.ig).start
 
-        self.number_of_leads = random.randint(10, 15)
+        # self.number_of_leads = random.randint(1, 3)
+        self.number_of_leads = 1
         self.ig.page.on("response", lambda response: self.handle_response(response))
 
     def handle_response(self, response):
@@ -53,7 +58,6 @@ class BrowserLeadFullDataExtractorEvent:
         profile_pic_url = user.get('hd_profile_pic_url_info').get('url')
         id = user.get('id')
 
-        self.ig.account.add_cli(f'Profile picture url : {profile_pic_url}')
         self.ig.account.add_cli(f'Profile loaded: {username}, name:{full_name}')
 
         if full_name:
@@ -64,7 +68,6 @@ class BrowserLeadFullDataExtractorEvent:
 
         self.save_avatar(profile_pic_url)
         self.save_instagram_id(id)
-        self.save_posts()
 
     def process_timeline(self, timeline):
         edges = timeline.get('edges', [])
@@ -101,7 +104,7 @@ class BrowserLeadFullDataExtractorEvent:
             os.makedirs(full_dir, exist_ok=True)
             filename = f'{uuid.uuid4()}{ext}'
             full_path = os.path.join(full_dir, filename)
-            text = os.path.join(relative_path, filename)
+            text = f"{relative_path}/{filename}"
 
             try:
                 r = requests.get(url, timeout=20)
@@ -124,7 +127,7 @@ class BrowserLeadFullDataExtractorEvent:
             self.save_lead_template(template)
 
             self.ig.account.add_cli(
-                f"Media saved: {shortcode} ({'video' if media_type == 2 else 'image'})"
+                f"Media saved: {shortcode} ({media_type})"
             )
             pass
 
@@ -142,8 +145,9 @@ class BrowserLeadFullDataExtractorEvent:
 
         # VIDEO
         elif media_type == 2:
+            # http://207.189.164.112/storage/uploads/video-post/a7cd5688-8b7b-464a-822b-c47fc8d3b184\95a16b07-0a98-4140-841e-cadf097bc029.mp4
             carousel_id = uuid.uuid4()
-            relative_path = rf'video-post/{carousel_id}'
+            relative_path = rf'uploads/video-post/{carousel_id}'
 
             videos = node.get('video_versions', [])
             thumbnails = node.get('image_versions2', [])
@@ -154,7 +158,7 @@ class BrowserLeadFullDataExtractorEvent:
             video_ext = '.mp4'
 
             image_url = thumbnails.get('candidates')[0]['url']
-            image_ext = '.mp4'
+            image_ext = '.jpg'
 
             save(video_url, video_ext, 'video-post', relative_path, carousel_id, 'video')
             save(image_url, image_ext, 'video-post', relative_path, carousel_id, 'image')
@@ -165,7 +169,7 @@ class BrowserLeadFullDataExtractorEvent:
             carousel_id = uuid.uuid4()
 
             for uid, media in enumerate(medias, start=1):
-                relative_path = rf'carousel/{carousel_id}'
+                relative_path = rf'uploads/carousel/{carousel_id}'
                 candidates = media.get('image_versions2', {}).get('candidates', [])
 
                 url = candidates[0]['url']
@@ -247,9 +251,6 @@ class BrowserLeadFullDataExtractorEvent:
         self.lead.save()
         self.ig.account.add_cli(f"Lead instagram id saved")
 
-    def save_posts(self):
-        pass
-
     def init(self):
         self.ig.account.add_cli(f"Getting Leads profile ...")
 
@@ -259,7 +260,54 @@ class BrowserLeadFullDataExtractorEvent:
             go_to_page(self.ig, f"https://www.instagram.com/{str(self.lead.username)}/", 'Lead')
             self.ig.pause(7000, 11000)
 
+            try:
+                self.handle_page_breaks()
+            except NotAReachableAccount as e:
+                self.ig.account.add_cli(str(e))
+                continue
+
+            self.extract_post_count()
+            self.ig.pause(6000, 8000)
+            number_of_scrolls = int(self.post_count / 10)
+            number_of_scrolls = min(number_of_scrolls, 10)
+            print(f'Number Of Scrolls : {number_of_scrolls}')
+
+            for i in range(number_of_scrolls):
+                self.scroll(min_length=7000, max_length=8000, min_pause=4000, max_pause=6000)
+
     def save_lead_template(self, template):
         from script.models.LeadTemplate import LeadTemplate
 
         LeadTemplate.create(lead=self.lead, template=template)
+
+    def extract_post_count(self):
+        try:
+            post_element = self.ig.page.locator('span:has-text("posts")').first
+
+            text = post_element.inner_text()
+            post_count = text.split()[0]
+
+            if 'K' in post_count:
+                self.post_count = int(float(post_count.replace('K', '').replace(',', '')) * 1000)
+            else:
+                self.post_count = int(post_count.replace(',', ''))
+        except Exception as e:
+            self.ig.account.add_cli(f'Problem extracting post counts : {str(e)}')
+            self.post_count = 200
+
+        print(f'Post Count : {self.post_count}')  # 554
+
+    def handle_page_breaks(self):
+        error_texts = [
+            "This profile is private",
+            "This account is private",
+            "Sorry, this page isn't available",
+            "Page is not available",
+            "This page isn't available",
+            "the page may have been removed",
+            "The link you followed may be broken",
+        ]
+
+        for text in error_texts:
+            if self.ig.is_visible_by_text(text):
+                raise NotAReachableAccount(text)

@@ -116,3 +116,7 @@ class ProcessShouldStop(Exception):
 
 class RetryableError(Exception):
     pass
+
+
+class NotAReachableAccount(Exception):
+    pass

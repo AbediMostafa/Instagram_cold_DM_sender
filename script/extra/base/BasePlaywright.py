@@ -84,7 +84,6 @@ class BasePlaywright:
             count = locator.count()
 
             for i in range(count):
-                print(f"Checking if Element {i} for '{text}' is visible")
                 if locator.nth(i).is_visible():
                     print(f"Element {i} for '{text}' is visible")
                     return True
@@ -93,6 +92,9 @@ class BasePlaywright:
         except Exception as e:
             print(f"Error checking '{text}': {e}")
             return False
+
+    def is_visible_by_texts(self, texts, timeout: int = 5000):
+        return any(self.is_visible_by_text(text, timeout) for text in texts)
 
     def two_factor_authentication_process(self):
 

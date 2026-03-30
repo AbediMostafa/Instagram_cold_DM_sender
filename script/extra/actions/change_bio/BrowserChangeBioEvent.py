@@ -1,13 +1,12 @@
-from script.models.Template import get_a
-from script.extra.playwright.base_actions.GoToProfilePageAction import GoToProfilePageAction
 from script.extra.helper import go_to_page
-from script.extra.routes import get_template
 from script.models.Template import get_next
+from script.models.Lead import Lead
 
 
 class BrowserChangeBioEvent:
     command = None
     bio = None
+    lead = None
 
     def __init__(self, ig):
         self.ig = ig
@@ -40,7 +39,7 @@ class BrowserChangeBioEvent:
             self.ig.pause(3000, 4000)
 
     def get_bio(self):
-        self.bio = get_next('bio')
+        self.bio, self.lead = Lead.get_a_template(self.ig.account, 'bio')
 
         if not self.bio:
             raise Exception(f'No bio ...')
@@ -68,4 +67,8 @@ class BrowserChangeBioEvent:
     def after_change_hook(self):
         self.command.update_cmd('state', 'success')
         self.ig.account.set('bio', self.bio)
+
+        if self.lead.account is None:
+            self.lead.set_account(self.ig.account)
+
         self.ig.account.add_cli("Bio changed successfully")

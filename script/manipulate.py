@@ -36,7 +36,7 @@ from script.extra.events.browser_events.BrowserLoginEvent import BrowserLoginEve
 from script.extra.events.browser_events.BrowserDmFollowUpEvent import BrowserDmFollowUpEvent
 from script.extra.events.browser_events.BrowserChangeBioEvent import BrowserChangeBioEvent
 from script.extra.events.browser_events.BrowserChangeNameEvent import BrowserChangeNameEvent
-from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
+# from script.extra.events.browser_events.BrowserChangeUsernameEvent import BrowserChangeUsernameEvent
 from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
 from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
@@ -114,7 +114,7 @@ from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext impo
 # from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
 # from script.extra.actions.view_story.ViewStoryContext import ViewStoryContext
 # from script.extra.actions.save_post.SavePostContext import SavePostContext
-from script.extra.actions.connect_to_uploadPost.UploadPostConnectContext import UploadPostConnectContext
+# from script.extra.actions.connect_to_uploadPost.UploadPostConnectContext import UploadPostConnectContext
 
 
 from script.extra.actions.order_preparer.OrderPreparerContext import OrderPreparerContext
@@ -144,6 +144,14 @@ from datetime import timedelta
 from script.extra.helper import tehran_now
 # from script.models.Order import get_next_order_for_account
 import json
+from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
+from script.extra.actions.post_media.PostMediaContext import PostMediaContext
+# account = Account.get_by_id(15)
+# lead = Lead.select_lead_for_profile(account)
+# print(lead)
+# template = Lead.get_a_template(account, 'bio')
+#
+# print(template)
 
 # oc = OrderComment.get_by_id(210874)
 # oc.updated_at = tehran_now()
@@ -152,13 +160,13 @@ from script.models.OrderComment import release_stuck_comments
 
 # print(updated_counts.count())
 # account = get_next_account()
-account = Account.get_by_id(7558)
-# order = get_next_order_for_account(account)
-# print(order)
+account = Account.get_by_id(151)
+# # order = get_next_order_for_account(account)
+# # print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-UploadPostConnectContext(browser_ig).fire()
+PostMediaContext(browser_ig).fire()
 # OrderPreparerContext(browser_ig).fire()
 # ApiCommentContext(browser_ig).fire()
 # ApiSavePostContext(browser_ig).fire()

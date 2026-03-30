@@ -35,6 +35,11 @@ class Template extends Model
         return $this->belongsToMany(Account::class);
     }
 
+    public function leads()
+    {
+        return $this->belongsToMany(Lead::class);
+    }
+
     public function color()
     {
         return $this->belongsTo(Color::class);

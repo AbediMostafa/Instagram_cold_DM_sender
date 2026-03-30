@@ -91,6 +91,11 @@ class Lead extends Model
         return $this->belongsTo(Account::class);
     }
 
+    public function templates()
+    {
+        return $this->belongsToMany(Template::class);
+    }
+
     public function threads()
     {
         return $this->hasMany(Thread::class);

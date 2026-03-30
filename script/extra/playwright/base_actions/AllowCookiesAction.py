@@ -6,8 +6,13 @@ import re
 class AllowCookiesAction(BaseAction):
 
     def start(self):
-        if self.ig.is_visible_by_text("Allow the use of cookies") or self.ig.is_visible_by_text(
-                "Allow all cookies") or self.ig.is_visible_by_text("Allow All Cookies"):
+        messages = [
+            "Allow the use of cookies",
+            "Allow all cookies",
+            "Allow All Cookies"
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
 
             try:
                 self.ig.page.locator('button', has_text='Allow all cookies').click(timeout=3000)

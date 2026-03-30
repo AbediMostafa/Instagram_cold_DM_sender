@@ -20,6 +20,7 @@ class Lead(BaseWithTimeZoneModel):
     last_command_send_date = DateTimeField(null=True)
 
     def set_account(self, account):
+        account.add_cli('Saving lead for account ...')
         self.account = account
         self.save()
 
@@ -154,6 +155,84 @@ class Lead(BaseWithTimeZoneModel):
         category = self.category
 
         return self.passed_hours_since_last_follow_up() < category.hour_interval
+
+    @classmethod
+    def select_lead_for_profile(cls, account):
+
+        lead = Lead.select().where(Lead.account == account).first()
+
+        if lead:
+            account.add_cli(f'We have a reserved lead for this account : {lead.username}')
+            return lead
+
+        account.add_cli('Theres no reserved lead for this account, getting new one ...')
+
+        return (Lead.select().where(
+            (Lead.account_id.is_null(True)) &
+            (Lead.instagram_id.is_null(False))
+        )
+                .order_by(fn.Random())
+                .first())
+
+    @classmethod
+    def get_a_template(cls, account, _type):
+        from .Template import Template
+        from .LeadTemplate import LeadTemplate
+
+        lead = Lead.select_lead_for_profile(account)
+
+        template = (
+            Template
+            .select()
+            .join(LeadTemplate)
+            .where(
+                (LeadTemplate.lead == lead) &
+                (Template.type == _type)
+            )
+            .first()
+        )
+
+        return template, lead
+
+    @classmethod
+    def get_a_media(cls, account, types):
+        from .Template import Template
+        from .LeadTemplate import LeadTemplate
+        from .AccountTemplate import AccountTemplate
+
+        lead = Lead.select_lead_for_profile(account)
+
+        selected_templates_subquery = (AccountTemplate
+                                       .select(AccountTemplate.template)
+                                       .where(AccountTemplate.account == account))
+
+        template = (
+            Template
+            .select()
+            .join(LeadTemplate)
+            .where(
+                (LeadTemplate.lead == lead) &
+                (Template.type.in_(types)) &
+                (Template.id.not_in(selected_templates_subquery))
+            )
+            .order_by(Template.id.desc())
+        ).first()
+
+        if template is None:
+            account.add_cli('Theres no media for this lead ...')
+            return None, None, None
+
+        if template.type == 'carousel' or template.type == 'video-post':
+            # If media type is carousel OR video-post we need to fetch a set of medias not only first
+            medias = (Template
+                      .select()
+                      .where(Template.carousel_id == template.carousel_id)
+                      .order_by(Template.uid))
+
+            return medias, template.type, lead
+
+        # If single media (image/video) → wrap in list
+        return [template], template.type, lead
 
     class Meta:
         table_name = 'leads'

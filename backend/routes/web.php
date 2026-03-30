@@ -47,6 +47,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use \App\Models\Template;
+use \App\Models\Lead;
+use \App\Models\Account;
 
 Route::get('/', function () {
 });

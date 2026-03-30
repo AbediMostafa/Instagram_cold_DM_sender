@@ -290,6 +290,11 @@ def go_to_page(ig, target, name):
 
     raise Exception(f"Failed to reach {name} after 5 attempts.")
 
+
+def check_if_we_are_still_in_the_page(ig, page_indicators, loop_count=10, sleep_between=1500, next_page_indicators=[]):
+    pass
+
+
 def get_profile_picture():
     from uuid import uuid4
 
@@ -307,6 +312,7 @@ def get_profile_picture():
     print('saved:', filename)
 
     return filename
+
 
 def generate_username():
     first_names = [
@@ -360,7 +366,7 @@ def generate_username():
     separator = random.choice(["", "_", "__", "._", "_.", "_._", "_.__", "_.__"])
 
     # ساختار یوزرنیم با طول تصادفی
-    username = first + adj+ separator + last + number
+    username = first + adj + separator + last + number
 
     # کوتاه یا بلند کردن با اضافه کردن یک جداکننده یا عدد در صورت نیاز
     if len(username) < 10:
@@ -369,4 +375,3 @@ def generate_username():
         username = username[:28]  # محدودیت اینستاگرام
 
     return username
-

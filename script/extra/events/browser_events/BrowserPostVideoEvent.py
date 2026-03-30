@@ -64,7 +64,6 @@ class BrowserPostVideoEvent(InstagramMiddleware):
         self.video_path = self.video_template.download_image(self.tmp)
 
     def generate_caption(self):
-        # prompt = f'rewrite this text without plagiarism please remove extra text and give me pure text:{self.video_template.caption}'
         self.caption = self.video_template.caption
 
     def before_change_hook(self):

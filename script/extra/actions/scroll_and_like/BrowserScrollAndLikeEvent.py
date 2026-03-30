@@ -16,6 +16,7 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
         try:
             self.command = self.ig.account.create_command('scroll and like', 'processing')
             self.ig.account.add_cli("Starting scroll and like ...")
+            self.turn_on_notif()
             self.scroll_and_like()
             self.command.update_cmd('state', 'success')
 
@@ -28,7 +29,7 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
 
     def scroll_and_like(self):
 
-        for i in range(random.randint(6, 8)):
+        for i in range(random.randint(8, 12)):
             self.ig.page.mouse.wheel(0, random.randint(450, 650))
             self.ig.pause(2000, 4000)
             self.try_like()
@@ -55,3 +56,13 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
                 continue
 
         return False
+
+    def turn_on_notif(self):
+        import re
+        if self.ig.is_visible_by_text('Turn On notif'):
+            try:
+                self.ig.page.get_by_role('button', name=re.compile(r'Turn On', re.IGNORECASE)).click()
+                self.ig.pause(4000, 5000)
+            except:
+                self.ig.account.add_cli("Turn On doesn't exists")
+                pass

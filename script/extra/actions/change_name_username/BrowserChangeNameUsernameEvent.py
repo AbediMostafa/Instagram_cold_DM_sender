@@ -3,6 +3,7 @@ from script.extra.playwright.base_actions.GoToProfilePageAction import GoToProfi
 from script.extra.helper import go_to_page
 from script.extra.routes import *
 from script.extra.actions.BaseAction import BaseAction
+from script.models.Lead import Lead
 
 
 class BrowserChangeNameUsernameEvent(BaseAction):
@@ -11,6 +12,7 @@ class BrowserChangeNameUsernameEvent(BaseAction):
     username = None
     name = None
     username_counter = 0
+    lead = None
 
     def init(self):
         if self.ig.account.username_changed:
@@ -43,12 +45,10 @@ class BrowserChangeNameUsernameEvent(BaseAction):
             self.ig.pause(3000, 4000)
 
     def before_change_hook(self):
-        self.name_username = get_next('name-username')
+        self.name_username, self.lead = Lead.get_a_template(self.ig.account, 'name-username')
 
         if not self.name_username:
             raise Exception(f"We dont have a name or username for this account")
-
-        print(f'Name username id: {self.name_username.id}')
 
         self.username = self.name_username.text
         self.name = self.name_username.caption
@@ -60,12 +60,14 @@ class BrowserChangeNameUsernameEvent(BaseAction):
 
         GoToProfilePageAction(self.ig).start()
 
-        try:
-            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
-        except Exception as e:
-            self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click(timeout=3000)
-            self.ig.pause(2000, 2500)
-            self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
+        # try:
+        #     self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
+        # except Exception as e:
+        #     self.ig.page.get_by_label(f"Profiles {self.ig.account.username}").click(timeout=3000)
+        #     self.ig.pause(2000, 2500)
+        #     self.ig.page.get_by_label(f"{self.ig.account.username} Instagram").click(timeout=3000)
+
+        self.ig.page.locator('a:has(svg image)').first.click()
 
         self.ig.pause(3000, 3500)
         self.ig.account.add_cli(f"Name appeared")
@@ -94,8 +96,9 @@ class BrowserChangeNameUsernameEvent(BaseAction):
         self.ig.account.set('name', self.name)
         self.ig.account.set('username', self.username)
         self.ig.account.set('username_changed', 1)
-        # res = delete_template([self.name_username['id']])
-        # print(res)
+
+        if self.lead.account is None:
+            self.lead.set_account(self.ig.account)
 
     def fill_name(self):
         try:
