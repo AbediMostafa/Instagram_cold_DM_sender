@@ -1,5 +1,6 @@
 from peewee import *
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
+from .Country import Country
 import random
 
 
@@ -7,6 +8,7 @@ class City(BaseWithTimeZoneModel):
     city_id = CharField()
     name = CharField()
     slug = CharField()
+    country = ForeignKeyField(Country, backref='cities')
     is_used = SmallIntegerField(default=0)
 
     class Meta:
@@ -14,9 +16,6 @@ class City(BaseWithTimeZoneModel):
 
 
 def _try_claim_city():
-    """
-    Atomically claim one free city.
-    """
     random_offset = random.randint(0, 5)
 
     candidates = list(
@@ -49,9 +48,6 @@ def _try_claim_city():
 
 
 def _try_reset_cities():
-    """
-    Reset cities with lock to prevent multiple threads from resetting.
-    """
     from .Lock import Lock
 
     if not Lock.acquire('city_reset', duration_seconds=30):
@@ -66,9 +62,6 @@ def _try_reset_cities():
 
 
 def get_next():
-    """
-    Select the next free city using atomic claiming.
-    """
     print('Selecting city ...')
 
     for attempt in range(3):

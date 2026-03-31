@@ -15,7 +15,7 @@ class BrowserLeadGenerateByLocationEvent:
     ig = None
     command = None
     location_count = 1
-    scroll_count = 10
+    scroll_count = 3
     location = None
     listener = None
 
@@ -25,7 +25,7 @@ class BrowserLeadGenerateByLocationEvent:
     def init(self):
         go_to_page(self.ig, "https://www.instagram.com/explore/locations/", 'Locations')
         self.ig.pause(7000, 8000)
-        go_to_page(self.ig, "https://www.instagram.com/explore/locations/IL/israel/", 'Country')
+        go_to_page(self.ig, "https://www.instagram.com/explore/locations/US/united-states/", 'Country')
         self.ig.pause(7000, 8000)
         self.ig.account.add_cli('Setting up listener ... ')
         self._setup_listener()

@@ -9,6 +9,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CliController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\CommandController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DmPostController;
 use App\Http\Controllers\HashtagController;
@@ -47,9 +48,6 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use \App\Models\Template;
-use \App\Models\Lead;
-use \App\Models\Account;
 
 Route::get('/', function () {
 });
@@ -130,6 +128,14 @@ Route::post('account/detach-tag', [AccountController::class, 'detachTag']);
 Route::post('account/attach-service', [AccountController::class, 'attachService']);
 Route::post('account/detach-service', [AccountController::class, 'detachService']);
 Route::post('account/reset-is-used', [AccountController::class, 'resetIsUsed']);
+
+Route::post('account/upload-post-connect', [AccountController::class, 'uploadPostConnect']);
+Route::post('account/upload-post-disconnect', [AccountController::class, 'uploadPostDisconnect']);
+Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
+Route::post('account/reset-upload-post-status', [AccountController::class, 'resetUploadPostStatus']);
+
+Route::post('account/attach-country', [AccountController::class, 'attachCountry']);
+Route::post('account/detach-country', [AccountController::class, 'detachCountry']);
 
 Route::post('leads', [LeadController::class, 'index']);
 Route::post('lead/view', [LeadController::class, 'view']);
@@ -302,9 +308,6 @@ Route::post('tik-tok-tags/store', [TikTokTagController::class, 'index']);
 Route::delete('tik-tok-tags/{id}', [TikTokTagController::class, 'destroy']);
 
 
-Route::post('account/upload-post-connect', [AccountController::class, 'uploadPostConnect']);
-Route::post('account/upload-post-disconnect', [AccountController::class, 'uploadPostDisconnect']);
-Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
-Route::post('account/reset-upload-post-status', [AccountController::class, 'resetUploadPostStatus']);
 
+Route::post('/countries', [CountryController::class, 'index']);
 //});

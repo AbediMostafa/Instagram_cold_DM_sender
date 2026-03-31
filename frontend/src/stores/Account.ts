@@ -23,6 +23,8 @@ export const useAccountStore = defineStore("AccountStore", {
                 type: '',
                 tags: [],
                 services: [],
+                countries: [],
+                selectedCountryId: null,
             },
             accountsData: [],
             accountStates: [
@@ -30,7 +32,6 @@ export const useAccountStore = defineStore("AccountStore", {
                 {value: "suspended", label: "suspended"},
                 {value: "challenging", label: "challenging"},
             ],
-            // Upload-Post status options for the filter checkbox group
             uploadPostStates: [
                 {value: "none", label: "None"},
                 {value: "pending", label: "Pending"},
@@ -68,10 +69,6 @@ export const useAccountStore = defineStore("AccountStore", {
 
         // ---- Upload-Post actions ----
 
-        /**
-         * Set upload_post_status to 'pending' for selected accounts (bulk).
-         * The Python worker will pick these up and run the connect flow.
-         */
         connectUploadPost(ids) {
             this.warnIfdosntSelected(ids) &&
             warningPromise("Mark selected account(s) for Upload-Post connection?")
@@ -84,10 +81,6 @@ export const useAccountStore = defineStore("AccountStore", {
                 })
         },
 
-        /**
-         * Set upload_post_status to 'disconnecting' for selected accounts (bulk).
-         * The Python worker will pick these up and run the disconnect flow.
-         */
         disconnectUploadPost(ids) {
             this.warnIfdosntSelected(ids) &&
             warningPromise("Mark selected account(s) for Upload-Post disconnection?")
@@ -100,11 +93,6 @@ export const useAccountStore = defineStore("AccountStore", {
                 })
         },
 
-        /**
-         * Toggle Upload-Post for a single account.
-         * If not connected -> runs connect script (opens browser).
-         * If connected -> disconnects via API.
-         */
         toggleUploadPost(id) {
             ApiService.post("account/toggle-upload-post", {id})
                 .then((response) => {
@@ -113,10 +101,6 @@ export const useAccountStore = defineStore("AccountStore", {
                 })
         },
 
-        /**
-         * Reset upload_post_status to 'none' for selected accounts.
-         * Keeps upload_post_username so the profile number can be reused on reconnect.
-         */
         resetUploadPostStatus(ids) {
             this.warnIfdosntSelected(ids) &&
             warningPromise("Reset Upload-Post status to 'none' for selected account(s)?")
@@ -128,6 +112,52 @@ export const useAccountStore = defineStore("AccountStore", {
                         })
                 })
         },
+
+        // ---- Country actions ----
+
+        attachCountry() {
+            if (!this.warnIfdosntSelected(this.checkedAccountRows)) return;
+
+            if (!this.accounts.selectedCountryId) {
+                Swal.fire({icon: "error", text: "Please select a country first"});
+                return;
+            }
+
+            this.is.loading = true;
+
+            const data = {
+                accountIds: this.checkedAccountRows,
+                countryId: this.accounts.selectedCountryId,
+            }
+
+            ApiService.post("account/attach-country", data)
+                .then(() => {
+                    ElMessage.success('Country assigned successfully');
+                    this.getAccounts(this.accounts.current_page);
+                })
+                .finally(() => this.is.loading = false);
+        },
+
+        detachCountry() {
+            this.warnIfdosntSelected(this.checkedAccountRows) &&
+            warningPromise("Are you sure you want to detach country from selected account(s)?")
+                .then(() => {
+                    this.is.loading = true;
+
+                    const data = {
+                        accountIds: this.checkedAccountRows,
+                    }
+
+                    ApiService.post("account/detach-country", data)
+                        .then(() => {
+                            ElMessage.success('Country detached successfully');
+                            this.getAccounts(this.accounts.current_page);
+                        })
+                        .finally(() => this.is.loading = false);
+                })
+        },
+
+        // ---- Core actions ----
 
         warnIfdosntSelected(selected) {
             if (selected.length) return true;
@@ -149,6 +179,7 @@ export const useAccountStore = defineStore("AccountStore", {
                 page,
                 filter: this.accounts.filters,
                 uploadPostFilter: this.accounts.uploadPostFilter,
+                countries: this.accounts.countries,
                 search: this.accounts.search,
                 type: this.accounts.type,
                 dateRange: this.accounts.dateRange,
@@ -167,6 +198,8 @@ export const useAccountStore = defineStore("AccountStore", {
                     this.is.loading = false;
                 });
         },
+
+        // ---- Tag & Service actions ----
 
         attachTag() {
             this.is.loading = true;
@@ -192,13 +225,12 @@ export const useAccountStore = defineStore("AccountStore", {
                 .finally(() => this.is.loading = false);
 
         },
-        resetIsUsed(){
+        resetIsUsed() {
             warningPromise("Are you sure you want to reset is used?")
                 .then(() => {
                     this.is.loading = true;
                     ApiService.post("account/reset-is-used", {})
                         .finally(() => this.is.loading = false);
-
                 })
         },
         detachService() {

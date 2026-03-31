@@ -49,7 +49,7 @@ class BrowserUploadPostConnectEvent:
         First cleans up one suspended account's Upload-Post profile, then
         checks the current account's upload_post_status and routes to connect or disconnect.
         """
-        # Housekeeping: clean up one suspended account's Upload-Post profile per cycle
+        # clean up one suspended account's Upload-Post profile per cycle
         self._cleanup_one_suspended_profile()
 
         status = self.account.upload_post_status
@@ -65,9 +65,6 @@ class BrowserUploadPostConnectEvent:
         else:
             self.account.add_cli(f'[UploadPost] Status is "{status}", skipping...')
 
-    # -------------------------------------------------------------------------
-    # Connect flow
-    # -------------------------------------------------------------------------
 
     def _connect(self):
         """
@@ -416,10 +413,6 @@ class BrowserUploadPostConnectEvent:
         self.account.add_cli(f'[UploadPost] Verify API call failed: {response.status_code}')
         return False
 
-    # -------------------------------------------------------------------------
-    # Disconnect flow
-    # -------------------------------------------------------------------------
-
     def _disconnect(self):
         """
         Disconnect flow: delete the profile from Upload-Post via API and reset local status.
@@ -470,21 +463,20 @@ class BrowserUploadPostConnectEvent:
             self._update_status(original_status)
             self.account.add_cli(f'[UploadPost] Disconnect error: {str(e)} - reverted to "{original_status}"')
 
-    # -------------------------------------------------------------------------
-    # Suspended account cleanup
-    # -------------------------------------------------------------------------
 
     def _cleanup_one_suspended_profile(self):
         """
-        Find one suspended account that has an Upload-Post profile and delete it.
+        Find one suspended/challenging account that has an Upload-Post profile and delete it.
 
-        Uses atomic UPDATE ... WHERE ... LIMIT 1 to prevent race conditions
-        when multiple workers run simultaneously. Each worker picks a different
-        suspended account to clean up.
+        Targets accounts where:
+          - instagram_state is 'suspended' (any upload_post_status except 'none')
+          - instagram_state is 'challenging' AND upload_post_status is 'disconnecting'
+            (challenging might be temporary, so only cleanup if explicitly marked for disconnect)
+
+        Uses atomic FOR UPDATE to prevent race conditions across concurrent workers.
 
         Only clears upload_post_status to 'none'. upload_post_username is kept
-        in case the account becomes active again and needs to reconnect with
-        the same profile number.
+        in case the account becomes active again and needs to reconnect.
 
         Returns True if a profile was successfully deleted, False otherwise.
         """
@@ -493,25 +485,40 @@ class BrowserUploadPostConnectEvent:
 
         try:
             with database.atomic():
-                # Atomically claim one suspended account that has an Upload-Post profile
-                suspended = (Account
+                # Atomically claim one account that needs Upload-Post profile cleanup:
+                # Suspended accounts with any active Upload-Post profile
+                # Challenging accounts that are marked for disconnection
+                target = (Account
                     .select()
                     .where(
-                        (Account.instagram_state == 'suspended') &
                         (Account.upload_post_username.is_null(False)) &
-                        (Account.upload_post_status != 'none')
+                        (
+                            # Suspended: clean up regardless of upload_post_status
+                            (
+                                (Account.instagram_state == 'suspended') &
+                                (Account.upload_post_status != 'none')
+                            ) |
+                            # Challenging: only clean up if explicitly marked for disconnect
+                            (
+                                (Account.instagram_state == 'challenging') &
+                                (Account.upload_post_status == 'disconnecting')
+                            )
+                        )
                     )
                     .order_by(Account.id)
                     .limit(1)
                     .for_update()
                     .first())
 
-                if not suspended:
-                    self.account.add_cli('[UploadPost Cleanup] No suspended accounts with profiles found')
+                if not target:
                     return False
 
-                profile_username = suspended.upload_post_username
-                self.account.add_cli(f'[UploadPost Cleanup] Found suspended account: {suspended.username} (ID: {suspended.id}, profile: {profile_username})')
+                profile_username = target.upload_post_username
+                self.account.add_cli(
+                    f'[UploadPost Cleanup] Found {target.instagram_state} account: '
+                    f'{target.username} (ID: {target.id}, profile: {profile_username}, '
+                    f'status: {target.upload_post_status})'
+                )
 
                 # Delete the profile from Upload-Post API
                 response = requests.delete(
@@ -527,29 +534,22 @@ class BrowserUploadPostConnectEvent:
                     data = {}
 
                 if response.status_code == 200 and data.get('success'):
-                    # API confirmed deletion - safe to update local status
-                    suspended.upload_post_status = 'none'
-                    suspended.save()
-                    self.account.add_cli(f'[UploadPost Cleanup] Successfully deleted profile "{profile_username}" for {suspended.username}')
+                    target.upload_post_status = 'none'
+                    target.save()
+                    self.account.add_cli(f'[UploadPost Cleanup] Successfully deleted profile "{profile_username}" for {target.username}')
                     return True
                 elif response.status_code == 404:
-                    # Profile didn't exist on Upload-Post anyway - still clean up local status
-                    suspended.upload_post_status = 'none'
-                    suspended.save()
+                    target.upload_post_status = 'none'
+                    target.save()
                     self.account.add_cli(f'[UploadPost Cleanup] Profile "{profile_username}" not found on Upload-Post, reset local status')
                     return True
                 else:
-                    # API delete failed - do NOT update local status, leave for next cycle
                     self.account.add_cli(f'[UploadPost Cleanup] API delete failed for "{profile_username}": {response.status_code} - {data}')
                     return False
 
         except Exception as e:
             self.account.add_cli(f'[UploadPost Cleanup] Error: {str(e)}')
             return False
-
-    # -------------------------------------------------------------------------
-    # Helpers
-    # -------------------------------------------------------------------------
 
     def _update_status(self, status):
         """

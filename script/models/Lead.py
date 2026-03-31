@@ -2,6 +2,7 @@ import datetime
 from peewee import *
 from .Account import Account
 from .Category import Category
+from .Country import Country
 from dotenv import load_dotenv
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 import os
@@ -16,6 +17,7 @@ class Lead(BaseWithTimeZoneModel):
     last_state = CharField(default='free')
     account = ForeignKeyField(Account, backref='leads', null=True)
     category = ForeignKeyField(Category, backref='leads', null=True)
+    country = ForeignKeyField(Country, backref='leads', null=True)
 
     last_command_send_date = DateTimeField(null=True)
 

@@ -18,7 +18,6 @@ class AccountController extends Controller
             $startDate = Carbon::parse(r('dateRange')[0])->startOfDay();
             $endDate = Carbon::parse(r('dateRange')[1])->endOfDay();
         } else {
-            // Default to today
             $startDate = Carbon::today()->startOfDay();
             $endDate = Carbon::today()->endOfDay();
         }
@@ -27,11 +26,12 @@ class AccountController extends Controller
             ->select(
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id', 'service_id',
-                'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name',
-                'upload_post_status', 'app_state')
+                'country_id', 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name',
+                'upload_post_status', 'upload_post_username', 'app_state')
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
                 'service:id,title',
+                'country:id,name,country_code',
                 'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
                     $query->select('created_at', 'account_id', 'cause')
@@ -42,10 +42,13 @@ class AccountController extends Controller
                 r('filter'),
                 fn($_) => $_->whereIn('instagram_state', r('filter'))
             )
-            // Filter by upload_post_status when provided
             ->when(
                 r('uploadPostFilter'),
                 fn($_) => $_->whereIn('upload_post_status', r('uploadPostFilter'))
+            )
+            ->when(
+                r('countries'),
+                fn($_) => $_->whereIn('country_id', r('countries'))
             )
             ->when(
                 r('search'),
@@ -68,6 +71,10 @@ class AccountController extends Controller
 
                     if (r('type') === 'phone') {
                         $_->where('phone', likeOperator(), '%' . r('search') . '%');
+                    }
+
+                    if (r('type') === 'uploadPost') {
+                        $_->where('upload_post_username', likeOperator(), '%' . r('search') . '%');
                     }
                 }
             )
@@ -106,9 +113,10 @@ class AccountController extends Controller
     {
         return Account::query()->select(
             'username', 'password', 'name', 'bio', 'id', 'avatar_changed',
-            'instagram_state', 'app_state', 'is_active', 'created_at')
+            'instagram_state', 'app_state', 'is_active', 'created_at', 'country_id')
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
+                'country:id,name,country_code',
             ])
             ->withCount([
                 'commands as following_count' => fn($_) => $_->where('type', 'follow')->where('state', 'success'),
@@ -126,7 +134,7 @@ class AccountController extends Controller
             'username', 'password', 'name', 'bio',
             'instagram_state', 'app_state', 'color_id', 'is_used',
             'avatar_changed', 'username_changed', 'initial_posts_deleted',
-            'has_enough_posts', 'next_login'
+            'has_enough_posts', 'next_login', 'country_id'
         )
             ->find(r('id'));
     }
@@ -373,28 +381,65 @@ class AccountController extends Controller
         try {
             $account = Account::find(r('id'));
 
+            \Log::info('[UploadPost Toggle] Started', [
+                'account_id' => $account->id,
+                'username' => $account->username,
+                'current_status' => $account->upload_post_status,
+                'upload_post_username' => $account->upload_post_username,
+            ]);
+
             if (in_array($account->upload_post_status, ['none', 'failed', 'disconnecting'])) {
                 $account->upload_post_status = 'pending';
                 $account->save();
 
+                \Log::info('[UploadPost Toggle] Status set to pending, running script...', [
+                    'account_id' => $account->id,
+                ]);
+
                 $path = base_path("../script/upload_post_connect.py");
                 $process = new \Symfony\Component\Process\Process(['python', $path, (string)$account->id]);
                 $process->setTimeout(400);
                 $process->run();
+
+                \Log::info('[UploadPost Toggle] Script finished', [
+                    'account_id' => $account->id,
+                    'exit_code' => $process->getExitCode(),
+                    'stdout' => $process->getOutput(),
+                    'stderr' => $process->getErrorOutput(),
+                ]);
 
                 return jsonSuccess('Upload-Post connect started');
 
             } elseif ($account->upload_post_status === 'connected') {
-                $account->upload_post_status = 'disconnecting';
+                // Disconnect: call Upload-Post API directly from PHP.
+                // No browser needed - this also handles challenging accounts that can't login.
+                \Log::info('[UploadPost Toggle] Disconnecting via API...', [
+                    'account_id' => $account->id,
+                    'upload_post_username' => $account->upload_post_username,
+                ]);
+
+                if ($account->upload_post_username) {
+                    $apiKey = env('UPLOAD_POST_API_KEY');
+
+                    $response = Http::withHeaders([
+                        'Authorization' => 'ApiKey ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->delete('https://api.upload-post.com/api/uploadposts/users', [
+                        'username' => $account->upload_post_username,
+                    ]);
+
+                    \Log::info('[UploadPost Toggle] API delete response', [
+                        'account_id' => $account->id,
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                }
+
+                // Reset status but keep upload_post_username (numbers are never reused)
+                $account->upload_post_status = 'none';
                 $account->save();
 
-
-                $path = base_path("../script/upload_post_connect.py");
-                $process = new \Symfony\Component\Process\Process(['python', $path, (string)$account->id]);
-                $process->setTimeout(400);
-                $process->run();
-
-                return jsonSuccess('Upload-Post disconnect started');
+                return jsonSuccess('Upload-Post disconnected');
 
             } else {
                 \Log::warning('[UploadPost Toggle] Skipped - already in progress', [
@@ -494,6 +539,32 @@ class AccountController extends Controller
                 ->each(fn($account) => $account->update(['service_id' => null]));
 
         }, 'Service detached successfully');
+    }
+
+    public function attachCountry()
+    {
+        return tryCatch(function () {
+
+            $countryId = r('countryId');
+
+            abort_if(empty($countryId), 422, 'No country selected');
+
+            Account::query()
+                ->whereIn('id', r('accountIds'))
+                ->update(['country_id' => $countryId]);
+
+        }, 'Country assigned successfully');
+    }
+
+    public function detachCountry()
+    {
+        return tryCatch(function () {
+
+            Account::query()
+                ->whereIn('id', r('accountIds'))
+                ->update(['country_id' => null]);
+
+        }, 'Country detached successfully');
     }
 
     public function detachTag()

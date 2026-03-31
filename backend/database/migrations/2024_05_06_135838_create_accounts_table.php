@@ -50,6 +50,11 @@ return new class extends Migration {
                 ->constrained('services')
                 ->nullOnDelete();
 
+            $table->foreignId('country_id')
+                ->nullable()
+                ->constrained('countries')
+                ->nullOnDelete();
+
             $table->unsignedTinyInteger('is_used')->default(0);
             $table->unsignedTinyInteger('is_verify')->default(0);
             $table->unsignedTinyInteger('two_factor_activated')->default(0);

@@ -3,6 +3,7 @@
   <div
       class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold w-350px"
       data-kt-menu="true"
+      style="max-height: 80vh; overflow-y: auto;"
   >
     <!--begin::Menu item-->
     <div class="menu-item px-3">
@@ -132,12 +133,6 @@
           <a class="btn btn-sm btn-light-success ms-2" @click="store.attachService()">Attach Service</a>
         </div>
 
-        <div class="mt-2 fill-flex d-flex align-items-center">
-          <a
-              class="btn btn-light-success btn-sm"
-              @click="store.getAccounts()">Filter</a>
-        </div>
-
       </div>
 
       <!-- Upload-Post status filter -->
@@ -146,17 +141,73 @@
         <el-checkbox-group
             v-model="store.accounts.uploadPostFilter"
             size="small"
+            @change="actionClicked"
         >
           <el-checkbox-button
               v-for="state in store.uploadPostStates"
               :key="state.value"
-              :value="state.value"
-              :label="state.label"
-              @click="actionClicked"
+              :label="state.value"
           >
             {{ state.label }}
           </el-checkbox-button>
         </el-checkbox-group>
+      </div>
+
+      <!-- Country: pick one to assign to selected accounts -->
+      <div class="menu-content px-3 mt-3">
+        <span class="text-muted fw-semibold fs-8 d-block mb-2">Country</span>
+        <el-select
+            v-model="store.accounts.selectedCountryId"
+            filterable
+            remote
+            clearable
+            placeholder="Select Country"
+            :remote-method="countryStore.fetchCountries"
+            :loading="countryStore.is.searching"
+        >
+          <el-option
+              v-for="country in countryStore.countries"
+              :key="country.id"
+              :label="`${country.country_code} - ${country.name}`"
+              :value="country.id"
+          />
+        </el-select>
+
+        <div class="fill-flex d-flex align-items-center mt-4">
+          <a class="btn btn-sm btn-light-danger" @click="store.detachCountry()">Detach Country</a>
+          <a class="btn btn-sm btn-light-success ms-2" @click="store.attachCountry()">Attach Country</a>
+        </div>
+      </div>
+
+      <!-- Country filter -->
+      <div class="menu-content px-3 mt-3">
+        <span class="text-muted fw-semibold fs-8 d-block mb-2">Filter by Country</span>
+        <el-select
+            v-model="store.accounts.countries"
+            multiple
+            filterable
+            remote
+            clearable
+            placeholder="Filter by Country"
+            :remote-method="countryStore.fetchCountries"
+            :loading="countryStore.is.searching"
+        >
+          <el-option
+              v-for="country in countryStore.countries"
+              :key="country.id"
+              :label="`${country.country_code} - ${country.name}`"
+              :value="country.id"
+          />
+        </el-select>
+      </div>
+
+      <!-- One shared filter button for everything -->
+      <div class="menu-content px-3 mt-3 mb-3">
+        <div class="fill-flex d-flex align-items-center">
+          <a
+              class="btn btn-light-success btn-sm"
+              @click="store.getAccounts()">Filter</a>
+        </div>
       </div>
     </div>
 
@@ -171,6 +222,7 @@ import {useTagStore} from "@/stores/Tag";
 import {showModal} from "@/core/helpers/modal";
 import {useProfileStore} from "@/stores/Profile";
 import {useServiceStore} from "@/stores/Service";
+import {useCountryStore} from "@/stores/Country";
 import {useDebounceFn} from "@vueuse/core";
 
 export default defineComponent({
@@ -180,6 +232,7 @@ export default defineComponent({
   setup() {
     const tagStore = useTagStore();
     const serviceStore = useServiceStore();
+    const countryStore = useCountryStore();
     const tagLoading = ref(false)
     const store = useAccountStore();
 
@@ -191,6 +244,7 @@ export default defineComponent({
       tagStore,
       tagLoading,
       serviceStore,
+      countryStore,
       actionClicked,
     }
 

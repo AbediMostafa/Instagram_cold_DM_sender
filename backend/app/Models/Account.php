@@ -196,6 +196,11 @@ class Account extends Model
         return $this->belongsTo(Profile::class);
     }
 
+    public function country()
+    {
+        return $this->belongsTo(\App\Models\Country::class);
+    }
+
     public function updateProfileProxyFromResidentialToCustom()
     {
         if ($this->profile) {

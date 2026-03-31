@@ -29,6 +29,14 @@
         <el-dropdown-item @click="store.resetUploadPostStatus([account?.id])">
           Reset Upload-Post Status
         </el-dropdown-item>
+
+        <!-- Country actions -->
+        <el-dropdown-item divided @click="store.attachCountry()">
+          Assign Country
+        </el-dropdown-item>
+        <el-dropdown-item @click="store.detachCountry()">
+          Detach Country
+        </el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
