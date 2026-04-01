@@ -146,6 +146,7 @@ Route::post('lead/set-category', [LeadController::class, 'setCategory']);
 Route::post('lead/import', [LeadController::class, 'import']);
 Route::post('lead/get-statuses', [LeadController::class, 'getStatuses']);
 Route::post('lead/export', [LeadController::class, 'export']);
+Route::post('lead/screenshot', [LeadController::class, 'screenshot']);
 
 Route::post('templates', [TemplateController::class, 'index']);
 Route::post('template/delete', [TemplateController::class, 'delete']);

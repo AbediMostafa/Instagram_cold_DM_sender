@@ -14,7 +14,7 @@ class Lead extends Model
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s', // Change the format as needed
     ];
-
+    protected $appends = ['screenshot_url'];
     public $timestamps = false;
 
     public static array $states = [
@@ -134,5 +134,13 @@ class Lead extends Model
     public function dmPosts()
     {
         return $this->belongsToMany(DmPost::class, 'dm_post_lead');
+    }
+    public function getScreenshotUrlAttribute()
+    {
+        if (!$this->screenshot_path) {
+            return null;
+        }
+
+        return asset('storage/' . $this->screenshot_path);
     }
 }

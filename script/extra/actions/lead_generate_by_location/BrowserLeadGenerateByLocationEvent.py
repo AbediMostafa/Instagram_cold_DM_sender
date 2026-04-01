@@ -73,12 +73,20 @@ class BrowserLeadGenerateByLocationEvent:
 
             self.ig.account.add_cli(f'Found {len(edges)} Nodes ...')
 
+            # Get country from the location's city
+            country = None
+            if self.location and self.location.city:
+                country = self.location.city.country
+
             for edge in edges:
                 node = edge.get("node", {})
                 username = node.get("user").get("username")
 
                 try:
-                    Lead.get_or_create(username=username)
+                    Lead.get_or_create(
+                        username=username,
+                        defaults={'country': country}
+                    )
                 except Exception as e:
                     pass
 

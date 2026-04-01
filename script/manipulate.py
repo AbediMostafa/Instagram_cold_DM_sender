@@ -55,8 +55,6 @@ from script.extra.actions.DmFollowUp import DmFollowUp
 from script.extra.actions.lead_generate_through_api.LeadGenerateThroughApiContext import LeadGenerateThroughApiContext
 from script.extra.actions.lead_generate_by_page_engagement.LeadGenerateByPageEngagementContext import \
     LeadGenerateByPageEngagementContext
-from script.extra.actions.lead_generate_by_post_engagement.LeadGenerateByPostEngagementContext import \
-    LeadGenerateByPostEngagementContext
 from script.extra.actions.login.LoginContext import LoginContext
 from script.extra.actions.get_contact_information.GetContactInformationContext import GetContactInformationContext
 from script.models.Warning import Warning
@@ -146,23 +144,26 @@ from datetime import timedelta
 from script.extra.helper import tehran_now
 # from script.models.Order import get_next_order_for_account
 import json
-
+from script.extra.actions.generate_lead_screen_shots.LeadScreenshotContext import LeadScreenshotContext
+from script.extra.actions.follow_base_location.FollowPagesViaLocationContext import FollowPagesViaLocationContext
+from script.extra.actions.lead_generate_by_location.LeadGenerateByLocationContext import LeadGenerateByLocationContext
 # oc = OrderComment.get_by_id(210874)
 # oc.updated_at = tehran_now()
 # oc.save()
 from script.models.OrderComment import release_stuck_comments
 
 # print(updated_counts.count())
-# account = get_next_account()
-account = Account.get_by_id(7951)
+account = get_next_account()
+# account = Account.get_by_id(7950)
+# account = Account.get_by_id(5038)
 # order = get_next_order_for_account(account)
 # print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-# LocationScraperContext(browser_ig).fire()
-# UploadPostConnectContext(browser_ig).fire()
-LocationScrollAndLikeContext(browser_ig).fire()
+# FollowPagesViaLocationContext(browser_ig).fire()
+LocationScraperContext(browser_ig).fire()
+# LocationScrollAndLikeContext(browser_ig).fire()
 
 # ApiCommentContext(browser_ig).fire()
 # ApiSavePostContext(browser_ig).fire()
@@ -172,7 +173,6 @@ LocationScrollAndLikeContext(browser_ig).fire()
 # ViewAllStoriesContext(browser_ig).fire()
 # SavePostContext(browser_ig).fire()
 # LikeAndCommentContext(browser_ig).fire()
-# LeadGenerateByPostEngagementContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()
 # ReelsAverageExtractor(browser_ig).fire()

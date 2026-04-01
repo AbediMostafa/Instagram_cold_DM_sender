@@ -18,6 +18,7 @@ class Lead(BaseWithTimeZoneModel):
     account = ForeignKeyField(Account, backref='leads', null=True)
     category = ForeignKeyField(Category, backref='leads', null=True)
     country = ForeignKeyField(Country, backref='leads', null=True)
+    screenshot_path = CharField(null=True)
 
     last_command_send_date = DateTimeField(null=True)
 
@@ -70,6 +71,15 @@ class Lead(BaseWithTimeZoneModel):
             lead=self,
             account=account.id,
             user=user)
+
+    def save_screenshot_path(self, path):
+        """
+        Save the screenshot file path after a successful capture.
+        The path should be relative to Laravel's storage/app/ directory,
+        for example: lead_screenshots/123.png
+        """
+        self.screenshot_path = path
+        self.save()
 
     @classmethod
     def get_leads(cls, count=1, category=None):
@@ -149,6 +159,22 @@ class Lead(BaseWithTimeZoneModel):
         )
                 .order_by(fn.Random())
                 .limit(cnt))
+
+    @classmethod
+    def get_leads_for_screenshot(cls, cnt):
+        """
+        Get leads that don't have a screenshot yet.
+        Picks random free leads where screenshot_path is still null.
+        """
+        return (
+            Lead.select()
+            .where(
+                (Lead.last_state == 'free') &
+                (Lead.screenshot_path.is_null(True))
+            )
+            .order_by(fn.Random())
+            .limit(cnt)
+        )
 
     def passed_hours_since_last_follow_up(self):
         return (tehran_now() - self.last_command_send_date).total_seconds() / 3600
@@ -233,7 +259,7 @@ class Lead(BaseWithTimeZoneModel):
 
             return medias, template.type, lead
 
-        # If single media (image/video) → wrap in list
+        # If single media (image/video) wrap in list
         return [template], template.type, lead
 
     class Meta:

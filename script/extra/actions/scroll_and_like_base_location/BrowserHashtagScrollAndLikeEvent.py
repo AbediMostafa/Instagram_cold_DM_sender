@@ -7,15 +7,14 @@ import re
 
 class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
     """
-    Warm-up event that searches for a hashtag on Instagram and likes random posts.
+    Warm-up event that searches for a hashtag via the Instagram UI and likes random posts.
 
-    Hashtags are generated dynamically from city names in the database, filtered by the
-    account's country. For example if the account belongs to the US and we have a city
-    called "New York City", the hashtag becomes #newyorkcity. This way we don't need
-    a hardcoded list and every country gets relevant hashtags automatically once cities
-    are scraped.
+    Simulates real user behavior by opening search through the sidebar, typing a hashtag,
+    picking a random result from the suggestions, then scrolling and liking posts.
 
-    If the account has no country assigned, the event is skipped entirely.
+    The sidebar always has a Search icon. If Explore is also in the sidebar, clicking
+    Search opens a side panel with a search input. If Explore is NOT in the sidebar,
+    clicking Search navigates to /explore/ where the search input is on the page itself.
     """
     command = None
 
@@ -40,15 +39,16 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
             self.ig.account.add_cli("No hashtag available for this account's country, skipping")
             return
 
-        url = f'https://www.instagram.com/explore/search/keyword/?q=%23{hashtag}'
+        self.ig.account.add_cli(f"Searching for hashtag: #{hashtag}")
 
-        self.ig.account.add_cli(f"Navigating to hashtag: #{hashtag}")
-        go_to_page(self.ig, url, 'hashtag page')
+        # Open search and type the hashtag
+        self._search_for_hashtag(hashtag)
 
-        # Wait until at least one post link shows up
+        # Wait for the posts grid to load
         self.ig.page.locator('a[href*="/p/"]').first.wait_for(state='visible', timeout=15000)
         self.ig.pause(3000, 5000)
 
+        # Scroll and like loop
         like_count = 0
         rounds = random.randint(6, 8)
 
@@ -62,13 +62,106 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
 
         self.ig.account.add_cli(f"Hashtag scroll and like finished. Liked {like_count}/{rounds} posts.")
 
+    def _search_for_hashtag(self, hashtag):
+        """
+        Open search via sidebar and type the hashtag. After suggestions load,
+        pick a random hashtag result from the dropdown.
+        """
+        search_input = self._open_search()
+
+        if search_input:
+            search_input.type(f'#{hashtag}', delay=random.randint(80, 180))
+
+            # Wait for suggestions to load
+            self.ig.account.add_cli("Waiting for hashtag suggestions ...")
+            self.ig.pause(8000, 12000)
+
+            # Pick a random hashtag from the suggestions
+            self._click_random_hashtag_result()
+        else:
+            # Fallback: navigate directly
+            self.ig.account.add_cli("Could not open search, navigating directly")
+            url = f'https://www.instagram.com/explore/search/keyword/?q=%23{hashtag}'
+            go_to_page(self.ig, url, 'hashtag page')
+
+    def _open_search(self):
+        """
+        Click the Search icon in the sidebar. The behavior depends on whether
+        Explore is also present:
+
+        - Explore IS in sidebar: Search click opens a side panel with input
+        - Explore NOT in sidebar: Search click navigates to /explore/ page with input
+
+        Returns the search input element, or None on failure.
+        """
+        try:
+            has_explore = (
+                self.ig.page.locator('svg[aria-label="Explore"]').first.count() > 0
+                and self.ig.page.locator('svg[aria-label="Explore"]').first.is_visible()
+            )
+
+            # Click the Search icon (always present)
+            search_icon = self.ig.page.locator('svg[aria-label="Search"]').first
+            search_icon.click(timeout=5000)
+
+            if has_explore:
+                # Side panel opens with search input
+                self.ig.account.add_cli("Explore in sidebar — search panel opening")
+                self.ig.pause(2000, 3000)
+
+                search_input = self.ig.page.locator('input[aria-label="Search input"]').first
+                if search_input.count() > 0 and search_input.is_visible():
+                    return search_input
+
+            else:
+                # Navigates to /explore/ page
+                self.ig.account.add_cli("No Explore in sidebar — navigating to /explore/")
+                self.ig.pause(3000, 5000)
+
+                # The input is inside a div[role="button"] that intercepts clicks,
+                # so we click the parent div first to activate it, then return the input
+                search_wrapper = self.ig.page.locator('div[role="button"]:has(input[placeholder="Search"])').first
+                if search_wrapper.count() > 0 and search_wrapper.is_visible():
+                    search_wrapper.click(timeout=5000)
+                    self.ig.pause(1000, 2000)
+
+                search_input = self.ig.page.locator('input[aria-label="Search input"]').first
+                if search_input.count() == 0 or not search_input.is_visible():
+                    search_input = self.ig.page.locator('input[placeholder="Search"]').first
+
+                if search_input.count() > 0 and search_input.is_visible():
+                    return search_input
+
+        except Exception as e:
+            self.ig.account.add_cli(f"Failed to open search: {str(e)}")
+
+        return None
+
+    def _click_random_hashtag_result(self):
+        """
+        From the search suggestions, find all hashtag links and click a random one.
+        Hashtag results have href like /explore/tags/newyorkcity/
+        """
+        hashtag_links = self.ig.page.locator('a[href*="/explore/tags/"]').all()
+        visible_links = [link for link in hashtag_links if link.is_visible()]
+
+        if visible_links:
+            chosen = random.choice(visible_links)
+            href = chosen.get_attribute('href')
+            self.ig.account.add_cli(f"Clicking random hashtag suggestion: {href}")
+
+            # Use dispatch_event to bypass overlay elements intercepting pointer events
+            chosen.dispatch_event('click')
+            self.ig.pause(3000, 5000)
+        else:
+            self.ig.account.add_cli("No hashtag suggestions found, pressing Enter")
+            self.ig.page.keyboard.press('Enter')
+            self.ig.pause(3000, 5000)
+
     def _get_random_hashtag(self):
         """
         Pick a random city from the account's country and turn its name into a hashtag.
-
-        We keep trying up to 10 times if the first pick results in something too short
-        (less than 4 chars). City names like "AD" or "ML" don't make good hashtags,
-        so we skip those.
+        Retries up to 10 times if the result is too short (< 4 chars).
         """
         country = self.ig.account.country
 
@@ -86,7 +179,6 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
             self.ig.account.add_cli(f"No cities found for country {country.name}")
             return None
 
-        # Try picking a city whose name makes a decent hashtag
         city = random.choice(cities)
         hashtag = self._name_to_hashtag(city.name)
 
@@ -104,13 +196,7 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
     def _name_to_hashtag(self, name):
         """
         Clean up a city name so it works as a hashtag.
-
-        Strips out everything that isn't a letter or digit, then lowercases it.
-        Examples:
-            "New York City"  -> "newyorkcity"
-            "St. Charles"    -> "stcharles"
-            "Davio's Philly" -> "daviosphilly"
-            "JFK Plaza / Love Park" -> "jfkplazalovepark"
+        Strips non-alphanumeric characters and lowercases.
         """
         clean = re.sub(r"[^a-zA-Z0-9]", '', name)
         return clean.lower()
@@ -118,7 +204,6 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
     def try_open_and_like_post(self):
         """
         Click a random visible post, like it, close the modal.
-        Returns True if we managed to like, False if anything went wrong.
         """
         try:
             post_links = self.ig.page.locator('a[href*="/p/"]').all()
@@ -134,7 +219,6 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
 
             liked = self.try_like()
 
-            # Stay on the post for a bit to look natural
             self.ig.pause(1000, 3000)
 
             self.ig.page.keyboard.press('Escape')
@@ -152,8 +236,7 @@ class BrowserHashtagScrollAndLikeEvent(InstagramMiddleware):
 
     def try_like(self):
         """
-        Find the heart icon and click it. We go two levels up from the SVG
-        to reach the actual clickable button element.
+        Find the heart icon and click its parent button element.
         """
         try:
             like_button = self.ig.page.locator('svg[aria-label="Like"]').first
