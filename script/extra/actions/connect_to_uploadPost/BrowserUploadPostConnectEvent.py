@@ -16,14 +16,15 @@ class BrowserUploadPostConnectEvent:
     Module responsible for connecting/disconnecting Instagram accounts to Upload-Post.
 
     Lifecycle:
-      1. Check upload_post_status on the account
-      2. If 'pending'       -> run the connect flow
-      3. If 'disconnecting' -> run the disconnect flow
-      4. Otherwise          -> skip (not actionable)
+      1. Cleanup: delete Upload-Post profiles for suspended/challenging/disconnecting accounts
+      2. Check upload_post_status on the current account
+      3. If 'pending'       -> run the connect flow
+      4. If 'disconnecting' -> run the disconnect flow
+      5. Otherwise          -> skip (not actionable)
 
     Connect flow:
       - Assign a sequential numeric profile name (001, 002, ...) if not already assigned
-      - Create a profile on Upload-Post with that number
+      - Create profile on Upload-Post (handles 'already exists' and 'limit reached')
       - Generate a JWT-based access URL (valid for 48h)
       - Open the URL in the current AdsPower browser
       - Complete the OAuth flow (Facebook/Instagram permission grant)
@@ -46,11 +47,12 @@ class BrowserUploadPostConnectEvent:
     def init(self):
         """
         Entry point called by Context via BrowserUploadPostConnectEvent(ig).init().
-        First cleans up one suspended account's Upload-Post profile, then
-        checks the current account's upload_post_status and routes to connect or disconnect.
+        First runs cleanup tasks (one suspended/challenging + one disconnecting per cycle),
+        then checks the current account's upload_post_status and routes to connect or disconnect.
         """
-        # clean up one suspended account's Upload-Post profile per cycle
+        # Housekeeping: clean up profiles that are no longer needed
         self._cleanup_one_suspended_profile()
+        self._cleanup_one_disconnecting_profile()
 
         status = self.account.upload_post_status
 
@@ -65,6 +67,9 @@ class BrowserUploadPostConnectEvent:
         else:
             self.account.add_cli(f'[UploadPost] Status is "{status}", skipping...')
 
+    # -------------------------------------------------------------------------
+    # Connect flow
+    # -------------------------------------------------------------------------
 
     def _connect(self):
         """
@@ -81,16 +86,13 @@ class BrowserUploadPostConnectEvent:
 
             # Step 0: Assign a sequential profile number if not already assigned.
             # This is atomic to prevent duplicate numbers across concurrent threads.
-            # is_new=True means we need to create the profile on Upload-Post.
-            # is_new=False means profile already exists (reuse from previous attempt).
-            profile_username, is_new = self._get_or_assign_profile_username()
+            profile_username = self._get_or_assign_profile_username()
 
-            # Step 1: Only create profile on Upload-Post if this is a new number.
-            # If reusing an existing number, the profile was already created before.
-            if is_new:
-                self._create_profile(profile_username)
-            else:
-                self.account.add_cli(f'[UploadPost] Profile "{profile_username}" already exists on Upload-Post, skipping creation')
+            # Step 1: Always call create_profile. It handles:
+            #   - New profile: creates it
+            #   - Already exists: logs and continues
+            #   - Limit reached: cleans up a suspended profile and retries once
+            self._create_profile(profile_username)
 
             # Step 2: Generate the secure access URL (JWT link, valid 48h)
             access_url = self._generate_jwt(profile_username)
@@ -151,18 +153,15 @@ class BrowserUploadPostConnectEvent:
 
         Format: '001', '002', ..., '999', '1000', etc. (zero-padded to 3 digits minimum)
 
-        Returns: tuple (profile_username, is_new)
-          - is_new=False means profile was already created on Upload-Post before
-          - is_new=True means this is a brand new number, profile needs to be created
+        Returns: profile_username string
         """
         from script.models.Account import Account
         from script.models.Base import database
 
-        # If already assigned (e.g. retry after failure), reuse the same number.
-        # Profile already exists on Upload-Post, no need to create again.
+        # If already assigned (e.g. retry after failure), reuse the same number
         if self.account.upload_post_username:
             self.account.add_cli(f'[UploadPost] Reusing existing profile number: {self.account.upload_post_username}')
-            return self.account.upload_post_username, False
+            return self.account.upload_post_username
 
         # Atomically get the next number: find max existing number and add 1
         with database.atomic():
@@ -183,14 +182,17 @@ class BrowserUploadPostConnectEvent:
             self.account.save()
 
         self.account.add_cli(f'[UploadPost] Assigned new profile number: {profile_username}')
-        return profile_username, True
+        return profile_username
 
     def _create_profile(self, username, is_retry=False):
         """
         Step 1: Create a user profile on Upload-Post.
         POST /api/uploadposts/users
-        If the profile already exists, we log it and continue (not an error).
-        If PROFILE_LIMIT_REACHED, try to clean up a suspended profile and retry once.
+
+        Handles three cases:
+          - Success: profile created
+          - Already exists (409): fine, continue (profile was created in a previous attempt)
+          - PROFILE_LIMIT_REACHED (403): cleanup a suspended profile and retry once
         """
         self.account.add_cli(f'[UploadPost] Creating profile for "{username}"...')
 
@@ -413,6 +415,10 @@ class BrowserUploadPostConnectEvent:
         self.account.add_cli(f'[UploadPost] Verify API call failed: {response.status_code}')
         return False
 
+    # -------------------------------------------------------------------------
+    # Disconnect flow
+    # -------------------------------------------------------------------------
+
     def _disconnect(self):
         """
         Disconnect flow: delete the profile from Upload-Post via API and reset local status.
@@ -420,6 +426,9 @@ class BrowserUploadPostConnectEvent:
         to publish. The Instagram OAuth permission remains but is harmless.
         upload_post_username is NOT cleared - numbers are never reused.
         On failure, reverts to original status so worker can retry.
+
+        This method can be called standalone (e.g. from ProcessManager) or
+        via the cleanup methods for background processing.
         """
         # Remember original status so we can revert on failure
         original_status = self.account.upload_post_status
@@ -463,13 +472,17 @@ class BrowserUploadPostConnectEvent:
             self._update_status(original_status)
             self.account.add_cli(f'[UploadPost] Disconnect error: {str(e)} - reverted to "{original_status}"')
 
+    # -------------------------------------------------------------------------
+    # Cleanup: background profile deletion for accounts that no longer need them
+    # -------------------------------------------------------------------------
 
     def _cleanup_one_suspended_profile(self):
         """
         Find one suspended/challenging account that has an Upload-Post profile and delete it.
 
         Targets accounts where:
-          - instagram_state is 'suspended' (any upload_post_status except 'none')
+          - instagram_state is 'suspended' AND upload_post_status is not 'none'
+            (suspended is permanent, so always clean up)
           - instagram_state is 'challenging' AND upload_post_status is 'disconnecting'
             (challenging might be temporary, so only cleanup if explicitly marked for disconnect)
 
@@ -481,29 +494,68 @@ class BrowserUploadPostConnectEvent:
         Returns True if a profile was successfully deleted, False otherwise.
         """
         from script.models.Account import Account
+
+        return self._cleanup_profile_by_condition(
+            condition=(
+                # Suspended: clean up regardless of upload_post_status (except 'none')
+                (
+                    (Account.instagram_state == 'suspended') &
+                    (Account.upload_post_status != 'none')
+                ) |
+                # Challenging: only clean up if explicitly marked for disconnect
+                (
+                    (Account.instagram_state == 'challenging') &
+                    (Account.upload_post_status == 'disconnecting')
+                )
+            ),
+            log_prefix='[UploadPost Cleanup Suspended]'
+        )
+
+    def _cleanup_one_disconnecting_profile(self):
+        """
+        Find one account with upload_post_status='disconnecting' and delete its Upload-Post profile.
+
+        This handles disconnect requests for ANY account regardless of instagram_state.
+        Useful for accounts that are challenging, active, or any other state where
+        the user explicitly requested disconnect from the admin panel.
+
+        Uses atomic FOR UPDATE to prevent race conditions across concurrent workers.
+
+        Only clears upload_post_status to 'none'. upload_post_username is kept.
+
+        Returns True if a profile was successfully deleted, False otherwise.
+        """
+        from script.models.Account import Account
+
+        return self._cleanup_profile_by_condition(
+            condition=(
+                Account.upload_post_status == 'disconnecting'
+            ),
+            log_prefix='[UploadPost Cleanup Disconnect]'
+        )
+
+    def _cleanup_profile_by_condition(self, condition, log_prefix):
+        """
+        Generic cleanup method: find one account matching the condition,
+        delete its Upload-Post profile via API, and reset status to 'none'.
+
+        Args:
+            condition: Peewee WHERE condition to find the target account
+            log_prefix: String prefix for log messages (e.g. '[UploadPost Cleanup Suspended]')
+
+        Returns True if a profile was successfully deleted, False otherwise.
+        """
+        from script.models.Account import Account
         from script.models.Base import database
 
         try:
             with database.atomic():
-                # Atomically claim one account that needs Upload-Post profile cleanup:
-                # Suspended accounts with any active Upload-Post profile
-                # Challenging accounts that are marked for disconnection
+                # Atomically claim one account matching the condition
                 target = (Account
                     .select()
                     .where(
                         (Account.upload_post_username.is_null(False)) &
-                        (
-                            # Suspended: clean up regardless of upload_post_status
-                            (
-                                (Account.instagram_state == 'suspended') &
-                                (Account.upload_post_status != 'none')
-                            ) |
-                            # Challenging: only clean up if explicitly marked for disconnect
-                            (
-                                (Account.instagram_state == 'challenging') &
-                                (Account.upload_post_status == 'disconnecting')
-                            )
-                        )
+                        condition
                     )
                     .order_by(Account.id)
                     .limit(1)
@@ -515,7 +567,7 @@ class BrowserUploadPostConnectEvent:
 
                 profile_username = target.upload_post_username
                 self.account.add_cli(
-                    f'[UploadPost Cleanup] Found {target.instagram_state} account: '
+                    f'{log_prefix} Found {target.instagram_state} account: '
                     f'{target.username} (ID: {target.id}, profile: {profile_username}, '
                     f'status: {target.upload_post_status})'
                 )
@@ -534,22 +586,29 @@ class BrowserUploadPostConnectEvent:
                     data = {}
 
                 if response.status_code == 200 and data.get('success'):
+                    # API confirmed deletion - safe to update local status
                     target.upload_post_status = 'none'
                     target.save()
-                    self.account.add_cli(f'[UploadPost Cleanup] Successfully deleted profile "{profile_username}" for {target.username}')
+                    self.account.add_cli(f'{log_prefix} Successfully deleted profile "{profile_username}" for {target.username}')
                     return True
                 elif response.status_code == 404:
+                    # Profile didn't exist on Upload-Post anyway - still clean up local status
                     target.upload_post_status = 'none'
                     target.save()
-                    self.account.add_cli(f'[UploadPost Cleanup] Profile "{profile_username}" not found on Upload-Post, reset local status')
+                    self.account.add_cli(f'{log_prefix} Profile "{profile_username}" not found on Upload-Post, reset local status')
                     return True
                 else:
-                    self.account.add_cli(f'[UploadPost Cleanup] API delete failed for "{profile_username}": {response.status_code} - {data}')
+                    # API delete failed - do NOT update local status, leave for next cycle
+                    self.account.add_cli(f'{log_prefix} API delete failed for "{profile_username}": {response.status_code} - {data}')
                     return False
 
         except Exception as e:
-            self.account.add_cli(f'[UploadPost Cleanup] Error: {str(e)}')
+            self.account.add_cli(f'{log_prefix} Error: {str(e)}')
             return False
+
+    # -------------------------------------------------------------------------
+    # Helpers
+    # -------------------------------------------------------------------------
 
     def _update_status(self, status):
         """

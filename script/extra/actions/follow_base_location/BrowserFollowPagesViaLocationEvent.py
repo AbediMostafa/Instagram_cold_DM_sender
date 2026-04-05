@@ -13,7 +13,7 @@ class BrowserFollowPagesViaLocationEvent(InstagramMiddleware):
     Searches for the username via the sidebar Search icon to register search activity
     as an algorithm signal. Uses the same search approach as BrowserHashtagScrollAndLikeEvent.
 
-    Daily limit: 3 follows per 24 hours, checked via command history.
+    Daily limit: 1 follows per 24 hours, checked via command history.
     """
     command = None
 
@@ -37,7 +37,7 @@ class BrowserFollowPagesViaLocationEvent(InstagramMiddleware):
     def _can_follow_today(self):
         count = performed_command_count(self.ig.account, ['follow pages via location'], 24)
 
-        if count >= 3:
+        if count >= 1:
             self.ig.account.add_cli(f'Already followed {count} pages today, skipping')
             return False
 

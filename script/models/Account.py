@@ -241,9 +241,182 @@ class Account(BaseWithTimeZoneModel):
 
         return self.proxy
 
-    def get_verification_code(self):
-        from script.extra.helper import get_otp_code
-        return get_otp_code(self.secret_key)
+    def get_verification_code(self, secret_key=None):
+        if not self.secret_key:
+            return ""
+
+        import pyotp
+        s_key = secret_key or self.secret_key
+        clean_secret = s_key.replace(" ", "")
+
+        totp = pyotp.TOTP(clean_secret)
+
+        return totp.now()
+
+    def add_direct(self, text, lead, direct, sender='account', type='text'):
+        """Save a DM to the database, creating a thread if one doesn't exist yet."""
+        from .Thread import Thread
+        from .Message import Message
+
+        def add_message(th):
+            return Message.create(message_id=direct.id, thread=th, text=text, sender=sender, type=type)
+
+        thread = Thread.select().where(Thread.thread_id == direct.thread_id).first()
+
+        if thread:
+            return add_message(thread)
+
+        thread = Thread.select().where(
+            (Thread.account == self) &
+            (Thread.lead == lead)
+        ).first()
+
+        if thread:
+            return add_message(thread)
+
+        thread = Thread.create(account=self, lead=lead, thread_id=direct.thread_id)
+        return add_message(thread)
+
+    def add_direct_url_id(self, text, lead, thread_url_id=None, sender='account', type='text'):
+        """Same as add_direct but uses thread_url_id instead of thread_id from the API."""
+        from .Thread import Thread
+        from .Message import Message
+
+        def add_message(th):
+            return Message.create(thread=th, text=text, sender=sender, type=type)
+
+        if thread_url_id:
+            thread = Thread.select().where(Thread.thread_url_id == thread_url_id).first()
+
+            if thread:
+                return add_message(thread)
+
+        thread = Thread.select().where(
+            (Thread.account == self) &
+            (Thread.lead == lead)
+        ).first()
+
+        if thread:
+            return add_message(thread)
+
+        thread = Thread.create(account=self, lead=lead, thread_url_id=thread_url_id)
+        return add_message(thread)
+
+    def get_latest_warning(self):
+        from script.models.Warning import Warning
+
+        return (Warning
+                .select()
+                .where(Warning.account == self)
+                .order_by(Warning.created_at.desc())
+                .first())
+
+    def update_last_activity(self):
+        """
+        Set next_login to a random time in the future. The random range comes
+        from settings so we can tune how often accounts wake up.
+        """
+        from script.extra.adapters.SettingAdapter import SettingAdapter
+
+        random_second = random.randint(1, 59)
+        random_minute = random.randint(1, 59)
+
+        min_hour_setting = SettingAdapter.minimum_time_for_next_login()
+        max_hour_setting = SettingAdapter.maximum_time_for_next_login()
+
+        random_hour = random.randint(min_hour_setting, max_hour_setting)
+
+        time_delta = timedelta(seconds=random_second, minutes=random_minute, hours=random_hour)
+        new_time = tehran_now() + time_delta
+
+        self.next_login = new_time
+        self.save()
+
+        return new_time
+
+    def next_login_has_not_reached_yet(self):
+        """Check if it's too early to log in again. Returns (bool, remaining timedelta)."""
+        if not self.next_login:
+            return False, 0
+
+        time_delta = max(self.next_login - tehran_now(), timedelta(0))
+        return self.next_login > tehran_now(), time_delta
+
+    def get_color(self):
+        """Get the account's color, assigning one if it doesn't have one yet."""
+        if not self.color:
+            self.color = get_next_color()
+            self.save()
+
+        if self.color:
+            self.add_cli(f"Account's color : {self.color.title}")
+            return self.color
+
+        return None
+
+    def get_a_carousel(self):
+        """
+        Pick a carousel set that this account hasn't used yet, matching the account's color.
+        Returns all slides in that carousel ordered by uid, or None if nothing is available.
+        """
+        from .AccountTemplate import AccountTemplate
+        from .Template import Template
+
+        selected_templates_subquery = (AccountTemplate
+                                       .select(AccountTemplate.template)
+                                       .where(AccountTemplate.account == self))
+
+        available_carousel = (Template
+                              .select()
+                              .where(
+            (Template.type == 'carousel') &
+            (Template.color == self.get_color()) &
+            (~(Template.id << selected_templates_subquery))
+        )
+                              .order_by(fn.Random())
+                              .first())
+
+        return (Template
+                .select()
+                .where(Template.carousel_id == available_carousel.carousel_id)
+                .order_by(Template.uid)) if available_carousel else None
+
+    def get_a_video(self):
+        """
+        Pick a video post that this account hasn't used yet. Video posts come in pairs:
+        a video file and a cover image, linked by carousel_id.
+        Returns (image_template, video_template) or (None, None).
+        """
+        from .AccountTemplate import AccountTemplate
+        from .Template import Template
+
+        selected_templates_subquery = (AccountTemplate
+                                       .select(AccountTemplate.template)
+                                       .where(AccountTemplate.account == self))
+
+        video_template = ((Template
+        .select()
+        .where(
+            (Template.type == 'video-post') &
+            (Template.sub_type == 'video') &
+            (~(Template.id << selected_templates_subquery))
+        ))
+                          .order_by(fn.Random())
+                          .first())
+
+        if not video_template:
+            return None, None
+
+        image_template = (Template
+                          .select()
+                          .where(
+            (Template.carousel_id == video_template.carousel_id) &
+            (Template.sub_type == 'image') &
+            (Template.type == 'video-post')
+        )
+                          .first())
+
+        return image_template, video_template,
 
     def get_latest_post_commands(self, limit=3):
         """Fetch the most recent successful post commands (image, video, carousel)."""
