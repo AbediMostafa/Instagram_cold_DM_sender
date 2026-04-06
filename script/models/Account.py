@@ -6,6 +6,7 @@ from .Profile import Profile
 from .Category import Category
 from .Service import Service
 from .Color import Color, get_next_color
+from .Country import Country
 import random
 from dotenv import load_dotenv
 import os
@@ -20,6 +21,10 @@ class Account(BaseWithTimeZoneModel):
     profile = ForeignKeyField(Profile, backref='accounts', null=True)
     category = ForeignKeyField(Category, backref='accounts', null=True)
     service = ForeignKeyField(Service, backref='accounts', null=True)
+
+    # Which country this account operates in. Used for warm-up (location/hashtag),
+    # lead generation, and picking the right templates.
+    country = ForeignKeyField(Country, backref='accounts', null=True)
 
     secret_key = CharField(null=True)
     username = CharField(unique=True)
@@ -49,14 +54,16 @@ class Account(BaseWithTimeZoneModel):
     updated_at = DateTimeField(null=True)
     next_login = DateTimeField(null=True)
 
-    # Upload-Post connection status: none | pending | connecting | connected | failed | disconnecting
+    # Upload-Post connection lifecycle: none -> pending -> connecting -> connected
+    # Can also be: failed, disconnecting
     upload_post_status = CharField(default='none')
 
-    # Sequential numeric profile name on Upload-Post (e.g. '001', '002', '003')
-    # Assigned once atomically during connect, never reused across accounts.
+    # The profile number assigned on Upload-Post (e.g. '001', '002').
+    # Set once during connect, never reused across accounts.
     upload_post_username = CharField(null=True)
 
-    # Possibilities
+    # These are runtime values, not stored in DB. They get calculated
+    # on the fly when deciding how many DMs to send, etc.
     passed_days_since_creation = None
     allowed_number_of_dms = None
     allowed_number_of_dm_follow_ups = None
@@ -72,16 +79,16 @@ class Account(BaseWithTimeZoneModel):
     current_chunk_dm = None
 
     def delete_instance(self, *args, **kwargs):
+        """Clean up polymorphic taggable records before deleting the account."""
         from script.models.Taggable import Taggable
 
-        # Delete related Taggable records
         Taggable.delete().where(Taggable.taggable_id == self.id,
                                 Taggable.taggable_type == 'App\\Models\\Account').execute()
 
         super().delete_instance(*args, **kwargs)
 
     def set_state(self, state='suspended', _type='instagram_state', log=-1):
-
+        """Update the account's state (instagram_state or app_state) and optionally its log."""
         setattr(self, _type, state)
 
         if log != -1:
@@ -89,31 +96,28 @@ class Account(BaseWithTimeZoneModel):
 
         # Save the instance with the new state
         self.save()
-        # self.save(only=[Account._type, Account.log] if log != -1 else [Account._type])
 
     def add_warning(self, cause, duration=24):
         from .Warning import Warning
-
         Warning.create(account=self, cause=cause, duration=duration)
 
     def add_log(self, log):
         from .Log import Log
-
         Log.create(account=self, log=log)
 
     def add_cli(self, log, print_only=False):
+        """
+        Print a log line to stdout with the account's username and ID prefix.
+        The DB write is currently disabled (returns early) to reduce write load.
+        """
         from .Cli import Cli
         from .Process import Process
 
         log = f'[{self.username} -- {self.id}] ${log}'
-
         print(log)
-
-        # if print_only:
         return False
 
         truncated_log = (log[:254]) if log else ''
-
         Cli.create(account=self, log=truncated_log)
 
     def add_screen_shot(self, cause, path):
@@ -147,19 +151,20 @@ class Account(BaseWithTimeZoneModel):
         self.save()
 
     def get_session(self):
+        """Parse and return the stored web session. Handles double-encoded JSON gracefully."""
         storage_state = self.web_session
 
         try:
             decoded = json.loads(storage_state)
             if isinstance(decoded, str):
                 decoded = json.loads(decoded)
-
         except Exception as e:
             decoded = {}
 
         return decoded
 
     def should_not_post(self, command_type, hours=24):
+        """Check if a successful command of this type was already sent within the last N hours."""
         from .Command import Command
 
         n_hours_ago = hours_ago(hours)
@@ -172,6 +177,10 @@ class Account(BaseWithTimeZoneModel):
         ).exists()
 
     def get_a_free_template(self, type):
+        """
+        Get a random template of the given type that this account hasn't used yet.
+        The account_template pivot table tracks which templates have been consumed.
+        """
         from .Template import Template
         from .AccountTemplate import AccountTemplate
 
@@ -180,7 +189,6 @@ class Account(BaseWithTimeZoneModel):
 
         return (Template.select().where(
             (Template.type == type) &
-            # (Template.category == self.category) &
             ~(Template.id << (AccountTemplate
                               .select(AccountTemplate.template)
                               .join(Template)
@@ -193,7 +201,6 @@ class Account(BaseWithTimeZoneModel):
 
     def attach_template(self, template):
         from .AccountTemplate import AccountTemplate
-
         return AccountTemplate.create(account=self, template=template)
 
     def create_command(self, _type, state, lead=None, times=0, category=None):
@@ -234,7 +241,7 @@ class Account(BaseWithTimeZoneModel):
 
         return self.proxy
 
-    def get_verification_code(self, secret_key =None):
+    def get_verification_code(self, secret_key=None):
         if not self.secret_key:
             return ""
 
@@ -247,6 +254,7 @@ class Account(BaseWithTimeZoneModel):
         return totp.now()
 
     def add_direct(self, text, lead, direct, sender='account', type='text'):
+        """Save a DM to the database, creating a thread if one doesn't exist yet."""
         from .Thread import Thread
         from .Message import Message
 
@@ -270,6 +278,7 @@ class Account(BaseWithTimeZoneModel):
         return add_message(thread)
 
     def add_direct_url_id(self, text, lead, thread_url_id=None, sender='account', type='text'):
+        """Same as add_direct but uses thread_url_id instead of thread_id from the API."""
         from .Thread import Thread
         from .Message import Message
 
@@ -303,6 +312,10 @@ class Account(BaseWithTimeZoneModel):
                 .first())
 
     def update_last_activity(self):
+        """
+        Set next_login to a random time in the future. The random range comes
+        from settings so we can tune how often accounts wake up.
+        """
         from script.extra.adapters.SettingAdapter import SettingAdapter
 
         random_second = random.randint(1, 59)
@@ -322,6 +335,7 @@ class Account(BaseWithTimeZoneModel):
         return new_time
 
     def next_login_has_not_reached_yet(self):
+        """Check if it's too early to log in again. Returns (bool, remaining timedelta)."""
         if not self.next_login:
             return False, 0
 
@@ -329,6 +343,7 @@ class Account(BaseWithTimeZoneModel):
         return self.next_login > tehran_now(), time_delta
 
     def get_color(self):
+        """Get the account's color, assigning one if it doesn't have one yet."""
         if not self.color:
             self.color = get_next_color()
             self.save()
@@ -340,6 +355,10 @@ class Account(BaseWithTimeZoneModel):
         return None
 
     def get_a_carousel(self):
+        """
+        Pick a carousel set that this account hasn't used yet, matching the account's color.
+        Returns all slides in that carousel ordered by uid, or None if nothing is available.
+        """
         from .AccountTemplate import AccountTemplate
         from .Template import Template
 
@@ -347,7 +366,6 @@ class Account(BaseWithTimeZoneModel):
                                        .select(AccountTemplate.template)
                                        .where(AccountTemplate.account == self))
 
-        # get a single free carousel
         available_carousel = (Template
                               .select()
                               .where(
@@ -358,13 +376,17 @@ class Account(BaseWithTimeZoneModel):
                               .order_by(fn.Random())
                               .first())
 
-        # return series of carousels
         return (Template
                 .select()
                 .where(Template.carousel_id == available_carousel.carousel_id)
                 .order_by(Template.uid)) if available_carousel else None
 
     def get_a_video(self):
+        """
+        Pick a video post that this account hasn't used yet. Video posts come in pairs:
+        a video file and a cover image, linked by carousel_id.
+        Returns (image_template, video_template) or (None, None).
+        """
         from .AccountTemplate import AccountTemplate
         from .Template import Template
 
@@ -377,7 +399,6 @@ class Account(BaseWithTimeZoneModel):
         .where(
             (Template.type == 'video-post') &
             (Template.sub_type == 'video') &
-            # (Template.category == self.category) &
             (~(Template.id << selected_templates_subquery))
         ))
                           .order_by(fn.Random())
@@ -390,19 +411,17 @@ class Account(BaseWithTimeZoneModel):
                           .select()
                           .where(
             (Template.carousel_id == video_template.carousel_id) &
-            (Template.sub_type == 'image') &  # Ensure it's an image subtype
-            (Template.type == 'video-post')  # Ensure it's a part of a video-post
+            (Template.sub_type == 'image') &
+            (Template.type == 'video-post')
         )
                           .first())
 
         return image_template, video_template,
 
     def get_latest_post_commands(self, limit=3):
+        """Fetch the most recent successful post commands (image, video, carousel)."""
         from .Command import Command
 
-        """
-        Fetch the latest `limit` post commands (image, video, or carousel) for the account.
-        """
         return (Command
                 .select()
                 .where(
@@ -415,11 +434,9 @@ class Account(BaseWithTimeZoneModel):
                 )
 
     def sent_recent_post_command_within(self, hours=20):
+        """True if any successful post was made within the last N hours."""
         from .Command import Command
 
-        """
-        Check if any successful post command (image, video, or carousel) was sent within the last `hours`.
-        """
         time_threshold = tehran_now() - timedelta(hours=hours)
 
         return (Command
@@ -462,11 +479,9 @@ class Account(BaseWithTimeZoneModel):
                 .count())
 
     def get_latest_successful_command_time(self):
+        """Returns something like '14 hours ago' for the most recent successful post."""
         from .Command import Command
 
-        """
-        Get the latest successful post command (image, video, or carousel) post date in the format 'n hours ago'.
-        """
         latest_command = (Command
                           .select()
                           .where(
@@ -486,22 +501,20 @@ class Account(BaseWithTimeZoneModel):
         return f"{int(hours_ago)} hours ago"
 
     def determine_next_post_command(self):
+        """
+        Decide what type of post to upload next. We rotate between carousel, video
+        and image. If a post was already uploaded recently, raise an exception.
+        """
         from script.extra.exceptions import UploadedPostRecently
-        """
-        Determine the next post command type based on the latest post commands.
-        """
+
         if self.sent_recent_post_command_within(random.randint(24, 30)):
-            raise UploadedPostRecently('We have sent a post recently')  # No post can be sent if one was sent
+            raise UploadedPostRecently('We have sent a post recently')
 
-
-        # Fetch the latest three post commands
         latest_commands = self.get_latest_post_commands(1)
 
-        # If no commands found, send 'post carousel' as default
         if not latest_commands:
             return 'post video'
 
-        # Extract the types of the last commands (we'll have 0 to 3 depending on the data)
         latest_command_types = [cmd.type for cmd in latest_commands]
 
         if latest_command_types[0] == 'post carousel':
@@ -517,11 +530,9 @@ class Account(BaseWithTimeZoneModel):
             return self.profile
 
         self.assign_profile()
-
         return self.profile
 
     def assign_profile(self):
-
         load_dotenv()
 
         data = {
@@ -531,7 +542,6 @@ class Account(BaseWithTimeZoneModel):
         }
 
         response = requests.post(os.getenv('ASSIGN_PROFILE_TO_ACCOUNT_API_URL'), data=data)
-
         return response.text
 
     def has_tag(self, tag_title):
@@ -550,7 +560,6 @@ class Account(BaseWithTimeZoneModel):
         from script.models.Taggable import Taggable
         from script.models.Tag import Tag
 
-        # Get all tags associated with this account
         tags = (Tag
         .select()
         .join(Taggable, on=(Taggable.tag == Tag.id))
@@ -565,10 +574,10 @@ class Account(BaseWithTimeZoneModel):
         tag_titles = [tag.title for tag in tags]
         tags = ", ".join(tag_titles)
 
-        # Join the titles into a single string separated by commas
         return tags
 
     def calculate_today_dms(self):
+        """Figure out how many DMs this account is allowed to send today based on its age."""
         from script.models.Command import performed_command_count
 
         self.allowed_number_of_dms = calculate_daily_dms(self.get_passed_days_since_creation())

@@ -143,74 +143,18 @@ from script.models.AccountHelper import get_storage_state
 from datetime import timedelta
 from script.extra.helper import tehran_now
 # from script.models.Order import get_next_order_for_account
+from script.models.LeadBlock import LeadBlock
 import json
 from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
 from script.extra.actions.post_media.PostMediaContext import PostMediaContext
-# account = Account.get_by_id(15)
-# lead = Lead.select_lead_for_profile(account)
-# print(lead)
-# template = Lead.get_a_template(account, 'bio')
-#
-# print(template)
-
-# oc = OrderComment.get_by_id(210874)
-# oc.updated_at = tehran_now()
-# oc.save()
-from script.models.OrderComment import release_stuck_comments
-
-# print(updated_counts.count())
+from script.extra.actions.block_associated_lead.BlockAssociatedLeadContext import BlockAssociatedLeadContext
 # account = get_next_account()
-account = Account.get_by_id(151)
+account_id = sys.argv[1]
+account = Account.get_by_id(account_id)
+
 # # order = get_next_order_for_account(account)
 # # print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-PostMediaContext(browser_ig).fire()
-# OrderPreparerContext(browser_ig).fire()
-# ApiCommentContext(browser_ig).fire()
-# ApiSavePostContext(browser_ig).fire()
-# StoryPreparerContext(browser_ig).fire()
-# ApiViewStoryContext(browser_ig).fire()
-# ViewStoryContext(browser_ig).fire()
-# ViewAllStoriesContext(browser_ig).fire()
-# SavePostContext(browser_ig).fire()
-# LikeAndCommentContext(browser_ig).fire()
-# LeadGenerateByPostEngagementContext(browser_ig).fire()
-# ChangeNameUsernameContext(browser_ig).fire()
-# CommentOnOthersPostContext(browser_ig).fire()
-# ReelsAverageExtractor(browser_ig).fire()
-# PostImageFromFolderContext(browser_ig).fire()
-# LikeAndCommentContext(browser_ig).fire()
-# MakeAccountPublicContext(browser_ig).fire()
-# Format A: /p/{code}
-# BrowserChangeBioEvent(browser_ig).fire()
-# GetContactInformationContext(browser_ig).fire()
-# response = requests.get(url, verify=False)
-# print(response.json().get('data').get('status'))
-# DeleteInitialPostsContext(browser_ig).fire()
-# UnfollowContext(browser_ig).fire()
-# lead = Lead.get_by_id(2950649)
-# dm_post = get_or_reset_dm_post_for_lead(lead)
-
-# print(dm_post)
-# dm = DmPostLead.select().first()
-# print(dm.lead_id)
-# print(dm.dm_post_id)
-# print(type(account.fingerprint))
-# print(account.fingerprint['fingerprint_config'])
-
-# account = Account.get_by_id(914)
-# account = get_next_account()
-# creator = ProfileCreator(account)
-# creator.create()
-# creator.delete()
-# browser_ig = BasePlaywright(account)
-# browser_ig.start_browser().go_to_instagram()
-# BrowserDmFollowUpEvent(browser_ig).fire()
-# SendDmContext(browser_ig).fire()
-# BrowserGetThreadMessagesEvent(browser_ig).fire()
-
-# UnfollowContext(browser_ig).fire()
-
-# HowManyEventsCanHandleStrategy(account, browser_ig, None).post_action_hook()
+BlockAssociatedLeadContext(browser_ig).fire()

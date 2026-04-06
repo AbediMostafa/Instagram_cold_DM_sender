@@ -105,6 +105,28 @@
                 >Set Workflow</a>
               </div>
             </div>
+            <div class="menu-item ">
+              <div
+                  @click.stop
+                  class="px-3 d-flex align-items-center justify-content-center">
+                <el-select
+                    v-model="formData.workflow_id"
+                    placeholder="Select a workflow"
+                    clearable
+                >
+                  <el-option
+                      v-for="workflow in workflowStore.workflows.data"
+                      :key="workflow.id"
+                      :label="workflow.title"
+                      :value="workflow.id"
+                  />
+                </el-select>
+                <a
+                    class="btn btn-light-success btn-sm px-4 w-50 ms-2"
+                    @click="store.setWorkflow(formData.workflow_id, store.checkedProcessRows)"
+                >Set Workflow</a>
+              </div>
+            </div>
 
           </div>
 

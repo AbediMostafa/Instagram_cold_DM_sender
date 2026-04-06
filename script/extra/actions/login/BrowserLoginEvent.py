@@ -11,7 +11,10 @@ import json
 import re
 
 max_login_retry = 10
-
+'''
+We removed your photo => Whenever see this message, should set 'avatar_changed' to 0
+But we're checking if this happens in avatar changes and not in post uploads
+'''
 
 class BrowserLoginEvent:
     command = None
@@ -46,7 +49,10 @@ class BrowserLoginEvent:
         'Enter confirmation code',
         'check the security code',
         "We couldn't connect to Instagram",
+
         'your password was incorrect',
+        'password you entered is incorrect',
+
         'was a problem logging you into Instagram',
         'login information you entered is incorrect',
         'Choose a way to recover',
@@ -93,7 +99,10 @@ class BrowserLoginEvent:
         'rust this device to skip the step',
         'Find friends and accounts you like'
         'Get fresh updates here',
-        'trust this device to skip the step'
+        'trust this device to skip the step',
+
+        'You can no longer request a review',
+        'This content is no longer available',
     ]
 
     logged_in_messages = [
@@ -145,7 +154,7 @@ class BrowserLoginEvent:
     def init(self):
         self.ig.account.add_cli('Starting Login ...')
         self.ig.page.goto('https://www.instagram.com', timeout=100000)
-        self.ig.pause(2000, 3000)
+        self.ig.pause(5000, 6000)
 
         self.pre_login_check()
         self.login_check()
@@ -193,11 +202,13 @@ class BrowserLoginEvent:
             self.errors.feedback_required()
             self.errors.change_password_handler()
             self.errors.trust_this_device()
+            self.errors.you_can_no_longer_request_a_review()
+            self.errors.this_content_is_no_longer_available()
             self.please_log_in_to_continue()
             self.find_friends_and_accounts_you_like()
             self.save_info()
             self.turn_on_notif()
-            self.ig.pause(2500, 3500)
+            self.ig.pause(3500, 4000)
 
             if self.login_counter > max_login_retry:
                 self.ig.account.add_cli('Max login attempts reached.')
@@ -232,6 +243,8 @@ class BrowserLoginEvent:
                     self.ig.account.add_cli(
                         f'logged in messages is visible trying to pass for {self.logged_in_counter} time ...')
 
+                    self.ig.account.add_cli(f"max_login_retry = {max_login_retry}")
+
                     self.we_need_you_to_agree_to_the_following_items()
                     self.the_messaging_tab_has_a_new_look()
                     self.turn_on_notif()
@@ -240,7 +253,7 @@ class BrowserLoginEvent:
                     AllowCookiesAction(self.ig).start()
                     self._capture_graphql_data()
 
-                    if self.pre_login_counter > max_login_retry:
+                    if self.logged_in_counter > max_login_retry:
                         self.ig.account.add_cli('Max Pre logged in attempts reached.')
                         break
 
@@ -421,7 +434,7 @@ class BrowserLoginEvent:
 
             self.two_fa_clicked = True
             self.ig.account.add_cli('2FA confirm clicked')
-            self.ig.pause(5000, 6000)
+            self.ig.pause(8000, 10000)
 
     def fill_username_password(self):
 

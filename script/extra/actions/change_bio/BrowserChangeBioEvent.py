@@ -52,12 +52,42 @@ class BrowserChangeBioEvent:
         self.command = self.ig.account.create_command('set bio', 'processing')
         go_to_page(self.ig, "https://www.instagram.com/accounts/edit/", "Edit page")
         self.ig.pause(3000, 4000)
-        self.ig.account.set_state('set bio', 'app_state')
 
     def change_hook(self):
 
         self.ig.page.locator('textarea[placeholder="Bio"]').fill(self.bio)
-        self.ig.pause(3000, 4000)
+        self.ig.pause(2000, 3000)
+
+        counter_locator = self.ig.page.locator("#pepBio").locator("xpath=ancestor::div[1]//span[contains(text(), '/')]")
+
+        counter_text = counter_locator.inner_text()
+
+        print(f'counter_text : {counter_text}')
+
+        current, max_len = map(int, counter_text.split('/'))
+        counter = 0
+
+        if current > max_len:
+
+            # trim progressively until it fits
+            while current > max_len:
+
+                counter += 1
+                self.ig.account.add_cli(
+                    f'Your bio length {current} is more than allowed {max_len}, trying to trim for the {counter} time ...')
+
+                self.bio = self.bio[:-2]  # remove last two character
+                self.ig.page.locator('textarea[placeholder="Bio"]').fill(self.bio)
+                self.ig.pause(1000, 1100)
+
+                counter_text = counter_locator.inner_text()
+                current, max_len = map(int, counter_text.split('/'))
+
+                if counter >= 40:
+                    break
+
+        self.ig.pause(1000, 10000)
+
         self.ig.page.locator('div[role="button"]:has-text("Submit")').click()
         self.ig.pause(5000, 5500)
 

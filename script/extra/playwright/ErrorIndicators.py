@@ -66,7 +66,6 @@ class ErrorIndicators(BaseAction):
     #     Use another profile
 
     def choose_if_we_process_your_data(self):
-        # Choose if we process your data for ads
         messages = [
             'Choose if we process your data',
             'you can choose whether you consent to us processing',
@@ -86,7 +85,8 @@ class ErrorIndicators(BaseAction):
             self.ig.pause(5000, 6000)
 
             try:
-                self.ig.page.locator("role=radio[name='Use free of charge with ads']").click(timeout=5000)
+                # self.ig.page.locator("role=radio[name='Use free of charge with ads']").click(timeout=5000)
+                self.ig.page.get_by_text(re.compile("use free of charge with ads", re.IGNORECASE)).click(timeout=5000)
 
             except Exception as e:
                 self.ig.account.add_cli("Problem clicking on radio[name='Use free of charge with ads']")
@@ -95,10 +95,24 @@ class ErrorIndicators(BaseAction):
             self.ig.pause(2000, 2500)
 
             self.ig.page.get_by_role("button", name='Continue').click(timeout=3000)
-            self.ig.pause(3500, 5500)
+            self.ig.pause(5000, 6000)
             self.ig.page.get_by_role("button", name='Agree').click(timeout=3000)
             self.ig.pause(3500, 4500)
-            self.ig.page.get_by_role("button", name='Not interested').click(timeout=3000)
+
+            try:
+                self.ig.page.get_by_role("button", name='OK').click(timeout=3000)
+                self.ig.pause(3500, 4500)
+
+            except Exception as e:
+                self.ig.account.add_cli("Problem clicking on OK ...")
+
+            try:
+                self.ig.page.get_by_role("button", name='Not interested').click(timeout=3000)
+                self.ig.pause(3500, 4500)
+
+            except Exception as e:
+                self.ig.account.add_cli("Not interested")
+
             self.ig.pause(3500, 4500)
 
     def changes_to_how_we_manage_data(self):
@@ -150,8 +164,13 @@ class ErrorIndicators(BaseAction):
                 "We couldn't connect to Instagram. Make sure you're connected to the internet and try again.")
 
     def password_is_incorrect_handler(self):
-        # The password you entered is incorrect.
-        if self.ig.is_visible_by_text('your password was incorrect'):
+
+        messages = [
+            'password you entered is incorrect',
+            'your password was incorrect'
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
             raise YourPasswordWasIncorrectError('Your password was incorrect')
 
     def problem_logging_in_handler(self):
@@ -399,4 +418,26 @@ class ErrorIndicators(BaseAction):
         if self.ig.is_visible_by_texts(messages):
             self.ig.page.get_by_role('button', name=re.compile(r'Trust this device', re.IGNORECASE)).click(timeout=4000)
             self.ig.account.add_cli('Trust this device clicked')
+            self.ig.pause(4000, 5000)
+
+    def you_can_no_longer_request_a_review(self):
+
+        messages = [
+            'You can no longer request a review',
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
+            self.ig.account.add_cli('You can no longer request a review')
+            self.ig.page.reload()
+            self.ig.pause(4000, 5000)
+
+    def this_content_is_no_longer_available(self):
+
+        messages = [
+            'This content is no longer available',
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
+            self.ig.account.add_cli('You can no longer request a review')
+            self.ig.page.get_by_role('button', name=re.compile(r'Ok', re.IGNORECASE)).click(timeout=4000)
             self.ig.pause(4000, 5000)

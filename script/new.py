@@ -41,7 +41,10 @@ import traceback
 from script.extra.actions.login.LoginContext import LoginContext
 from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import \
     CheckSystemUsernameWithIgUsernameContext
-
+from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserChangeAvatarEvent
+from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
+from script.extra.actions.account_status_checker.AccountStatusCheckerContext import AccountStatusCheckerContext
+from script.extra.actions.post_media.PostMediaContext import PostMediaContext
 # Ensure correct usage
 if len(sys.argv) < 2:
     print("Usage: python new.py <account_id>")
@@ -64,13 +67,13 @@ try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
-    FollowGoodPagesContext(browser_ig).fire()
+    PostMediaContext(browser_ig).fire()
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
-finally:
-    if browser_ig:
-        browser_ig.cleanup()
+# finally:
+#     if browser_ig:
+#         browser_ig.cleanup()
 
 # CheckForAccountActionsHook(account)
 #

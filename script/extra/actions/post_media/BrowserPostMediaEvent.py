@@ -2,6 +2,7 @@ from script.extra.instagram.browser.InstagramMiddleware import InstagramMiddlewa
 from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
 from script.extra.helper import *
 import shutil
+import re
 import random
 from script.extra.helper import go_to_page
 import urllib3
@@ -28,7 +29,7 @@ class BrowserPostMediaEvent:
         self.posting_age = int(Setting.get_value("allowed_posting_age"))
 
     def init(self):
-        if self.ig.account.get_passed_days_since_creation() < 3:
+        if self.ig.account.get_passed_days_since_creation() < 2:
             raise Exception(f"Account is not old enough to Post Media")
 
         self.ig.account.add_cli(f"Allowed posting age : {self.posting_age}", print_only=True)
@@ -39,6 +40,7 @@ class BrowserPostMediaEvent:
         self.ig.account.add_cli(f"Posting a media ...")
 
         try:
+            self.turn_on_notif()
             self.generate_path()
             self.generate_caption()
             self.before_change_hook()
@@ -180,6 +182,9 @@ class BrowserPostMediaEvent:
         start = time.time()
 
         while time.time() - start < timeout_sec:
+            if self.ig.is_visible_by_text('Your post could not be shared'):
+                self.ig.page.get_by_role('button', name=re.compile(r'Try again', re.IGNORECASE)).click(timeout=3000)
+                self.ig.pause(4000, 5000)
             try:
                 if self.ig.is_visible_by_text('Your reel has been shared') or self.ig.is_visible_by_text(
                         'Your post has been shared'):
@@ -201,3 +206,13 @@ class BrowserPostMediaEvent:
 
         for template in self.templates:
             self.ig.account.attach_template(template)
+
+    def turn_on_notif(self):
+        import re
+        if self.ig.is_visible_by_text('Turn On notif'):
+            try:
+                self.ig.page.get_by_role('button', name=re.compile(r'Turn On', re.IGNORECASE)).click()
+                self.ig.pause(4000, 5000)
+            except:
+                self.ig.account.add_cli("Turn On doesn't exists")
+                pass

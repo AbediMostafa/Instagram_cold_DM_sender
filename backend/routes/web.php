@@ -50,43 +50,17 @@ use Symfony\Component\Process\Process;
 use \App\Models\Template;
 use \App\Models\Lead;
 use \App\Models\Account;
+use \App\Models\Tag;
+use \App\Models\Proxy;
 
 Route::get('/', function () {
 });
 Route::get('/test', function () {
+    $account = Account::query()->where('username', 'sunnry4055')->first();
+    $lead = Lead::query()->where('account_id', $account->id)->first();
 
-});
+    dd($lead->templates[140]);
 
-Route::get('/get-state', function () {
-    $orders = Order::query()
-        ->orderBy('id', 'desc')
-        ->whereHas('actions', function ($actions) {
-            $actions->where('status', 'failed');
-        })->get()
-        ->pluck('id')->toArray();
-
-    dd($orders);
-
-    $orders = \App\Models\Order::query()->where('status', 'Completed')
-        ->withCount(['actions as nullAccounts' => function ($action) {
-            $action->whereNull('account_id');
-        }])
-        ->withCount(['actions' => function ($action) {
-            $action
-                ->where('status', 'sent')
-                ->whereNotNull('account_id');
-        }])
-        ->orderBy('id', 'desc')
-        ->whereHas('actions', function ($actions) {
-            $actions->where(function ($q) {
-                $q->whereNull('account_id')
-                    ->orWhere('status', 'failed');
-            });
-        })
-        ->get()
-        ->pluck('id')->toArray();
-
-    dd($orders);
 });
 
 

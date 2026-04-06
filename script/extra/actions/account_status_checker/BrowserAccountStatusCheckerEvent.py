@@ -6,7 +6,7 @@ from script.models.Account import Account
 
 
 class BrowserAccountStatusCheckerEvent:
-    number_of_accounts_to_check = 10
+    number_of_accounts_to_check = 3
     command = None
     account_to_check = None
 
@@ -32,8 +32,8 @@ class BrowserAccountStatusCheckerEvent:
 
                 self.after_check_hook()
 
-                if is_unavailable:
-                    return
+                # if is_unavailable:
+                #     return
 
             except Exception as e:
                 self.handle_failure(e)

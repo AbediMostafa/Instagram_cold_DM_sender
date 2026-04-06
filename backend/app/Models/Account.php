@@ -148,22 +148,26 @@ class Account extends Model
         $accounts = [];
 
         foreach ($lines as $line) {
-            $account = explode(',', $line);
+            $account = explode('|', $line);
+            $username = trim($account[0]);
+            $password =trim($account[1]);
+            $secret = array_key_exists(2, $account) ? str_replace(' ', '', $account[2]) : null;
+            $secret = trim($secret);
 
             $accountExists = Account::query()
-                ->whereUsername($account[0])
-//                ->wherePassword($account[1])
+                ->whereUsername($username)
+//                ->wherePassword($password)
                 ->exists();
 
             if ($accountExists) {
-                $existsAccounts .= $account[0] . ':' . $account[0] . "\n";
+                $existsAccounts .= $username . ':' . $username . "\n";
                 continue;
             }
 
             $accountObj = Account::query()->create([
-                'username' => $account[0],
-                'password' => $account[1],
-                'secret_key' => array_key_exists(2, $account) ? str_replace(' ', '', $account[2]) : null,
+                'username' => $username,
+                'password' => $password,
+                'secret_key' => $secret,
                 'email' => array_key_exists(3, $account) ? $account[3] : null,
                 'email_password' => array_key_exists(4, $account) ? $account[4] : null,
                 'username_changed' => r('username_changed'),

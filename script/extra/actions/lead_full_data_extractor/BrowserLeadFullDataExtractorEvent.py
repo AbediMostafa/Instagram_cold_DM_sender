@@ -254,9 +254,9 @@ class BrowserLeadFullDataExtractorEvent:
     def init(self):
         self.ig.account.add_cli(f"Getting Leads profile ...")
 
-        leads = Lead.select().where(Lead.instagram_id.is_null(True)).order_by(fn.Random()).limit(self.number_of_leads)
+        for _ in range (self.number_of_leads):
 
-        for self.lead in leads:
+            self.lead = Lead.select().where(Lead.instagram_id.is_null(True)).order_by(fn.Random()).first()
             go_to_page(self.ig, f"https://www.instagram.com/{str(self.lead.username)}/", 'Lead')
             self.ig.pause(7000, 11000)
 
