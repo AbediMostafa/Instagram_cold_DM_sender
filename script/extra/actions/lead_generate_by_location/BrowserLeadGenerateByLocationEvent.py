@@ -15,7 +15,7 @@ class BrowserLeadGenerateByLocationEvent:
     ig = None
     command = None
     location_count = 1
-    scroll_count = 10
+    scroll_count = 3
     location = None
     listener = None
 
@@ -25,7 +25,7 @@ class BrowserLeadGenerateByLocationEvent:
     def init(self):
         go_to_page(self.ig, "https://www.instagram.com/explore/locations/", 'Locations')
         self.ig.pause(7000, 8000)
-        go_to_page(self.ig, "https://www.instagram.com/explore/locations/IL/israel/", 'Country')
+        go_to_page(self.ig, "https://www.instagram.com/explore/locations/US/united-states/", 'Country')
         self.ig.pause(7000, 8000)
         self.ig.account.add_cli('Setting up listener ... ')
         self._setup_listener()
@@ -73,12 +73,20 @@ class BrowserLeadGenerateByLocationEvent:
 
             self.ig.account.add_cli(f'Found {len(edges)} Nodes ...')
 
+            # Get country from the location's city
+            country = None
+            if self.location and self.location.city:
+                country = self.location.city.country
+
             for edge in edges:
                 node = edge.get("node", {})
                 username = node.get("user").get("username")
 
                 try:
-                    Lead.get_or_create(username=username)
+                    Lead.get_or_create(
+                        username=username,
+                        defaults={'country': country}
+                    )
                 except Exception as e:
                     pass
 

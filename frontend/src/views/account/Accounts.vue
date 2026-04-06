@@ -71,6 +71,7 @@
                 <el-option label="Account Id" value="accountId"/>
                 <el-option label="Profile" value="profile"/>
                 <el-option label="Proxy" value="proxy"/>
+                <el-option label="Upload Post" value="uploadPost"/>
               </el-select>
             </template>
           </el-input>
@@ -275,14 +276,24 @@
                   Connect
                 </a>
                 <upload-post-status-badge class="ms-2" :status="account.upload_post_status"/>
+                <span
+                    v-if="account.upload_post_username"
+                    class="text-muted fw-semibold fs-8 ms-1"
+                >#{{ account.upload_post_username }}</span>
               </td>
 
+              <!-- Service + Country column -->
               <td>
                 <span
                     v-if="account.service"
                     class="text-muted fs-8 border border-dashed px-3 py-1 rounded border-2 border-info-subtle"
-                >{{ account.service?.title }}</span
-                >
+                >{{ account.service?.title }}</span>
+
+                <!-- Country badge shown right next to service -->
+                <span
+                    v-if="account.country"
+                    class="text-muted fs-8 border border-dashed px-3 py-1 rounded border-2 border-success-subtle ms-1"
+                >{{ account.country?.country_code }}</span>
 
                 <div>
                   <span class="badge badge-light-primary mt-1 ms-1"

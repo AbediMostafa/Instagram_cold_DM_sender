@@ -4,6 +4,7 @@ from peewee import *
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from .Color import Color
 from .Category import Category
+from .Country import Country
 from script.extra.helper import *
 
 
@@ -41,6 +42,7 @@ class Template(BaseWithTimeZoneModel):
     uid = CharField(null=True)
     color = ForeignKeyField(Color, backref='templates', null=True)
     category = ForeignKeyField(Category, backref='templates', null=True)
+    country = ForeignKeyField(Country, backref='templates', null=True)
 
     def download_image(self, tmp=None):
         # If no tmp folder is provided, generate a random one

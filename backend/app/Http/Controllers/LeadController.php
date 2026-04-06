@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Reader;
 use League\Csv\Writer;
+use Maatwebsite\Excel\Facades\Excel;
 use Nette\Schema\ValidationException;
 use PHPUnit\Exception;
-use Maatwebsite\Excel\Facades\Excel;
 
 class LeadController extends Controller
 {
@@ -122,10 +122,9 @@ class LeadController extends Controller
             foreach ($csv as $row) {
 
                 $lead = Lead::query()->firstOrCreate(
-                    ['username' => $row[0]] // Attributes to check for an existing record
+                    ['username' => $row[0]]
                 );
 
-                // Update category_id even if the lead already exists
                 $lead->update([
                     'category_id' => r('category_id')
                 ]);
@@ -157,23 +156,21 @@ class LeadController extends Controller
         try {
 
             DB::beginTransaction();
-            // Fetch the required number of leads that haven't been assigned a category yet
+
             $leads = Lead::whereNull('user_id')
                 ->where('last_state', 'free')
                 ->when(
                     r('tags'),
                     fn($_) => $_->whereHas('tags', fn($_) => $_->whereIn('id', r('tags')))
                 )
-                ->inRandomOrder() // Fetch random leads
+                ->inRandomOrder()
                 ->limit(r()->numberOfLeads)
                 ->get();
 
             abort_if($leads->isEmpty(), 422, 'No leads available for export');
 
-            // Mark the leads with the selected category and assign them to the logged-in user
             foreach ($leads as $lead) {
                 $lead->update([
-//                    'category_id' => r()->categoryId,
                     'user_id' => Auth::id(),
                     'export_date' => now(),
                 ]);
@@ -182,26 +179,21 @@ class LeadController extends Controller
                     'user_id' => Auth::id()
                 ]);
             }
-            // Create CSV for download
-            $csv = Writer::createFromString('');
 
-            // Insert the headers
+            $csv = Writer::createFromString('');
             $csv->insertOne(['ID', 'Username', 'Export Date', 'Category']);
 
-            // Insert the lead data
             foreach ($leads as $lead) {
                 $csv->insertOne([
                     $lead->id,
                     $lead->username,
-                    $lead->export_date->format('Y-m-d H:i:s'), // Format date properly
-                    'N/A', // Ensure no empty values
-//                    $lead->category->title ?? 'N/A', // Ensure no empty values
+                    $lead->export_date->format('Y-m-d H:i:s'),
+                    'N/A',
                 ]);
             }
 
             DB::commit();
 
-            // Return CSV as download
             return response()->streamDownload(function () use ($csv) {
                 echo $csv->toString();
             }, 'leads.csv', [
@@ -222,7 +214,6 @@ class LeadController extends Controller
             'username' => 'required',
             'password' => 'required',
             'number_of_leads' => 'required|integer|min:1',
-//            'category_id' => 'nullable|integer|exists:categories,id',
         ]);
 
         $credentials = [
@@ -267,7 +258,6 @@ class LeadController extends Controller
             DB::commit();
 
             return $leads->select('id', 'username');
-
 
         } catch (\Exception $e) {
             DB::rollBack();

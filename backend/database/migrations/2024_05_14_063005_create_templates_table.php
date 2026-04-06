@@ -1,10 +1,9 @@
 <?php
 
-use \App\Models\Template;
+use App\Models\Template;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use \App\Models\Account;
 
 return new class extends Migration {
     /**
@@ -28,6 +27,12 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained('categories')
                 ->nullOnDelete();
+
+            $table->foreignId('country_id')
+                ->nullable()
+                ->constrained('countries')
+                ->nullOnDelete();
+
             $table->unsignedTinyInteger('is_used')->default(0);
             $table->enum('type', Template::$types);
             $table->enum('sub_type', Template::$subTypes)->nullable();

@@ -11,17 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cities', function (Blueprint $table) {
+        Schema::create('countries', function (Blueprint $table) {
             $table->id();
-            $table->string('city_id');
+            $table->string('country_code')->unique();
             $table->string('name');
             $table->string('slug');
 
-            $table->foreignId('country_id')
-                ->constrained('countries');
-
             $table->unsignedTinyInteger('is_used')->default(0);
             $table->timestamps();
+        });
+
+        Schema::table('cities', function (Blueprint $table) {
+            $table->foreignId('country_id')
+                ->nullable()
+                ->after('slug')
+                ->constrained('countries')
+                ->nullOnDelete();
         });
     }
 
@@ -30,6 +35,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cities');
+        Schema::table('cities', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('country_id');
+        });
+
+        Schema::dropIfExists('countries');
     }
 };

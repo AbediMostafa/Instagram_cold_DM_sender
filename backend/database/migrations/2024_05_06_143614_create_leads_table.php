@@ -1,10 +1,9 @@
 <?php
 
+use App\Models\Lead;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Lead;
-
 
 return new class extends Migration {
     /**
@@ -33,6 +32,13 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained('categories')
                 ->nullOnDelete();
+
+            $table->foreignId('country_id')
+                ->nullable()
+                ->constrained('countries')
+                ->nullOnDelete();
+
+            $table->string('screenshot_path')->nullable();
 
             $table->timestamp('export_date')
                 ->nullable()

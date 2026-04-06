@@ -573,18 +573,43 @@ class BrowserLoginEvent:
             self.ig.page.get_by_role('button', name=re.compile(r'OK', re.IGNORECASE)).click()
 
     def find_friends_and_accounts_you_like(self):
-
         messages = [
             'Get fresh updates here',
             'Find friends and accounts you like'
         ]
 
         if self.ig.is_visible_by_texts(messages):
+            # Try old method first (Next button)
             try:
                 self.ig.page.get_by_role('button', name=re.compile(r'next', re.IGNORECASE)).click(timeout=3000)
+                self.ig.pause(3000, 4000)
+                return
+            except:
+                self.ig.account.add_cli('Next button not found, trying search and follow...')
+
+            # Fallback: search and follow
+            try:
+                target = random.choice(['instagram', 'meta'])
+
+                search_input = self.ig.page.get_by_placeholder(re.compile(r'search', re.IGNORECASE))
+                search_input.click(timeout=3000)
+                search_input.press_sequentially(target, delay=100)
+                self.ig.pause(2000, 3000)
+
+                # Click checkbox to select the account
+                self.ig.page.locator('input[type="checkbox"][aria-label="Checkmark outline icon"]').first.click(timeout=5000)
+                self.ig.account.add_cli(f'Selected {target} checkbox')
+                self.ig.pause(1500, 2500)
+
+                # Now Follow button should be enabled, click it
+                self.ig.page.get_by_role('button', name=re.compile(r'^Follow$', re.IGNORECASE)).click(timeout=5000)
+                self.ig.account.add_cli(f'Followed {target} from find friends page')
+                self.ig.pause(3000, 4000)
+
             except Exception as e:
-                self.ig.account.add_cli(f'Problem clicking on Find friends: {str(e)}')
-                self.ig.page.get_by_role('button', name=re.compile(r'Follow', re.IGNORECASE)).click(timeout=3000)
+                self.ig.account.add_cli(f'Problem with find friends: {str(e)}')
+                go_to_page(self.ig, 'https://www.instagram.com/', 'Home')
+                self.ig.pause(3000, 4000)
 
     def save_session(self):
         self.ig.account.add_cli('Saving session ...')
