@@ -45,6 +45,7 @@ from script.extra.events.browser_events.BrowserChangeAvatarEvent import BrowserC
 from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
 from script.extra.actions.account_status_checker.AccountStatusCheckerContext import AccountStatusCheckerContext
 from script.extra.actions.post_media.PostMediaContext import PostMediaContext
+from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
 # Ensure correct usage
 if len(sys.argv) < 2:
     print("Usage: python new.py <account_id>")
@@ -67,7 +68,7 @@ try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
-    PostMediaContext(browser_ig).fire()
+    ScrollAndLikeContext(browser_ig).fire()
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())

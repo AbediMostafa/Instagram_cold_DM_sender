@@ -56,11 +56,11 @@ class Account(BaseWithTimeZoneModel):
 
     # Upload-Post connection lifecycle: none -> pending -> connecting -> connected
     # Can also be: failed, disconnecting
-    upload_post_status = CharField(default='none')
+    # upload_post_status = CharField(default='none')
 
     # The profile number assigned on Upload-Post (e.g. '001', '002').
     # Set once during connect, never reused across accounts.
-    upload_post_username = CharField(null=True)
+    # upload_post_username = CharField(null=True)
 
     # These are runtime values, not stored in DB. They get calculated
     # on the fly when deciding how many DMs to send, etc.

@@ -148,13 +148,15 @@ import json
 from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import LeadFullDataExtractor
 from script.extra.actions.post_media.PostMediaContext import PostMediaContext
 from script.extra.actions.block_associated_lead.BlockAssociatedLeadContext import BlockAssociatedLeadContext
+from script.extra.actions.scroll_and_like_base_location.LocationScrollAndLikeContext import LocationScrollAndLikeContext
 # account = get_next_account()
-account_id = sys.argv[1]
-account = Account.get_by_id(account_id)
+# account_id = sys.argv[1]
+account = Account.get_by_id(4364)
 
-# # order = get_next_order_for_account(account)
-# # print(order)
+# order = get_next_order_for_account(account)
+# print(order)
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
-BlockAssociatedLeadContext(browser_ig).fire()
+ChangeNameUsernameContext(browser_ig).fire()
+

@@ -202,7 +202,50 @@ class ErrorIndicators(BaseAction):
             "Enter the 6-digit code we sent to the email"
         ]
         if self.ig.is_visible_by_texts(messages):
-            raise FillCodeSentToError('Enter the code we sent to your email')
+
+            import requests
+            import re
+
+            url = "https://fakemailo.com/partner-authorized-emails/get-code"
+
+            params = {
+                "email": self.ig.account.email,
+                "service": "Instagram"
+            }
+
+            response = requests.get(url, params=params)
+            counter = 0
+
+            while int(response.status_code) != 200:
+                counter += 1
+                self.ig.account.add_cli(f'Response is not 200 for the {counter} times ')
+                response = requests.get(url, params=params)
+                self.ig.pause(12000, 13000)
+
+                if counter == 8:
+                    break
+
+            data = response.json()
+            print(response.status_code)
+            print(data)
+            html_content = data["data"]["content"]
+
+            # Extract 6-digit code
+            match = re.search(r"\b\d{6}\b", html_content)
+
+            if match:
+                code = match.group(0)
+
+                self.ig.page.get_by_label('Code').press_sequentially(code, delay=100, timeout=6000)
+                print("Code:", code)
+                self.ig.pause(2000, 3000)
+                self.ig.page.get_by_role('button', name='Continue').click(timeout=5000)
+                self.ig.pause(11000, 12000)
+
+            else:
+                print("No code found")
+
+            # raise FillCodeSentToError('Enter the code we sent to your email')
 
     def enter_your_mobile_number(self):
         if self.ig.is_visible_by_text('Enter your mobile number'):
@@ -220,12 +263,11 @@ class ErrorIndicators(BaseAction):
 
     def suspended_account_handler(self):
         if self.ig.is_visible_by_text('We suspended your account'):
-
-            try:
-                self.ig.page.get_by_role("button", name="Appeal", exact=True).click(timeout=3000)
-                self.ig.pause(5000, 6000)
-            except:
-                pass
+            # try:
+            #     self.ig.page.get_by_role("button", name="Appeal", exact=True).click(timeout=3000)
+            #     self.ig.pause(5000, 6000)
+            # except:
+            #     pass
 
             raise AccountSuspendedError('We suspended your account')
 
@@ -440,4 +482,14 @@ class ErrorIndicators(BaseAction):
         if self.ig.is_visible_by_texts(messages):
             self.ig.account.add_cli('You can no longer request a review')
             self.ig.page.get_by_role('button', name=re.compile(r'Ok', re.IGNORECASE)).click(timeout=4000)
+            self.ig.pause(4000, 5000)
+
+    def upload_a_verification_selfie(self):
+
+        messages = [
+            'Upload a verification selfie',
+        ]
+
+        if self.ig.is_visible_by_texts(messages):
+            raise HelpUsConfirmItsYouError("Upload a verification selfie")
             self.ig.pause(4000, 5000)

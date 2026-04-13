@@ -103,6 +103,8 @@ class BrowserLoginEvent:
 
         'You can no longer request a review',
         'This content is no longer available',
+
+        'Upload a verification selfie',
     ]
 
     logged_in_messages = [
@@ -208,7 +210,7 @@ class BrowserLoginEvent:
             self.find_friends_and_accounts_you_like()
             self.save_info()
             self.turn_on_notif()
-            self.ig.pause(3500, 4000)
+            self.ig.pause(4500, 5000)
 
             if self.login_counter > max_login_retry:
                 self.ig.account.add_cli('Max login attempts reached.')
@@ -414,7 +416,7 @@ class BrowserLoginEvent:
                 self.ig.account.add_cli('Security Code input dont exists trying second method ...')
 
                 try:
-                    input_box = self.ig.page.locator('input[type="text"]').first
+                    input_box = self.ig.page.locator('input[name="verificationCode"]').first
                     input_box.wait_for(state="visible", timeout=6000)
                     input_box.fill(self.ig.account.get_verification_code())
 
@@ -487,7 +489,7 @@ class BrowserLoginEvent:
                 self.ig.page.locator('[aria-label="Log In"]').click(timeout=3000)
 
             self.login_clicked = True
-            self.ig.pause(2000, 3000)
+            self.ig.pause(7000, 8000)
 
     def unusual_login_detected(self):
 
