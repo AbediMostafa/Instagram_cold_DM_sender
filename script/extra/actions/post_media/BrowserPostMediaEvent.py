@@ -182,9 +182,9 @@ class BrowserPostMediaEvent:
         start = time.time()
 
         while time.time() - start < timeout_sec:
-            if self.ig.is_visible_by_text('Your post could not be shared'):
-                self.ig.page.get_by_role('button', name=re.compile(r'Try again', re.IGNORECASE)).click(timeout=3000)
-                self.ig.pause(4000, 5000)
+            # if self.ig.is_visible_by_text('Your post could not be shared'):
+            #     self.ig.page.get_by_role('button', name=re.compile(r'Try again', re.IGNORECASE)).click(timeout=3000)
+            #     self.ig.pause(4000, 5000)
             try:
                 if self.ig.is_visible_by_text('Your reel has been shared') or self.ig.is_visible_by_text(
                         'Your post has been shared'):

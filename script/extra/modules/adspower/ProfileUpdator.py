@@ -25,8 +25,8 @@ class ProfileUpdator:
     response_data = None
     profile = None
     cookies = None
-    folder_id = "5780347"
-    response = "5780347"
+    folder_id = "8972883"
+    response = "8972883"
     payload = {
         "name": "",
         "group_id": "",
@@ -58,7 +58,7 @@ class ProfileUpdator:
 
     def get_proxy(self):
 
-        self.proxy_obj = get_free_proxy()
+        self.proxy_obj = get_free_proxy(self.account)
 
         return {
             "proxy_soft": "other",
@@ -72,31 +72,28 @@ class ProfileUpdator:
     def assign_profile_name(self):
         uid = self.account.id if self.account else str(uuid.uuid4())
         self.profile_name = f"profile_{uid}"
-        self.payload["name"] = self.profile_name
-        return self
+        return self.profile_name
 
     def create(self):
         self.account.add_cli('Creating account ....')
-        try:
-            sleep(3)
-            self.get_proxy()
-            self.assign_cookies()
-            self.assign_profile_name()
-            # self.assign_screen_resolution()
+        # try:
+        sleep(3)
 
-            self.payload["group_id"] = self.folder_id
-            self.payload["user_proxy_config"] = self.proxy
+        self.payload["group_id"] = self.folder_id
+        self.payload["user_proxy_config"] = self.get_proxy()
+        self.payload["cookie"] = self.assign_cookies()
+        self.payload["name"] = self.assign_profile_name()
 
-            self.send_request() \
-                .create_profile_record() \
-                .update_account()
+        self.send_request() \
+            .create_profile_record() \
+            .update_account()
 
-        except ProxyStuck:
-            raise
-
-        except Exception as e:
-            self.account.add_cli(f"Error: {e} | {self.response_message}")
-            raise Exception(f"{str(e)} | {self.response_message}")
+        # except ProxyStuck:
+        #     raise
+        #
+        # except Exception as e:
+        #     self.account.add_cli(f"Error: {e} | {self.response_message}")
+        #     raise Exception(f"{str(e)} | {self.response_message}")
 
     def assign_screen_resolution(self):
         import random
@@ -111,8 +108,10 @@ class ProfileUpdator:
             '1440_900',
             '1536_864',
         ]
+        resolution = random.choice(screen_resolutions)
+        print(f'Random resolution: {resolution}')
 
-        self.payload["fingerprint_config"]["screen_resolution"] = random.choice(screen_resolutions)
+        self.payload["fingerprint_config"]["screen_resolution"] = resolution
 
     def update(self):
         self.account.add_cli('Updating account ....')
@@ -121,8 +120,17 @@ class ProfileUpdator:
             self.payload = {
                 'profile_id': self.profile.profile_id,
                 "user_proxy_config": self.get_proxy(),
-                'cookie': self.assign_cookies()
+                'cookie': self.assign_cookies(),
+                "fingerprint_config": {
+                    "language_switch": 0,
+                    "language": ["en-US", "en"],
+                    "random_ua": {
+                        "ua_system_version": ["Windows 10"]
+                    }
+                }
             }
+
+            self.assign_screen_resolution()
 
             self.send_request().update_account()
 
@@ -131,7 +139,7 @@ class ProfileUpdator:
             raise Exception(f"{str(e)} | {self.response_message}")
 
     def send_request(self):
-        url = "http://local.adspower.net:50325/api/v2/browser-profile/update"
+        url = "http://local.adspower.net:50325/api/v2/browser-profile/create"
         max_retries = 5
         retry_delay = 2
 
@@ -140,7 +148,7 @@ class ProfileUpdator:
 
             try:
                 json_response = self.response.json()
-                self.account.add_cli(f"Update response (Attempt {attempt})")
+                self.account.add_cli(f"Create response (Attempt {attempt})")
                 self.account.add_cli(json_response)
             except Exception:
                 raise Exception(f"Invalid response: {self.response.text}")
@@ -180,7 +188,7 @@ class ProfileUpdator:
         self.profile = Profile.create(
             title=self.profile_name,
             folder=self.folder_id,
-            profile_id=self.response_data.get('id'),
+            profile_id=self.response_data.get('profile_id'),
             proxy=self.proxy_obj if self.proxy_obj else None
         )
         return self

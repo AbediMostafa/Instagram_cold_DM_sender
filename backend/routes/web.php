@@ -52,14 +52,15 @@ use \App\Models\Lead;
 use \App\Models\Account;
 use \App\Models\Tag;
 use \App\Models\Proxy;
+use \App\Models\Profile;
 
 Route::get('/', function () {
+
 });
 Route::get('/test', function () {
-    $account = Account::query()->where('username', 'sunnry4055')->first();
-    $lead = Lead::query()->where('account_id', $account->id)->first();
-
-    dd($lead->templates[140]);
+    dd(
+        \App\Models\Ip::query()->get()->pluck('ip')->toArray()
+    );
 
 });
 

@@ -155,6 +155,7 @@ class BrowserLoginEvent(InstagramMiddleware):
 
     def fill_code_sent_to_email(self):
         if self.ig.is_visible_by_text('Enter the code we sent to') or self.ig.is_visible_by_text('Check your email'):
+            raise EnterYourEmailError('Enter your email address')
 
             def fill_email():
                 self.ig.account.add_cli(f'Fill email is visible trying to get the code ...')

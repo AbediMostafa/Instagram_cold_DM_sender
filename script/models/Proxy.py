@@ -179,7 +179,7 @@ def _try_reset_proxies(proxy_type):
         Lock.release('proxy_reset')
 
 
-def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts=50):
+def get_free_proxy(account=None, max_check_timeout=10, stuck_threshold_minutes=5, max_attempts=50):
     from .Setting import Setting
 
     proxy_type = Setting.get_value('proxy_type')
@@ -223,12 +223,24 @@ def get_free_proxy(max_check_timeout=10, stuck_threshold_minutes=5, max_attempts
 
             minutes = (now - prev_checked).total_seconds() / 60
             if minutes <= stuck_threshold_minutes:
+
+                save_observed_ip(account, observed_ip, next_proxy)
                 return next_proxy
             else:
                 print(f'Proxy stuck for {minutes:.1f} min, trying next...')
                 continue
 
         next_proxy.set_real_ip(observed_ip, now)
+        save_observed_ip(account, observed_ip, next_proxy)
+
         return next_proxy
 
     raise RuntimeError('No valid rotating proxy found after max attempts')
+
+
+def save_observed_ip(account, ip, proxy):
+    from .Ip import Ip
+    from .AccountIp import AccountIp
+
+    ip_record, created = Ip.get_or_create(ip=ip, proxy=proxy, type=proxy.type)
+    AccountIp.create(account=account, ip=ip_record)

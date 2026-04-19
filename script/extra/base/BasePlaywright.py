@@ -16,7 +16,7 @@ class BasePlaywright:
         self.handler = AdsPowerHandler(account)
 
     def init(self):
-        self.handler.update_profile()
+        self.handler.create_profile()
         self.handler.start_browser()
 
         self.browser = self.handler.get_browser()
@@ -51,6 +51,7 @@ class BasePlaywright:
     def cleanup(self):
         self.handler.cleanup()
         self.handler.delete_adspower_cache()
+        self.handler.delete_profile()
 
     def pause(self, min_ms, max_ms):
         self.page.wait_for_timeout(random.randint(min_ms, max_ms))

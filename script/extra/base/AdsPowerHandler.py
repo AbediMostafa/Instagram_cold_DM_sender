@@ -15,7 +15,7 @@ class AdsPowerHandler(IBrowserHandler):
         self.account.add_cli('Creating Profile ....')
 
         creator = ProfileUpdator(self.account)
-        creator.call_action('create')
+        creator.create()
 
     def change_proxy(self):
         self.account.add_cli('Change profile proxy ....')
@@ -43,7 +43,7 @@ class AdsPowerHandler(IBrowserHandler):
 
         self.account.add_cli('Deleting Profile ....')
         creator = ProfileUpdator(self.account)
-        creator.call_action('delete')
+        creator.delete()
 
     def start_browser(self):
         self.ws_endpoint = Adspower().get_endpoint_url(self.account)

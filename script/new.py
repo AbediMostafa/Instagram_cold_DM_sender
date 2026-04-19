@@ -46,6 +46,7 @@ from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import 
 from script.extra.actions.account_status_checker.AccountStatusCheckerContext import AccountStatusCheckerContext
 from script.extra.actions.post_media.PostMediaContext import PostMediaContext
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
+
 # Ensure correct usage
 if len(sys.argv) < 2:
     print("Usage: python new.py <account_id>")
@@ -72,9 +73,9 @@ try:
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
-# finally:
-#     if browser_ig:
-#         browser_ig.cleanup()
+finally:
+    if browser_ig:
+        browser_ig.cleanup()
 
 # CheckForAccountActionsHook(account)
 #

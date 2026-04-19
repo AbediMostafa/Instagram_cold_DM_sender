@@ -206,6 +206,7 @@ class BrowserLoginEvent:
             self.errors.trust_this_device()
             self.errors.you_can_no_longer_request_a_review()
             self.errors.this_content_is_no_longer_available()
+            self.errors.upload_a_verification_selfie()
             self.please_log_in_to_continue()
             self.find_friends_and_accounts_you_like()
             self.save_info()
@@ -217,6 +218,7 @@ class BrowserLoginEvent:
                 raise Exception('Max login attempts reached.')
 
         self.save_session()
+        self.follow_suggested()
 
     def pre_login_check(self):
         while self.ig.is_visible_by_texts(self.pre_login_messages):
@@ -621,29 +623,10 @@ class BrowserLoginEvent:
         self.ig.account.save_session(storage_state_json)
 
     def follow_suggested(self):
-        passed_days = self.ig.account.get_passed_days_since_creation() if self.ig.account.passed_days_since_creation is None else self.ig.account.passed_days_since_creation
-
-        if passed_days < 25:
-            return self.ig.account.add_cli('Account is under 25 ...')
-
-        allowed_follows = random.randint(15, SettingAdapter.max_follow())
-        allowed_follows = min(allowed_follows, passed_days)
-
-        command_count = performed_command_count(self.ig.account, ['follow'], 24)
-
-        self.ig.account.add_cli(f'performed follow: {command_count}, and allowed: {allowed_follows}')
-
-        if command_count > allowed_follows:
-            self.ig.account.add_cli('We are not allowed to follow')
-            return False
 
         if self.ig.is_visible_by_text('Suggested for you'):
-            random_follow_number = random.randint(2, 4)
+            random_follow_number = random.randint(1, 3)
             follow_buttons = self.ig.page.query_selector_all('button:has-text("Follow")')
-
-            if len(follow_buttons) < 1 or len(follow_buttons) < random_follow_number:
-                self.ig.account.add_cli(f'small follow button: {len(follow_buttons)}')
-                return False
 
             selected_follow_button = random.sample(follow_buttons, random_follow_number)
             count = 0
