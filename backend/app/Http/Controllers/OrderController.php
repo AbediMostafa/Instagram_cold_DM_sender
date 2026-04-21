@@ -118,8 +118,10 @@ class OrderController extends Controller
                                 $remainingCount = $order->total_count - $order->completed_count;
 
                                 if ($remainingCount > 0) {
-                                    // Always deduct balance for remaining
-                                    $this->deductBalance($order->service_type, $remainingCount);
+                                    // Deduct balance for remaining (skip for comment_and_reply — no balance ops)
+                                    if ($order->service_type !== 'comment_and_reply') {
+                                        $this->deductBalance($order->service_type, $remainingCount);
+                                    }
 
                                     // Only update actions if is_prepared = 2 (actions exist)
                                     if ($order->is_prepared == 2) {
@@ -199,8 +201,8 @@ class OrderController extends Controller
                     $order->action_data = null;
                     $order->save();
 
-                    if ($order->service_type === 'comment') {
-                        // For comments: keep actions but reset status and account
+                    if (in_array($order->service_type, ['comment', 'comment_and_reply'])) {
+                        // For comments and comment_and_reply: keep actions but reset status and account
                         $order->actions()->update([
                             'status' => 'free',
                             'account_id' => null,
@@ -226,8 +228,8 @@ class OrderController extends Controller
                     $order = Order::query()->find($orderId);
                     if (!$order) continue;
 
-                    // If order was canceled, refund the remaining balance first
-                    if ($order->status === 'Canceled') {
+                    // If order was canceled, refund the remaining balance first (skip for comment_and_reply)
+                    if ($order->status === 'Canceled' && $order->service_type !== 'comment_and_reply') {
                         $remaining = $order->total_count - $order->completed_count;
                         if ($remaining > 0) {
                             $this->refundBalance($order->service_type, $remaining);
@@ -294,7 +296,7 @@ class OrderController extends Controller
                     "category" => "SSM-fire",
                     "rate" => "0.30$",
                     "min" => 5,
-                    "max" => 4000,
+                    "max" => 2000,
                     "type" => "custom_comments",
                     "desc" => "Instagram Comment Service",
                     "dripfeed" => false,
@@ -307,7 +309,7 @@ class OrderController extends Controller
                     "category" => "SSM-fire",
                     "rate" => "0.05$",
                     "min" => 10,
-                    "max" => 4000,
+                    "max" => 2000,
                     "type" => "default",
                     "desc" => "View first or specific story",
                     "dripfeed" => false,
@@ -320,7 +322,7 @@ class OrderController extends Controller
                     "category" => "SSM-fire",
                     "rate" => "0.04$",
                     "min" => 10,
-                    "max" => 4000,
+                    "max" => 2000,
                     "type" => "default",
                     "desc" => "Save a post or reel",
                     "dripfeed" => false,
@@ -367,7 +369,7 @@ class OrderController extends Controller
             }
 
             $minQty = ($serviceType === 'comment') ? 5 : 10;
-            $maxQty = ($serviceType === 'comment') ? 2000 : 10000;
+            $maxQty = 2000;
 
             if ($quantity < $minQty || $quantity > $maxQty) {
                 return response()->json([
@@ -1020,6 +1022,7 @@ class OrderController extends Controller
         $patterns = [
             '/instagram\.com\/p\/[\w-]+/',
             '/instagram\.com\/reel\/[\w-]+/',
+            '/instagram\.com\/reels\/[\w-]+/',
             '/instagram\.com\/[\w.]+\/reel\/[\w-]+/',
         ];
 
@@ -1041,5 +1044,152 @@ class OrderController extends Controller
             }
         }
         return 0.025;
+    }
+
+    /**
+     * Place a comment_and_reply order.
+     *
+     * This creates an order where the first comment is posted on the target post,
+     * and the remaining comments become replies to that first comment. If quantity
+     * is provided, extra like-only actions are created for accounts that just like
+     * the main comment without replying.
+     *
+     * Inputs:
+     *   - link: Instagram post or reel URL
+     *   - comments: newline-separated comment texts, at least one required.
+     *              First line = main comment, rest = replies.
+     *   - quantity: optional, total number of likes on the main comment.
+     *              If quantity > number of replies, the difference becomes like-only actions.
+     *              Reply accounts always like the main comment too, so they count toward quantity.
+     *
+     * Example: 10 comments + quantity=50
+     *   - 1 main comment action (preparer posts this via browser)
+     *   - 9 reply actions (each account replies AND likes)
+     *   - 41 like-only actions (50 - 9 = 41, these accounts only like)
+     *
+     * No balance operations for this service type.
+     */
+    public function commentAndReply()
+    {
+        try {
+            $link = request('link');
+            $comments = request('comments');
+            $quantity = (int) request('quantity', 0);
+
+            // Comments are required, at least the main comment
+            if (empty($comments)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'At least one comment is required'
+                ]);
+            }
+
+            $commentList = explode("\n", $comments);
+            $commentList = array_filter(array_map('trim', $commentList));
+
+            if (count($commentList) === 0) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'At least one comment is required'
+                ]);
+            }
+
+            // Must be a valid post or reel link
+            if (!$this->isValidPostOrReelLink($link)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid link. Must be a post or reel URL.'
+                ]);
+            }
+
+            $cleanLink = $this->cleanInstagramLink($link);
+
+            // Duplicate check against active orders of the same type
+            $duplicateCheck = $this->checkDuplicateLink($cleanLink, 'comment_and_reply');
+//            if ($duplicateCheck !== true) {
+//                return $duplicateCheck;
+//            }
+
+            // Split comments: first one is the main comment, rest are replies
+            $commentArray = array_values($commentList);
+            $mainComment = $commentArray[0];
+            $replies = array_slice($commentArray, 1);
+            $replyCount = count($replies);
+
+            // Calculate how many like-only actions we need.
+            // Reply accounts also like the main comment, so they count toward quantity.
+            // Like-only is only needed if quantity exceeds the number of reply accounts.
+            $likeOnlyCount = max(0, $quantity - $replyCount);
+
+            // Total actions: 1 main comment + N replies + M like-only
+            $totalCount = 1 + $replyCount + $likeOnlyCount;
+
+            $service = Service::query()
+                ->where('service', 'comment_and_reply')
+                ->first();
+
+            // Wrap everything in a transaction so the preparer never sees the order
+            // before all its actions are inserted. Without this, a thread could claim
+            // the order and find zero actions.
+            $order = DB::transaction(function () use (
+                $cleanLink, $mainComment, $replies, $likeOnlyCount, $totalCount, $service
+            ) {
+                $order = Order::query()->create([
+                    'customer' => request('site_url') ?? request('customer'),
+                    'service_id' => $service ? $service->id : null,
+                    'service_type' => 'comment_and_reply',
+                    'target_link' => $cleanLink,
+                    'total_count' => $totalCount,
+                    'status' => 'Pending',
+                ]);
+
+                // First action: the main comment that preparer will post via browser
+                OrderAction::query()->create([
+                    'order_id' => $order->id,
+                    'type' => 'comment_and_reply',
+                    'content' => $mainComment,
+                    'status' => 'free',
+                ]);
+
+                // Reply actions: each one has the reply text as content.
+                // During execution, the account will reply AND like the main comment.
+                foreach ($replies as $replyText) {
+                    OrderAction::query()->create([
+                        'order_id' => $order->id,
+                        'type' => 'comment_and_reply',
+                        'content' => $replyText,
+                        'status' => 'free',
+                    ]);
+                }
+
+                // Like-only actions: no content means the account just likes the main comment
+                for ($i = 0; $i < $likeOnlyCount; $i++) {
+                    OrderAction::query()->create([
+                        'order_id' => $order->id,
+                        'type' => 'comment_and_reply',
+                        'content' => null,
+                        'status' => 'free',
+                    ]);
+                }
+
+                return $order;
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order placed successfully',
+                'order_id' => $order->id,
+                'total_actions' => $totalCount,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('commentAndReply error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to create order: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -245,7 +245,12 @@ class CommentPrepareHandler:
                 headers = response.request.headers
                 friendly_name = headers.get('x-fb-friendly-name', '')
 
-                if friendly_name != 'PolarisPostCommentInputRevampedMutation':
+                # Instagram uses different mutation names depending on UI version
+                valid_names = [
+                    'PolarisPostCommentInputRevampedMutation',
+                    'usePolarisCommentSubmitMutation',
+                ]
+                if friendly_name not in valid_names:
                     return
 
                 post_data = response.request.post_data
@@ -263,8 +268,21 @@ class CommentPrepareHandler:
                     self.base._log_to_file(f'COMMENT_INVALID_VARS: {variables_str[:300]}', 'unknown')
                     return
 
-                # Extract media_id from variables
-                media_id = variables.get('media_id')
+                # Skip reply requests (we only want top-level comments)
+                data_block = variables.get('data', {})
+                request_data_block = variables.get('request_data', {})
+                if data_block.get('replied_to_comment_id') or request_data_block.get('replied_to_comment_id'):
+                    return
+
+                # Extract media_id from variables (supports multiple formats)
+                # v1: variables.media_id (top-level)
+                # v2: variables.data.media_id (nested in data block)
+                # v3: variables.request_data.media_id (nested in request_data)
+                media_id = (
+                    variables.get('media_id')
+                    or data_block.get('media_id')
+                    or request_data_block.get('media_id')
+                )
 
                 if not media_id:
                     self.base._log_to_file(f'COMMENT_NO_MEDIA_ID: {json.dumps(variables)[:500]}', 'unknown')

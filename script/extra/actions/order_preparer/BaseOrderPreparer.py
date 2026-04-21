@@ -19,7 +19,7 @@ STUCK_TIMEOUT_SECONDS = 120
 CAPTURE_TIMEOUT_SECONDS = 45
 
 # Service types that can be prepared by this class
-SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post', 'comment']
+SUPPORTED_SERVICE_TYPES = ['view_story', 'save_post', 'comment', 'comment_and_reply']
 
 
 class BaseOrderPreparer(BaseAction):
@@ -211,6 +211,11 @@ class BaseOrderPreparer(BaseAction):
                 handler = CommentPrepareHandler(self.ig, self)
                 handler.prepare(self.order)
 
+            elif self.order.service_type == 'comment_and_reply':
+                from .handlers.CommentAndReplyPrepareHandler import CommentAndReplyPrepareHandler
+                handler = CommentAndReplyPrepareHandler(self.ig, self)
+                handler.prepare(self.order)
+
             else:
                 raise Exception(f'Unknown service_type: {self.order.service_type}')
 
@@ -222,9 +227,9 @@ class BaseOrderPreparer(BaseAction):
             self._save_action_data()
 
             # Create or update OrderAction records
-            # For comments: actions already exist (created by Laravel with content)
+            # For comments and comment_and_reply: actions already exist (created by Laravel with content)
             # For others: we need to create them here
-            if self.order.service_type == 'comment':
+            if self.order.service_type in ('comment', 'comment_and_reply'):
                 self._mark_first_comment_action_sent()
             else:
                 self._create_order_actions()
@@ -384,14 +389,14 @@ class BaseOrderPreparer(BaseAction):
 
     def _mark_first_comment_action_sent(self):
         """
-        Mark the first comment action as sent (for comment orders).
+        Mark the first comment action as sent (for comment and comment_and_reply orders).
 
-        For comments, OrderAction records are created by Laravel (OrderController)
+        For these order types, OrderAction records are created by Laravel (OrderController)
         with the comment content already set. The preparer just needs to:
         1. Find the first free action
         2. Mark it as sent (preparer posted this comment via browser)
         3. Increment completed_count
-        4. Deduct balance
+        4. Deduct balance (skipped for comment_and_reply which has no balance logic)
 
         Uses completed_count + 1 (not =1) to handle re-prepare scenario correctly.
         """
@@ -426,8 +431,9 @@ class BaseOrderPreparer(BaseAction):
                     Order.id == self.order.id
                 ).execute()
 
-                # Deduct balance for this one action
-                Balance.deduct_for_actions('comment', 1)
+                # Deduct balance for this one action (comment_and_reply has no balance)
+                if self.order.service_type != 'comment_and_reply':
+                    Balance.deduct_for_actions(self.order.service_type, 1)
 
                 # Check if order is now complete
                 self._check_order_completion()
@@ -479,8 +485,9 @@ class BaseOrderPreparer(BaseAction):
             Order.id == self.order.id
         ).execute()
 
-        # Charge for remaining actions
-        self._charge_remaining()
+        # Charge for remaining actions (comment_and_reply has no balance)
+        if self.order.service_type != 'comment_and_reply':
+            self._charge_remaining()
 
     def _charge_remaining(self):
         """

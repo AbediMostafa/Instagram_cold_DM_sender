@@ -21,7 +21,7 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->enum('service_type', ['comment', 'like', 'like_and_comment', 'follow', 'view', 'view_story',
-                'save_post']);
+                'save_post', 'comment_and_reply']);
             $table->text('target_link');
             $table->integer('start_count')->default(0);
             $table->integer('total_count')->default(0);

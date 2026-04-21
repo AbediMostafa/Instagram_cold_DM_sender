@@ -50,7 +50,7 @@ class BrowserUploadPostConnectEvent:
         First runs cleanup tasks (one suspended/challenging + one disconnecting per cycle),
         then checks the current account's upload_post_status and routes to connect or disconnect.
         """
-        # Housekeeping: clean up profiles that are no longer needed
+        # clean up profiles that are no longer needed
         self._cleanup_one_suspended_profile()
         self._cleanup_one_disconnecting_profile()
 
@@ -67,9 +67,7 @@ class BrowserUploadPostConnectEvent:
         else:
             self.account.add_cli(f'[UploadPost] Status is "{status}", skipping...')
 
-    # -------------------------------------------------------------------------
-    # Connect flow
-    # -------------------------------------------------------------------------
+
 
     def _connect(self):
         """
@@ -415,9 +413,7 @@ class BrowserUploadPostConnectEvent:
         self.account.add_cli(f'[UploadPost] Verify API call failed: {response.status_code}')
         return False
 
-    # -------------------------------------------------------------------------
-    # Disconnect flow
-    # -------------------------------------------------------------------------
+
 
     def _disconnect(self):
         """
@@ -472,9 +468,6 @@ class BrowserUploadPostConnectEvent:
             self._update_status(original_status)
             self.account.add_cli(f'[UploadPost] Disconnect error: {str(e)} - reverted to "{original_status}"')
 
-    # -------------------------------------------------------------------------
-    # Cleanup: background profile deletion for accounts that no longer need them
-    # -------------------------------------------------------------------------
 
     def _cleanup_one_suspended_profile(self):
         """
@@ -606,9 +599,6 @@ class BrowserUploadPostConnectEvent:
             self.account.add_cli(f'{log_prefix} Error: {str(e)}')
             return False
 
-    # -------------------------------------------------------------------------
-    # Helpers
-    # -------------------------------------------------------------------------
 
     def _update_status(self, status):
         """

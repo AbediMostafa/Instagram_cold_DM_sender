@@ -5,18 +5,21 @@ import random
 
 class BrowserScrollAndLikeEvent(InstagramMiddleware):
     """
-    Event class for executing email registration on Instagram
+    Event class for scrolling through the Instagram feed, liking posts,
+    and watching stories to simulate natural user behavior.
     """
     command = None
 
     def init(self):
         """
-        Initialize and execute the email registration process
+        Main entry point. Creates a command record, then runs story watching
+        followed by scroll and like actions.
         """
         try:
             self.command = self.ig.account.create_command('scroll and like', 'processing')
             self.ig.account.add_cli("Starting scroll and like ...")
             self.turn_on_notif()
+            self.watch_stories()
             self.scroll_and_like()
             self.command.update_cmd('state', 'success')
 
@@ -26,6 +29,95 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
             self.command.update_cmd('state', 'fail')
             self.ig.account.add_log(traceback.format_exc())
             self.ig.account.add_cli(f"Scroll and like failed: {str(e)}")
+
+    def watch_stories(self):
+        """
+        Watches a random number of unseen stories from the story bar on the home feed.
+        First checks if any unseen stories exist. If they do, clicks the first one to open
+        the story viewer, waits a random duration on each story, then moves to the next one.
+        After watching the desired number, closes the story viewer.
+        """
+        try:
+            # Look for unseen story items in the story bar
+            unseen_selector = 'div[aria-label*="Story by"][aria-label*="not seen"][role="button"]'
+            unseen_stories = self.ig.page.locator(unseen_selector)
+
+            self.ig.pause(2000, 3000)
+
+            unseen_count = unseen_stories.count()
+
+            if unseen_count == 0:
+                self.ig.account.add_cli("No unseen stories found, skipping story watching")
+                return
+
+            # Pick how many stories to watch (5 to 8), but cap it at available count
+            target_count = min(random.randint(5, 8), unseen_count)
+            self.ig.account.add_cli(f"Found {unseen_count} unseen stories, will watch {target_count}")
+
+            # Click the first unseen story to open the story viewer
+            unseen_stories.first.click(timeout=5000)
+            self.ig.pause(2000, 3000)
+
+            for i in range(target_count):
+                # Wait a random time between 7 and 10 seconds to simulate actually viewing the story
+                watch_duration = random.randint(7000, 10000)
+                self.ig.account.add_cli(f"Watching story {i + 1}/{target_count} for {watch_duration}ms")
+                self.ig.pause(watch_duration, watch_duration + 500)
+
+                # If this is not the last story we want to watch, move to the next one
+                if i < target_count - 1:
+                    self.go_to_next_story()
+
+            # Done watching, close the story viewer
+            self.close_story_viewer()
+            self.ig.pause(1500, 2500)
+            self.ig.account.add_cli(f"Finished watching {target_count} stories")
+
+        except Exception as e:
+            self.ig.account.add_cli(f"Story watching failed: {str(e)}")
+            # Try to close the story viewer in case it is still open
+            self.close_story_viewer()
+
+    def go_to_next_story(self):
+        """
+        Moves to the next story inside the story viewer. Tries clicking the Next button first.
+        If the button is not found, falls back to pressing the ArrowRight key.
+        """
+        try:
+            next_button = self.ig.page.locator('button[aria-label="Next"]')
+            if next_button.count() > 0 and next_button.first.is_visible():
+                next_button.first.click(timeout=3000)
+                self.ig.pause(500, 1000)
+                return
+        except:
+            pass
+
+        # Fallback: use keyboard arrow right to advance
+        try:
+            self.ig.page.keyboard.press('ArrowRight')
+            self.ig.pause(500, 1000)
+        except:
+            self.ig.account.add_cli("Could not move to next story")
+
+    def close_story_viewer(self):
+        """
+        Closes the story viewer overlay. Tries the close button first,
+        then falls back to pressing Escape if the button is not available.
+        """
+        try:
+            # Instagram story viewer typically has a close button with svg or specific role
+            close_button = self.ig.page.locator('button:has(svg[aria-label="Close"])').first
+            if close_button.count() > 0 and close_button.is_visible():
+                close_button.click(timeout=3000)
+                return
+        except:
+            pass
+
+        # Fallback: press Escape to close the overlay
+        try:
+            self.ig.page.keyboard.press('Escape')
+        except:
+            self.ig.account.add_cli("Could not close story viewer")
 
     def scroll_and_like(self):
 
@@ -39,11 +131,7 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
         import random
 
         selectors = [
-            # 'div:not([aria-label*="comment"]) div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
             'div[style*="max-width"] section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
-            # 'div.x1ypdohk[data-visualcompletion="ignore-dynamic"] div.x1i10hfl.x972fbf.x10w94by[role="button"]',
-            # 'section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
-            # 'article div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',
         ]
 
         for selector in selectors:
