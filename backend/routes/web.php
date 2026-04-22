@@ -31,7 +31,6 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
-use App\Models\Order;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 use Illuminate\Support\Facades\Auth;
@@ -47,12 +46,6 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use \App\Models\Template;
-use \App\Models\Lead;
-use \App\Models\Account;
-use \App\Models\Tag;
-use \App\Models\Proxy;
-use \App\Models\Profile;
 
 Route::get('/', function () {
 
@@ -222,6 +215,8 @@ Route::post('order/get-actions', [OrderController::class, 'getActions']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
 Route::post('api/v4', [OrderController::class, 'v4']);
+Route::post('api/comment-and-reply', [OrderController::class, 'commentAndReply']);
+
 
 
 Route::post('settings', [SettingController::class, 'index']);

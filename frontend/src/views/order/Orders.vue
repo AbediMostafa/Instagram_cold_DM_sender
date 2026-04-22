@@ -89,6 +89,7 @@
             <option value="comment">Comment</option>
             <option value="view_story">View Story</option>
             <option value="save_post">Save Post</option>
+            <option value="comment_and_reply">Comment & Reply</option>
           </select>
         </div>
 

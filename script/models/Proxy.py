@@ -75,7 +75,10 @@ def _build_requests_proxy(proxy: Proxy) -> dict:
 
 
 def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
-    """Fetch the real external IP of a proxy."""
+    try:
+        timeout = int(timeout)
+    except (TypeError, ValueError):
+        timeout = 10
     proxies = _build_requests_proxy(proxy)
     endpoints = [
         'https://httpbin.org/ip',
@@ -99,7 +102,8 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
             m = re.search(r'(\d{1,3}(?:\.\d{1,3}){3})', text)
             if m:
                 return m.group(1)
-        except Exception:
+        except Exception as e:
+            print(f"Proxy check failed for {url}: {type(e).__name__}: {e}")
             continue
     return None
 

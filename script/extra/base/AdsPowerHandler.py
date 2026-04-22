@@ -16,6 +16,7 @@ class AdsPowerHandler(IBrowserHandler):
 
         creator = ProfileUpdator(self.account)
         creator.create()
+        self.proxy = creator.proxy_obj
 
     def change_proxy(self):
         self.account.add_cli('Change profile proxy ....')

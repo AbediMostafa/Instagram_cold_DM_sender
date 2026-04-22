@@ -19,12 +19,14 @@ class OrderAction(BaseWithTimeZoneModel):
         'view_story',
         'view_all_stories',
         'save_post',
+        'comment_and_reply',
     ]
 
     VALID_STATUSES = [
         'free',
         'processing',
         'sent',
+        'skipped'
     ]
 
     order = ForeignKeyField(Order, backref='order_actions')

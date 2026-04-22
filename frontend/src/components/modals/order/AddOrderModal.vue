@@ -26,6 +26,28 @@
 
         <!--begin::Modal body-->
         <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
+          <!--begin::Heading-->
+          <div class="mb-13 text-center">
+            <h1 class="mb-3">Create New Order</h1>
+          </div>
+
+          <!--begin::Tabs-->
+          <ul class="nav nav-tabs nav-line-tabs mb-8 fs-6">
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'comment' }" href="#" @click.prevent="activeTab = 'comment'">Comment</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'view_story' }" href="#" @click.prevent="activeTab = 'view_story'">View Story</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'save_post' }" href="#" @click.prevent="activeTab = 'save_post'">Save Post</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'comment_and_reply' }" href="#" @click.prevent="activeTab = 'comment_and_reply'">Comment & Reply</a>
+            </li>
+          </ul>
+          <!--end::Tabs-->
+
           <!--begin:Form-->
           <el-form
               id="add_order_modal_form"
@@ -35,82 +57,62 @@
               ref="formRef"
               class="form"
           >
-            <!--begin::Heading-->
-            <div class="mb-13 text-center">
-              <h1 class="mb-3">Create New Order</h1>
-            </div>
             <div class="d-flex flex-column mb-8 fv-row">
-              <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Customer Name</span>
+                <span>Customer Name</span>
               </label>
-              <!--end::Label-->
-
               <el-form-item prop="customer">
                 <el-input
                     v-model="targetData.customer"
-                    placeholder="Enter Account Username"
+                    placeholder="Enter Customer Name (optional)"
                     name="customer"
                 ></el-input>
               </el-form-item>
             </div>
+
             <div class="d-flex flex-column mb-8 fv-row">
-              <!--begin::Label-->
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
                 <span class="required">Target Link</span>
               </label>
-              <!--end::Label-->
-
               <el-form-item prop="link">
                 <el-input
                     v-model="targetData.link"
-                    placeholder="Enter Account Username"
+                    placeholder="Enter Target Link"
                     name="link"
                 ></el-input>
               </el-form-item>
             </div>
-            <div class="d-flex flex-column mb-8 fv-row">
-              <!--begin::Label-->
-              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Count</span>
-              </label>
-              <!--end::Label-->
 
+            <div class="d-flex flex-column mb-8 fv-row" v-if="showCount">
+              <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
+                <span :class="{ required: isCountRequired }">Count</span>
+              </label>
               <el-form-item prop="count">
                 <el-input
                     v-model="targetData.count"
-                    placeholder="Enter Account Username"
+                    placeholder="Enter Count"
                     name="count"
-                    disabled
-
+                    type="number"
                 ></el-input>
               </el-form-item>
             </div>
 
-
-            <!--end::Heading-->
-            <div
-                class="d-flex flex-column mb-6 fv-row"
-            >
-              <!--begin::Label-->
+            <div class="d-flex flex-column mb-6 fv-row" v-if="showComments">
               <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-                <span class="required">Comments</span>
+                <span class="required">{{ activeTab === 'comment_and_reply' ? 'Comment & Replies' : 'Comments' }}</span>
+                <span v-if="activeTab === 'comment_and_reply'" class="text-muted fs-8 ms-2">(1st line = comment, rest = replies)</span>
               </label>
-              <!--end::Label-->
-              <el-form-item prop="ip">
+              <el-form-item prop="comments">
                 <el-input
                     v-model="targetData.comments"
                     :rows="8"
                     type="textarea"
-                    placeholder="Enter Accounts Here"
-                    name="bunchInsert"
+                    :placeholder="activeTab === 'comment_and_reply' ? 'First line: main comment\nFollowing lines: replies' : 'Enter Comments (one per line)'"
+                    name="comments"
                 />
               </el-form-item>
-
             </div>
 
-
-            <!--begin::Input group-->
             <!--begin::Actions-->
             <div class="text-center">
               <button
@@ -122,7 +124,6 @@
                 Cancel
               </button>
 
-              <!--begin::Button-->
               <button
                   :data-kt-indicator="loading ? 'on' : null"
                   class="btn btn-lg btn-primary"
@@ -159,12 +160,9 @@
 </style>
 
 <script lang="ts">
-import {defineComponent, onMounted, ref,watch} from "vue";
+import {computed, defineComponent, ref} from "vue";
 import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
-import {useAccountStore} from "@/stores/Account";
-import {useCategoryStore} from "@/stores/Category";
-import {useTagStore} from "@/stores/Tag";
 import {useOrderStore} from "@/stores/Order";
 
 export default defineComponent({
@@ -174,6 +172,7 @@ export default defineComponent({
     const newAccountModalRef = ref<null | HTMLElement>(null);
     const loading = ref<boolean>(false);
     const store = useOrderStore();
+    const activeTab = ref('comment');
 
     const targetData = ref({
       customer: "",
@@ -182,14 +181,51 @@ export default defineComponent({
       comments: "",
     });
 
-    const rules = ref({
-      comments: [
-        {required: true, message: "Please input comments", trigger: "blur"},
-      ],
-      link: [
-        {required: true, message: "Please input link", trigger: "blur"},
-      ],
+    // comment: comments required, no count
+    // view_story: count required, no comments
+    // save_post: count required, no comments
+    // comment_and_reply: comments required, count optional
+    const showComments = computed(() => ['comment', 'comment_and_reply'].includes(activeTab.value));
+    const showCount = computed(() => ['view_story', 'save_post', 'comment_and_reply'].includes(activeTab.value));
+    const isCountRequired = computed(() => ['view_story', 'save_post'].includes(activeTab.value));
+
+    const rules = computed(() => {
+      const r: any = {
+        link: [
+          {required: true, message: "Please input link", trigger: "blur"},
+        ],
+      };
+
+      if (showComments.value) {
+        r.comments = [
+          {required: true, message: "Please input comments", trigger: "blur"},
+        ];
+      }
+
+      if (isCountRequired.value) {
+        r.count = [
+          {required: true, message: "Please input count", trigger: "blur"},
+        ];
+      }
+
+      return r;
     });
+
+    const serviceCodeMap: Record<string, number> = {
+      comment: 740,
+      view_story: 741,
+      save_post: 743,
+    };
+
+    const resetForm = () => {
+      targetData.value = {
+        customer: "",
+        link: "",
+        count: "",
+        comments: "",
+      };
+      formRef.value?.resetFields();
+    };
 
     const submit = () => {
       if (!formRef.value) {
@@ -200,30 +236,39 @@ export default defineComponent({
         if (valid) {
           loading.value = true;
 
-          ApiService.post("orders/create", targetData.value)
-              // .then(() => hideModal("add_order_modal"))
-              .then(() => store.getOrders())
+          let endpoint: string;
+          let payload: any;
+
+          if (activeTab.value === 'comment_and_reply') {
+            endpoint = 'api/comment-and-reply';
+            payload = {
+              link: targetData.value.link,
+              comments: targetData.value.comments,
+              quantity: targetData.value.count || 0,
+              customer: targetData.value.customer || null,
+            };
+          } else {
+            endpoint = 'api/v3';
+            payload = {
+              action: 'add',
+              service: serviceCodeMap[activeTab.value],
+              link: targetData.value.link,
+              quantity: targetData.value.count,
+              comments: targetData.value.comments,
+              customer: targetData.value.customer || null,
+            };
+          }
+
+          ApiService.post(endpoint, payload)
+              .then(() => {
+                resetForm();
+                hideModal('add_order_modal');
+                store.getOrders();
+              })
               .finally(() => (loading.value = false));
         }
       });
     };
-    watch(
-        () => targetData.value.comments,
-        (value) => {
-          if (!value) {
-            targetData.value.count = 0;
-            return;
-          }
-
-          // محاسبه تعداد خطوط واقعی
-          const lines = value
-              .split('\n')
-              .map(l => l.trim())
-              .filter(l => l.length > 0);
-
-          targetData.value.count = lines.length;
-        }
-    );
 
     return {
       targetData,
@@ -233,6 +278,10 @@ export default defineComponent({
       rules,
       newAccountModalRef,
       hideModal,
+      activeTab,
+      showComments,
+      showCount,
+      isCountRequired,
     };
   },
 });
