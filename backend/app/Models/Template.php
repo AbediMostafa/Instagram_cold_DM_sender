@@ -14,6 +14,10 @@ class Template extends Model
     protected $guarded = [];
     const UPDATED_AT = null;
 
+    protected $casts = [
+        'is_custom' => 'boolean',
+    ];
+
     public static array $types = [
         'name',
         'username',
@@ -32,7 +36,20 @@ class Template extends Model
 
     public function accounts()
     {
-        return $this->belongsToMany(Account::class);
+        return $this->belongsToMany(Account::class)
+            ->using(AccountTemplate::class)
+            ->withPivot([
+                'status',
+                'url',
+                'like_count',
+                'comment_count',
+                'view_count',
+                'save_count',
+                'repost_count',
+                'stats',
+                'posted_at',
+                'updated_at',
+            ]);
     }
 
     public function leads()

@@ -20,6 +20,24 @@ return new class extends Migration {
             $table->foreignId('template_id')
                 ->constrained()
                 ->cascadeOnDelete();
+
+            $table->enum('status', ['pending', 'processing', 'completed'])
+                ->default('pending');
+
+            $table->string('url')->nullable();
+
+            $table->unsignedBigInteger('like_count')->default(0);
+            $table->unsignedBigInteger('comment_count')->default(0);
+            $table->unsignedBigInteger('view_count')->default(0);
+            $table->unsignedBigInteger('save_count')->default(0);
+            $table->unsignedBigInteger('repost_count')->default(0);
+
+            $table->jsonb('stats')->nullable();
+
+            $table->timestamp('posted_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
+
+            $table->index('status', 'idx_account_template_status');
         });
     }
 

@@ -82,7 +82,20 @@ class Account extends Model
 
     public function templates()
     {
-        return $this->belongsToMany(Template::class);
+        return $this->belongsToMany(Template::class)
+            ->using(AccountTemplate::class)
+            ->withPivot([
+                'status',
+                'url',
+                'like_count',
+                'comment_count',
+                'view_count',
+                'save_count',
+                'repost_count',
+                'stats',
+                'posted_at',
+                'updated_at',
+            ]);
     }
 
     public function proxy()

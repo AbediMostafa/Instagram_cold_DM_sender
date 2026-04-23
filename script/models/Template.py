@@ -39,6 +39,7 @@ class Template(BaseWithTimeZoneModel):
     sub_type = CharField()
     carousel_id = CharField(null=True)
     is_used = SmallIntegerField(default=0)
+    is_custom = BooleanField(default=False)
     uid = CharField(null=True)
     color = ForeignKeyField(Color, backref='templates', null=True)
     category = ForeignKeyField(Category, backref='templates', null=True)

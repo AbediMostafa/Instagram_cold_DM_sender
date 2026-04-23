@@ -34,6 +34,7 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->unsignedTinyInteger('is_used')->default(0);
+            $table->boolean('is_custom')->default(false);
             $table->enum('type', Template::$types);
             $table->enum('sub_type', Template::$subTypes)->nullable();
             $table->timestamp('created_at')->nullable();
