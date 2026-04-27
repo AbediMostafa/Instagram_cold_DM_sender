@@ -19,7 +19,10 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
             self.command = self.ig.account.create_command('scroll and like', 'processing')
             self.ig.account.add_cli("Starting scroll and like ...")
             self.turn_on_notif()
-            self.watch_stories()
+
+            if random.random() < 0.3:
+                self.watch_stories()
+
             self.scroll_and_like()
             self.command.update_cmd('state', 'success')
 
@@ -121,14 +124,19 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
 
     def scroll_and_like(self):
 
-        for i in range(random.randint(2, 4)):
-            self.ig.page.mouse.wheel(0, random.randint(450, 650))
+        for i in range(random.randint(4, 12)):
+            self.ig.page.mouse.wheel(0, random.randint(650, 700))
             self.ig.pause(2000, 4000)
-            self.try_like()
+
+            if random.random() < 0.2:
+                self.ig.page.reload()
+                self.ig.pause(3000, 4000)
+                self.turn_on_notif()
+
+            if random.random() < 0.3:
+                self.try_like()
 
     def try_like(self):
-
-        import random
 
         selectors = [
             'div[style*="max-width"] section div[role="button"]:has(svg[aria-label="Like"]) >> nth=0',

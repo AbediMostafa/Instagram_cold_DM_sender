@@ -9,13 +9,15 @@ from .BrowserSendDmEvent import BrowserSendDmEvent
 
 class SendDmContext(InstagramMiddleware):
     ig = None
-    strategies = [IsProperServer, HitTheMaxAllowedDm, AccountIsOldEnough]
+    strategies = []
+    # strategies = [IsProperServer, HitTheMaxAllowedDm, AccountIsOldEnough]
 
     def execute(self):
+        BrowserSendDmEvent(self.ig).init()
+
         try:
             self.cant_perform()
 
-            BrowserSendDmEvent(self.ig).init()
 
         except CantPerformAction as e:
             return True

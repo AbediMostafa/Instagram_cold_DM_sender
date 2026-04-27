@@ -51,7 +51,7 @@ class ProfileUpdator:
 
         storage_state = get_storage_state(self.account)
         if not storage_state or "cookies" not in storage_state:
-            return []
+            return None
 
         cookies = storage_state["cookies"]
         return json.dumps(cookies)
@@ -76,24 +76,28 @@ class ProfileUpdator:
 
     def create(self):
         self.account.add_cli('Creating account ....')
-        # try:
-        sleep(3)
+        try:
+            sleep(3)
 
-        self.payload["group_id"] = self.folder_id
-        self.payload["user_proxy_config"] = self.get_proxy()
-        self.payload["cookie"] = self.assign_cookies()
-        self.payload["name"] = self.assign_profile_name()
+            cookies = self.assign_cookies()
 
-        self.send_request() \
-            .create_profile_record() \
-            .update_account()
+            if cookies:
+                self.payload["cookie"] = self.assign_cookies()
 
-        # except ProxyStuck:
-        #     raise
-        #
-        # except Exception as e:
-        #     self.account.add_cli(f"Error: {e} | {self.response_message}")
-        #     raise Exception(f"{str(e)} | {self.response_message}")
+            self.payload["group_id"] = self.folder_id
+            self.payload["user_proxy_config"] = self.get_proxy()
+            self.payload["name"] = self.assign_profile_name()
+
+            self.send_request() \
+                .create_profile_record() \
+                .update_account()
+
+        except ProxyStuck:
+            raise
+
+        except Exception as e:
+            self.account.add_cli(f"Error: {e} | {self.response_message}")
+            raise Exception(f"{str(e)} | {self.response_message}")
 
     def assign_screen_resolution(self):
         import random

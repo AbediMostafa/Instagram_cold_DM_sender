@@ -589,6 +589,8 @@ class BrowserLoginEvent:
                 self.ig.pause(3000, 4000)
                 return
             except:
+                self.ig.page.get_by_role('button', name=re.compile(r'Follow', re.IGNORECASE)).click(timeout=3000)
+
                 self.ig.account.add_cli('Next button not found, trying search and follow...')
 
             # Fallback: search and follow
@@ -625,7 +627,7 @@ class BrowserLoginEvent:
     def follow_suggested(self):
 
         if self.ig.is_visible_by_text('Suggested for you'):
-            random_follow_number = random.randint(1, 3)
+            random_follow_number = random.randint(1, 2)
             follow_buttons = self.ig.page.query_selector_all('button:has-text("Follow")')
 
             selected_follow_button = random.sample(follow_buttons, random_follow_number)

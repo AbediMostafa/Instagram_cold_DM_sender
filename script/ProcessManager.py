@@ -20,7 +20,7 @@ class ProcessManager:
     process = None
     remote_process = None
     initial_data = None
-    sleep_time = 31
+    sleep_time = 20
     workflow = None
     service = None
     modules = None
