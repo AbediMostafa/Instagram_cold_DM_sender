@@ -73,9 +73,9 @@ try:
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
-finally:
-    if browser_ig:
-        browser_ig.cleanup()
+# finally:
+#     if browser_ig:
+#         browser_ig.cleanup()
 
 # CheckForAccountActionsHook(account)
 #

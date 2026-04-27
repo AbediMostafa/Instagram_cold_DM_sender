@@ -255,31 +255,6 @@
                   <span v-else>Start Profile</span>
 
                 </a>
-
-                <!-- Upload-Post: single button that switches between Connect / Disconnect -->
-                <a
-                    v-if="account.upload_post_status === 'pending' || account.upload_post_status === 'connecting'"
-                    class="btn btn-light-info btn-sm fs-8 px-3 py-2 ms-2" disabled>
-                  <span class="spinner-border spinner-border-sm align-middle me-1"></span>
-                  Connecting...
-                </a>
-                <a
-                    v-else-if="account.upload_post_status === 'connected'"
-                    @click="store.toggleUploadPost(account.id)"
-                    class="btn btn-light-danger btn-sm fs-8 px-3 py-2 ms-2">
-                  Disconnect
-                </a>
-                <a
-                    v-else
-                    @click="store.toggleUploadPost(account.id)"
-                    class="btn btn-light-primary btn-sm fs-8 px-3 py-2 ms-2">
-                  Connect
-                </a>
-                <upload-post-status-badge class="ms-2" :status="account.upload_post_status"/>
-                <span
-                    v-if="account.upload_post_username"
-                    class="text-muted fw-semibold fs-8 ms-1"
-                >#{{ account.upload_post_username }}</span>
               </td>
 
               <!-- Service + Country column -->
@@ -362,7 +337,6 @@ import AccountInstagramState from "@/components/account/AccountInstagramState.vu
 import AccountAppState from "@/components/account/AccountAppState.vue";
 import AccountsDropDown from "@/components/account/AccountsDropDown.vue";
 import AccountDropDown from "@/components/account/AccountDropDown.vue";
-import UploadPostStatusBadge from "@/components/account/UploadPostStatusBadge.vue";
 import {useAccountStore} from "@/stores/Account";
 import EditAccountModal from "@/components/modals/account/EditAccountModal.vue";
 import AccountUpdatePhoneModal from "@/components/modals/account/AccountUpdatePhoneModal.vue";

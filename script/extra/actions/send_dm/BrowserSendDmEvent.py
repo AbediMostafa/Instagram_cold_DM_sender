@@ -65,7 +65,8 @@ class BrowserSendDmEvent:
             url_id = GetThreadUrlAction(self.ig).start()
             self.ig.account.add_direct_url_id(self.lead.dm_text, self.lead, url_id)
 
-            self.lead.change_state(self.ig.account, 'dm follow up', add_history=True, update_date=True)
+            print(f'Changing the state of the lead : {self.lead.id}')
+            self.lead.change_state(None, 'dm follow up', add_history=True, update_date=True)
             self.command.update_cmd('state', 'success')
 
         except Exception as e:
@@ -99,7 +100,10 @@ class BrowserSendDmEvent:
         except:
             pass
         # Fill the text box with DM text
-        self.ig.page.get_by_label("Message", exact=True).fill(self.lead.dm_text)
+        try:
+            self.ig.page.locator('[contenteditable="true"]').fill(self.lead.dm_text, timeout=4000)
+        except Exception as e:
+            self.ig.page.get_by_label("Message", exact=True).fill(self.lead.dm_text, timeout=4000)
         self.ig.pause(2000, 3500)
 
 

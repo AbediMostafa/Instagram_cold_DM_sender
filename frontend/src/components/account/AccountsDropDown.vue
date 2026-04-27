@@ -28,25 +28,6 @@
             class="btn btn-sm btn-success me-2"
             @click="showModal('create_account_modal')"
         >Add Account</a>
-
-        <a
-            class="btn btn-sm btn-primary"
-            @click="store.getAccounts(store.accounts.current_page)"
-        >Refresh</a>
-      </div>
-    </div>
-    <div class="menu-item ">
-      <div class="px-3 fill-flex d-flex align-items-center">
-        <a
-            class="btn btn-light-success btn-sm px-4"
-            @click="store.startProfile(store.checkedAccountRows)">Start Profile</a>
-      </div>
-    </div>
-    <div class="menu-item ">
-      <div class="px-3 fill-flex d-flex align-items-center">
-        <a
-            class="btn btn-light-success btn-sm px-4"
-            @click="showModal('account_update_phone')">Update Phone</a>
       </div>
     </div>
     <div class="menu-item ">
@@ -59,25 +40,6 @@
 
     <!-- Upload-Post bulk actions -->
     <div class="separator my-3 opacity-75"></div>
-    <div class="menu-item px-3">
-      <div class="menu-content fs-6 text-gray-900 fw-bold px-3 pb-2">
-        Upload-Post
-      </div>
-    </div>
-    <div class="menu-item ">
-      <div class="px-3 fill-flex d-flex align-items-center">
-        <a
-            class="btn btn-light-success btn-sm px-4 me-2"
-            @click="store.connectUploadPost(store.checkedAccountRows)">Connect Upload-Post</a>
-        <a
-            class="btn btn-light-danger btn-sm px-4 me-2"
-            @click="store.disconnectUploadPost(store.checkedAccountRows)">Disconnect Upload-Post</a>
-        <a
-            class="btn btn-light-warning btn-sm px-4"
-            @click="store.resetUploadPostStatus(store.checkedAccountRows)">Reset Status</a>
-      </div>
-    </div>
-
     <div class="menu-item">
       <div class="menu-content fs-6 text-gray-900 fw-bold px-3 pt-4">
         Filter
@@ -133,24 +95,6 @@
           <a class="btn btn-sm btn-light-success ms-2" @click="store.attachService()">Attach Service</a>
         </div>
 
-      </div>
-
-      <!-- Upload-Post status filter -->
-      <div class="menu-content px-3 mt-3">
-        <span class="text-muted fw-semibold fs-8 d-block mb-2">Upload-Post Status</span>
-        <el-checkbox-group
-            v-model="store.accounts.uploadPostFilter"
-            size="small"
-            @change="actionClicked"
-        >
-          <el-checkbox-button
-              v-for="state in store.uploadPostStates"
-              :key="state.value"
-              :label="state.value"
-          >
-            {{ state.label }}
-          </el-checkbox-button>
-        </el-checkbox-group>
       </div>
 
       <!-- Country: pick one to assign to selected accounts -->

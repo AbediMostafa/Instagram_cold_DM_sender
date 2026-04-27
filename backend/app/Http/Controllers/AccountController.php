@@ -27,7 +27,7 @@ class AccountController extends Controller
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id', 'service_id',
                 'country_id', 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name',
-                'upload_post_status', 'upload_post_username', 'app_state')
+                'app_state')
             ->with([
                 'templates' => fn($query) => $query->where('type', 'avatar')->first(),
                 'service:id,title',
