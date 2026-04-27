@@ -46,11 +46,39 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use \App\Models\Account;
 
 Route::get('/', function () {
 
+
 });
 Route::get('/test', function () {
+
+    $account =  Account::query()->find(9205);
+    $account->web_session = null;
+    $account->save();
+
+    dd('shodddd');
+
+
+//    $account = Account::query()->find(4333);
+//
+//    $account->web_session = null;
+//    $account->save();
+
+    dd('shod');
+//    $accounts = Account::query()->whereHas('tags', function ($tag){
+//        $tag->where('title', '02/04');
+//    })->get()
+//    ->each(function (Account $account){
+//        $account->makeActive();
+//    });
+
+//    dd($accounts);
+//    $leads = \App\Models\Lead::query()->whereNotNull('instagram_id')
+//        ->whereNull('account_id')->count();
+//
+//    dd($leads);
     dd(
         \App\Models\Ip::query()->get()->pluck('ip')->toArray()
     );
@@ -216,7 +244,6 @@ Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
 Route::post('api/v4', [OrderController::class, 'v4']);
 Route::post('api/comment-and-reply', [OrderController::class, 'commentAndReply']);
-
 
 
 Route::post('settings', [SettingController::class, 'index']);
