@@ -15,6 +15,11 @@ return new class extends Migration {
             $table->id();
             $table->bigInteger('instagram_id')->nullable();
             $table->string('username')->unique();
+
+            $table->string('name')->unique();
+            $table->text('bio')->unique();
+            $table->unsignedTinyInteger('is_old')->default(0);
+
             $table->integer('times')->nullable()->default(0);
             $table->enum('last_state', Lead::$states)->default('free');
 

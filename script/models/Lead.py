@@ -12,6 +12,9 @@ from script.extra.helper import tehran_now
 
 class Lead(BaseWithTimeZoneModel):
     username = CharField()
+    name = CharField()
+    bio = TextField()
+    is_old = SmallIntegerField(default=0)
     instagram_id = BigIntegerField(null=True)
     times = IntegerField(default=0)
     last_state = CharField(default='free')
