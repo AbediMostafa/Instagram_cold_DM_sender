@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('title');
             $table->string('folder')->nullable();
             $table->string('profile_id');
+            $table->string('profile_number');
             $table->unsignedTinyInteger('is_used')->default(0);
 
             $table->foreignId('proxy_id')

@@ -16,7 +16,7 @@ class BrowserChangeAvatarEvent(InstagramMiddleware):
 
     def execute(self):
 
-        if self.ig.account.get_passed_days_since_creation() < 2:
+        if self.ig.account.get_passed_days_since_creation() < 4:
             return self.ig.account.add_cli(f"Account is not old enough to change avatar")
 
         if self.ig.account.avatar_changed:

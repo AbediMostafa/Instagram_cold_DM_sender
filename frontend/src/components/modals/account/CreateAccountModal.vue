@@ -141,6 +141,13 @@
               </div>
               <div class="d-flex flex-column mb-8 fv-row">
                 <el-switch
+                    v-model="targetData.has_static_profile"
+                    active-text="Has static profile"
+                />
+
+              </div>
+              <div class="d-flex flex-column mb-8 fv-row">
+                <el-switch
                     v-model="targetData.start_profile"
                     active-text="Start Profile"
                 />
@@ -356,6 +363,7 @@ export default defineComponent({
       accounts: "",
       category: "",
       username_changed: 0,
+      has_static_profile: 0,
       start_profile: 0,
       bulk_insertion: false,
       tags: [],

@@ -31,6 +31,7 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
+use App\Models\Template;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 use Illuminate\Support\Facades\Auth;
@@ -47,38 +48,106 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use \App\Models\Account;
+use \App\Models\Proxy;
+use \App\Models\Profile;
 
 Route::get('/', function () {
-
 
 });
 Route::get('/test', function () {
 
-    $account =  Account::query()->find(9205);
-    $account->web_session = null;
-    $account->save();
+//    name
+//    bio
+//    profile_picture_url
+//    is_old
 
-    dd('shodddd');
+
+    $leads= \App\Models\Lead::query()->whereNotNull('instagram_id')->whereNotNull('account_id')->count();
+
+    dd($leads);
+
+    $prfiles = Profile::query()->withCount('accounts')
+        ->orderBy('id')
+        ->get()
+        ->pluck('accounts_count', 'id');
+    dd($prfiles);
+
+    function makeProfile()
+    {
+        $profileName = \Illuminate\Support\Str::uuid();
+        $folderId = "8972883";
+        $payload = [
+            "name" => $profileName,
+            "group_id" => $folderId,
+            "user_proxy_config" => [
+                "proxy_soft" => "other",
+                "proxy_type" => "socks5",
+                "proxy_host" => "45.63.17.144",
+                "proxy_port" => 22115,
+                "proxy_user" => "AZ7564142044",
+                "proxy_password" => "OlVB7GTaqoD7",
+            ],
+            "fingerprint_config" => [
+                "language_switch" => 0,
+                "language" => ["en-US", "en"],
+                "screen_resolution" => "random",
+                "random_ua" => [
+                    "ua_system_version" => ["Windows 10"]
+                ]
+            ]
+        ];
 
 
-//    $account = Account::query()->find(4333);
-//
-//    $account->web_session = null;
-//    $account->save();
+        $url = "http://local.adspower.net:50325/api/v2/browser-profile/create";
+
+        $res = Http::withoutVerifying()->post($url, $payload);
+        $json = $res->json();
+
+        dump($json);
+
+        $profileId = $json['data']["profile_id"];
+        $profileNumber = $json['data']["profile_no"];
+
+        $profile = Profile::query()->create([
+            'title' => $profileName,
+            'folder' => $folderId,
+            'profile_id' => $profileId,
+            'profile_number' => $profileNumber,
+        ]);
+
+        dump($profile->id);
+        return $profile;
+
+    }
+
+    $accounts = Account::query()
+        ->orderBy('id', 'DESC')
+        ->whereHas('tags', function ($tag) {
+            $tag->where('title', 'static_profile');
+        })->get()->pluck('id')->toArray();
+
+    $counter = 0;
+    $profile = makeProfile();
+    foreach ($accounts as $account) {
+        $counter++;
+
+        $accObj = Account::query()
+            ->find($account);
+        $accObj->profile_id = $profile->id;
+        $accObj->save();
+
+        if ($counter == 10) {
+            $profile = makeProfile();
+            dump('------------------------------------------------------------------------');
+            $counter = 0;
+        }
+    }
 
     dd('shod');
-//    $accounts = Account::query()->whereHas('tags', function ($tag){
-//        $tag->where('title', '02/04');
-//    })->get()
-//    ->each(function (Account $account){
-//        $account->makeActive();
-//    });
 
-//    dd($accounts);
-//    $leads = \App\Models\Lead::query()->whereNotNull('instagram_id')
-//        ->whereNull('account_id')->count();
-//
-//    dd($leads);
+    dd($accounts);
+
+
     dd(
         \App\Models\Ip::query()->get()->pluck('ip')->toArray()
     );

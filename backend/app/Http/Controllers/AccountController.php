@@ -29,7 +29,6 @@ class AccountController extends Controller
                 'country_id', 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name',
                 'app_state')
             ->with([
-                'templates' => fn($query) => $query->where('type', 'avatar')->first(),
                 'service:id,title',
                 'country:id,name,country_code',
                 'tags:id,title',

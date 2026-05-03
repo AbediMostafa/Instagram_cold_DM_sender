@@ -42,7 +42,7 @@ class ErrorIndicators(BaseAction):
                 self.ig.pause(1000, 2000)
                 self.ig.account.add_cli('We suspect automated behavior on your account')
                 self.ig.page.get_by_role("button", name='Dismiss').click(timeout=5000)
-                self.ig.pause(5000, 6000)
+                self.ig.pause(6000, 7000)
 
             except Exception as e:
                 raise Exception(f'Problem clicking on Dismiss:{str(e)}')
@@ -69,6 +69,7 @@ class ErrorIndicators(BaseAction):
         messages = [
             'Choose if we process your data',
             'you can choose whether you consent to us processing',
+            'Make a choice about your ads',
         ]
 
         if self.ig.is_visible_by_texts(messages):
@@ -85,8 +86,10 @@ class ErrorIndicators(BaseAction):
             self.ig.pause(5000, 6000)
 
             try:
-                # self.ig.page.locator("role=radio[name='Use free of charge with ads']").click(timeout=5000)
-                self.ig.page.get_by_text(re.compile("use free of charge with ads", re.IGNORECASE)).click(timeout=5000)
+                try:
+                    self.ig.page.get_by_text(re.compile("use free of charge with ads", re.IGNORECASE)).click(timeout=5000)
+                except:
+                    self.ig.page.get_by_text(re.compile("Use for free with ads", re.IGNORECASE)).click(timeout=5000)
 
             except Exception as e:
                 self.ig.account.add_cli("Problem clicking on radio[name='Use free of charge with ads']")

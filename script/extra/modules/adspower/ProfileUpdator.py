@@ -14,6 +14,8 @@ from script.models.Profile import Profile
 from script.extra.exceptions import ProxyStuck
 
 TIME_TO_SLEEP = 400
+MAX_RETRIES = 5
+RETRY_DELAY = 2
 
 
 class ProfileUpdator:
@@ -82,7 +84,7 @@ class ProfileUpdator:
             cookies = self.assign_cookies()
 
             if cookies:
-                self.payload["cookie"] = self.assign_cookies()
+                self.payload["cookie"] = cookies
 
             self.payload["group_id"] = self.folder_id
             self.payload["user_proxy_config"] = self.get_proxy()
@@ -122,21 +124,31 @@ class ProfileUpdator:
 
         try:
             self.payload = {
-                'profile_id': self.profile.profile_id,
+                'profile_id': self.account.profile.profile_id,
                 "user_proxy_config": self.get_proxy(),
-                'cookie': self.assign_cookies(),
-                "fingerprint_config": {
-                    "language_switch": 0,
-                    "language": ["en-US", "en"],
-                    "random_ua": {
-                        "ua_system_version": ["Windows 10"]
-                    }
-                }
             }
 
-            self.assign_screen_resolution()
+            cookies = self.assign_cookies()
 
-            self.send_request().update_account()
+            if cookies:
+                self.payload["cookie"] = cookies
+
+            self.update_request()
+
+        except Exception as e:
+            self.account.add_cli(f"Error: {e} | {self.response_message}")
+            raise Exception(f"{str(e)} | {self.response_message}")
+
+    def clean_up(self):
+        self.account.add_cli(f'Profile number :  {self.account.profile.profile_number}')
+
+        try:
+            self.payload = {
+                'profile_id': self.account.profile.profile_id,
+                "cookie": [],
+            }
+
+            self.update_request()
 
         except Exception as e:
             self.account.add_cli(f"Error: {e} | {self.response_message}")
@@ -144,10 +156,8 @@ class ProfileUpdator:
 
     def send_request(self):
         url = "http://local.adspower.net:50325/api/v2/browser-profile/create"
-        max_retries = 5
-        retry_delay = 2
 
-        for attempt in range(1, max_retries):
+        for attempt in range(1, MAX_RETRIES):
             self.response = requests.post(url, json=self.payload, verify=False)
 
             try:
@@ -161,8 +171,8 @@ class ProfileUpdator:
             self.response_data = json_response.get("data", {})
 
             if json_response.get("code") == -1 and "Too many request" in self.response_message:
-                if attempt < max_retries:
-                    sleep(retry_delay)
+                if attempt < MAX_RETRIES:
+                    sleep(RETRY_DELAY)
                     continue
                 else:
                     raise Exception("Maximum retry attempts reached: Too many requests per second")
@@ -175,16 +185,25 @@ class ProfileUpdator:
         url = "http://local.adspower.net:50325/api/v2/browser-profile/update"
         self.response = requests.post(url, json=self.payload, verify=False)
 
-        try:
-            json_response = self.response.json()
-            self.account.add_cli("Create response")
-            self.account.add_cli(json_response)
+        for attempt in range(1, MAX_RETRIES):
+            try:
+                json_response = self.response.json()
+                self.account.add_cli(json_response)
 
-        except Exception:
-            raise Exception(f"Invalid response: {self.response.text}")
+            except Exception:
+                raise Exception(f"Invalid response: {self.response.text}")
 
-        self.response_message = json_response.get("msg", "")
-        self.response_data = json_response.get("data", {})
+            self.response_message = json_response.get("msg", "")
+            self.response_data = json_response.get("data", {})
+
+            if json_response.get("code") == -1 and "Too many request" in self.response_message:
+                if attempt < MAX_RETRIES:
+                    sleep(RETRY_DELAY)
+                    continue
+                else:
+                    raise Exception("Maximum retry attempts reached: Too many requests per second")
+            else:
+                break
 
         return self
 

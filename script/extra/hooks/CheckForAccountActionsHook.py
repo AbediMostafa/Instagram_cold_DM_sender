@@ -8,8 +8,6 @@ class CheckForAccountActionsHook:
     def init_possibilities(self):
         self.account.get_passed_days_since_creation()
         # self.account.calculate_today_dms()
-        # self.account.get_number_of_dm_follow_ups()
-        # self.account.get_number_of_loom_follow_ups()
         # self.account.get_custom_message_commands()
 
         self.account.add_cli('------------------------------------------', print_only=True)

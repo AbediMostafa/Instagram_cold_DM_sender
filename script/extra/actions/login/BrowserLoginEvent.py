@@ -16,6 +16,7 @@ We removed your photo => Whenever see this message, should set 'avatar_changed' 
 But we're checking if this happens in avatar changes and not in post uploads
 '''
 
+
 class BrowserLoginEvent:
     command = None
     errors = None
@@ -37,6 +38,7 @@ class BrowserLoginEvent:
         'Use another profile',
         'Choose if we process your data',
         'you can choose whether you consent to us processing',
+        'Make a choice about your ads',
         'Changes to How We Manage Data',
         'Review and Agree',
         'Continue as',
@@ -248,6 +250,7 @@ class BrowserLoginEvent:
                         f'logged in messages is visible trying to pass for {self.logged_in_counter} time ...')
 
                     self.ig.account.add_cli(f"max_login_retry = {max_login_retry}")
+                    self.ig.account.add_cli(f"Login counter = {self.logged_in_counter}")
 
                     self.we_need_you_to_agree_to_the_following_items()
                     self.the_messaging_tab_has_a_new_look()
@@ -437,8 +440,23 @@ class BrowserLoginEvent:
                 self.ig.page.get_by_role('button', name='Continue').click(timeout=5000)
 
             self.two_fa_clicked = True
-            self.ig.account.add_cli('2FA confirm clicked')
-            self.ig.pause(8000, 10000)
+            self.ig.pause(3000, 4000)
+
+            self.ig.account.add_cli('Waiting for the page to load completely ..... ')
+            self.ig.page.wait_for_load_state("domcontentloaded", timeout=10000)
+            self.ig.account.add_cli('Page loaded completely ..... ')
+            #
+            # two_factor_counter = 0
+            # while self.ig.is_visible_by_texts(messages):
+            #     two_factor_counter += 1
+            #     self.ig.account.add_cli(
+            #         f'2FA confirm clicked but we are still in the same page for the {two_factor_counter} times...')
+            #     self.ig.pause(1500, 2000)
+            #
+            #     if two_factor_counter > 10:
+            #         self.ig.account.add_cli('Maximum two factor wait reached ...')
+
+            self.ig.pause(6000, 8000)
 
     def fill_username_password(self):
 
@@ -590,7 +608,6 @@ class BrowserLoginEvent:
                 return
             except:
                 self.ig.page.get_by_role('button', name=re.compile(r'Follow', re.IGNORECASE)).click(timeout=3000)
-
                 self.ig.account.add_cli('Next button not found, trying search and follow...')
 
             # Fallback: search and follow
@@ -603,12 +620,20 @@ class BrowserLoginEvent:
                 self.ig.pause(2000, 3000)
 
                 # Click checkbox to select the account
-                self.ig.page.locator('input[type="checkbox"][aria-label="Checkmark outline icon"]').first.click(timeout=5000)
+                self.ig.page.locator('input[type="checkbox"][aria-label="Checkmark outline icon"]').first.click(
+                    timeout=5000)
                 self.ig.account.add_cli(f'Selected {target} checkbox')
                 self.ig.pause(1500, 2500)
 
                 # Now Follow button should be enabled, click it
-                self.ig.page.get_by_role('button', name=re.compile(r'^Follow$', re.IGNORECASE)).click(timeout=5000)
+                try:
+                    self.ig.page.get_by_role('button', name=re.compile(r'next', re.IGNORECASE)).click(timeout=3000)
+                    self.ig.pause(3000, 4000)
+                    return
+                except:
+                    self.ig.page.get_by_role('button', name=re.compile(r'Follow', re.IGNORECASE)).click(timeout=3000)
+                    self.ig.account.add_cli('Next button not found, trying search and follow...')
+
                 self.ig.account.add_cli(f'Followed {target} from find friends page')
                 self.ig.pause(3000, 4000)
 
@@ -625,6 +650,7 @@ class BrowserLoginEvent:
         self.ig.account.save_session(storage_state_json)
 
     def follow_suggested(self):
+        return True
 
         if self.ig.is_visible_by_text('Suggested for you'):
             random_follow_number = random.randint(1, 2)

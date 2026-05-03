@@ -184,6 +184,7 @@ class Account extends Model
                 'email' => array_key_exists(3, $account) ? $account[3] : null,
                 'email_password' => array_key_exists(4, $account) ? $account[4] : null,
                 'username_changed' => r('username_changed'),
+                'has_static_profile' => r('has_static_profile'),
                 'created_at' => Carbon::now(),
                 'category_id' => r('category'),
                 'service_id' => r('service_id'),

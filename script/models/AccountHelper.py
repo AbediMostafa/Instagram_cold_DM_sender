@@ -73,11 +73,9 @@ def _try_claim_account(tag_titles=None, specific_ids=None, service_id=None):
     from .Tag import Tag
     from .Taggable import Taggable
 
-    random_offset = random.randint(0, 10)
-
     query = (
         Account
-        .select(Account.id)
+        .select()
         .where(
             (Account.is_used == 0) &
             (Account.instagram_state == 'active')
@@ -97,37 +95,25 @@ def _try_claim_account(tag_titles=None, specific_ids=None, service_id=None):
         query = (
             query
             .join(Taggable, on=(
-                (Taggable.taggable_id == Account.id) &
-                (Taggable.taggable_type == account_class)
+                    (Taggable.taggable_id == Account.id) &
+                    (Taggable.taggable_type == account_class)
             ))
             .where(Taggable.tag.in_(tags_to_include))
         )
 
-    candidates = list(
-        query
-        .order_by(Account.id)
-        .offset(random_offset)
-        .limit(5)
-    )
-
-    if not candidates:
+    if not query:
+        print('No account available')
         return None
 
-    for candidate in candidates:
-        updated = (
-            Account
-            .update(is_used=True)
-            .where(
-                (Account.id == candidate.id) &
-                (Account.is_used == 0)
-            )
-            .execute()
-        )
+    next_account = (query
+                    .order_by(Account.id)
+                    .first())
 
-        if updated > 0:
-            return Account.get_by_id(candidate.id)
+    if next_account:
+        next_account.is_used = True
+        next_account.save()
 
-    return None
+    return next_account
 
 
 def _try_reset_accounts(service_id=None):

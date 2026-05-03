@@ -27,16 +27,20 @@ class AdsPowerHandler(IBrowserHandler):
     def update_profile(self):
         self.account.add_cli('Updating Profile ....')
 
-        # Get next free profile to update
-        profile = get_next()
-
-        updator = ProfileUpdator(self.account, profile)
+        updator = ProfileUpdator(self.account)
         updator.update()
 
         # Store proxy reference for later use in API requests
         self.proxy = updator.proxy_obj
         if self.proxy:
             self.account.add_cli(f'[PROXY] Stored proxy: {self.proxy.get_proxy_identifier()}')
+
+    def clean_up_adspower_profile(self):
+        self.account.add_cli('Clean up profile ....')
+
+        updator = ProfileUpdator(self.account)
+        updator.clean_up()
+
 
     def delete_profile(self):
         if self.account.profile is None:

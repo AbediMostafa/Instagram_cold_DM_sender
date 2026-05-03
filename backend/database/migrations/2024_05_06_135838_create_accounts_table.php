@@ -64,6 +64,7 @@ return new class extends Migration {
             $table->unsignedTinyInteger('initial_posts_deleted')->default(0);
             $table->unsignedTinyInteger('has_enough_posts')->default(0);
             $table->unsignedTinyInteger('screenshot_taken')->default(0);
+            $table->unsignedTinyInteger('has_static_profile')->default(0);
             $table->unsignedTinyInteger('is_public')->default(0);
             $table->unsignedTinyInteger('is_active')->default(1);
             $table->text('web_session')->nullable();

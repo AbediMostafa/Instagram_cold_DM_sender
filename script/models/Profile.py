@@ -7,6 +7,7 @@ import random
 class Profile(BaseWithTimeZoneModel):
     title = CharField()
     profile_id = CharField()
+    profile_number = CharField()
     folder = CharField()
     is_used = SmallIntegerField(default=0)
     proxy = ForeignKeyField(Proxy, backref='profiles', null=True)

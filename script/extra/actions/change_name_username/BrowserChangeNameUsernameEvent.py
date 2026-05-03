@@ -18,8 +18,8 @@ class BrowserChangeNameUsernameEvent(BaseAction):
         if self.ig.account.username_changed:
             return self.ig.account.add_cli(f"Account's username has been changed already.")
 
-        # if self.ig.account.get_passed_days_since_creation() < 4:
-        #     return self.ig.account.add_cli(f"Account is not old enough to change name username")
+        if self.ig.account.get_passed_days_since_creation() < 3:
+            return self.ig.account.add_cli(f"Account is not old enough to change name username")
 
         self.ig.account.add_cli('Changing name and username ...')
 

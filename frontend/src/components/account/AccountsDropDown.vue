@@ -35,6 +35,9 @@
         <a
             class="btn btn-light-danger btn-sm px-4"
             @click="store.deleteSelected(store.checkedAccountRows)"> Delete Selected </a>
+        <a
+            class="btn btn-light-success btn-sm px-4 ms-1"
+            @click="store.makeActive(store.checkedAccountRows)"> Activate Selected </a>
       </div>
     </div>
 

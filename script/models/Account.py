@@ -46,6 +46,7 @@ class Account(BaseWithTimeZoneModel):
     is_active = SmallIntegerField(default=1)
     is_public = SmallIntegerField(default=0)
     screenshot_taken = SmallIntegerField(default=0)
+    has_static_profile = SmallIntegerField(default=0)
     is_verify = SmallIntegerField(default=0)
     two_factor_activated = SmallIntegerField(default=0)
     web_session = TextField(null=True)
@@ -418,54 +419,6 @@ class Account(BaseWithTimeZoneModel):
 
         return image_template, video_template,
 
-    def get_latest_post_commands(self, limit=3):
-        """Fetch the most recent successful post commands (image, video, carousel)."""
-        from .Command import Command
-
-        return (Command
-                .select()
-                .where(
-            (Command.account == self) &
-            (Command.type.in_(['post image', 'post video', 'post carousel'])) &
-            (Command.state == 'success')  # Ensure we're looking at successful commands
-        )
-                .order_by(Command.created_at.desc())
-                .limit(limit)
-                )
-
-    def sent_recent_post_command_within(self, hours=20):
-        """True if any successful post was made within the last N hours."""
-        from .Command import Command
-
-        time_threshold = tehran_now() - timedelta(hours=hours)
-
-        return (Command
-                .select()
-                .where(
-            (Command.account == self) &
-            (Command.type.in_(['post image', 'post video', 'post carousel'])) &
-            (Command.state == 'success') &
-            (Command.created_at >= time_threshold)
-        )
-                .exists())
-
-    def get_post_action(self):
-        next_command = self.determine_next_post_command()
-        return self.execute_posting(next_command)
-
-    def execute_posting(self, next_command):
-        from script.extra.events.browser_events.BrowserPostImageEvent import BrowserPostImageEvent
-        from script.extra.events.browser_events.BrowserPostVideoEvent import BrowserPostVideoEvent
-        from script.extra.events.browser_events.BrowserPostCarouselEvent import BrowserPostCarouselEvent
-
-        types = {
-            'post carousel': BrowserPostCarouselEvent,
-            'post video': BrowserPostVideoEvent,
-            'post image': BrowserPostImageEvent,
-        }
-
-        return types[next_command], next_command
-
     def get_number_of_successful_posts(self):
         from .Command import Command
 
@@ -477,72 +430,6 @@ class Account(BaseWithTimeZoneModel):
             (Command.state == 'success')
         )
                 .count())
-
-    def get_latest_successful_command_time(self):
-        """Returns something like '14 hours ago' for the most recent successful post."""
-        from .Command import Command
-
-        latest_command = (Command
-                          .select()
-                          .where(
-            (Command.account == self) &
-            (Command.type.in_(['post image', 'post video', 'post carousel'])) &
-            (Command.state == 'success')
-        )
-                          .order_by(Command.created_at.desc())
-                          .first())
-
-        if not latest_command:
-            return "No successful commands found"
-
-        time_difference = tehran_now() - latest_command.created_at
-        hours_ago = time_difference.total_seconds() // 3600
-
-        return f"{int(hours_ago)} hours ago"
-
-    def determine_next_post_command(self):
-        """
-        Decide what type of post to upload next. We rotate between carousel, video
-        and image. If a post was already uploaded recently, raise an exception.
-        """
-        from script.extra.exceptions import UploadedPostRecently
-
-        if self.sent_recent_post_command_within(random.randint(24, 30)):
-            raise UploadedPostRecently('We have sent a post recently')
-
-        latest_commands = self.get_latest_post_commands(1)
-
-        if not latest_commands:
-            return 'post video'
-
-        latest_command_types = [cmd.type for cmd in latest_commands]
-
-        if latest_command_types[0] == 'post carousel':
-            return 'post video'
-
-        if latest_command_types[0] == 'post video':
-            return 'post image'
-
-        return 'post carousel'
-
-    def get_profile(self):
-        if self.profile:
-            return self.profile
-
-        self.assign_profile()
-        return self.profile
-
-    def assign_profile(self):
-        load_dotenv()
-
-        data = {
-            'username': os.getenv('API_USERNAME'),
-            'password': os.getenv('API_PASSWORD'),
-            'account_id': self.id,
-        }
-
-        response = requests.post(os.getenv('ASSIGN_PROFILE_TO_ACCOUNT_API_URL'), data=data)
-        return response.text
 
     def has_tag(self, tag_title):
         from script.models.Taggable import Taggable
@@ -591,55 +478,24 @@ class Account(BaseWithTimeZoneModel):
 
         return self.current_chunk_dm
 
-    def get_number_of_dm_follow_ups(self):
-        from .Lead import Lead
+    def get_profile(self):
+        # Subquery: count accounts per profile
+        query = (
+            Profile
+            .select(Profile, fn.COUNT(Account.id).alias('account_count'))
+            .order_by('id')
+            .join(Account, JOIN.LEFT_OUTER)  # include profiles with zero accounts
+            .group_by(Profile)
+            .order_by(fn.COUNT(Account.id).asc())
+        )
 
-        forty_eight_hours_ago = hours_ago(48)
+        # Get the profile with minimum accounts
+        profile_with_min_accounts = query.first()
+        self.add_cli(f'Selected profile id : {profile_with_min_accounts.id}')
+        self.profile = profile_with_min_accounts
+        self.save()
 
-        self.allowed_number_of_dm_follow_ups = Lead.select().where(
-            (Lead.last_state == 'dm follow up') &
-            (Lead.account == self) &
-            (Lead.times < 3) &
-            (Lead.last_command_send_date < forty_eight_hours_ago)
-        ).count()
 
-        self.can_send_dm_follow_up_today = True if self.allowed_number_of_dm_follow_ups > 0 else False
-
-        return self
-
-    def get_number_of_loom_follow_ups(self):
-        from .Lead import Lead
-        forty_eight_hours_ago = hours_ago(48)
-
-        self.allowed_number_of_loom_follow_ups = Lead.select().where(
-            (Lead.last_state == 'loom follow up') &
-            (Lead.account == self) &
-            (Lead.times < 11) &
-            (Lead.last_command_send_date < forty_eight_hours_ago)
-        ).count()
-
-        self.can_send_loom_follow_up_today = True if self.allowed_number_of_loom_follow_ups > 0 else False
-
-        return self
-
-    def get_custom_message_commands(self):
-        from .Command import Command
-        self.custom_message_commands = (Command.select()
-        .where(
-            (Command.account == self) &
-            (Command.type.in_(['send loom', 'custom message'])) &
-            (Command.state == 'pending')
-        ))
-
-        self.number_of_custom_message_commands = self.custom_message_commands.count()
-
-    def update_proxy_to_residential(self):
-        load_dotenv()
-
-        base = os.getenv('SERVER_URL')
-        result = requests.post(base + '/account/change-profile-proxy-to-residential', {'id': self.id})
-
-        return result.text
 
     class Meta:
         table_name = 'accounts'

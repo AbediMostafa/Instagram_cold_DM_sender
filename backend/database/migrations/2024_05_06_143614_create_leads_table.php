@@ -28,11 +28,6 @@ return new class extends Migration {
                 ->constrained()
                 ->nullOnDelete();
 
-            $table->foreignId('category_id')
-                ->nullable()
-                ->constrained('categories')
-                ->nullOnDelete();
-
             $table->foreignId('country_id')
                 ->nullable()
                 ->constrained('countries')

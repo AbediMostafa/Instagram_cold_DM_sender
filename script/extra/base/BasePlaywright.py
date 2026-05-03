@@ -16,7 +16,20 @@ class BasePlaywright:
         self.handler = AdsPowerHandler(account)
 
     def init(self):
-        self.handler.create_profile()
+
+        if self.account.has_static_profile:
+            self.account.add_cli('Static profile account process ... ')
+
+            if self.account.profile is None:
+                self.account.add_cli('Account dont have profile, assigning profile and updating ...')
+                self.account.get_profile()
+
+            self.handler.update_profile()
+
+        else:
+            self.account.add_cli('Dynamic profile account process ... ')
+            self.handler.create_profile()
+
         self.handler.start_browser()
 
         self.browser = self.handler.get_browser()
@@ -49,9 +62,22 @@ class BasePlaywright:
         self.pause(4000, 6000)
 
     def cleanup(self):
+        # Basic clean up like close Playwright context and page
         self.handler.cleanup()
+
+        # if this account is a static profile type, just clean the cookies to be used by another account
+        if self.account.has_static_profile:
+            self.account.add_cli('Static account clean up process ...')
+            self.handler.clean_up_adspower_profile()
+            self.handler.delete_adspower_cache()
+            return True
+
+        # If the account is a dynamic profile account
+        self.account.add_cli(
+            'Dynamic account type, deleting adspower cache, profile and database profile instance ...')
         self.handler.delete_adspower_cache()
         self.handler.delete_profile()
+        self.account.profile.delete_instance()
 
     def pause(self, min_ms, max_ms):
         self.page.wait_for_timeout(random.randint(min_ms, max_ms))

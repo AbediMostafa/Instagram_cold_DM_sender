@@ -172,14 +172,7 @@
               <td>
                 <div class="d-flex align-items-center">
                   <div class="symbol symbol-50px symbol-circle">
-                    <img
-                        v-if="account.avatar_changed"
-                        :src="getAvatarPath(account)"
-                        @error="
-                          (e) => (e.target.src = '/media/avatars/blank.png')
-                        "
-                    />
-                    <img v-else src="/media/avatars/blank.png"/>
+                    <img src="/media/avatars/blank.png"/>
                     <div
                         v-if="account.priority == 0"
                         style="top: 12px"
