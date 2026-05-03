@@ -16,8 +16,9 @@ return new class extends Migration {
             $table->bigInteger('instagram_id')->nullable();
             $table->string('username')->unique();
 
-            $table->string('name')->unique();
-            $table->text('bio')->unique();
+            $table->string('name')->nullable();
+            $table->text('bio')->nullable();
+            $table->text('profile_pic_url')->nullable();
             $table->unsignedTinyInteger('is_old')->default(0);
 
             $table->integer('times')->nullable()->default(0);
