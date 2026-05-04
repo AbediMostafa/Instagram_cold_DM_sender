@@ -112,13 +112,11 @@ def _try_claim_proxy(proxy_type):
     """
     Atomically claim one free proxy.
     """
-    random_offset = random.randint(0, 10)
-
     if proxy_type == 'complex':
         proxy_types = ["global_datacenter", "datacenter"]
         query = (
             Proxy
-            .select(Proxy.id)
+            .select()
             .where(
                 (Proxy.is_used == 0) &
                 (Proxy.type.in_(proxy_types))
@@ -127,38 +125,26 @@ def _try_claim_proxy(proxy_type):
     else:
         query = (
             Proxy
-            .select(Proxy.id)
+            .select()
             .where(
                 (Proxy.is_used == 0) &
                 (Proxy.type == proxy_type)
             )
         )
 
-    candidates = list(
-        query
-        .order_by(fn.Random())
-        .offset(random_offset)
-        .limit(5)
-    )
-
-    if not candidates:
+    if not query:
+        print('No proxy available ...')
         return None
 
-    for candidate in candidates:
-        updated = (
-            Proxy
-            .update(is_used=1)
-            .where(
-                (Proxy.id == candidate.id) &
-                (Proxy.is_used == 0)
-            )
-            .execute()
-        )
+    next_proxy = (query
+                  .order_by(Proxy.id)
+                  .first())
 
-        if updated > 0:
-            return Proxy.get_by_id(candidate.id)
+    if next_proxy:
+        next_proxy.is_used = True
+        next_proxy.save()
 
-    return None
+    return next_proxy
 
 
 def _try_reset_proxies(proxy_type):
