@@ -34,7 +34,8 @@ return new class extends Migration {
 
             $table->jsonb('stats')->nullable();
 
-            $table->timestamp('posted_at')->nullable();
+
+            $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
 
             $table->index('status', 'idx_account_template_status');

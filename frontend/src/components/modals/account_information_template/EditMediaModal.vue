@@ -22,12 +22,11 @@
             <h1 class="mb-3">Edit Media</h1>
           </div>
           <div class="divider"></div>
+
           <div class="d-flex flex-column mb-6 fv-row">
-            <!--begin::Label-->
             <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
               <span class="required">Caption</span>
             </label>
-            <!--end::Label-->
             <el-form-item prop="caption">
               <el-input
                   style="direction: rtl"
@@ -41,25 +40,30 @@
           </div>
 
           <div class="d-flex flex-column mb-8 fv-row">
-            <!--begin::Label-->
             <label class="d-flex align-items-center fs-6 fw-semibold mb-2">
-              <span class="required">Category</span>
+              Tags
             </label>
-            <!--end::Label-->
+
             <el-select
-                v-if="categoryStore.categories.data.length"
-                v-model="store.selectedTemplate.category_id" placeholder="Select">
+                v-model="selectedTagIds"
+                multiple
+                filterable
+                remote
+                clearable
+                placeholder="Search for tags"
+                :remote-method="tagStore.fetchTags"
+                :loading="tagStore.is.searching"
+            >
               <el-option
-                  v-for="item in categoryStore.categories.data"
-                  :key="item.id"
-                  :label="item.title"
-                  :value="item.id"
+                  v-for="tag in tagStore.searchedTags"
+                  :key="tag.id"
+                  :label="tag.title"
+                  :value="tag.id"
               />
             </el-select>
-
           </div>
-          <!-- Upload Button -->
-          <el-button type="success" @click="store.updateTemplate()">Edit</el-button>
+
+          <el-button type="success" @click="onSave">Edit</el-button>
         </div>
       </div>
     </div>
@@ -67,17 +71,57 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, onMounted, defineProps, watch} from "vue";
+import {ref, watch} from "vue";
 import {useTemplateStore} from "@/stores/Template";
-import {useCategoryStore} from "@/stores/Category";
-import ApiService from "@/core/services/ApiService";
+import {useTagStore} from "@/stores/Tag";
 
-const props = defineProps(['id']);
 const store = useTemplateStore();
-const categoryStore = useCategoryStore()
+const tagStore = useTagStore();
 
-watch(() => store.selectedTemplate.id, () => store.getTemplate())
+// Local mirror of the tag IDs currently attached to the template.
+// We keep this separate from store.selectedTemplate so the user can
+// freely add/remove tags without mutating the store until Save.
+const selectedTagIds = ref<number[]>([]);
 
+// Whenever a different template is selected, fetch its current state
+// from the backend. The view endpoint now also returns the tags so
+// they can be pre-populated in the dropdown.
+watch(
+    () => store.selectedTemplate.id,
+    (newId) => {
+      if (newId) {
+        store.getTemplate();
+      }
+    }
+);
+
+// When the template payload arrives, seed both the dropdown selection
+// and the search results so existing tags are visible by their titles
+// before the user types anything.
+watch(
+    () => store.selectedTemplate,
+    (template) => {
+      const tags = (template as any)?.tags ?? [];
+      selectedTagIds.value = tags.map((t: any) => t.id);
+
+      // Make sure the option labels exist in the dropdown's option list,
+      // otherwise el-select would render bare numeric IDs as labels.
+      tagStore.searchedTags = mergeTagOptions(tagStore.searchedTags, tags);
+    },
+    {deep: true}
+);
+
+const mergeTagOptions = (existing: any[], incoming: any[]) => {
+  const byId = new Map<number, any>();
+  (existing ?? []).forEach(t => byId.set(t.id, t));
+  (incoming ?? []).forEach(t => byId.set(t.id, t));
+  return Array.from(byId.values());
+};
+
+const onSave = () => {
+  
+  store.updateTemplate(selectedTagIds.value);
+};
 </script>
 
 <style lang="scss">

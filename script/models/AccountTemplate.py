@@ -6,6 +6,12 @@ from .Template import Template
 
 
 class AccountTemplate(BaseWithTimeZoneModel):
+    """
+    Pivot model linking accounts to the templates they have posted.
+    created_at is inherited from BaseWithTimeZoneModel and acts as both
+    the assignment time (for pending rows) and the post time (the worker
+    overwrites it with the real post timestamp on completion).
+    """
     account = ForeignKeyField(Account, backref='templates')
     template = ForeignKeyField(Template, backref='account_template')
 
@@ -20,7 +26,6 @@ class AccountTemplate(BaseWithTimeZoneModel):
 
     stats = BinaryJSONField(null=True)
 
-    posted_at = DateTimeField(null=True)
     updated_at = DateTimeField(null=True)
 
     statuses = [

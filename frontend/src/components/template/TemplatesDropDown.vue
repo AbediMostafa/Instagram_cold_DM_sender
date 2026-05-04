@@ -74,6 +74,21 @@
               :value="color.id"
           />
         </el-select>
+
+        <!-- Custom only toggle. When enabled, the list shows only templates
+             with is_custom=true. Custom templates are uploads that get
+             prioritized by the worker and tracked individually for stats. -->
+        <div class="d-flex align-items-center mt-3 ps-1">
+          <label class="form-check form-switch form-check-custom form-check-solid m-0 me-3">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                v-model="store.templates.queryParams.custom_only"
+            />
+          </label>
+          <span class="fw-semibold text-gray-700">Custom only</span>
+        </div>
+
         <div class="fill-flex d-flex align-items-center mt-4">
           <a class="btn btn-sm btn-light-primary" @click="store.getTemplates()">Filter</a>
           <a class="btn btn-sm btn-light-success ms-1" @click="store.attachTag()">Attach Tag</a>
@@ -85,9 +100,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useCategoryStore } from '@/stores/Category';
-import { useTagStore } from '@/stores/Tag';
+import {onMounted, ref} from 'vue';
+import {useCategoryStore} from '@/stores/Category';
+import {useTagStore} from '@/stores/Tag';
 import {useTemplateStore} from "@/stores/Template";
 
 const categoryStore = useCategoryStore();

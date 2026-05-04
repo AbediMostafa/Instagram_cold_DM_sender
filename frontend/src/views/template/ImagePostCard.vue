@@ -43,6 +43,31 @@
       <span class="badge badge-light-primary mt-1 ms-1"
             v-for="tag in template.tags" :key="tag.id"
       >{{ tag.title }}</span>
+
+      <!-- Assign and Stats actions for custom templates only.
+           Custom templates are uploads that get prioritized by the worker
+           and tracked individually for stats. -->
+      <div
+          v-if="template.is_custom"
+          class="d-flex gap-2 mt-3 pt-3 border-top"
+          @click.stop
+      >
+        <a
+            class="btn btn-sm btn-light-primary flex-fill"
+            @click="onAssignClick"
+        >
+          <KTIcon icon-name="user-plus" icon-class="fs-4"/>
+          Assign
+        </a>
+
+        <a
+            class="btn btn-sm btn-light-info flex-fill"
+            @click="onStatsClick"
+        >
+          <KTIcon icon-name="chart-simple" icon-class="fs-4"/>
+          Stats
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -51,7 +76,6 @@
 import {computed, defineProps} from "vue";
 import {useTemplateStore} from "@/stores/Template";
 import {getImageSrc} from "@/core/helpers/helper";
-import {cutMorThanNCharacters} from "@/core/helpers/helper";
 import {showModal} from "@/core/helpers/modal";
 
 const props = defineProps(["template", "card_style"]);
@@ -75,6 +99,21 @@ const toggleCheck = () => {
   } else {
     store.checkedTemplateRows.splice(index, 1)
   }
+}
+
+// Open the assign modal targeted at this template.
+// The store stashes id and type so the modal reads them on open.
+const onAssignClick = () => {
+  store.openAssignModal(props.template);
+  showModal("assign_accounts_modal");
+}
+
+// Fetch stats for this template and open the stats modal.
+// The modal renders even when nothing has been posted yet — the
+// totals show as zero and the breakdown shows an empty-state notice.
+const onStatsClick = () => {
+  store.fetchStats(props.template.id);
+  showModal("template_stats_modal");
 }
 
 </script>

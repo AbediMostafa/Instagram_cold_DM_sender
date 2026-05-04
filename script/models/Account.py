@@ -199,9 +199,85 @@ class Account(BaseWithTimeZoneModel):
                 .order_by(random_function())
                 .first())
 
-    def attach_template(self, template):
+    def attach_template(self, template, url=None):
+        """
+        Mark a template as posted by this account.
+        Creates an account_template row in the 'completed' state with the
+        public URL of the post (when known). created_at is set to now and
+        acts as the post timestamp (the table has no separate posted_at).
+
+        Used by the non-custom flow where no record existed beforehand.
+        The custom flow uses the row claimed by get_pending_custom_template
+        instead and updates it directly.
+        """
         from .AccountTemplate import AccountTemplate
-        return AccountTemplate.create(account=self, template=template)
+
+        now = tehran_now()
+
+        return AccountTemplate.create(
+            account=self,
+            template=template,
+            status='completed',
+            url=url,
+            created_at=now,
+            updated_at=now,
+        )
+
+    def get_pending_custom_template(self):
+        """
+        Atomically claim one pending custom-template assignment for this
+        account and flip it to 'processing'. The corresponding template
+        must be marked is_custom=true and have a supported type.
+
+        Returns (template, account_template_record) on success, or
+        (None, None) when nothing is available. The template type can
+        be inspected via template.type.
+
+        Atomicity is enforced the same way as get_next_account in
+        AccountHelper: select candidate ids, then update WHERE status
+        is still 'pending' and check the affected row count.
+        """
+        from .AccountTemplate import AccountTemplate
+        from .Template import Template
+
+        supported_types = ['image-post', 'video-post', 'carousel']
+
+        candidates = list(
+            AccountTemplate
+            .select(AccountTemplate.id)
+            .join(Template)
+            .where(
+                (AccountTemplate.account == self) &
+                (AccountTemplate.status == 'pending') &
+                (Template.is_custom == True) &
+                (Template.type.in_(supported_types))
+            )
+            .order_by(AccountTemplate.id)
+            .limit(5)
+        )
+
+        if not candidates:
+            return None, None
+
+        now = tehran_now()
+
+        for candidate in candidates:
+            updated = (
+                AccountTemplate
+                .update(status='processing', updated_at=now)
+                .where(
+                    (AccountTemplate.id == candidate.id) &
+                    (AccountTemplate.status == 'pending')
+                )
+                .execute()
+            )
+
+            if updated > 0:
+                at_record = AccountTemplate.get_by_id(candidate.id)
+                template = Template.get_by_id(at_record.template_id)
+                return template, at_record
+
+        return None, None
 
     def create_command(self, _type, state, lead=None, times=0, category=None):
         from .Command import Command

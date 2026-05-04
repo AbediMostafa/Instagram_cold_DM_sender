@@ -48,14 +48,38 @@
     <span class="badge badge-light-primary mt-1 ms-1"
           v-for="tag in videoTemplate?.tags" :key="tag.id"
     >{{ tag.title }}</span>
+
+    <!-- Assign and Stats actions for custom video posts only.
+         Assignment targets the video record; the worker resolves the
+         cover image later via carousel_id. -->
+    <div
+        v-if="videoTemplate?.is_custom"
+        class="d-flex gap-2 mt-3 pt-3 border-top"
+        @click.stop
+    >
+      <a
+          class="btn btn-sm btn-light-primary flex-fill"
+          @click="onAssignClick"
+      >
+        <KTIcon icon-name="user-plus" icon-class="fs-4"/>
+        Assign
+      </a>
+
+      <a
+          class="btn btn-sm btn-light-info flex-fill"
+          @click="onStatsClick"
+      >
+        <KTIcon icon-name="chart-simple" icon-class="fs-4"/>
+        Stats
+      </a>
+    </div>
   </el-card>
 </template>
 
 <script setup>
-import {defineProps, computed, ref} from "vue";
+import {computed, defineProps} from "vue";
 import {ElCard, ElImage} from "element-plus";
 import {useTemplateStore} from "@/stores/Template";
-import {cutMorThanNCharacters} from "@/core/helpers/helper";
 import {showModal} from "@/core/helpers/modal";
 
 const store = useTemplateStore();
@@ -94,6 +118,23 @@ const toggleCheck = () => {
   }
 }
 
+// Assignment always targets the video record. The cover image is
+// resolved later by the worker through the shared carousel_id.
+const onAssignClick = () => {
+  if (!videoTemplate.value) return;
+
+  store.openAssignModal(videoTemplate.value);
+  showModal("assign_accounts_modal");
+}
+
+// Fetch stats for the video record and open the stats modal.
+// The modal renders even when nothing has been posted yet.
+const onStatsClick = () => {
+  if (!videoTemplate.value) return;
+
+  store.fetchStats(videoTemplate.value.id);
+  showModal("template_stats_modal");
+}
 
 // cutMorThanNCharacters(videoTemplate?.caption || imageTemplate?.caption, 200)
 </script>

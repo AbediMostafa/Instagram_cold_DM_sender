@@ -132,13 +132,13 @@
     <create-template-modal/>
     <upload-media-modal/>
     <edit-media-modal/>
+    <assign-accounts-modal/>
+    <template-stats-modal/>
 
   </div>
 </template>
 <script setup lang="ts">
-import LoomCard from "@/components/loom/LoomCard.vue";
 import {onMounted} from "vue";
-import {useLoomStore} from "@/stores/Loom";
 import {useTemplateStore} from "@/stores/Template";
 import {useAppConfigStore} from "@/stores/AppConfig";
 import AvatarCard from "@/views/template/AvatarCard.vue";
@@ -153,6 +153,8 @@ import CreateTemplateModal from "@/components/modals/account_information_templat
 import TemplatesDropDown from "@/components/template/TemplatesDropDown.vue";
 import EditMediaModal from "@/components/modals/account_information_template/EditMediaModal.vue";
 import NameUsernameCard from "@/views/template/NameUsernameCard.vue";
+import AssignAccountsModal from "@/components/modals/account_information_template/AssignAccountsModal.vue";
+import TemplateStatsModal from "@/components/modals/account_information_template/TemplateStatsModal.vue";
 
 const store = useTemplateStore();
 const configStore = useAppConfigStore();

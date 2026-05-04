@@ -31,6 +31,7 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
+use App\Models\Account;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 use Illuminate\Support\Facades\Auth;
@@ -46,7 +47,6 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use \App\Models\Account;
 
 Route::get('/', function () {
 
@@ -126,6 +126,8 @@ Route::post('account/detach-tag', [AccountController::class, 'detachTag']);
 Route::post('account/attach-service', [AccountController::class, 'attachService']);
 Route::post('account/detach-service', [AccountController::class, 'detachService']);
 Route::post('account/reset-is-used', [AccountController::class, 'resetIsUsed']);
+Route::post('accounts/fetch-post-insights', [AccountController::class, 'fetchPostInsights']);
+Route::post('accounts/search-active', [AccountController::class, 'searchActive']);
 
 Route::post('leads', [LeadController::class, 'index']);
 Route::post('lead/view', [LeadController::class, 'view']);
@@ -146,6 +148,10 @@ Route::post('template/upload-file', [TemplateController::class, 'uploadFile']);
 Route::post('template/fetch-types', [TemplateController::class, 'fetchTypes']);
 Route::post('template/get-template', [TemplateController::class, 'getTemplate']);
 Route::post('template/attach-tag', [TemplateController::class, 'attachTag']);
+Route::post('template/stats', [TemplateController::class, 'stats']);
+Route::post('template/assign-accounts', [TemplateController::class, 'assignAccounts']);
+Route::post('template/assigned-accounts', [TemplateController::class, 'assignedAccounts']);
+Route::post('template/unassign-accounts', [TemplateController::class, 'unassignAccounts']);
 
 Route::post('proxies', [ProxyController::class, 'index']);
 Route::post('proxy/create', [ProxyController::class, 'create']);

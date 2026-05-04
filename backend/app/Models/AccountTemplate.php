@@ -10,7 +10,10 @@ class AccountTemplate extends Pivot
 
     public $incrementing = true;
 
-    // We manage updated_at manually when stats are refreshed; there is no created_at column.
+    // We manage timestamps manually. created_at is set by the worker
+    // when a post completes (and by the assign endpoint when a row is
+    // created in 'pending' state). updated_at is bumped when stats or
+    // status are refreshed.
     public $timestamps = false;
 
     protected $guarded = [];
@@ -23,7 +26,7 @@ class AccountTemplate extends Pivot
 
     protected $casts = [
         'stats'         => 'array',
-        'posted_at'     => 'datetime',
+        'created_at'    => 'datetime',
         'updated_at'    => 'datetime',
         'like_count'    => 'integer',
         'comment_count' => 'integer',

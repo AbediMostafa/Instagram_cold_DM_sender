@@ -93,7 +93,7 @@ class Account extends Model
                 'save_count',
                 'repost_count',
                 'stats',
-                'posted_at',
+                'created_at',
                 'updated_at',
             ]);
     }

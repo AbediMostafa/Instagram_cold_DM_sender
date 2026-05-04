@@ -26,13 +26,13 @@ return new class extends Migration {
 
             $table->jsonb('stats')->nullable()->after('repost_count');
 
-            $table->timestamp('posted_at')->nullable()->after('stats');
-            $table->timestamp('updated_at')->nullable()->after('posted_at');
+
+            $table->timestamp('created_at')->nullable()->after('stats');
+            $table->timestamp('updated_at')->nullable()->after('created_at');
 
             $table->index('status', 'idx_account_template_status');
         });
 
-        // Backfill: mark all existing rows as completed
         DB::table('account_template')->update(['status' => 'completed']);
     }
 
@@ -53,7 +53,7 @@ return new class extends Migration {
                 'save_count',
                 'repost_count',
                 'stats',
-                'posted_at',
+                'created_at',
                 'updated_at',
             ]);
         });

@@ -596,4 +596,49 @@ class AccountController extends Controller
             'Is used reset successfully'
         );
     }
+    public function searchActive()
+    {
+        $query = r('query', '');
+
+        return Account::query()
+            ->where('instagram_state', 'active')
+            ->when($query, function ($q) use ($query) {
+                $q->where('username', 'like', "%{$query}%");
+            })
+            ->select('id', 'username', 'profile_pic_url')
+            ->orderBy('username')
+            ->limit(50)
+            ->get();
+    }
+    public function fetchPostInsights()
+    {
+        try {
+            $account = Account::find(r('id'));
+
+            if (!$account) {
+                return jsonError('Account not found');
+            }
+
+            $path = base_path("../script/post_insights.py");
+
+            // Run in background, don't wait for completion
+            $command = "python \"{$path}\" {$account->id} > /dev/null 2>&1 &";
+
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                $command = "start /B python \"{$path}\" {$account->id} > NUL 2>&1";
+            }
+
+            pclose(popen($command, 'r'));
+
+            return jsonSuccess('Post insights collection started');
+
+        } catch (\Exception $e) {
+            \Log::error('[PostInsights] Exception', [
+                'account_id' => r('id'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return jsonError($e->getMessage());
+        }
+    }
 }
