@@ -59,15 +59,8 @@ class BrowserLeadFullDataExtractorEvent:
         id = user.get('id')
 
         self.ig.account.add_cli(f'Profile loaded: {username}, name:{full_name}')
-
-        if full_name:
-            self.save_name_username(username, full_name)
-
-        if bio:
-            self.save_bio(bio)
-
         self.save_avatar(profile_pic_url)
-        self.save_instagram_id(id)
+        self.update_lead_record(id, full_name, bio, profile_pic_url)
 
     def process_timeline(self, timeline):
         edges = timeline.get('edges', [])
@@ -184,31 +177,6 @@ class BrowserLeadFullDataExtractorEvent:
         else:
             return
 
-    def save_name_username(self, username, full_name):
-
-        template = Template.create(
-            type='name-username',
-            text=username,
-            caption=full_name or ''
-        )
-
-        self.save_lead_template(template)
-        self.ig.account.add_cli(f"Lead name and username saved")
-
-    def save_bio(self, bio):
-
-        if not bio:
-            return
-
-        template = Template.create(
-            type='bio',
-            text=bio,
-            caption=''
-        )
-
-        self.save_lead_template(template)
-        self.ig.account.add_cli(f"Lead bio saved")
-
     def save_avatar(self, url):
         from script.models.Setting import Setting
 
@@ -246,15 +214,18 @@ class BrowserLeadFullDataExtractorEvent:
         self.save_lead_template(template)
         self.ig.account.add_cli(f"Lead avatar saved")
 
-    def save_instagram_id(self, id):
+    def update_lead_record(self, id, name, bio, profile_pic_url):
         self.lead.instagram_id = id
+        self.lead.name = name
+        self.lead.bio = bio
+        self.lead.profile_pic_url = profile_pic_url
         self.lead.save()
-        self.ig.account.add_cli(f"Lead instagram id saved")
+        self.ig.account.add_cli(f"Lead instagram record saved")
 
     def init(self):
         self.ig.account.add_cli(f"Getting Leads profile ...")
 
-        for _ in range (self.number_of_leads):
+        for _ in range(self.number_of_leads):
 
             self.lead = Lead.select().where(Lead.instagram_id.is_null(True)).order_by(fn.Random()).first()
             go_to_page(self.ig, f"https://www.instagram.com/{str(self.lead.username)}/", 'Lead')

@@ -18,6 +18,9 @@ return new class extends Migration {
             $table->string('carousel_id')->nullable();
             $table->string('uid')->nullable();
 
+            $table->string('code')->nullable();
+            $table->string('media_id')->nullable();
+
             $table->foreignId('color_id')
                 ->nullable()
                 ->constrained('colors')
