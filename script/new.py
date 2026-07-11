@@ -60,15 +60,10 @@ if not account:
     sys.exit(1)
 
 try:
-    with open("log.txt", "a") as log_file:
-        log_file.write(f"{account.username} - {account.id}\n")
-except Exception as e:
-    print(f"Failed to write to log: {str(e)}")
-
-try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
+    browser_ig.pause(1000000, 2000000)
     ScrollAndLikeContext(browser_ig).fire()
 except Exception as e:
     print(str(e))

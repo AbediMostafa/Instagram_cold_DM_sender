@@ -23,14 +23,21 @@ from script.extra.api_actions.comment.ApiCommentContext import ApiCommentContext
 from script.extra.api_actions.view_story.ApiViewStoryContext import ApiViewStoryContext
 from script.extra.api_actions.save_post.ApiSavePostContext import ApiSavePostContext
 from script.extra.api_actions.comment_and_reply.ApiCommentAndReplyContext import ApiCommentAndReplyContext
-
-
-account = get_next_account()
-# account = Account.get_by_id(7580)
+from script.extra.actions.follow.FollowContext import FollowContext
+from script.models.Proxy import get_free_proxy
+import requests
+from  script.extra.actions.get_account_pk.GetAccountPkContext import GetAccountPkContext
+# account = get_next_account(service_id=6)
+account = Account.get_by_id(4133)
 
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
+# ScrollAndLikeContext(browser_ig).fire()
+FollowContext(browser_ig).fire()
+
+if browser_ig:
+    browser_ig.cleanup()
 
 # LocationScraperContext(browser_ig).fire()
 # LocationScrollAndLikeContext(browser_ig).fire()
@@ -40,10 +47,9 @@ LoginContext(browser_ig).fire()
 # ScrollAndLikeContext(browser_ig).fire()
 # ChangeBioContext(browser_ig).fire()
 # ChangeNameUsernameContext(browser_ig).fire()
-# MakeAccountPublicContext(browser_ig).fire()
 # MakeAccountPrivateContext(browser_ig).fire()
-OrderPreparerContext(browser_ig).fire()
-ApiCommentAndReplyContext(browser_ig).fire()
+# OrderPreparerContext(browser_ig).fire()
+# ApiCommentAndReplyContext(browser_ig).fire()
 # ApiCommentContext(browser_ig).fire()
 # ApiViewStoryContext(browser_ig).fire()
 # ApiSavePostContext(browser_ig).fire()

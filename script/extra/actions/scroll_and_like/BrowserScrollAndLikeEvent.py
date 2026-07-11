@@ -124,7 +124,7 @@ class BrowserScrollAndLikeEvent(InstagramMiddleware):
 
     def scroll_and_like(self):
 
-        for i in range(random.randint(4, 12)):
+        for i in range(random.randint(2, 6)):
             self.ig.page.mouse.wheel(0, random.randint(650, 700))
             self.ig.pause(4000, 6000)
 

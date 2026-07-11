@@ -22,4 +22,4 @@ class Adspower:
 
     def close_browser(self, profile_id):
         return requests.get(
-            f'http://local.adspower.net:50325/api/v1/browser/stop?user_id={profile_id}')
+            f'http://127.0.0.1:50325/api/v1/browser/stop?user_id={profile_id}')

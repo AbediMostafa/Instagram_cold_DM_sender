@@ -258,7 +258,7 @@ class BrowserLoginEvent:
                     self.find_friends_and_accounts_you_like()
                     self.save_info()
                     AllowCookiesAction(self.ig).start()
-                    self._capture_graphql_data()
+                    # self._capture_graphql_data()
 
                     if self.logged_in_counter > max_login_retry:
                         self.ig.account.add_cli('Max Pre logged in attempts reached.')

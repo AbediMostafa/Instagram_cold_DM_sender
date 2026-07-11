@@ -27,11 +27,10 @@ class ProfileUpdator:
     response_data = None
     profile = None
     cookies = None
-    folder_id = "8972883"
     response = "8972883"
     payload = {
         "name": "",
-        "group_id": "",
+        "group_id": "0",
         "cookie": "",
         "user_proxy_config": {},
         "fingerprint_config": {
@@ -86,7 +85,6 @@ class ProfileUpdator:
             if cookies:
                 self.payload["cookie"] = cookies
 
-            self.payload["group_id"] = self.folder_id
             self.payload["user_proxy_config"] = self.get_proxy()
             self.payload["name"] = self.assign_profile_name()
 
@@ -140,7 +138,6 @@ class ProfileUpdator:
             raise Exception(f"{str(e)} | {self.response_message}")
 
     def clean_up(self):
-        self.account.add_cli(f'Profile number :  {self.account.profile.profile_number}')
 
         try:
             self.payload = {
@@ -155,7 +152,7 @@ class ProfileUpdator:
             raise Exception(f"{str(e)} | {self.response_message}")
 
     def send_request(self):
-        url = "http://local.adspower.net:50325/api/v2/browser-profile/create"
+        url = "http://127.0.0.1:50325/api/v2/browser-profile/create"
 
         for attempt in range(1, MAX_RETRIES):
             self.response = requests.post(url, json=self.payload, verify=False)
@@ -182,7 +179,7 @@ class ProfileUpdator:
         return self
 
     def update_request(self):
-        url = "http://local.adspower.net:50325/api/v2/browser-profile/update"
+        url = "http://127.0.0.1:50325/api/v2/browser-profile/update"
         self.response = requests.post(url, json=self.payload, verify=False)
 
         for attempt in range(1, MAX_RETRIES):
@@ -210,7 +207,6 @@ class ProfileUpdator:
     def create_profile_record(self):
         self.profile = Profile.create(
             title=self.profile_name,
-            folder=self.folder_id,
             profile_id=self.response_data.get('profile_id'),
             proxy=self.proxy_obj if self.proxy_obj else None
         )
@@ -293,6 +289,5 @@ class ProfileUpdator:
     def change_proxy(self):
         self.get_proxy(type='private_residential')
         self.payload["profile_id"] = self.account.profile.profile_id
-        self.payload["group_id"] = self.folder_id
         self.payload["user_proxy_config"] = self.proxy
         self.update_request()

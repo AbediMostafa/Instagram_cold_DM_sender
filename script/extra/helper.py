@@ -273,7 +273,7 @@ def get_dm_chunk(account_age):
     return random.randint(9, 12)
 
 
-def go_to_page(ig, target, name):
+def go_to_page(ig, target, name=None):
     max_retries = 5
 
     for attempt in range(max_retries):

@@ -81,7 +81,6 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
         timeout = 10
     proxies = _build_requests_proxy(proxy)
     endpoints = [
-        'https://httpbin.org/ip',
         'https://ifconfig.co/ip',
         'https://api.ipify.org?format=json'
     ]
@@ -108,29 +107,15 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
     return None
 
 
-def _try_claim_proxy(proxy_type):
+def _try_claim_proxy():
     """
     Atomically claim one free proxy.
     """
-    if proxy_type == 'complex':
-        proxy_types = ["global_datacenter", "datacenter"]
-        query = (
-            Proxy
-            .select()
-            .where(
-                (Proxy.is_used == 0) &
-                (Proxy.type.in_(proxy_types))
-            )
-        )
-    else:
-        query = (
-            Proxy
-            .select()
-            .where(
-                (Proxy.is_used == 0) &
-                (Proxy.type == proxy_type)
-            )
-        )
+    query = (
+        Proxy
+        .select()
+        .where(Proxy.is_used == 0)
+    )
 
     if not query:
         print('No proxy available ...')
@@ -147,7 +132,7 @@ def _try_claim_proxy(proxy_type):
     return next_proxy
 
 
-def _try_reset_proxies(proxy_type):
+def _try_reset_proxies():
     """
     Reset proxies with lock to prevent multiple threads from resetting.
     """
@@ -157,11 +142,7 @@ def _try_reset_proxies(proxy_type):
         return False
 
     try:
-        if proxy_type == 'complex':
-            proxy_types = ["global_datacenter", "datacenter"]
-            Proxy.update(is_used=0).where(Proxy.type.in_(proxy_types)).execute()
-        else:
-            Proxy.update(is_used=0).where(Proxy.type == proxy_type).execute()
+        Proxy.update(is_used=0).execute()
 
         return True
 
@@ -172,16 +153,15 @@ def _try_reset_proxies(proxy_type):
 def get_free_proxy(account=None, max_check_timeout=10, stuck_threshold_minutes=5, max_attempts=50):
     from .Setting import Setting
 
-    proxy_type = Setting.get_value('proxy_type')
     attempts = 0
 
     while attempts < max_attempts:
         attempts += 1
 
-        next_proxy = _try_claim_proxy(proxy_type)
+        next_proxy = _try_claim_proxy()
 
         if not next_proxy:
-            reset_done = _try_reset_proxies(proxy_type)
+            reset_done = _try_reset_proxies()
             if reset_done:
                 print('Proxies reset completed')
             continue
@@ -193,6 +173,8 @@ def get_free_proxy(account=None, max_check_timeout=10, stuck_threshold_minutes=5
             timeout=max_check_timeout
         )
         print(f'Observed IP : {observed_ip}')
+
+        return next_proxy
 
         now = tehran_now()
 

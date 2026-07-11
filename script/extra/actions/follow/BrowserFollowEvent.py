@@ -16,12 +16,14 @@ class BrowserFollowEvent:
 
     def init(self):
         self.ig.account.add_cli('Starting follow leads ...')
-        leads = Lead.get_leads_for_follow(self.get_allowed_dms())
+        self.perform_follow()
 
-        for lead in leads:
-            self.ig.account.add_cli(f'Following {lead.username} ...')
-            self.perform_follow(lead)
-            self.ig.pause(3000, 4000)
+        # leads = Lead.get_leads_for_follow(self.get_allowed_dms())
+        #
+        # for lead in leads:
+        #     self.ig.account.add_cli(f'Following {lead.username} ...')
+        #     self.perform_follow(lead)
+        #     self.ig.pause(3000, 4000)
 
     def get_allowed_dms(self):
         performed_follows = performed_command_count(
@@ -41,23 +43,15 @@ class BrowserFollowEvent:
 
         return final_allowed_chunk
 
-    def perform_follow(self, lead):
+    def perform_follow(self):
+    # def perform_follow(self, lead):
 
         try:
-            self.command = self.ig.account.create_command(
-                'follow',
-                'processing',
-                lead=lead,
-                category=self.category_model)
-
-            DirectlyGoToAccountPageAction(self.ig).start(lead.username)
+            DirectlyGoToAccountPageAction(self.ig).start('tibtaniem')
             self.ig.pause(3000, 4000)
 
             self.ig.page.get_by_role("button", name="Follow").first.click()
             self.ig.pause(3000, 4000)
-
-            lead.change_state(self.ig.account, 'followed', add_history=True)
-            self.command.update_cmd('state', 'success')
 
         except Exception as e:
             self.ig.account.add_cli(f'Problem Following lead : {str(e)}')

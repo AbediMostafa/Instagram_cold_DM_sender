@@ -35,26 +35,24 @@ class Proxy extends Model
 
         foreach ($lines as $line) {
             $proxy = explode(':', $line);
-            if (count($proxy) === 5) {
 
-                $proxyExists = Proxy::query()
-                    ->whereIp($proxy[0])
-                    ->wherePort($proxy[1])
-                    ->exists();
+//            $proxyExists = Proxy::query()
+//                ->whereIp($proxy[0])
+//                ->wherePort($proxy[1])
+//                ->exists();
+//
+//            if ($proxyExists) {
+//                $existsProxies .= $proxy[0] . ':' . $proxy[0] . "\n";
+//                continue;
+//            }
 
-                if ($proxyExists) {
-                    $existsProxies .= $proxy[0] . ':' . $proxy[0] . "\n";
-                    continue;
-                }
-
-                $proxies[] = [
-                    'ip' => $proxy[0],
-                    'port' => $proxy[1],
-                    'username' => $proxy[2],
-                    'password' => $proxy[3],
-                    'type' => $proxy[4],
-                ];
-            }
+            $proxies[] = [
+                'ip' => $proxy[0],
+                'port' => $proxy[1],
+                'username' => $proxy[2],
+                'password' => $proxy[3],
+                'type' => $proxy[4],
+            ];
         }
 
         Proxy::query()->insert($proxies);

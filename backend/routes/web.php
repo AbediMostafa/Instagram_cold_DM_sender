@@ -55,14 +55,44 @@ Route::get('/', function () {
 
 });
 Route::get('/test', function () {
+$accounts = Account::query()->whereHas('tags', function($_){
+    $_->where('title', 'web');
+
+})->update([
+    'is_used'=>0,
+    'service_id'=>7,
+]);
+
+dd($accounts);
+
+    dd('shod');
+    $accounts = Account::query()->where('service_id', 6)
+        ->where('instagram_state', '!=', 'active')
+        ->update();
+
+    dd($accounts);
+
+//        ->each(function ($account) {
+//            $data = [
+//                'user_ids'=>[$account->profile->profile_id]
+//            ];
+//            $url = "http://127.0.0.1:50325/api/v1/user/delete";
+//            $response = Http::withoutVerifying()->post($url, $data = $data);
+//            dump($response->json());
+//            sleep(3);
+//        });
+
+    dd(
+        '$accounts'
+    );
 
 //    name
 //    bio
-//    profile_picture_url
+//    profile_picture_url|
 //    is_old
 
 
-    $leads= \App\Models\Lead::query()->whereNotNull('instagram_id')->whereNotNull('account_id')->count();
+    $leads = \App\Models\Lead::query()->whereNotNull('instagram_id')->whereNotNull('account_id')->count();
 
     dd($leads);
 
