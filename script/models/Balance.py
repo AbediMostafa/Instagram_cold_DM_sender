@@ -11,6 +11,10 @@ ACTION_RATES = {
     'save_post': Decimal('0.00004'),          # $0.04 / 1000
 }
 
+# Types with no balance operations at all (never charged, never refunded).
+# Explicit guard so an exempt type can't hit the default-rate fallback.
+BALANCE_EXEMPT_TYPES = ('share', 'comment_and_reply')
+
 
 class Balance(BaseWithTimeZoneModel):
     customer = CharField()
@@ -32,6 +36,9 @@ class Balance(BaseWithTimeZoneModel):
             Decimal: Total amount deducted
         """
         if count <= 0:
+            return Decimal('0')
+
+        if action_type in BALANCE_EXEMPT_TYPES:
             return Decimal('0')
 
         rate = ACTION_RATES.get(action_type, Decimal('0.00005'))

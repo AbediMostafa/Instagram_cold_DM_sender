@@ -142,14 +142,7 @@ class BaseDuoPlus:
         last_err = None
 
         for attempt in range(retries):
-            print(url)
-            print(cls._headers())
-            print(payload)
-            resp = requests.post(
-                url,
-                headers=cls._headers(),
-                json=payload,
-                timeout=30)
+            resp = requests.post(url, headers=cls._headers(), json=payload, timeout=30)
             # The pause comes right after the request so even error paths
             # respect the QPS=1 limit.
             time.sleep(cls.RATE_LIMIT_PAUSE)
@@ -418,15 +411,15 @@ class BaseDuoPlus:
         )
         self.command(f'input text "{escaped}"')
 
-    def clear_field(self, max_chars=30):
+    def clear_field(self, max_chars=60):
         """
-        Clear the focused field in ONE API call: MOVE_END followed by a batch
-        of DELs in a single keyevent (keyevent accepts a sequence of codes).
-        Fewer calls matters against the 1 req/sec limit. 30 chars covers the
-        longest field we type (a share_group_NN name is ~14).
+        Clear the focused field: jump to end, then batch-delete. Deletes ride
+        in one command (keyevent accepts repeats) to save API calls against
+        the 1 req/sec limit.
         """
-        seq = ['123'] + ['67'] * max_chars  # 123 = MOVE_END, 67 = DEL
-        self.command(f'input keyevent {" ".join(seq)}')
+        self.command('input keyevent KEYCODE_MOVE_END')
+        dels = ' '.join(['67'] * max_chars)  # 67 = KEYCODE_DEL
+        self.command(f'input keyevent {dels}')
 
     def press_back(self):
         self.command('input keyevent 4')
@@ -443,11 +436,8 @@ class BaseDuoPlus:
         plus the pauses — treat dumps as expensive.
         """
         self.command(f'DuoPlusDumpUI {self.DUMP_PATH_ON_DEVICE}')
-        # Brief settle so the file is fully written before we cat it. 0.5s is
-        # enough in practice; the RATE_LIMIT_PAUSE between the two calls adds
-        # more on top.
-        time.sleep(0.5)
-        return self.command(f'cat {self.DUMP_PATH_ON_DEVICE}', want_output=True) 
+        time.sleep(1)
+        return self.command(f'cat {self.DUMP_PATH_ON_DEVICE}', want_output=True)
 
     def find(self, xml_text, selector):
         """
@@ -567,7 +557,7 @@ class BaseDuoPlus:
         return None
 
     # ── app / foreground ────────────────────────────────────────────────────
-    def open_url(self, url, settle_seconds=4, verify=True):
+    def open_url(self, url, settle_seconds=4):
         """
         Open an Instagram URL inside the Instagram app via a VIEW intent.
 
@@ -577,10 +567,8 @@ class BaseDuoPlus:
         foreground). Opening content by URL DOES work on mobile, unlike the
         "go home" case; there just is no home-equivalent URL.
 
-        Returns True when Instagram holds the foreground afterwards (or, when
-        verify=False, immediately after the settle without the extra
-        foreground call — used by time-critical flows like stories where the
-        interstitial only shows ~3s and every API call costs ~1.6s).
+        Returns True when Instagram holds the foreground afterwards. The
+        caller decides what a False means (usually RetryableError).
         """
         # Quote the URL and escape & so the shell on the device doesn't
         # split the command; ?igsh=... style params survive this way too.

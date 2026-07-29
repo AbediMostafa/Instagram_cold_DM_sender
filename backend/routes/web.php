@@ -256,6 +256,7 @@ Route::post('order/fail', [OrderController::class, 'fail']);
 Route::post('order/reset', [OrderController::class, 'reset']);
 Route::post('order/change-processing-to-free', [OrderController::class, 'changeProcessingToFree']);
 Route::post('order/get-actions', [OrderController::class, 'getActions']);
+Route::post('orders/report', [OrderController::class, 'report']);
 Route::post('api/v3', [OrderController::class, 'v3']);
 Route::post('api/telegram-group-sender', [OrderController::class, 'telegramGroupSender']);
 Route::post('api/v4', [OrderController::class, 'v4']);

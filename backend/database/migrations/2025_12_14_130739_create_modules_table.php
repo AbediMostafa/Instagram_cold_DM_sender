@@ -16,6 +16,9 @@ return new class extends Migration
             $table->string('title');
             $table->string('module_path');
             $table->string('class_name');
+            $table->string('type')
+                ->default('web')
+                ->index();
 
             $table->integer('priority')
                 ->nullable()

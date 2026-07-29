@@ -231,6 +231,87 @@ class SettingSeeder extends Seeder
             'description' => 'Batch size for viewing stories',
         ],
 
+        // ===== Mobile =====
+        // NOTE: run() deletes any DB setting missing from this seeder, so
+        // every mobile_* key the DuoPlus workers read MUST be listed here.
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_stuck_timeout_seconds',
+            'value' => '900',
+            'description' => 'Seconds before a processing mobile with a stale heartbeat is reset',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_explore_min_posts',
+            'value' => '7',
+            'description' => 'Minimum posts to view per Explore browse',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_explore_max_posts',
+            'value' => '12',
+            'description' => 'Maximum posts to view per Explore browse',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_explore_like_chance',
+            'value' => '0.2',
+            'description' => 'Probability (0-1) of liking each viewed Explore post',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_explore_min_dwell',
+            'value' => '8',
+            'description' => 'Minimum seconds to dwell on each Explore post',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_explore_max_dwell',
+            'value' => '20',
+            'description' => 'Maximum seconds to dwell on each Explore post',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_share_seconds',
+            'value' => '300',
+            'description' => 'Per-account time window (seconds) for the share execution module',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_share_prepare_batch',
+            'value' => '3',
+            'description' => 'How many share orders one prepare session claims',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_share_stuck_timeout',
+            'value' => '120',
+            'description' => 'Seconds before a share order stuck in is_prepared=1 is reset to 0',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_share_groups_per_send',
+            'value' => '20',
+            'description' => 'Maximum share groups ticked in one send',
+        ],
+        [
+            'type' => 'number',
+            'category' => 'Mobile',
+            'key' => 'mobile_share_per_group',
+            'value' => '245',
+            'description' => 'Real views sent per group in a send (group member count); customer count is capped at the order total',
+        ],
+
         // ===== General =====
         [
             'type' => 'text',

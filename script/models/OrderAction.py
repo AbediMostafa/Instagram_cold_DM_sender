@@ -12,6 +12,11 @@ class OrderAction(BaseWithTimeZoneModel):
     """
     Model for tracking individual action items within an order.
     Each order can have multiple actions (e.g., 100 story views = 100 action records).
+
+    `count` is how many units this single action is worth. Web actions are
+    always 1 (the default). Mobile share actions carry a variable count: one
+    action = one send = ticked_groups * per_group (e.g. 20 * 250 = 5000), and
+    the last send of an order can be smaller.
     """
 
     VALID_TYPES = [
@@ -20,6 +25,7 @@ class OrderAction(BaseWithTimeZoneModel):
         'view_all_stories',
         'save_post',
         'comment_and_reply',
+        'share',
     ]
 
     VALID_STATUSES = [
@@ -33,6 +39,7 @@ class OrderAction(BaseWithTimeZoneModel):
     account = ForeignKeyField(Account, backref='order_actions', null=True)
     content = TextField(null=True)
     type = CharField(max_length=50)
+    count = IntegerField(default=1)
     status = CharField(max_length=20, default='free')
     updated_at = DateTimeField(null=True)
 
@@ -193,6 +200,77 @@ def mark_action_completed(action):
         (Order.id == action.order_id) &
         (Order.completed_count >= Order.total_count) &
         (Order.status != 'Completed')
+    ).execute()
+
+
+def mark_share_action_completed(action):
+    """
+    Count-aware completion for mobile share actions.
+
+    Differences from mark_action_completed:
+      - completed_count grows by action.count (a send is worth many units),
+        not by 1.
+      - No balance deduction: share is balance-exempt end to end (like
+        comment_and_reply).
+
+    The action must already be claimed (status=processing) by this worker;
+    the sent UPDATE is guarded on that so a stuck-reset that raced us and
+    freed the action cannot produce a double completion.
+
+    Returns True if this call performed the completion, False if the action
+    was no longer ours.
+    """
+    updated = OrderAction.update(
+        status='sent',
+        updated_at=tehran_now()
+    ).where(
+        (OrderAction.id == action.id) &
+        (OrderAction.status == 'processing')
+    ).execute()
+
+    if updated == 0:
+        return False
+
+    Order.update(
+        completed_count=Order.completed_count + action.count
+    ).where(
+        Order.id == action.order_id
+    ).execute()
+
+    Order.update(
+        status='Completed'
+    ).where(
+        (Order.id == action.order_id) &
+        (Order.completed_count >= Order.total_count) &
+        (Order.status != 'Completed')
+    ).execute()
+
+    return True
+
+
+def reset_stuck_processing_actions(action_types, timeout_seconds):
+    """
+    Free actions that a crashed worker left in 'processing'.
+
+    Without this, a device dying mid-send strands its claimed action in
+    'processing' forever and that slice of the order never runs. The order
+    level already has a stuck-reset (is_prepared=1 -> 0); this is the same
+    guard one level down. The conditional UPDATE is atomic, so it is safe
+    for every worker to attempt it; a Lock in the caller just keeps the
+    query from running more often than needed.
+
+    Returns the number of actions freed.
+    """
+    cutoff = tehran_now() - timedelta(seconds=timeout_seconds)
+
+    return OrderAction.update(
+        status='free',
+        account=None,
+        updated_at=tehran_now()
+    ).where(
+        (OrderAction.type.in_(action_types)) &
+        (OrderAction.status == 'processing') &
+        (OrderAction.updated_at < cutoff)
     ).execute()
 
 
