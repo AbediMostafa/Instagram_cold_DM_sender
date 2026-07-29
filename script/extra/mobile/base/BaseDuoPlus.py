@@ -436,7 +436,10 @@ class BaseDuoPlus:
         plus the pauses — treat dumps as expensive.
         """
         self.command(f'DuoPlusDumpUI {self.DUMP_PATH_ON_DEVICE}')
-        time.sleep(1)
+        # Brief settle so the file is fully written before we cat it. 0.5s is
+        # enough in practice; the RATE_LIMIT_PAUSE between the two calls adds
+        # more on top.
+        time.sleep(0.5)
         return self.command(f'cat {self.DUMP_PATH_ON_DEVICE}', want_output=True)
 
     def find(self, xml_text, selector):
@@ -557,7 +560,7 @@ class BaseDuoPlus:
         return None
 
     # ── app / foreground ────────────────────────────────────────────────────
-    def open_url(self, url, settle_seconds=4):
+    def open_url(self, url, settle_seconds=4, verify=True):
         """
         Open an Instagram URL inside the Instagram app via a VIEW intent.
 
@@ -567,8 +570,10 @@ class BaseDuoPlus:
         foreground). Opening content by URL DOES work on mobile, unlike the
         "go home" case; there just is no home-equivalent URL.
 
-        Returns True when Instagram holds the foreground afterwards. The
-        caller decides what a False means (usually RetryableError).
+        Returns True when Instagram holds the foreground afterwards (or, when
+        verify=False, immediately after the settle without the extra
+        foreground call — used by time-critical flows like stories where the
+        interstitial only shows ~3s and every API call costs ~1.6s).
         """
         # Quote the URL and escape & so the shell on the device doesn't
         # split the command; ?igsh=... style params survive this way too.
