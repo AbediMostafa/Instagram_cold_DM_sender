@@ -411,15 +411,15 @@ class BaseDuoPlus:
         )
         self.command(f'input text "{escaped}"')
 
-    def clear_field(self, max_chars=60):
+    def clear_field(self, max_chars=30):
         """
-        Clear the focused field: jump to end, then batch-delete. Deletes ride
-        in one command (keyevent accepts repeats) to save API calls against
-        the 1 req/sec limit.
+        Clear the focused field in ONE API call: MOVE_END followed by a batch
+        of DELs in a single keyevent (keyevent accepts a sequence of codes).
+        Fewer calls matters against the 1 req/sec limit. 30 chars covers the
+        longest field we type (a share_group_NN name is ~14).
         """
-        self.command('input keyevent KEYCODE_MOVE_END')
-        dels = ' '.join(['67'] * max_chars)  # 67 = KEYCODE_DEL
-        self.command(f'input keyevent {dels}')
+        seq = ['123'] + ['67'] * max_chars  # 123 = MOVE_END, 67 = DEL
+        self.command(f'input keyevent {" ".join(seq)}')
 
     def press_back(self):
         self.command('input keyevent 4')
