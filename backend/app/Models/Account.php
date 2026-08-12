@@ -133,6 +133,15 @@ class Account extends Model
         return $this->belongsTo(Service::class);
     }
 
+    /**
+     * The DuoPlus device this account is pinned to (mobile side only).
+     * Web accounts have mobile_id = null.
+     */
+    public function mobile()
+    {
+        return $this->belongsTo(Mobile::class);
+    }
+
     public function specs()
     {
         return $this->hasOne(AccountSpec::class);

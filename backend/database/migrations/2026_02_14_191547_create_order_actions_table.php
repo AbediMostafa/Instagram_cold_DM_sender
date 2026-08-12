@@ -24,6 +24,9 @@ return new class extends Migration {
 
             $table->text('content')->nullable();
             $table->string('type', 50);
+
+            $table->unsignedInteger('count')->default(1);
+
             $table->string('status', 20)->default('free');
             $table->timestamps();
 

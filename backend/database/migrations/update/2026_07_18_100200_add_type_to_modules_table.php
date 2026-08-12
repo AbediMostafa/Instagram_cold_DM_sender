@@ -10,8 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('leads', function (Blueprint $table) {
-            $table->string('screenshot_path')->nullable()->after('country_id');
+        Schema::table('modules', function (Blueprint $table) {
+            $table->string('type')
+                ->default('web')
+                ->after('class_name')
+                ->index();
         });
     }
 
@@ -20,8 +23,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('leads', function (Blueprint $table) {
-            $table->dropColumn('screenshot_path');
+        Schema::table('modules', function (Blueprint $table) {
+            $table->dropColumn('type');
         });
     }
 };

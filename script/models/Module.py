@@ -7,6 +7,11 @@ class Module(BaseWithTimeZoneModel):
     title = CharField()
     module_path = CharField()
     class_name = CharField()
+
+    # Execution environment: 'web' (AdsPower/Playwright) or 'mobile' (DuoPlus).
+    # MobileProcessManager only loads type='mobile' modules from the workflow.
+    type = CharField(default='web')
+
     priority = CharField()
 
     # workflow = ForeignKeyField(

@@ -11,7 +11,12 @@ class Service(BaseWithTimeZoneModel):
         'comment',
         'send_direct_message',
         'account_profiler',
-        'reels_spammer', 'engagement', 'account_profiler', 'edward', 'new_account_login', 'saman_view_story']
+        'reels_spammer', 'engagement', 'account_profiler', 'edward', 'new_account_login', 'saman_view_story',
+        # Mobile (DuoPlus) service. Static because the mobile workers must keep
+        # running their warm-up (ExploreAndLike) even when no share order is
+        # pending — without this, should_run() would be False on an empty queue
+        # and MobileProcessManager would park every device.
+        'mobile']
     active_statuses = ['Pending', 'In progress']
 
     class Meta:

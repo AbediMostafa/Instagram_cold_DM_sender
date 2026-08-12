@@ -27,9 +27,10 @@ class AccountController extends Controller
                 'id', 'avatar_changed', 'username', 'instagram_state', 'email', 'phone',
                 'name', 'password', 'email_password', 'created_at', 'category_id', 'service_id',
                 'country_id', 'secret_key', 'proxy_id', 'profile_id', 'has_enough_posts', 'name',
-                'app_state')
+                'app_state', 'mobile_id')
             ->with([
                 'service:id,title',
+                'mobile:id,name,duo_id',
                 'country:id,name,country_code',
                 'tags:id,title',
                 'warnings' => function ($query) use ($startDate, $endDate) {
@@ -48,6 +49,18 @@ class AccountController extends Controller
             ->when(
                 r('countries'),
                 fn($_) => $_->whereIn('country_id', r('countries'))
+            )
+            // Filter by DuoPlus device. 'none' selects the web pool (accounts
+            // with no device), so both sides can be isolated from the panel.
+            ->when(
+                r('mobiles'),
+                function ($_) {
+                    $mobiles = (array) r('mobiles');
+                    if (in_array('none', $mobiles, true)) {
+                        return $_->whereNull('mobile_id');
+                    }
+                    return $_->whereIn('mobile_id', $mobiles);
+                }
             )
             ->when(
                 r('search'),

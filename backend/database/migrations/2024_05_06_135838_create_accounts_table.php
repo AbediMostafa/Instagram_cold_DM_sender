@@ -50,6 +50,13 @@ return new class extends Migration {
                 ->constrained('services')
                 ->nullOnDelete();
 
+            // Fixed assignment to a DuoPlus device (max 10 active accounts
+            // per mobile). Web accounts keep this null.
+            $table->foreignId('mobile_id')
+                ->nullable()
+                ->constrained('mobiles')
+                ->nullOnDelete();
+
             $table->foreignId('country_id')
                 ->nullable()
                 ->constrained('countries')

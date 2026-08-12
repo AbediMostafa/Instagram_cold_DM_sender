@@ -142,14 +142,7 @@ class BaseDuoPlus:
         last_err = None
 
         for attempt in range(retries):
-            print(url)
-            print(cls._headers())
-            print(payload)
-            resp = requests.post(
-                url,
-                headers=cls._headers(),
-                json=payload,
-                timeout=30)
+            resp = requests.post(url, headers=cls._headers(), json=payload, timeout=30)
             # The pause comes right after the request so even error paths
             # respect the QPS=1 limit.
             time.sleep(cls.RATE_LIMIT_PAUSE)
@@ -447,7 +440,7 @@ class BaseDuoPlus:
         # enough in practice; the RATE_LIMIT_PAUSE between the two calls adds
         # more on top.
         time.sleep(0.5)
-        return self.command(f'cat {self.DUMP_PATH_ON_DEVICE}', want_output=True) 
+        return self.command(f'cat {self.DUMP_PATH_ON_DEVICE}', want_output=True)
 
     def find(self, xml_text, selector):
         """
