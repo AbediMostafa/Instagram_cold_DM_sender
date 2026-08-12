@@ -2,6 +2,7 @@ import datetime
 import os
 from peewee import *
 from .Workflow import Workflow
+from .Mobile import Mobile
 from .BaseWithTimeZoneModel import BaseWithTimeZoneModel
 from script.extra.helper import tehran_now
 from dotenv import load_dotenv
@@ -15,6 +16,11 @@ class Process(BaseWithTimeZoneModel):
     status = CharField(default='idle')
     proxy_type = CharField()
     workflow = ForeignKeyField(Workflow, backref='processes', null=True)
+
+    # Which cloud phone this worker drives. Null for web workers, which are
+    # interchangeable; a mobile worker is pinned to one device for its life.
+    mobile = ForeignKeyField(Mobile, backref='processes', null=True)
+
     last_checked_at = DateTimeField(null=True, default=tehran_now)
 
     stopped_process = ['stopped', 'idle', 'terminated']
@@ -60,6 +66,48 @@ class Process(BaseWithTimeZoneModel):
 
         if not created:
             process.last_checked_at = now
+            process.save()
+
+        return process
+
+    @staticmethod
+    def register_mobile_worker(pid, mobile):
+        """
+        Register a mobile worker in the same table as web workers, pinned to
+        its device.
+
+        The row is keyed by (pid, server_ip) like any process, so a restart
+        creates a fresh row. To spare the operator re-assigning a workflow to
+        every device after each restart, the workflow of the most recent
+        previous row for the same device on this server is carried over; the
+        panel remains the only place it's ever chosen.
+        """
+        process = Process.update_or_create_process(pid)
+
+        changed = False
+
+        if process.mobile_id != mobile.id:
+            process.mobile = mobile
+            changed = True
+
+        if process.workflow_id is None:
+            previous = (
+                Process
+                .select()
+                .where(
+                    (Process.mobile == mobile) &
+                    (Process.server_ip == process.server_ip) &
+                    (Process.id != process.id) &
+                    (Process.workflow.is_null(False))
+                )
+                .order_by(Process.id.desc())
+                .first()
+            )
+            if previous is not None:
+                process.workflow = previous.workflow_id
+                changed = True
+
+        if changed:
             process.save()
 
         return process

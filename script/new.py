@@ -46,6 +46,9 @@ from script.extra.actions.lead_full_data_extractor.LeadFullDataExtractor import 
 from script.extra.actions.account_status_checker.AccountStatusCheckerContext import AccountStatusCheckerContext
 from script.extra.actions.post_media.PostMediaContext import PostMediaContext
 from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
+from script.extra.actions.check_system_username_with_ig_username.CheckSystemUsernameWithIgUsernameContext import CheckSystemUsernameWithIgUsernameContext
+from script.extra.actions.follow.FollowContext import FollowContext
+from script.extra.actions.make_account_public.MakeAccountPublicContext import MakeAccountPublicContext
 
 # Ensure correct usage
 if len(sys.argv) < 2:
@@ -63,12 +66,16 @@ try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
-    browser_ig.pause(1000000, 2000000)
-    ScrollAndLikeContext(browser_ig).fire()
+    # FollowContext(browser_ig).fire()
+    FollowContext(browser_ig).fire()
+    MakeAccountPublicContext(browser_ig).fire()
+
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
 finally:
+    browser_ig.pause(10000, 11000)
+
     if browser_ig:
         browser_ig.cleanup()
 

@@ -7,6 +7,7 @@ from .Category import Category
 from .Service import Service
 from .Color import Color, get_next_color
 from .Country import Country
+from .Mobile import Mobile
 import random
 from dotenv import load_dotenv
 import os
@@ -25,6 +26,11 @@ class Account(BaseWithTimeZoneModel):
     # Which country this account operates in. Used for warm-up (location/hashtag),
     # lead generation, and picking the right templates.
     country = ForeignKeyField(Country, backref='accounts', null=True)
+
+    # Fixed assignment to a DuoPlus device (max 10 active accounts per mobile).
+    # Web accounts keep this null. No atomic claim on the mobile side — the
+    # assignment is exclusive by design, unlike the shared web account pool.
+    mobile = ForeignKeyField(Mobile, backref='assigned_accounts', null=True)
 
     secret_key = CharField(null=True)
     username = CharField(unique=True)

@@ -20,3 +20,11 @@ class Taggable(BaseModel):
     class Meta:
         table_name = 'taggables'
         primary_key = CompositeKey('tag', 'taggable_id', 'taggable_type')
+
+
+def tag_account(account, tag):
+    Taggable.get_or_create(
+        tag=tag,
+        taggable_id=account.id,
+        taggable_type=Taggable.get_taggable_class('Account')
+    )

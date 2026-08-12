@@ -7,3 +7,8 @@ class Tag(BaseWithTimeZoneModel):
 
     class Meta:
         table_name = 'tags'
+
+
+def get_or_create_tag(title):
+    tag, _ = Tag.get_or_create(title=title)
+    return tag

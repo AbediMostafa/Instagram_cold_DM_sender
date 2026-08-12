@@ -26,15 +26,27 @@ from script.extra.api_actions.comment_and_reply.ApiCommentAndReplyContext import
 from script.extra.actions.follow.FollowContext import FollowContext
 from script.models.Proxy import get_free_proxy
 import requests
-from  script.extra.actions.get_account_pk.GetAccountPkContext import GetAccountPkContext
+# from  script.extra.actions.get_account_pk.GetAccountPkContext import GetAccountPkContext
 # account = get_next_account(service_id=6)
-account = Account.get_by_id(4133)
+
+if len(sys.argv) < 2:
+    print("Usage: python new.py <account_id>")
+    sys.exit(1)
+
+account_id = sys.argv[1]
+
+# Fetch the account (you may need to import Account from your models)
+account = Account.get_by_id(account_id)
+if not account:
+    sys.exit(1)
+
 
 browser_ig = BasePlaywright(account)
 browser_ig.init()
 LoginContext(browser_ig).fire()
 # ScrollAndLikeContext(browser_ig).fire()
-FollowContext(browser_ig).fire()
+# SendDmContext(browser_ig).fire()
+GetGroupMembersContext(browser_ig).fire()
 
 if browser_ig:
     browser_ig.cleanup()

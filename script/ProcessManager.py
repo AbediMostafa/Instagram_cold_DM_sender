@@ -74,9 +74,9 @@ class ProcessManager:
             err = f"There's no modules assigned to this workflow, going to sleep {self.sleep_time} seconds ..."
             raise ProcessShouldStop(err)
 
-        if self.service.should_run() is False:
-            err = f"We shouldn't run the process, going to sleep {self.sleep_time} seconds ..."
-            raise ProcessShouldStop(err)
+        # if self.service.should_run() is False:
+        #     err = f"We shouldn't run the process, going to sleep {self.sleep_time} seconds ..."
+        #     raise ProcessShouldStop(err)
 
     def get_modules(self):
 

@@ -44,18 +44,38 @@ class BrowserFollowEvent:
         return final_allowed_chunk
 
     def perform_follow(self):
-    # def perform_follow(self, lead):
+        # def perform_follow(self, lead):
 
-        try:
-            DirectlyGoToAccountPageAction(self.ig).start('tibtaniem')
-            self.ig.pause(3000, 4000)
+        # usernames = [
+        #     'gonzalezz_leilaa1j2',
+        #     'sohbantfar',
+        #     'zakariam_i_',
+        #     'ak.h_jafri',
+        # ]
 
-            self.ig.page.get_by_role("button", name="Follow").first.click()
-            self.ig.pause(3000, 4000)
+        usernames = [
+            'zakariam_i_',#1360
+            'ak.h_jafri',#13615
+            'pe.ter64314',#6139
+            'thiaxmjr7',#13591
+        ]
+        usernames = [
+            'plwers',
+            'aminaj.arte',  # 12870
+        ]
 
-        except Exception as e:
-            self.ig.account.add_cli(f'Problem Following lead : {str(e)}')
-            self.ig.account.add_log(f'Problem Following lead : {traceback.format_exc()}')
+        for username in usernames:
 
-            if self.command:
-                self.command.update_cmd('state', 'fail')
+            try:
+                DirectlyGoToAccountPageAction(self.ig).start(username)
+                self.ig.pause(4500, 6000)
+
+                self.ig.page.get_by_role("button", name="Follow").first.click()
+                self.ig.pause(3000, 4000)
+
+            except Exception as e:
+                self.ig.account.add_cli(f'Problem Following lead : {str(e)}')
+                self.ig.account.add_log(f'Problem Following lead : {traceback.format_exc()}')
+
+                if self.command:
+                    self.command.update_cmd('state', 'fail')

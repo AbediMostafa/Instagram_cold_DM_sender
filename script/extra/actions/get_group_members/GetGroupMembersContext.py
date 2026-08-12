@@ -4,20 +4,17 @@ from script.extra.actions.send_dm.strategies.IsProperServer import IsProperServe
 from script.extra.actions.send_dm.strategies.AccountIsOldEnough import AccountIsOldEnough
 from script.extra.exceptions import CantPerformAction, IsNotProperServer
 import traceback
-from .BrowserSendDmEvent import BrowserSendDmEvent
-from .AddToGroup import AddToGroup
+from .BrowserGetGroupMembersEvent import BrowserGetGroupMembersEvent
 
 
-class SendDmContext(InstagramMiddleware):
+class GetGroupMembersContext(InstagramMiddleware):
     ig = None
     strategies = []
-    # strategies = [IsProperServer, HitTheMaxAllowedDm, AccountIsOldEnough]
 
     def execute(self):
-        AddToGroup(self.ig).init()
 
         try:
-            self.cant_perform()
+            BrowserGetGroupMembersEvent(self.ig).init()
 
 
         except CantPerformAction as e:
@@ -28,7 +25,7 @@ class SendDmContext(InstagramMiddleware):
             return True
 
         except Exception as e:
-            self.ig.account.add_cli(f'Problem sending DM : {str(e)}')
-            self.ig.account.add_log(f'Problem sending DM : {traceback.format_exc()}')
+            self.ig.account.add_cli(f'Problem Adding to Group : {str(e)}')
+            self.ig.account.add_log(f'Problem Adding to Group : {traceback.format_exc()}')
 
         return False

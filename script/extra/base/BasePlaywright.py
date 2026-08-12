@@ -17,11 +17,7 @@ class BasePlaywright:
 
     def init(self):
 
-        if self.account.profile:
-            self.handler.update_profile()
-        else:
-            self.handler.create_profile()
-
+        self.handler.create_profile()
         self.handler.start_browser()
 
         self.browser = self.handler.get_browser()
@@ -55,6 +51,7 @@ class BasePlaywright:
     def cleanup(self):
         # Basic clean up like close Playwright context and page
         self.handler.cleanup()
+        self.handler.delete_profile()
 
     def pause(self, min_ms, max_ms):
         self.page.wait_for_timeout(random.randint(min_ms, max_ms))

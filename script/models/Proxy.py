@@ -107,7 +107,7 @@ def _fetch_external_ip_via_proxy(proxy: Proxy, timeout=10) -> str | None:
     return None
 
 
-def _try_claim_proxy():
+def _try_claim_proxy(_type=None):
     """
     Atomically claim one free proxy.
     """
@@ -116,6 +116,9 @@ def _try_claim_proxy():
         .select()
         .where(Proxy.is_used == 0)
     )
+
+    if _type:
+        query = query.where(Proxy.type == _type)
 
     if not query:
         print('No proxy available ...')
@@ -132,7 +135,7 @@ def _try_claim_proxy():
     return next_proxy
 
 
-def _try_reset_proxies():
+def _try_reset_proxies(_type=None):
     """
     Reset proxies with lock to prevent multiple threads from resetting.
     """
@@ -142,12 +145,39 @@ def _try_reset_proxies():
         return False
 
     try:
-        Proxy.update(is_used=0).execute()
+
+        if _type:
+            Proxy.update(is_used=0).where(Proxy.type == _type).execute()
+
+        else:
+            Proxy.update(is_used=0).execute()
 
         return True
 
     finally:
         Lock.release('proxy_reset')
+
+
+def _get_free_proxy(_type='isp'):
+    attempts = 0
+    max_attempts = 20
+
+    while attempts < max_attempts:
+        attempts += 1
+
+        next_proxy = _try_claim_proxy(_type)
+
+        if not next_proxy:
+            reset_done = _try_reset_proxies(_type)
+            if reset_done:
+                print('Proxies reset completed')
+            continue
+
+        print(f'Selected proxy : {next_proxy.ip}:{next_proxy.port}: {next_proxy.real_ip}')
+
+        return next_proxy
+
+    raise RuntimeError('No valid rotating proxy found after max attempts')
 
 
 def get_free_proxy(account=None, max_check_timeout=10, stuck_threshold_minutes=5, max_attempts=50):

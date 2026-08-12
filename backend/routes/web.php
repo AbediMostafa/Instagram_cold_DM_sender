@@ -31,6 +31,7 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
+use \App\Http\Controllers\RpaController;
 use App\Models\Template;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
@@ -50,138 +51,54 @@ use Symfony\Component\Process\Process;
 use \App\Models\Account;
 use \App\Models\Proxy;
 use \App\Models\Profile;
+use \App\Models\Tag;
+use \App\Models\Order;
 
 Route::get('/', function () {
 
 });
 Route::get('/test', function () {
-$accounts = Account::query()->whereHas('tags', function($_){
-    $_->where('title', 'web');
+//
 
-})->update([
-    'is_used'=>0,
-    'service_id'=>7,
-]);
+    $proxies = Proxy::query()->where('ip', 'gw.dataimpulse.com')->update(['type' => 'residential']);
 
-dd($accounts);
+    dd($proxies);
 
-    dd('shod');
-    $accounts = Account::query()->where('service_id', 6)
-        ->where('instagram_state', '!=', 'active')
-        ->update();
+    $links = [
+        'https://www.instagram.com/p/C9gw8NfMJKy/?igsh=MXB6a2NraTZld2NtMg==',
+        'https://www.instagram.com/p/DaZHlJvotcW/?igsh=MXVpZWw3eDBjd3Bkdw==',
+        'https://www.instagram.com/p/C3lOBchLukK/?igsh=MWE1ZDZybzYxZHQ5MA==',
+        'https://www.instagram.com/p/C3h5z-9t2ft/?igsh=MTVhem5rMGN6Z3JybA==',
+        'https://www.instagram.com/p/C3NMU1yNJdF/?igsh=NWEyZDNxenRvZWtk',
+        'https://www.instagram.com/p/C9gw7KRspcR/?igsh=MWk4dXcxYW03M3FleA==',
+    ];
 
-    dd($accounts);
-
-//        ->each(function ($account) {
-//            $data = [
-//                'user_ids'=>[$account->profile->profile_id]
-//            ];
-//            $url = "http://127.0.0.1:50325/api/v1/user/delete";
-//            $response = Http::withoutVerifying()->post($url, $data = $data);
-//            dump($response->json());
-//            sleep(3);
-//        });
-
-    dd(
-        '$accounts'
-    );
-
-//    name
-//    bio
-//    profile_picture_url|
-//    is_old
-
-
-    $leads = \App\Models\Lead::query()->whereNotNull('instagram_id')->whereNotNull('account_id')->count();
-
-    dd($leads);
-
-    $prfiles = Profile::query()->withCount('accounts')
-        ->orderBy('id')
-        ->get()
-        ->pluck('accounts_count', 'id');
-    dd($prfiles);
-
-    function makeProfile()
-    {
-        $profileName = \Illuminate\Support\Str::uuid();
-        $folderId = "8972883";
-        $payload = [
-            "name" => $profileName,
-            "group_id" => $folderId,
-            "user_proxy_config" => [
-                "proxy_soft" => "other",
-                "proxy_type" => "socks5",
-                "proxy_host" => "45.63.17.144",
-                "proxy_port" => 22115,
-                "proxy_user" => "AZ7564142044",
-                "proxy_password" => "OlVB7GTaqoD7",
-            ],
-            "fingerprint_config" => [
-                "language_switch" => 0,
-                "language" => ["en-US", "en"],
-                "screen_resolution" => "random",
-                "random_ua" => [
-                    "ua_system_version" => ["Windows 10"]
-                ]
-            ]
+    foreach ($links as $link) {
+        $data = [
+            'action' => 'add',
+            'service' => 744,
+            'quantity' => 100000,
+            'link' => $link
         ];
 
+        $res = Http::withoutVerifying()->post('http://192.142.4.29/api/v3', $data);
 
-        $url = "http://local.adspower.net:50325/api/v2/browser-profile/create";
-
-        $res = Http::withoutVerifying()->post($url, $payload);
-        $json = $res->json();
-
-        dump($json);
-
-        $profileId = $json['data']["profile_id"];
-        $profileNumber = $json['data']["profile_no"];
-
-        $profile = Profile::query()->create([
-            'title' => $profileName,
-            'folder' => $folderId,
-            'profile_id' => $profileId,
-            'profile_number' => $profileNumber,
-        ]);
-
-        dump($profile->id);
-        return $profile;
-
+        dump($res->json());
     }
 
-    $accounts = Account::query()
-        ->orderBy('id', 'DESC')
-        ->whereHas('tags', function ($tag) {
-            $tag->where('title', 'static_profile');
-        })->get()->pluck('id')->toArray();
 
-    $counter = 0;
-    $profile = makeProfile();
-    foreach ($accounts as $account) {
-        $counter++;
-
-        $accObj = Account::query()
-            ->find($account);
-        $accObj->profile_id = $profile->id;
-        $accObj->save();
-
-        if ($counter == 10) {
-            $profile = makeProfile();
-            dump('------------------------------------------------------------------------');
-            $counter = 0;
-        }
-    }
-
-    dd('shod');
-
-    dd($accounts);
-
-
-    dd(
-        \App\Models\Ip::query()->get()->pluck('ip')->toArray()
-    );
-
+//    $usernames = [
+//        'thesebastian6465',
+//        'mrathilde.m.n',
+//    ];
+//
+//    $accounts = Account::query()->whereIn('username', $usernames)
+//
+//        ->update([
+//            'mobile_id'=>5
+//        ]);
+//
+//    dd($accounts);
 });
 
 
@@ -402,5 +319,7 @@ Route::post('account/upload-post-connect', [AccountController::class, 'uploadPos
 Route::post('account/upload-post-disconnect', [AccountController::class, 'uploadPostDisconnect']);
 Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
 Route::post('account/reset-upload-post-status', [AccountController::class, 'resetUploadPostStatus']);
+
+Route::post('rpa/start', [RpaController::class, 'start']);
 
 //});

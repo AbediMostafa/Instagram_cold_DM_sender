@@ -154,6 +154,13 @@ class OrderController extends Controller
 
     private function deductBalance($actionType, $count = 1)
     {
+        // Balance-exempt types: no charge at all. Explicit guard (instead of
+        // relying on call sites) so a future generic call can't hit the
+        // default-rate fallback below.
+        if (in_array($actionType, ['share', 'comment_and_reply'])) {
+            return;
+        }
+
         $rates = [
             'comment' => 0.0003,
             'view_story' => 0.00005,
@@ -254,6 +261,11 @@ class OrderController extends Controller
 
     private function refundBalance($actionType, $count)
     {
+        // Balance-exempt types were never charged, so never refund either.
+        if (in_array($actionType, ['share', 'comment_and_reply'])) {
+            return;
+        }
+
         $rates = [
             'comment' => 0.0003,
             'view_story' => 0.00005,
@@ -277,6 +289,9 @@ class OrderController extends Controller
             740 => ['type' => 'comment', 'rate' => 0.30],
             741 => ['type' => 'view_story', 'rate' => 0.05],
             743 => ['type' => 'save_post', 'rate' => 0.04],
+            // Mobile (DuoPlus) share service. Balance-exempt: no charge,
+            // no deduct/refund anywhere (like comment_and_reply).
+            744 => ['type' => 'share', 'rate' => 0],
         ];
 
         if ($action === 'balance') {
@@ -329,6 +344,19 @@ class OrderController extends Controller
                     "refill" => false,
                     "cancel" => false,
                 ],
+                [
+                    "service" => 744,
+                    "name" => "Share",
+                    "category" => "SSM-fire",
+                    "rate" => "0.00$",
+                    "min" => 100,
+                    "max" => 500000,
+                    "type" => "default",
+                    "desc" => "Share a post, reel or story (mobile)",
+                    "dripfeed" => false,
+                    "refill" => false,
+                    "cancel" => false,
+                ],
             ]);
         }
 
@@ -351,11 +379,23 @@ class OrderController extends Controller
                 return $this->placeCommentOrder($link, $quantity);
             }
 
+            // save_post: a post or reel target
             if ($serviceType === 'save_post') {
                 if (!$this->isValidPostOrReelLink($link)) {
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Invalid link. Must be a post or reel URL.'
+                    ]);
+                }
+            }
+
+            // share (mobile) also accepts direct story links; highlights are
+            // rejected (the mobile flow cannot share them).
+            if ($serviceType === 'share') {
+                if (!$this->isValidShareTargetLink($link)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Invalid link. Must be a post, reel or story URL (highlights not supported).'
                     ]);
                 }
             }
@@ -368,8 +408,17 @@ class OrderController extends Controller
                 return $duplicateCheck;
             }
 
-            $minQty = ($serviceType === 'comment') ? 5 : 10;
-            $maxQty = 2000;
+            if ($serviceType === 'share') {
+                // Mobile fleet throughput is much lower per hour, so share
+                // orders only make sense in bulk. Quantities are counted
+                // against the customer amount, not the real views sent (each
+                // group sends per_group real views regardless).
+                $minQty = 100;
+                $maxQty = 500000;
+            } else {
+                $minQty = ($serviceType === 'comment') ? 5 : 10;
+                $maxQty = 2000;
+            }
 
             if ($quantity < $minQty || $quantity > $maxQty) {
                 return response()->json([
@@ -391,7 +440,8 @@ class OrderController extends Controller
                 "status" => "Pending",
             ]);
 
-            // view_story and save_post actions are created by OrderPreparer after data capture
+            // view_story, save_post and share actions are created by the
+            // preparer after data capture (is_prepared stays 0 here).
             // No immediate action creation needed for these types
 
             return response()->json([
@@ -543,8 +593,8 @@ class OrderController extends Controller
     {
         $order = Order::query()->find(r('orderId'));
 
-        // If is_prepared != 2, no actions exist yet (for view_story and save_post)
-        if (in_array($order->service_type, ['view_story', 'save_post']) && $order->is_prepared != 2) {
+        // If is_prepared != 2, no actions exist yet (view_story, save_post, share)
+        if (in_array($order->service_type, ['view_story', 'save_post', 'share']) && $order->is_prepared != 2) {
             return response()->json([
                 'message' => 'Order is not prepared yet',
                 'is_prepared' => $order->is_prepared,
@@ -556,6 +606,89 @@ class OrderController extends Controller
             ->with('account:id,username')
             ->orderBy('id')
             ->get();
+    }
+
+
+    /**
+     * Order report over an id range and/or date range, optionally filtered by
+     * service_type. Read-only stats endpoint for checking how many orders (and
+     * how much volume) landed in a window.
+     *
+     * Query params (all optional, combined with AND):
+     *   from_id / to_id       -> orders.id range (inclusive)
+     *   from_date / to_date   -> created_at date range (inclusive, Y-m-d)
+     *   service_type          -> exact match (e.g. 'share', 'comment')
+     *   status                -> exact match (e.g. 'Pending', 'Completed')
+     *
+     * Route to register:
+     *   Route::get('orders/report', [OrderController::class, 'report']);
+     */
+    public function report()
+    {
+        $query = Order::query();
+
+        if ($fromId = request('from_id')) {
+            $query->where('id', '>=', (int) $fromId);
+        }
+        if ($toId = request('to_id')) {
+            $query->where('id', '<=', (int) $toId);
+        }
+
+        // whereDate so a plain 'Y-m-d' to_date includes that whole day.
+        if ($fromDate = request('from_date')) {
+            $query->whereDate('created_at', '>=', $fromDate);
+        }
+        if ($toDate = request('to_date')) {
+            $query->whereDate('created_at', '<=', $toDate);
+        }
+
+        if ($serviceType = request('service_type')) {
+            $query->where('service_type', $serviceType);
+        }
+        if ($status = request('status')) {
+            $query->where('status', $status);
+        }
+
+        $totals = (clone $query)
+            ->selectRaw('COUNT(*) as orders_count')
+            ->selectRaw('COALESCE(SUM(total_count), 0) as sum_total_count')
+            ->selectRaw('COALESCE(SUM(completed_count), 0) as sum_completed_count')
+            ->first();
+
+        // Per-type / per-status breakdown of the same filtered set, so one
+        // call answers both "how many share orders" and "how many of them
+        // completed" without a second request.
+        $byType = (clone $query)
+            ->selectRaw('service_type')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->selectRaw('COALESCE(SUM(total_count), 0) as sum_total_count')
+            ->selectRaw('COALESCE(SUM(completed_count), 0) as sum_completed_count')
+            ->groupBy('service_type')
+            ->orderBy('service_type')
+            ->get();
+
+        $byStatus = (clone $query)
+            ->selectRaw('status')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->groupBy('status')
+            ->orderBy('status')
+            ->get();
+
+        return response()->json([
+            'filters' => [
+                'from_id' => request('from_id'),
+                'to_id' => request('to_id'),
+                'from_date' => request('from_date'),
+                'to_date' => request('to_date'),
+                'service_type' => request('service_type'),
+                'status' => request('status'),
+            ],
+            'orders_count' => (int) $totals->orders_count,
+            'sum_total_count' => (int) $totals->sum_total_count,
+            'sum_completed_count' => (int) $totals->sum_completed_count,
+            'by_service_type' => $byType,
+            'by_status' => $byStatus,
+        ]);
     }
 
 
@@ -1030,6 +1163,33 @@ class OrderController extends Controller
             if (preg_match($pattern, $link)) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Share (mobile) targets: post, reel, or a direct story link.
+     * Highlights are explicitly rejected; the mobile share flow cannot open
+     * them (mirrors LinkParser.is_highlight_link on the Python side).
+     */
+    private function isValidShareTargetLink($link)
+    {
+        // Highlight shapes are never valid, even though they start with /stories/
+        if (preg_match('/instagram\.com\/stories\/highlights\//i', $link)) {
+            return false;
+        }
+        if (preg_match('/instagram\.com\/s\/[a-zA-Z0-9]+/', $link)) {
+            return false;
+        }
+
+        if ($this->isValidPostOrReelLink($link)) {
+            return true;
+        }
+
+        // Direct story link: instagram.com/stories/{username}[/{story_id}]
+        if (preg_match('/instagram\.com\/stories\/[\w.]+/i', $link)) {
+            return true;
         }
 
         return false;
