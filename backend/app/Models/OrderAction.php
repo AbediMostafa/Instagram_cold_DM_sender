@@ -13,12 +13,19 @@ class OrderAction extends Model
     protected $guarded = [];
 
     protected $table = 'order_actions';
+    const SHARE_CHUNK_SIZE = 245;
+    const SHARE_ACTIONS_PER_RUN = 20;
+    /**
+     * Expiration time in minute
+     */
+    const EXPIRATION_TIME = 10;
 
     const TYPES = [
         'comment',
         'view_story',
         'view_all_stories',
         'save_post',
+        'share',
     ];
 
     const STATUSES = [
@@ -77,5 +84,14 @@ class OrderAction extends Model
     public static function isValidStatus($status)
     {
         return in_array($status, self::STATUSES);
+    }
+
+    public function updateWorkflow($workFlow, $status = 'processing')
+    {
+        return $this->update([
+            'status' => $status,
+            'duo_workflow_id' => $workFlow->id,
+            'updated_at' => now(),
+        ]);
     }
 }

@@ -41,4 +41,23 @@ class Mobile extends Model
     {
         return $this->hasMany(Process::class);
     }
+
+    public function getNextAccount()
+    {
+        $getNextAccount = fn() => $this->accounts()
+            ->orderBy('id')
+            ->where('is_used', 0)
+            ->first();
+
+
+        if (!$nextAccount = $getNextAccount()) {
+            $this->accounts()->update(['is_used' => 0]);
+            $nextAccount = $getNextAccount();
+        }
+
+        $nextAccount->is_used = 1;
+        $nextAccount->save();
+
+        return $nextAccount;
+    }
 }

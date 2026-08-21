@@ -31,7 +31,7 @@ use App\Http\Controllers\TikTokLinkController;
 use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
-use \App\Http\Controllers\RpaController;
+use \App\Http\Controllers\DuoWorkFlowController;
 use App\Models\Template;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
@@ -58,11 +58,18 @@ Route::get('/', function () {
 
 });
 Route::get('/test', function () {
-//
 
-    $proxies = Proxy::query()->where('ip', 'gw.dataimpulse.com')->update(['type' => 'residential']);
+    dump(
+        Order::query()->orderBy('id')->first()->actions
+    );
 
-    dd($proxies);
+    dd(
+        \App\Models\DuoWorkFlow::query()->get()
+    );
+    dd(
+        \App\Models\Cli::query()->count()
+    );
+    dd('salam');
 
     $links = [
         'https://www.instagram.com/p/C9gw8NfMJKy/?igsh=MXB6a2NraTZld2NtMg==',
@@ -321,6 +328,15 @@ Route::post('account/upload-post-disconnect', [AccountController::class, 'upload
 Route::post('account/toggle-upload-post', [AccountController::class, 'toggleUploadPost']);
 Route::post('account/reset-upload-post-status', [AccountController::class, 'resetUploadPostStatus']);
 
-Route::post('rpa/start', [RpaController::class, 'start']);
+Route::post('duo-workflow/start', [DuoWorkFlowController::class, 'start']);
+Route::post('duo-workflow/get-url', [DuoWorkFlowController::class, 'getUrl']);
+Route::post('duo-workflow/get-action-count', [DuoWorkFlowController::class, 'getActionCount']);
+Route::post('duo-workflow/group-click', [DuoWorkFlowController::class, 'groupClick']);
+Route::post('duo-workflow/change-account', [DuoWorkFlowController::class, 'changeAccount']);
+Route::post('/duo-test', function () {
+    return response()->json([
+        'success' => true,
+    ], 200);
+});
 
 //});

@@ -22,6 +22,11 @@ return new class extends Migration {
                 ->constrained('accounts')
                 ->nullOnDelete();
 
+            $table->foreignId('duo_workflow_id')
+                ->nullable()
+                ->constrained('duo_workflows')
+                ->nullOnDelete();
+
             $table->text('content')->nullable();
             $table->string('type', 50);
 
