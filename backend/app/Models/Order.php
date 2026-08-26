@@ -71,18 +71,22 @@ class Order extends Model
     public function makeShareActions()
     {
         $remaining = $this->total_count;
+        $actions = [];
 
         while ($remaining > 0) {
             // CHUNK_SIZE would be the size of group
             $count = min(OrderAction:: SHARE_CHUNK_SIZE, $remaining);
 
-            $this->actions()->create([
+            $actions[] = [
+                'order_id' => $this->id,
                 'type' => $this->service_type ?? 'share',
                 'count' => $count,
-            ]);
+            ];
 
             $remaining -= $count;
         }
+
+        OrderAction::query()->insert($actions);
 
         return $this;
     }
@@ -126,7 +130,7 @@ class Order extends Model
             ->get();
     }
 
-    public function getFreeActions($limit, $status ='free')
+    public function getFreeActions($limit, $status = 'free')
     {
         return $this->actions()
             ->where('status', $status)

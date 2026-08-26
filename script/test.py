@@ -113,32 +113,89 @@ from script.extra.actions.comment_on_others_post.CommentOnOthersPostContext impo
 from urllib.parse import urlparse
 from script.extra.actions.change_name_username.ChangeNameUsernameContext import ChangeNameUsernameContext
 from script.extra.routes import *
-from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
-from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import LeadProfileExtractor
-from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import ReelsAverageExtractor
-from script.ProcessManager import ProcessManager
-from script.models.Workflow import Workflow
-from script.models.Order import Order
-from script.models.Module import Module
-from script.models.Service import Service
-from script.models.Balance import Balance
-from script.models.Profile import Profile
-from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
-from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
-from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
-from script.extra.routes import *
-from script.models.AccountHelper import get_storage_state
-from script.models.Template import get_next
+# from script.extra.actions.like_and_comment.LikeAndCommentContext import LikeAndCommentContext
+# from script.extra.actions.lead_profile_extractor.LeadProfileExtractor import LeadProfileExtractor
+# from script.extra.actions.reels_average_extractor.ReelsAverageExtractor import ReelsAverageExtractor
+# from script.ProcessManager import ProcessManager
+# from script.models.Workflow import Workflow
+# from script.models.Order import Order
+# from script.models.Module import Module
+# from script.models.Service import Service
+# from script.models.Balance import Balance
+# from script.models.Profile import Profile
+# from script.extra.actions.scroll_and_like.ScrollAndLikeContext import ScrollAndLikeContext
+# from script.extra.actions.change_bio.ChangeBioContext import ChangeBioContext
+# from script.extra.actions.make_account_private.MakeAccountPrivateContext import MakeAccountPrivateContext
+# from script.extra.routes import *
+# from script.models.AccountHelper import get_storage_state
+# from script.models.Template import get_next
+import asyncio
+import aiohttp
+import os
+import uuid
 
-template = get_next('name-username')
-print(template)
+url = "http://209.200.252.19/api/v3"
+
+params = {
+    "service": 744,
+    "link": "https://www.instagram.com/p/C9gw7KRspcR/?igsh=MWk4dXcY...",
+    "action": "add",
+    "quantity": 3000,
+}
+
+os.makedirs("errors", exist_ok=True)
 
 
-from datetime import timedelta
-from script.extra.helper import tehran_now
+async def send_request(session, i):
+    try:
+        async with session.post(
+            url,
+            params=params,
+            timeout=aiohttp.ClientTimeout(total=60)
+        ) as response:
 
-import json
-account = Account.get_by_id(5146)
+            text = await response.text()
+
+            if response.status != 200:
+                filename = f"errors/{uuid.uuid4().hex}.html"
+
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(text)
+
+                print(f"[{i}/100] HTTP {response.status} -> {filename}")
+            else:
+                print(f"[{i}/100] HTTP {response.status} {text}")
+
+            return i, response.status
+
+    except Exception as e:
+        print(f"[{i}/100] ERROR: {e}")
+
+        # If you also want connection/timeout errors saved:
+        filename = f"errors/{uuid.uuid4().hex}.html"
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(str(e))
+
+        print(f"    Error saved -> {filename}")
+
+        return i, None
+
+
+async def main():
+    connector = aiohttp.TCPConnector(limit=100)
+
+    async with aiohttp.ClientSession(connector=connector) as session:
+        tasks = [
+            send_request(session, i)
+            for i in range(1, 201)
+        ]
+
+        await asyncio.gather(*tasks)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 # account = get_next_account()
 # LeadGenerateByPostEngagementContext(browser_ig).fire()
 # CommentOnOthersPostContext(browser_ig).fire()

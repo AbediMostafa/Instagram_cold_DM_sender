@@ -17,11 +17,16 @@ class DuoWorkFlowController extends Controller
 
     public function start()
     {
+        Log::info('START ' . microtime(true));
         foreach (Order::getPendings() as $order) {
-            $workflowId = DB::transaction(function () use ($order) {
+            $response = DB::transaction(function () use ($order) {
+
+                $mobile = Mobile::query()
+                    ->where('duo_id', r('phone_id'))
+                    ->first();
 
                 if ($order->is('Pending') && !$order->actions()->exists()) {
-                    Log::info("Order number {$order->id} is pending");
+                    Log::info("{$mobile?->name} -- Order number {$order->id} is pending");
                     $order->makeShareActions()->setStatusTo('In progress');
                 }
 
@@ -29,8 +34,7 @@ class DuoWorkFlowController extends Controller
                 $expiredActions = $order->getExpiredActions(OrderAction::SHARE_ACTIONS_PER_RUN);
                 $expiredCount = $expiredActions->count();
 
-                Log::info("{$expiredCount} Expired actions exists");
-
+                Log::info("{$mobile?->name} -- {$expiredCount} Expired actions exists");
 
                 $remaining = OrderAction::SHARE_ACTIONS_PER_RUN - $expiredCount;
 
@@ -38,31 +42,32 @@ class DuoWorkFlowController extends Controller
 
                 if ($remaining > 0) {
                     $freeActions = $order->getFreeActions($remaining);
-                    Log::info("{$freeActions->count()} Free actions claimed");
+                    Log::info("{$mobile?->name} -- {$freeActions->count()} Free actions claimed");
                 }
 
                 if ($expiredActions->isEmpty() && $freeActions->isEmpty()) {
                     return null;
                 }
 
-                $mobileId = Mobile::query()
-                    ->where('duo_id', r('phone_id'))
-                    ->first()
-                    ?->id;
-
                 $workFlow = $order->duoWorkFlows()->create([
-                    'mobile_id' => $mobileId,
+                    'mobile_id' => $mobile?->id,
                     'task_id' => r('task_id'),
                 ]);
 
                 $expiredActions->each(fn(OrderAction $action) => $action->updateWorkflow($workFlow));
                 $freeActions->each(fn(OrderAction $action) => $action->updateWorkflow($workFlow));
 
-                return $workFlow->id;
+                return [
+                    'action_count' => $expiredCount + $freeActions->count(),
+                    'url' => $order->target_link,
+                    'workflow_id' => $workFlow->id,
+                ];
             });
 
-            if ($workflowId !== null) {
-                return $workflowId;
+            Log::info('RETURN ' . microtime(true));
+
+            if ($response !== null) {
+                return $response;
             }
         }
         return -1;
@@ -154,6 +159,11 @@ class DuoWorkFlowController extends Controller
 
         $nextAccount = $mobile->getNextAccount();
 
-        return $nextAccount ? $nextAccount->username : -1;
+        if ($nextAccount) {
+            Log::info("Account changed to {$nextAccount->username}");
+            return $nextAccount->username;
+        }
+
+        return -1;
     }
 }

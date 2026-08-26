@@ -68,10 +68,10 @@ class OrderController extends Controller
         // Frontend expects: sent_actions_count, free_actions_count, processing_actions_count, failed_actions_count
         $orders->getCollection()->transform(function ($order) {
             $counts = explode(',', $order->action_counts_raw ?? '0,0,0,0');
-            $order->sent_actions_count = (int) ($counts[0] ?? 0);
-            $order->free_actions_count = (int) ($counts[1] ?? 0);
-            $order->processing_actions_count = (int) ($counts[2] ?? 0);
-            $order->failed_actions_count = (int) ($counts[3] ?? 0);
+            $order->sent_actions_count = (int)($counts[0] ?? 0);
+            $order->free_actions_count = (int)($counts[1] ?? 0);
+            $order->processing_actions_count = (int)($counts[2] ?? 0);
+            $order->failed_actions_count = (int)($counts[3] ?? 0);
             unset($order->action_counts_raw);
             return $order;
         });
@@ -282,6 +282,10 @@ class OrderController extends Controller
 
     public function v3()
     {
+//        Log::info('API v3 called', [
+//            'ip' => request()->ip(),
+//            'payload' => request()->all(),
+//        ]);
 
         $action = request('action');
 
@@ -361,10 +365,10 @@ class OrderController extends Controller
         }
 
         if ($action === 'add') {
-            $serviceCode = (int) request('service');
+            $serviceCode = (int)request('service');
             $link = request('link');
-            $quantity = (int) request('quantity');
-
+            $quantity = (int)request('quantity');
+            $isValidLink = true;
             if (!isset($serviceMap[$serviceCode])) {
                 return response()->json([
                     'status' => 'error',
@@ -392,21 +396,16 @@ class OrderController extends Controller
             // share (mobile) also accepts direct story links; highlights are
             // rejected (the mobile flow cannot share them).
             if ($serviceType === 'share') {
-                if (!$this->isValidShareTargetLink($link)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Invalid link. Must be a post, reel or story URL (highlights not supported).'
-                    ]);
-                }
+                $isValidLink = $this->isValidShareTargetLink($link);
             }
 
             $cleanLink = $this->cleanInstagramLink($link);
 
             // Duplicate link validation
-            $duplicateCheck = $this->checkDuplicateLink($cleanLink, $serviceType);
-            if ($duplicateCheck !== true) {
-                return $duplicateCheck;
-            }
+//            $duplicateCheck = $this->checkDuplicateLink($cleanLink, $serviceType);
+//            if ($duplicateCheck !== true) {
+//                return $duplicateCheck;
+//            }
 
             if ($serviceType === 'share') {
                 // Mobile fleet throughput is much lower per hour, so share
@@ -437,7 +436,9 @@ class OrderController extends Controller
                 "service_type" => $serviceType,
                 "target_link" => $cleanLink,
                 "total_count" => $quantity,
-                "status" => "Pending",
+
+                // If we're sharing and link is not valid, we need to place the order and make it Cancel
+                "status" => $isValidLink ? "Pending" : 'Canceled',
             ]);
 
             // view_story, save_post and share actions are created by the
@@ -445,7 +446,7 @@ class OrderController extends Controller
             // No immediate action creation needed for these types
 
             return response()->json([
-                'status' => 'success',
+                'status' => $order->status,
                 'order' => $order->id
             ]);
         }
@@ -463,9 +464,6 @@ class OrderController extends Controller
 
     public function telegramGroupSender()
     {
-        Log::info('telegramGroupSender', [
-            'body' => r()->all(),
-        ]);
         $action = request('action');
         if ($action === 'balance') {
             return response()->json([
@@ -628,10 +626,10 @@ class OrderController extends Controller
         $query = Order::query();
 
         if ($fromId = request('from_id')) {
-            $query->where('id', '>=', (int) $fromId);
+            $query->where('id', '>=', (int)$fromId);
         }
         if ($toId = request('to_id')) {
-            $query->where('id', '<=', (int) $toId);
+            $query->where('id', '<=', (int)$toId);
         }
 
         // whereDate so a plain 'Y-m-d' to_date includes that whole day.
@@ -683,9 +681,9 @@ class OrderController extends Controller
                 'service_type' => request('service_type'),
                 'status' => request('status'),
             ],
-            'orders_count' => (int) $totals->orders_count,
-            'sum_total_count' => (int) $totals->sum_total_count,
-            'sum_completed_count' => (int) $totals->sum_completed_count,
+            'orders_count' => (int)$totals->orders_count,
+            'sum_total_count' => (int)$totals->sum_total_count,
+            'sum_completed_count' => (int)$totals->sum_completed_count,
             'by_service_type' => $byType,
             'by_status' => $byStatus,
         ]);
@@ -770,9 +768,9 @@ class OrderController extends Controller
         }
 
         if ($action === 'add') {
-            $serviceCode = (int) request('service');
+            $serviceCode = (int)request('service');
             $link = request('link');
-            $quantity = (int) request('quantity');
+            $quantity = (int)request('quantity');
 
             if (!isset($serviceMap[$serviceCode])) {
                 return response()->json([
@@ -930,11 +928,11 @@ class OrderController extends Controller
                 $rate = $this->getRateForServiceType($order->service_type, $serviceMap);
 
                 $response[$id] = [
-                    'order' => (string) $order->id,
+                    'order' => (string)$order->id,
                     'status' => $order->status,
                     'charge' => $this->calculateCharge($order, $rate),
                     'start_count' => $order->start_count,
-                    'remains' => (string) $order->getRemains(),
+                    'remains' => (string)$order->getRemains(),
                     'currency' => "USD"
                 ];
             }
@@ -954,15 +952,18 @@ class OrderController extends Controller
 
             $rate = $this->getRateForServiceType($order->service_type, $serviceMap);
 
-            return response()->json([
-                'status' => 'success',
-                'order' => (string) $order->id,
+            $respose = [
+                'status' => $order->status,
+//                'status' => 'success',
+                'order' => (string)$order->id,
                 'order_status' => $order->status,
                 'charge' => $this->calculateCharge($order, $rate),
                 'start_count' => $order->start_count,
-                'remains' => (string) $order->getRemains(),
+                'remains' => (string)$order->getRemains(),
                 'currency' => "USD"
-            ]);
+            ];
+
+            return response()->json($respose);
         }
 
         return response()->json([
@@ -1059,11 +1060,11 @@ class OrderController extends Controller
                 $rate = $this->getRateForServiceType($order->service_type, $serviceMap);
 
                 $response[$id] = [
-                    'order' => (string) $order->id,
+                    'order' => (string)$order->id,
                     'status' => $order->status,
                     'charge' => $this->calculateChargeV4($order, $rate),
                     'start_count' => $order->start_count,
-                    'remains' => (string) $order->getRemains(),
+                    'remains' => (string)$order->getRemains(),
                     'currency' => "USD"
                 ];
             }
@@ -1085,11 +1086,11 @@ class OrderController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'order' => (string) $order->id,
+                'order' => (string)$order->id,
                 'order_status' => $order->status,
                 'charge' => $this->calculateChargeV4($order, $rate),
                 'start_count' => $order->start_count,
-                'remains' => (string) $order->getRemains(),
+                'remains' => (string)$order->getRemains(),
                 'currency' => "USD"
             ]);
         }
@@ -1189,7 +1190,7 @@ class OrderController extends Controller
 
         // Direct story link: instagram.com/stories/{username}[/{story_id}]
         if (preg_match('/instagram\.com\/stories\/[\w.]+/i', $link)) {
-            return true;
+            return false;
         }
 
         return false;
@@ -1234,7 +1235,7 @@ class OrderController extends Controller
         try {
             $link = request('link');
             $comments = request('comments');
-            $quantity = (int) request('quantity', 0);
+            $quantity = (int)request('quantity', 0);
 
             // Comments are required, at least the main comment
             if (empty($comments)) {

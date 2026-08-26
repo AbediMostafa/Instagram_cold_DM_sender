@@ -67,14 +67,14 @@ try:
     browser_ig.init()
     LoginContext(browser_ig).fire()
     # FollowContext(browser_ig).fire()
-    FollowContext(browser_ig).fire()
+    # FollowContext(browser_ig).fire()
     MakeAccountPublicContext(browser_ig).fire()
 
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
 finally:
-    browser_ig.pause(10000, 11000)
+    browser_ig.pause(1000000, 1100000)
 
     if browser_ig:
         browser_ig.cleanup()

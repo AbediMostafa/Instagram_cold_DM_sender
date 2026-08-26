@@ -32,6 +32,7 @@ use App\Http\Controllers\TikTokTagController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
 use \App\Http\Controllers\DuoWorkFlowController;
+use App\Models\Mobile;
 use App\Models\Template;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
@@ -56,11 +57,72 @@ use \App\Models\Order;
 
 Route::get('/', function () {
 
+//    Device_2 ==> "evurasian_cookncrea" پست در تایم لاین
+//    Device_1 ==> yzoehanaaa_ --> پست در تایم لاین
+//    Device_5 ==> frake_jinnat --> پست در تایم لاین
+    /** Device_5 :
+     * 0 => "_themarziie_"
+     * 1 => "mrathilde.m.n"@
+     * 2 => "euger.vasquez.3"@
+     * 3 => "goldfishschou"@
+     * 4 => "nivedi_ta_kuragund"@
+     * 5 => "shafmuanjohari"@
+     * 6 => "frake_jinnat"@
+     * 7 => "simndy_ii69"@
+     * 8 => "ylon_2b"@
+     * 9 => "thesebastian6465"@
+     */
+
 });
 Route::get('/test', function () {
+    $start = microtime(true);
 
-    dump(
-        Order::query()->orderBy('id')->first()->actions
+    DB::disconnect('pgsql');
+
+    DB::connection('pgsql')->getPdo();
+
+    $connectionTime = (microtime(true) - $start) * 1000;
+
+    dd($connectionTime);
+    dd([
+        'default' => config('database.default'),
+        'host' => config('database.connections.pgsql.host'),
+        'port' => config('database.connections.pgsql.port'),
+        'database' => config('database.connections.pgsql.database'),
+        'persistent' => config('database.connections.pgsql.persistent'),
+    ]);
+    $start = microtime(true);
+
+    DB::select('SELECT 1');
+
+    $time = (microtime(true) - $start) * 1000;
+
+    dd($time);
+
+    dd(
+        DB::select("
+
+       EXPLAIN (ANALYZE, BUFFERS)
+SELECT *
+FROM orders
+WHERE id = 40624
+LIMIT 1;
+        ")
+    );
+
+//    $response = Http::withoutVerifying()->post('http://209.200.252.19/duo-workflow/start');
+//    dd(
+//        $response->json()
+//    );
+
+   $res = Http::withoutVerifying()->post("http://209.200.252.19/duo-workflow/start");
+    dd($res->json());
+
+     $mobile = Mobile::query()
+        ->find(5);
+
+    dd(
+        $mobile->accounts->pluck('username')->toArray()
     );
 
     dd(
@@ -107,15 +169,6 @@ Route::get('/test', function () {
 //
 //    dd($accounts);
 });
-
-
-//
-//$order->completed_count = $order->actions_count;
-//$order->status = 'In progress';
-//$order->save();
-//$order->actions()->whereNull('account_id')->update(['status'=>'free']);
-//
-//dd($order);
 
 
 Route::post('login', [AuthController::class, 'login']);
@@ -333,10 +386,10 @@ Route::post('duo-workflow/get-url', [DuoWorkFlowController::class, 'getUrl']);
 Route::post('duo-workflow/get-action-count', [DuoWorkFlowController::class, 'getActionCount']);
 Route::post('duo-workflow/group-click', [DuoWorkFlowController::class, 'groupClick']);
 Route::post('duo-workflow/change-account', [DuoWorkFlowController::class, 'changeAccount']);
-Route::post('/duo-test', function () {
-    return response()->json([
-        'success' => true,
-    ], 200);
+Route::post('/test-case', function () {
+    return [
+        ''
+    ];
 });
 
 //});

@@ -23,6 +23,7 @@ from script.extra.api_actions.comment.ApiCommentContext import ApiCommentContext
 from script.extra.api_actions.view_story.ApiViewStoryContext import ApiViewStoryContext
 from script.extra.api_actions.save_post.ApiSavePostContext import ApiSavePostContext
 from script.extra.api_actions.comment_and_reply.ApiCommentAndReplyContext import ApiCommentAndReplyContext
+from script.extra.actions.get_group_members.GetGroupMembersContext import GetGroupMembersContext
 from script.extra.actions.follow.FollowContext import FollowContext
 from script.models.Proxy import get_free_proxy
 import requests
