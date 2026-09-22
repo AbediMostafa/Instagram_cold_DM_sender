@@ -469,6 +469,8 @@ class ErrorIndicators(BaseAction):
 
         messages = [
             'You can no longer request a review',
+            'We removed some content or messages',
+            'We removed your comment',
         ]
 
         if self.ig.is_visible_by_texts(messages):

@@ -294,7 +294,7 @@ import {useProcessStore} from "@/stores/Process";
 import EditProcessModal from "@/components/modals/process/EditProcessModal.vue";
 import {showModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
-import {useWorkflowStore} from "@/stores/workflow";
+import {useWorkflowStore} from "@/stores/Workflow";
 
 const store = useProcessStore();
 const formData = reactive({

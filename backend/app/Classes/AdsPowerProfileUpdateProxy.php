@@ -31,9 +31,12 @@ class AdsPowerProfileUpdateProxy
             ],
         ];
 
-        $url = "http://local.adspower.net:50325/api/v1/user/update";
+        $url = "http://127.0.0.1:50325/api/v1/user/update";
 
-        $res = Http::withoutVerifying()->post($url, $payload);
+        $res = Http::withoutVerifying()->post($url, $payload,  proxies={
+            'http': None,
+            'https': None,
+        });
         return $res;
     }
 
@@ -53,9 +56,12 @@ class AdsPowerProfileUpdateProxy
             ],
         ];
 
-        $url = "http://local.adspower.net:50325/api/v1/user/update";
+        $url = "http://127.0.0.1:50325/api/v1/user/update";
 
-        $res = Http::withoutVerifying()->post($url, $payload);
+        $res = Http::withoutVerifying()->post($url, $payload,  proxies={
+            'http': None,
+            'https': None,
+        });
         return true;
     }
 
@@ -77,9 +83,12 @@ class AdsPowerProfileUpdateProxy
                 ],
             ];
 
-            $url = "http://local.adspower.net:50325/api/v1/user/update";
+            $url = "http://127.0.0.1:50325/api/v1/user/update";
 
-            $response = Http::withoutVerifying()->post($url, $payload);
+            $response = Http::withoutVerifying()->post($url, $payload,  proxies={
+            'http': None,
+            'https': None,
+        });
         }
     }
 }

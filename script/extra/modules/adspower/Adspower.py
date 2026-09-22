@@ -7,8 +7,11 @@ class Adspower:
 
         profile_id = account.profile.profile_id
         response = requests.get(
-            f'http://local.adspower.net:50325/api/v1/browser/start?user_id={profile_id}&ip_tab=0')
-            # f'http://local.adspower.net:50325/api/v1/browser/start?user_id={profile_id}&ip_tab=0&headless=1')
+            f'http://127.0.0.1:50325/api/v1/browser/start?user_id={profile_id}&ip_tab=0',  proxies={
+            'http': None,
+            'https': None,
+        })
+            # f'http://127.0.0.1:50325/api/v1/browser/start?user_id={profile_id}&ip_tab=0&headless=1')
 
         if response.status_code == 200:
             res_data = response.json()

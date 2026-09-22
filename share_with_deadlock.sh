@@ -15,6 +15,7 @@ LOCK_PID="$LOCK_DIR/pid"
 START_TIME=$(date +%s)
 DEADLINE=$((START_TIME + MAX_RUNTIME))
 
+
 # ==========================================================
 # LOCK
 # ==========================================================
@@ -197,24 +198,25 @@ click_resource()
     resource_id="$1"
     description="$2"
 
-    if ! dump_ui; then
-        echo "ERROR: UI dump failed."
-        return 1
-    fi
+    dump_ui
 
     line=$(grep -o \
         "<node[^>]*resource-id=\"$resource_id\"[^>]*/>" \
         /sdcard/window.xml | head -1)
 
     if [ -z "$line" ]; then
+
         echo "ERROR: $description not found."
+
         return 1
     fi
 
     coords=$(get_center "$line")
 
     if [ -z "$coords" ]; then
+
         echo "ERROR: Could not determine $description coordinates."
+
         return 1
     fi
 
@@ -222,6 +224,8 @@ click_resource()
 
     x="$1"
     y="$2"
+
+    echo "Clicking $description at X=$x Y=$y"
 
     input tap "$x" "$y"
 
@@ -293,55 +297,25 @@ change_account()
 
 
     # ==================================================
-    # 3. Long press profile/avatar
+    # 3. Click profile/avatar
     # ==================================================
 
-    echo ""
-    echo "Long pressing profile/avatar..."
+    click_resource \
+        "com.instagram.android:id/tab_avatar" \
+        "profile/avatar button" || return 1
 
-    dump_ui
-
-    line=$(grep -o \
-        '<node[^>]*resource-id="com.instagram.android:id/tab_avatar"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' \
-        /sdcard/window.xml | head -1)
-
-    if [ -z "$line" ]; then
-        echo "ERROR: Profile/avatar button not found."
-        return 1
-    fi
-
-    coords=$(get_center "$line")
-
-    if [ -z "$coords" ]; then
-        echo "ERROR: Could not determine avatar coordinates."
-        return 1
-    fi
-
-    set -- $coords
-
-    x="$1"
-    y="$2"
-
-    echo "Long pressing avatar at X=$x Y=$y"
-
-    # Long press
-    input swipe "$x" "$y" "$x" "$y" 1000
-
-    echo "Long press completed."
-
-    safe_sleep 1 || return 1
-
+    safe_sleep 1.5 || return 1
 
 
     # ==================================================
     # 4. Click account title
     # ==================================================
 
-#    click_resource \
-#        "com.instagram.android:id/action_bar_title" \
-#        "account title" || return 1
-#
-#    safe_sleep 1 || return 1
+    click_resource \
+        "com.instagram.android:id/action_bar_title" \
+        "account title" || return 1
+
+    safe_sleep 1 || return 1
 
 
     # ==================================================
@@ -450,8 +424,6 @@ is_invalid_post()
         -e 'Get the full experience' \
         -e 'Open Instagram' \
         -e 'This profile is private' \
-        -e 'Restricted Video' \
-        -e 'This video is not available in your country' \
         /sdcard/window.xml; then
 
         return 0
@@ -487,369 +459,6 @@ fail_workflow()
     return 1
 }
 
-## ==========================================================
-## TEST SINGLE URL
-## ==========================================================
-#
-#test_url()
-#{
-#    url="https://www.instagram.com/p/DdXwA9vjX4s/"
-#
-#    action_count=3
-#
-#    echo ""
-#    echo "=================================================="
-#    echo "TEST URL"
-#    echo "=================================================="
-#    echo "URL: $url"
-#    echo "Action Count: $action_count"
-#    echo "=================================================="
-#
-#    # ==================================================
-#    # Open Instagram URL
-#    # ==================================================
-#
-#    echo "Opening Instagram URL..."
-#
-#    am start \
-#        -a android.intent.action.VIEW \
-#        -d "$url" \
-#        com.instagram.android
-#
-#    sleep 3
-#
-#    # ==================================================
-#    # Check if post/reel is unavailable
-#    # ==================================================
-#
-#    echo "Checking whether Instagram post is available..."
-#
-#    if is_invalid_post; then
-#
-#        echo ""
-#        echo "=========================================="
-#        echo "INVALID / UNAVAILABLE POST DETECTED"
-#        echo "=========================================="
-#
-#        dump_ui
-#        cat /sdcard/window.xml
-#
-#        return 1
-#    fi
-#
-#    echo "Post appears to be available."
-#
-#    # ==================================================
-#    # Click Share
-#    # ==================================================
-#
-#    echo "Looking for Share button..."
-#    share_clicked=0
-#
-#    for attempt in 1 2 3; do
-#        echo ""
-#        echo "=========================================="
-#        echo "Looking for Share button..."
-#        echo "Attempt: $attempt / 3"
-#        echo "=========================================="
-#
-#        # Try normal post Share button
-#        if click_resource \
-#            "com.instagram.android:id/row_feed_button_share" \
-#            "Normal Share button"; then
-#            echo "Normal post Share button clicked."
-#            share_clicked=1
-#            break
-#        fi
-#
-#        echo "Normal Share button not found."
-#
-#        # Try Reel Share button
-#        # echo "Trying Reel Share button..."
-#        #
-#        # if click_resource \
-#        #     "com.instagram.android:id/direct_share_button" \
-#        #     "Reel Share button"; then
-#        #     echo "Reel Share button clicked."
-#        #     share_clicked=1
-#        #     break
-#        # fi
-#        #
-#        # echo "Reel Share button not found."
-#
-#        if [ "$attempt" -ge 3 ]; then
-#            echo ""
-#            echo "Maximum attempts reached."
-#            echo "Share button could not be found."
-#            break
-#        fi
-#
-#        echo ""
-#        echo "Share button not found."
-#        echo "Scrolling down... (attempt $attempt / 3)"
-#
-#        echo "Before swipe"
-#
-#        input swipe 540 1400 540 500 500
-#
-#        echo "After swipe"
-#
-#        echo "NO SLEEP"
-#
-#        echo "Loop should continue now..."
-#
-#    done
-#
-#    # Check final result
-#    if [ "$share_clicked" -eq 1 ]; then
-#      echo ""
-#      echo "Share button successfully clicked."
-#
-#    else
-#      echo ""
-#      echo "FAILED: Share button could not be found."
-#
-#    fi
-#
-#    echo ""
-#    echo "Share button clicked successfully."
-#
-#    # ==================================================
-#    # Initial scrolling
-#    # ==================================================
-#
-#    sleep 2
-#
-#    input swipe 540 1643 540 1000 500
-#    sleep 0.5
-#
-#    input swipe 540 1296 540 1140 200
-#    sleep 0.3
-#
-#    # ==================================================
-#    # Click share groups
-#    # ==================================================
-#
-#    clicked=0
-#    no_new_groups=0
-#    max_no_new_groups=5
-#
-#    clicked_groups=""
-#
-#    echo "befor while"
-#    while [ "$clicked" -lt "$action_count" ]; do
-#
-#        echo ""
-#        echo "[1] in first while"
-#
-#        echo ""
-#        echo "========== GROUP LOOP =========="
-#        echo "Clicked: $clicked / $action_count"
-#        echo "No new groups: $no_new_groups / $max_no_new_groups"
-#
-#        dump_ui
-#
-#        echo ""
-#        echo "[2] after ui dump"
-#
-#        grep -o \
-#            'text="share_group[^"]*"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' \
-#            /sdcard/window.xml > /sdcard/share_groups.txt
-#
-#        new_groups_this_screen=0
-#
-#        while read -r line; do
-#
-#          echo ""
-#          echo "[3] in second while"
-#
-#            if [ "$clicked" -ge "$action_count" ]; then
-#                break
-#            fi
-#
-#            group=$(echo "$line" | sed \
-#                's/.*text="\(share_group_[0-9]*\)".*/\1/')
-#
-#            if [ -z "$group" ]; then
-#                continue
-#            fi
-#
-#            # Skip already clicked groups
-#            case " $clicked_groups " in
-#                *" $group "*)
-#                    echo "Already clicked: $group"
-#                    continue
-#                    ;;
-#            esac
-#
-#            coords=$(get_center "$line")
-#
-#            if [ -z "$coords" ]; then
-#                continue
-#            fi
-#
-#            set -- $coords
-#
-#            x="$1"
-#            y="$2"
-#
-#            echo "Clicking $group at $x,$y"
-#
-#            input tap "$x" "$y"
-#
-#            sleep 0.3
-#
-#            clicked_groups="$clicked_groups $group"
-#
-#            clicked=$((clicked + 1))
-#            new_groups_this_screen=$((new_groups_this_screen + 1))
-#
-#            echo "Clicked: $group"
-#            echo "Progress: $clicked / $action_count"
-#
-#        done < /sdcard/share_groups.txt
-#
-#        # ==================================================
-#        # Completed
-#        # ==================================================
-#
-#        if [ "$clicked" -ge "$action_count" ]; then
-#            break
-#        fi
-#
-#        # ==================================================
-#        # Nothing new
-#        # ==================================================
-#
-#        if [ "$new_groups_this_screen" -eq 0 ]; then
-#
-#            no_new_groups=$((no_new_groups + 1))
-#
-#            echo "No new groups found."
-#            echo "Attempt: $no_new_groups / $max_no_new_groups"
-#
-#        else
-#
-#            no_new_groups=0
-#
-#        fi
-#
-#        # ==================================================
-#        # Prevent infinite scrolling
-#        # ==================================================
-#
-#        if [ "$no_new_groups" -ge "$max_no_new_groups" ]; then
-#
-#            echo ""
-#            echo "ERROR: No new groups found."
-#            echo "Clicked $clicked / $action_count"
-#
-#            return 1
-#        fi
-#
-#        echo "Scrolling for more groups..."
-#
-#        input swipe 540 1460 540 350 400
-#
-#        sleep 0.7
-#
-#    done
-#
-#    echo ""
-#    echo "Finished groups."
-#    echo "Total unique clicks: $clicked / $action_count"
-#    echo "Clicked groups: $clicked_groups"
-#
-#    # ==================================================
-#    # Wait for Send
-#    # ==================================================
-#
-#    found=0
-#    button_type=""
-#
-#    for i in $(seq 1 5); do
-#
-#        echo ""
-#        echo "[4] in first for"
-#
-#        dump_ui
-#
-#        line=$(grep -o \
-#            'text="Send separately"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' \
-#            /sdcard/window.xml | head -1)
-#
-#        if [ -n "$line" ]; then
-#
-#            found=1
-#            button_type="Send separately"
-#
-#            break
-#        fi
-#
-#        line=$(grep -o \
-#            'text="Send"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' \
-#            /sdcard/window.xml | head -1)
-#
-#        if [ -n "$line" ]; then
-#
-#            found=1
-#            button_type="Send"
-#
-#            break
-#        fi
-#
-#        echo "Waiting for Send... $i/5"
-#
-#        sleep 0.2
-#
-#    done
-#
-#    # ==================================================
-#    # Check Send
-#    # ==================================================
-#
-#    if [ "$found" -ne 1 ]; then
-#
-#        echo "ERROR: Send button did not appear."
-#
-#        dump_ui
-#        cat /sdcard/window.xml
-#
-#        return 1
-#    fi
-#
-#    # ==================================================
-#    # Click Send
-#    # ==================================================
-#
-#    coords=$(get_center "$line")
-#
-#    if [ -z "$coords" ]; then
-#
-#        echo "ERROR: Could not determine Send coordinates."
-#
-#        return 1
-#    fi
-#
-#    set -- $coords
-#
-#    x="$1"
-#    y="$2"
-#
-#    echo "Clicking '$button_type' at X=$x Y=$y"
-#
-#    input tap "$x" "$y"
-#
-#    echo "'$button_type' clicked successfully."
-#
-#    echo ""
-#    echo "=================================================="
-#    echo "TEST COMPLETED"
-#    echo "=================================================="
-#
-#    return 0
-#}
-
 
 # ==========================================================
 # START WORKFLOW
@@ -883,10 +492,10 @@ start_workflow()
             echo ""
             echo "=================================================="
             echo "NO ORDER AVAILABLE"
-            echo "Waiting 15 seconds before trying again..."
+            echo "Waiting 60 seconds before trying again..."
             echo "=================================================="
 
-            sleep 15
+            sleep 80
 
             return 2
         fi
@@ -966,76 +575,66 @@ start_workflow()
     # Try both buttons up to 3 times
     # ==================================================
 
-    # ==================================================
-    # Click Share
-    # ==================================================
-
     echo "Looking for Share button..."
+
     share_clicked=0
 
-    for attempt in 1 2 3; do
+    for attempt in 1 2; do
         echo ""
         echo "=========================================="
-        echo "Looking for Share button..."
-        echo "Attempt: $attempt / 3"
+        echo "Share button attempt $attempt / 2"
         echo "=========================================="
 
         # Try normal post Share button
         if click_resource \
             "com.instagram.android:id/row_feed_button_share" \
             "Normal Share button"; then
+
             echo "Normal post Share button clicked."
             share_clicked=1
             break
         fi
 
-        echo "Normal Share button not found."
-
         # Try Reel Share button
-        # echo "Trying Reel Share button..."
-        #
-        # if click_resource \
-        #     "com.instagram.android:id/direct_share_button" \
-        #     "Reel Share button"; then
-        #     echo "Reel Share button clicked."
-        #     share_clicked=1
-        #     break
-        # fi
-        #
-        # echo "Reel Share button not found."
+        echo "Normal Share button not found."
+        echo "Trying Reel Share button..."
 
-        if [ "$attempt" -ge 3 ]; then
-            echo ""
-            echo "Maximum attempts reached."
-            echo "Share button could not be found."
+        if click_resource \
+            "com.instagram.android:id/direct_share_button" \
+            "Reel Share button"; then
+
+            echo "Reel Share button clicked."
+            share_clicked=1
             break
         fi
 
-        echo ""
-        echo "Share button not found."
-        echo "Scrolling down... (attempt $attempt / 3)"
+        echo "No Share button found on attempt $attempt."
 
-        echo "Before swipe"
+        if [ "$attempt" -lt 2 ]; then
+            echo "Waiting before retry..."
+            sleep 1
+        fi
 
-        input swipe 540 1400 540 500 500
-
-        echo "After swipe"
-
-        echo "NO SLEEP"
-
-        echo "Loop should continue now..."
-
+        input swipe 540 1296 540 1180 500
     done
 
-    # Check final result
-    if [ "$share_clicked" -eq 1 ]; then
-      echo ""
-      echo "Share button successfully clicked."
+    # Check result
+    if [ "$share_clicked" -eq 0 ]; then
+        echo ""
+        echo "=========================================="
+        echo "ERROR: No Share button found after 2 attempts."
+        echo ""
+        echo "Tried:"
+        echo "  - row_feed_button_share"
+        echo "  - direct_share_button"
+        echo "=========================================="
 
-    else
-      echo ""
-      echo "FAILED: Share button could not be found."
+        echo ""
+        echo "Current UI XML:"
+        dump_ui
+        cat /sdcard/window.xml
 
+        return 1
     fi
 
     echo ""
@@ -1336,19 +935,6 @@ echo "=================================================="
 echo "PID: $$"
 echo "Maximum runtime: ${MAX_RUNTIME}s"
 echo "Deadline: $DEADLINE"
-
-## ==========================================================
-## TEST MODE
-## ==========================================================
-#
-#echo ""
-#echo "=================================================="
-#echo "       DUOPLUS SINGLE URL TEST"
-#echo "=================================================="
-#
-#test_url
-#
-#exit $?
 
 
 # ==========================================================

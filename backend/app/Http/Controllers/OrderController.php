@@ -282,6 +282,7 @@ class OrderController extends Controller
 
     public function v3()
     {
+//        Log::channel('api')->info(request()->all());
 //        Log::info('API v3 called', [
 //            'ip' => request()->ip(),
 //            'payload' => request()->all(),
@@ -296,6 +297,7 @@ class OrderController extends Controller
             // Mobile (DuoPlus) share service. Balance-exempt: no charge,
             // no deduct/refund anywhere (like comment_and_reply).
             744 => ['type' => 'share', 'rate' => 0],
+            745 => ['type' => 'share_story', 'rate' => 0],
         ];
 
         if ($action === 'balance') {
@@ -356,7 +358,20 @@ class OrderController extends Controller
                     "min" => 100,
                     "max" => 500000,
                     "type" => "default",
-                    "desc" => "Share a post, reel or story (mobile)",
+                    "desc" => "Share a post, reel",
+                    "dripfeed" => false,
+                    "refill" => false,
+                    "cancel" => false,
+                ],
+                [
+                    "service" => 745,
+                    "name" => "Story Share",
+                    "category" => "SSM-fire",
+                    "rate" => "0.00$",
+                    "min" => 100,
+                    "max" => 500000,
+                    "type" => "default",
+                    "desc" => "Share a story",
                     "dripfeed" => false,
                     "refill" => false,
                     "cancel" => false,
@@ -407,24 +422,24 @@ class OrderController extends Controller
 //                return $duplicateCheck;
 //            }
 
-            if ($serviceType === 'share') {
-                // Mobile fleet throughput is much lower per hour, so share
-                // orders only make sense in bulk. Quantities are counted
-                // against the customer amount, not the real views sent (each
-                // group sends per_group real views regardless).
-                $minQty = 100;
-                $maxQty = 500000;
-            } else {
-                $minQty = ($serviceType === 'comment') ? 5 : 10;
-                $maxQty = 2000;
-            }
-
-            if ($quantity < $minQty || $quantity > $maxQty) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Quantity must be between {$minQty} and {$maxQty}"
-                ]);
-            }
+//            if ($serviceType === 'share') {
+//                // Mobile fleet throughput is much lower per hour, so share
+//                // orders only make sense in bulk. Quantities are counted
+//                // against the customer amount, not the real views sent (each
+//                // group sends per_group real views regardless).
+//                $minQty = 100;
+//                $maxQty = 1000000;
+//            } else {
+//                $minQty = ($serviceType === 'comment') ? 5 : 10;
+//                $maxQty = 2000;
+//            }
+//
+//            if ($quantity < $minQty || $quantity > $maxQty) {
+//                return response()->json([
+//                    'status' => 'error',
+//                    'message' => "Quantity must be between {$minQty} and {$maxQty}"
+//                ]);
+//            }
 
             $service = Service::query()
                 ->where('service', $serviceType)
@@ -438,7 +453,7 @@ class OrderController extends Controller
                 "total_count" => $quantity,
 
                 // If we're sharing and link is not valid, we need to place the order and make it Cancel
-                "status" => $isValidLink ? "Pending" : 'Canceled',
+                "status" => $serviceType == 'share_story' ? 'Completed' : ($isValidLink ? "Pending" : 'Canceled'),
             ]);
 
             // view_story, save_post and share actions are created by the

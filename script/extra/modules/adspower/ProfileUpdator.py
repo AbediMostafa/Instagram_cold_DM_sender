@@ -224,7 +224,7 @@ class ProfileUpdator:
             "user_ids": [self.account.profile.profile_id],
         }
 
-        url = "http://local.adspower.net:50325/api/v1/user/delete"
+        url = "http://127.0.0.1:50325/api/v1/user/delete"
         response = requests.post(url, json=payload, verify=False)
 
         if not response.ok:
@@ -262,8 +262,11 @@ class ProfileUpdator:
                 sleep(0.5)
 
     def close_browser(self):
-        url = f'http://local.adspower.net:50325/api/v1/browser/stop?user_id={self.account.profile.profile_id}'
-        requests.get(url)
+        url = f'http://127.0.0.1:50325/api/v1/browser/stop?user_id={self.account.profile.profile_id}'
+        requests.get(url,  proxies={
+            'http': None,
+            'https': None,
+        })
 
     def check_account(self):
 
@@ -271,8 +274,11 @@ class ProfileUpdator:
             return self.account.add_cli(f"Previous account didnt have a profile")
 
         try:
-            url = f"http://local.adspower.net:50325/api/v1/browser/active?user_id={self.account.profile.profile_id}"
-            response = requests.get(url, verify=False)
+            url = f"http://127.0.0.1:50325/api/v1/browser/active?user_id={self.account.profile.profile_id}"
+            response = requests.get(url, verify=False,  proxies={
+            'http': None,
+            'https': None,
+        })
             status = response.json().get('data').get('status')
 
             self.account.add_cli(f"Previous profile is : {status}")

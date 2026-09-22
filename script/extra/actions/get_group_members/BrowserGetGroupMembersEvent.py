@@ -40,6 +40,29 @@ class BrowserGetGroupMembersEvent:
             'group_20': 'https://www.instagram.com/direct/t/796297220172224/'  # 20
         }
 
+        urls = {
+            'group_20':'https://www.instagram.com/direct/t/1820077392337174/',  # 20 -->248
+            'group_19':'https://www.instagram.com/direct/t/1057836507151845/',  # 19 -->max
+            'group_18':'https://www.instagram.com/direct/t/1765222088138849/',  # 18 -->248
+            'group_17':'https://www.instagram.com/direct/t/1645569313949193/', #17
+            'group_16':'https://www.instagram.com/direct/t/1953917735295052/', #16 -->max
+            'group_15':'https://www.instagram.com/direct/t/1443482307595951/', #15
+            'group_14':'https://www.instagram.com/direct/t/1492630149029542/', #14
+            'group_13':'https://www.instagram.com/direct/t/1860172995426045/', #13 -->248
+            'group_12':'https://www.instagram.com/direct/t/1061646739788294/', #12
+            'group_11':'https://www.instagram.com/direct/t/1071113032057612/', #11
+            'group_10':'https://www.instagram.com/direct/t/1054794777521889/', #10 -->max
+            'group_9':'https://www.instagram.com/direct/t/1085199887208934/', #9
+            'group_8':'https://www.instagram.com/direct/t/1949706019052340/', #8
+            'group_7':'https://www.instagram.com/direct/t/2273130870170281/', #7
+            'group_6':'https://www.instagram.com/direct/t/1241487078110607/', #6
+            'group_5':'https://www.instagram.com/direct/t/1933169584046769/', #5
+            'group_4':'https://www.instagram.com/direct/t/1086470653919050/', #4
+            'group_3':'https://www.instagram.com/direct/t/1731522777963357/', #3
+            'group_2':'https://www.instagram.com/direct/t/1589156179446000/', #2
+            'group_1':'https://www.instagram.com/direct/t/1389516563314411/', #1
+        }
+
         for group_name, url in urls.items():
 
             self.api_usernames = []
@@ -90,7 +113,7 @@ class BrowserGetGroupMembersEvent:
                 continue
 
             tag_account(account, group_tag)
-            tag_account(account, web_share_tag)
+            # tag_account(account, web_share_tag)
 
         self.ig.account.add_cli(
             f'{group_name}: {len(account_map)} accounts found.'

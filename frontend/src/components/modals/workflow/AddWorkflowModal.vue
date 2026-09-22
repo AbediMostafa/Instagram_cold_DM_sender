@@ -126,7 +126,7 @@ import {hideModal} from "@/core/helpers/modal";
 import ApiService from "@/core/services/ApiService";
 import {useWorkflowStore} from "@/stores/Workflow";
 import {useServiceStore} from "@/stores/Service";
-import {useModuleStore} from "@/stores/module";
+import {useModuleStore} from "@/stores/Module";
 
 export default defineComponent({
   name: "AddWorkflowModal",

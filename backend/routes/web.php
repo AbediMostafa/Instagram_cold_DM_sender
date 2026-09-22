@@ -33,6 +33,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowController;
 use \App\Http\Controllers\DuoWorkFlowController;
 use App\Models\Mobile;
+use App\Models\Service;
 use App\Models\Template;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
@@ -56,69 +57,287 @@ use \App\Models\Tag;
 use \App\Models\Order;
 
 Route::get('/', function () {
-
 //    Device_2 ==> "evurasian_cookncrea" پست در تایم لاین
 //    Device_1 ==> yzoehanaaa_ --> پست در تایم لاین
 //    Device_5 ==> frake_jinnat --> پست در تایم لاین
-    /** Device_5 :
-     * 0 => "_themarziie_"
-     * 1 => "mrathilde.m.n"@
-     * 2 => "euger.vasquez.3"@
-     * 3 => "goldfishschou"@
-     * 4 => "nivedi_ta_kuragund"@
-     * 5 => "shafmuanjohari"@
-     * 6 => "frake_jinnat"@
-     * 7 => "simndy_ii69"@
-     * 8 => "ylon_2b"@
-     * 9 => "thesebastian6465"@
-     */
-
 });
 Route::get('/test', function () {
-    $start = microtime(true);
 
-    DB::disconnect('pgsql');
+    dd(Order::query()->get());
+    $usernames = [
+        "ary._amnin",
+        "le.eanln7246",
+        "tiago_rr53.77",
+        "madinaa_jpokec2",
+        "mkuhamm4d27",
+        "_b.vijayyz._",
+        "bihvcd7.1",
+        "thegoldenwizardbjookprize",
+        "mr_saya___007",
+        "harqinibk_10",
+        "tp.toi_letroll",
+        "puransuthar20c15",
+        "iraqui_tariquet75",
+        "meikizedek_son_ofz_iam",
+        "ms.deniqii",
+        "carotlline_rodriguez",
+        "katharina.bmrand",
+        "angvgeel_____",
+        "amb2ikkk",
+        "br626.3",
+        "arunm_andal1851",
+        "sydnenymonmon",
+        "annkisiel4l",
+        "afsane_hbarekat",
+        "alaa_ikero",
+        "dirimuom",
+        "alliesdeczorandmore",
+        "danieloliveira__ns",
+        "bihvcd7.6",
+        "dldbshgh09",
+        "abdolla.shwirvash",
+        "anas_architekct24",
+        "erro.r___.userrname",
+        "k_aatkakes",
+        "parmislesetoilegs_",
+        "iremunalyilma_zer",
+        "ayala.4118",
+        "81_luisa4a",
+        "trishirajg.exe",
+        "admiralhippeyr_",
+        "devy_ffauji",
+        "vbnoui6.6",
+        "adhz7909",
+        "arlmnn.ma",
+        "skyj_sirisak",
+        "alli_the_bookaholicc13",
+        "syfh_r10",
+        "jonovicycc_15",
+        "meinkyufrom",
+        "iymad_qadi",
+        "crazy.boyl001133",
+        "njuggty8.9",
+        "sumo.bjrr",
+        "autumn_ijir.an",
+        "itzsmwaura",
+        "faustino50mase1",
+        "arcos_qserviss",
+        "jlonguitow8a",
+        "oseama.alabdullahh",
+        "jxndosnn",
+        "aha_na_kuchupu",
+        "at.design.studizo24",
+        "gj.60023",
+        "mochtriprasetieyawan",
+        "scebbeelholm",
+        "bihvcd7.3",
+        "floreshurtadodeavid",
+        "bayardob_urgos",
+        "p0rwal_khnushi",
+        "tiloor12355",
+        "hsuchignbo",
+        "thesonu.khann",
+        "logam_cipctaa",
+        "beckjstevefns",
+        "cocchohector",
+        "shiva_pradhan__gurjar",
+        "matip_gf.44",
+        "cut_toanicka",
+        "gamebterminalnash",
+        "veronicamullerarbquitetura",
+        "guldamla_defsign",
+        "ali_avkimran",
+        "xiao_xian._.0o6",
+        "original_tshuepho",
+        "a_m_nd_",
+        "rojaklpenro",
+        "prodesign.fuy",
+        "stilcodisposal",
+        "artee_reali",
+        "_rasoul.ssarafraz_",
+        "_ruzzxzi",
+        "alison_uw5.88",
+        "tig.er_madride",
+        "259_jofuarrox",
+        "cassobuuuu",
+        "zubaid_dirskse_",
+        "abby1p00381",
+        "_s0sunthesinee",
+        "liss_ve8lasquez_c",
+        "aryanmzacki",
+        "_team_lim.on",
+        "shredatheome",
+        "teot1eocoli8",
+        "lilrayofsuuvnshinee",
+        "stephix5708",
+        "one_lenz_.view",
+        "maxnyr_ays",
+        "anto_em.c_nia",
+        "jdulissiri",
+        "anitankaira",
+        "lucas___dz66",
+        "aqn_afdlh",
+        "054_alffry",
+        "sa.rah_sergent15",
+        "tiago_rr53.44",
+        "carlan__val",
+        "damlaczzzg",
+        "tetsuroyoshsino",
+        "l2ah.cen3223",
+        "may_kel45",
+        "joshuarzkiy",
+        "adytson.rh",
+        "farideytres.7",
+        "vierr.ig.riv",
+        "sa_rtorial___la",
+        "aster3225633",
+        "jahir_flores_deev",
+        "2spazzed.1.3_",
+        "_ade_risdwan",
+        "k_amalmzp",
+        "dian_lestagri92",
+        "n.ishanth_joel_",
+        "l_a_cidi",
+        "bhgcdghy",
+        "velominaru.ntung_",
+        "_aiini.20",
+        "moek_htet_thar_",
+        "ftam.b971",
+        "sisterswho_areadtogether",
+        "sunst.arpapa",
+        "sibol12999",
+        "vkarpa_ra",
+        "chemrryntr123",
+        "_ana_s.w_ara._",
+        "z_.zzx990",
+        "may_kel4555",
+        "cedrsayoussef",
+        "nabder.robert",
+        "yng._sacyhin48",
+        "safa2._azimi",
+        "a_twal147",
+        "gmtsyubtime",
+        "l_sancheiz612",
+        "nishane43957",
+        "jace124x",
+        "aimlessajmes",
+        "davidni.hil_",
+        "msmariaher.ndon",
+        "_amirhosnein_mosavi",
+        "cou.ntry_gun_lover_man",
+        "malen_aa12466",
+        "xx_xibgdg.rni",
+        "_themarziej_",
+        "im.kaoerw",
+        "5kakrl_5",
+        "massoud_malekpanah",
+        "azzaaa_2s0",
+        "itz_cute_boy_56678",
+        "anikett_k_s",
+        "dan.ardelean_2l7",
+        "qamila_611",
+        "may_kel4544",
+        "casl_tor0ias",
+        "aadituya_batham_07",
+        "mojtuaba.abedi.359",
+        "gax573r",
+        "prod.b7y.gusta",
+        "meuble_gargsouri",
+        "devqender__pvt",
+        "ajycan.b17",
+        "pcond_test",
+        "jackjones44770",
+        "rrrhwei999",
+        "dee_pakgaur11",
+        "azizahainul2_",
+        "j_dallia1h",
+        "_t.x_.w.mii_",
+        "gulmiraergausheva3839",
+        "loxnewolf_danz",
+        "bihan_jiya22",
+        "reiriiheree_",
+        "anclal_k",
+        "darnio_pinkman",
+        "joeremie.ndaka",
+        "intslemegs",
+        "style2dbybeck",
+        "rifal_7coders",
+        "aileejnchen._",
+        "krr.isna9803",
+        "the_thomas_fbkk",
+        "reda_ef.z",
+        "saida_h.synovaaa",
+        "zhujam06803",
+        "martinely_18.33",
+        "far0hanpriambudii",
+        "addictedto.hoop",
+        "nic_o.not.nicho",
+        "ll_k1zlq",
+        "_ag.nauiils",
+        "me.rlo_10070",
+        "ethan.k_up",
+        "zohre_mng90",
+        "9trefdfen",
+        "mahyarncarpet",
+        "mazriedjourno",
+        "cutipie__queen_g1433",
+        "imcsamjutt",
+        "rathiomprarkash87",
+        "m_thompsoon9911",
+        "sonia.mrflores",
+        "wloekserc",
+        "terashimakikakyu",
+        "euelifunvr",
+        "being_.pragatiii",
+        "radinpourhos_sein",
+        "alison_uw5.99",
+        "tanxaz_zarie",
+        "kawt.arc3620",
+        "pepcini.e",
+        "elvwis27x",
+        "wendyopa.checo_",
+        "bhgcdghy.7",
+        "uzxair_chishti_",
+        "y.eslam_artstudio",
+        "xpozpz3d",
+        "m__sobkirovich",
+        "ashor5ii_a",
+        "fabioranier_ii",
+        "aldair1v2.s",
+        "k.magyyaaa",
+        "mhd_sthakil_",
+        "sulreymankesgn1903",
+        "chunkytokez45",
+        "celineu.nica",
+        "rafdh_sai76",
+        "pinto_q0p.22",
+        "james49612x7",
+        "utopizk.u",
+        "argh.charlgie",
+        "bmqktfjg",
+        "_oaiini.20",
+        "katiagomes2019abb",
+        "lunitapuntoeistrella",
+        "dannyp_medina2805",
+    ];
+return [
+  'url'=>'https://www.zoomit.ir'
+];
 
-    DB::connection('pgsql')->getPdo();
-
-    $connectionTime = (microtime(true) - $start) * 1000;
-
-    dd($connectionTime);
-    dd([
-        'default' => config('database.default'),
-        'host' => config('database.connections.pgsql.host'),
-        'port' => config('database.connections.pgsql.port'),
-        'database' => config('database.connections.pgsql.database'),
-        'persistent' => config('database.connections.pgsql.persistent'),
-    ]);
-    $start = microtime(true);
-
-    DB::select('SELECT 1');
-
-    $time = (microtime(true) - $start) * 1000;
-
-    dd($time);
-
-    dd(
-        DB::select("
-
-       EXPLAIN (ANALYZE, BUFFERS)
-SELECT *
-FROM orders
-WHERE id = 40624
-LIMIT 1;
-        ")
+    dump(
+        count($usernames)
     );
 
-//    $response = Http::withoutVerifying()->post('http://209.200.252.19/duo-workflow/start');
-//    dd(
-//        $response->json()
-//    );
+    dd(
+        Account::query()
+            ->where('service_id', 10)
+            ->where('instagram_state', 'active')
+            ->count()
+    );
+//   $res = Http::withoutVerifying()->post("http://209.200.252.19/duo-workflow/start");
+//    dd($res->json());
 
-   $res = Http::withoutVerifying()->post("http://209.200.252.19/duo-workflow/start");
-    dd($res->json());
-
-     $mobile = Mobile::query()
+    $mobile = Mobile::query()
         ->find(5);
 
     dd(
@@ -386,10 +605,9 @@ Route::post('duo-workflow/get-url', [DuoWorkFlowController::class, 'getUrl']);
 Route::post('duo-workflow/get-action-count', [DuoWorkFlowController::class, 'getActionCount']);
 Route::post('duo-workflow/group-click', [DuoWorkFlowController::class, 'groupClick']);
 Route::post('duo-workflow/change-account', [DuoWorkFlowController::class, 'changeAccount']);
+Route::post('/duo-workflow/fail', [DuoWorkFlowController::class, 'fail']);
 Route::post('/test-case', function () {
-    return [
-        ''
-    ];
+    Log::channel('api')->info(request()->all());
 });
 
 //});

@@ -111,8 +111,11 @@ class AdspowerProfileMaker
 
     public function sendRequest(): self
     {
-        $url = "http://local.adspower.net:50325/api/v1/user/create";
-        $this->response = Http::withoutVerifying()->post($url, $this->payload);
+        $url = "http://127.0.0.1:50325/api/v1/user/create";
+        $this->response = Http::withoutVerifying()->post($url, $this->payload,  proxies={
+            'http': None,
+            'https': None,
+        });
         $json = $this->response->json();
 
         $this->responseMessage = $json['msg'] ?? '';

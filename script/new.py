@@ -66,17 +66,15 @@ try:
     browser_ig = BasePlaywright(account)
     browser_ig.init()
     LoginContext(browser_ig).fire()
-    # FollowContext(browser_ig).fire()
-    # FollowContext(browser_ig).fire()
-    MakeAccountPublicContext(browser_ig).fire()
+    FollowContext(browser_ig).fire()
+#     FollowContext(browser_ig).fire()
+#     MakeAccountPublicContext(browser_ig).fire()
 
 except Exception as e:
     print(str(e))
     print(traceback.format_exc())
 finally:
-    browser_ig.pause(1000000, 1100000)
-
-    if browser_ig:
+        browser_ig.pause(1000000,1500000)
         browser_ig.cleanup()
 
 # CheckForAccountActionsHook(account)

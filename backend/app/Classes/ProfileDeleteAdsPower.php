@@ -17,8 +17,11 @@ class ProfileDeleteAdsPower
             'user_ids'=>[$this->profileId]
         ];
 
-        $url = "http://local.adspower.net:50325/api/v1/user/delete";
-        $response = Http::withoutVerifying()->post($url, $payload);
+        $url = "http://127.0.0.1:50325/api/v1/user/delete";
+        $response = Http::withoutVerifying()->post($url, $payload,  proxies={
+            'http': None,
+            'https': None,
+        });
 
         if ($response->failed()) {
             throw new \Exception("Error while Deleting profile " . $response->body());

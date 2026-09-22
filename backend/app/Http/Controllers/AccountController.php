@@ -32,7 +32,23 @@ class AccountController extends Controller
                 'service:id,title',
                 'mobile:id,name,duo_id',
                 'country:id,name,country_code',
-                'tags:id,title',
+                'tags' => function ($query) {
+                    $query
+                        ->orderByRaw("
+            CASE
+                WHEN title ~ '^group_[0-9]+$' THEN 0
+                ELSE 1
+            END
+        ")
+                        ->orderByRaw("
+            CASE
+                WHEN title ~ '^group_[0-9]+$'
+                THEN CAST(SUBSTRING(title FROM '[0-9]+$') AS INTEGER)
+                ELSE NULL
+            END
+        ")
+                        ->orderBy('title');
+                },
                 'warnings' => function ($query) use ($startDate, $endDate) {
                     $query->select('created_at', 'account_id', 'cause')
                         ->orderByDesc('created_at');

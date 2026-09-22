@@ -18,7 +18,7 @@ class OrderAction extends Model
     /**
      * Expiration time in minute
      */
-    const EXPIRATION_TIME = 10;
+    const EXPIRATION_TIME = 5;
 
     const TYPES = [
         'comment',

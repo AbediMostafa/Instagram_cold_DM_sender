@@ -10,7 +10,7 @@ import random
 import json
 import re
 
-max_login_retry = 10
+max_login_retry = 5
 '''
 We removed your photo => Whenever see this message, should set 'avatar_changed' to 0
 But we're checking if this happens in avatar changes and not in post uploads
@@ -107,6 +107,7 @@ class BrowserLoginEvent:
         'This content is no longer available',
 
         'Upload a verification selfie',
+        'We removed your comment',
     ]
 
     logged_in_messages = [
@@ -135,12 +136,13 @@ class BrowserLoginEvent:
         self.pre_login_counter = 0
         self.login_clicked = False
         self.two_fa_clicked = False
-        self._add_response_listener()
+        # self._add_response_listener()
 
     def _add_response_listener(self):
         """Attach response listener to capture GraphQL requests"""
 
         def on_response(response):
+
             if self.graphql_captured:
                 return
 

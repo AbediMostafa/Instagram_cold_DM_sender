@@ -54,6 +54,17 @@ return [
             'days' => 14,
         ],
 
+        'api' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/api.log'),
+            'level' => 'debug',
+        ],
+        'workflow' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/workflow.log'),
+            'level' => 'debug',
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

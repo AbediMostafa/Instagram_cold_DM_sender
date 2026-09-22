@@ -139,4 +139,13 @@ class Order extends Model
             ->limit($limit)
             ->get();
     }
+
+    public function fail($reason)
+    {
+        $this->status = 'Canceled';
+        $this->description = $reason;
+        $this->save();
+
+        return $this;
+    }
 }

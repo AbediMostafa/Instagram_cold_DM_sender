@@ -54,14 +54,11 @@ class BrowserFollowEvent:
         # ]
 
         usernames = [
-            'zakariam_i_',#1360
-            'ak.h_jafri',#13615
-            'pe.ter64314',#6139
-            'thiaxmjr7',#13591
-        ]
-        usernames = [
-            'plwers',
-            'aminaj.arte',  # 12870
+            'br626.3',#17052
+            'arunm_andal1851',#17050
+            'velominaru.ntung_',#17049
+            'ary._amnin',#16631
+            'le.eanln7246',#16653
         ]
 
         for username in usernames:

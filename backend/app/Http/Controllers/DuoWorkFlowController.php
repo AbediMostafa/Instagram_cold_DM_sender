@@ -17,7 +17,6 @@ class DuoWorkFlowController extends Controller
 
     public function start()
     {
-        Log::info('START ' . microtime(true));
         foreach (Order::getPendings() as $order) {
             $response = DB::transaction(function () use ($order) {
 
@@ -26,7 +25,7 @@ class DuoWorkFlowController extends Controller
                     ->first();
 
                 if ($order->is('Pending') && !$order->actions()->exists()) {
-                    Log::info("{$mobile?->name} -- Order number {$order->id} is pending");
+                    Log::channel('workflow')->info("{$mobile?->name} -- Order number {$order->id} is pending");
                     $order->makeShareActions()->setStatusTo('In progress');
                 }
 
@@ -34,7 +33,7 @@ class DuoWorkFlowController extends Controller
                 $expiredActions = $order->getExpiredActions(OrderAction::SHARE_ACTIONS_PER_RUN);
                 $expiredCount = $expiredActions->count();
 
-                Log::info("{$mobile?->name} -- {$expiredCount} Expired actions exists");
+                Log::channel('workflow')->info("{$mobile?->name} -- {$expiredCount} Expired actions exists");
 
                 $remaining = OrderAction::SHARE_ACTIONS_PER_RUN - $expiredCount;
 
@@ -42,7 +41,7 @@ class DuoWorkFlowController extends Controller
 
                 if ($remaining > 0) {
                     $freeActions = $order->getFreeActions($remaining);
-                    Log::info("{$mobile?->name} -- {$freeActions->count()} Free actions claimed");
+                    Log::channel('workflow')->info("{$mobile?->name} -- {$freeActions->count()} Free actions claimed");
                 }
 
                 if ($expiredActions->isEmpty() && $freeActions->isEmpty()) {
@@ -63,8 +62,6 @@ class DuoWorkFlowController extends Controller
                     'workflow_id' => $workFlow->id,
                 ];
             });
-
-            Log::info('RETURN ' . microtime(true));
 
             if ($response !== null) {
                 return $response;
@@ -94,8 +91,80 @@ class DuoWorkFlowController extends Controller
     public function groupClick()
     {
         $workFlow = DuoWorkFlow::query()->find(r('workflow_id'));
-        if (!$workFlow)
-            return -1;
+
+        if (!$workFlow) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Workflow not found',
+            ], 404);
+        }
+
+        return DB::transaction(function () use ($workFlow) {
+
+            $order = $workFlow->order;
+
+            // Get all actions belonging to this workflow
+            // that haven't been sent yet.
+            $actions = $workFlow->actions()
+                ->where('status', 'processing')
+                ->lockForUpdate()
+                ->get();
+
+            if ($actions->isEmpty()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No processing actions found',
+                    'workflow_id' => $workFlow->id,
+                    'action_count' => 0,
+                ]);
+            }
+
+            $actionIds = $actions->pluck('id');
+
+            // Mark ALL workflow actions as sent in one query
+            OrderAction::query()
+                ->whereIn('id', $actionIds)
+                ->update([
+                    'status' => 'sent',
+                    'updated_at' => now(),
+                ]);
+
+            $actionCount = $actions->count();
+
+            // Increment completed count by actual number of actions
+            $order->increment(
+                'completed_count',
+                $actionCount * OrderAction::SHARE_CHUNK_SIZE
+            );
+
+            Log::channel('workflow')->info("$actionCount actions completed");
+
+            // Check if every action for this order is now sent
+            $hasUnsentActions = $order->actions()
+                ->where('status', '!=', 'sent')
+                ->exists();
+
+            if (!$hasUnsentActions) {
+                $order->update([
+                    'status' => 'Completed',
+                ]);
+            }
+
+            Log::channel('workflow')->info(
+                "Workflow {$workFlow->id} completed. " .
+                "{$actionCount} actions marked as sent. " .
+                "Order {$order->id}"
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'workflow_id' => $workFlow->id,
+                'action_count' => $actionCount,
+                'order_id' => $order->id,
+                'completed_count' => $order->fresh()->completed_count,
+                'order_status' => $order->fresh()->status,
+            ]);
+        });
 
         $executeAction = function ($action, $type) use ($workFlow) {
 
@@ -165,5 +234,16 @@ class DuoWorkFlowController extends Controller
         }
 
         return -1;
+    }
+
+    public function fail()
+    {
+
+        $workFlow = DuoWorkFlow::query()->find(r('workflow_id'));
+
+        if (!$workFlow)
+            return -1;
+
+        return $workFlow->order->fail(r('reason'));
     }
 }
